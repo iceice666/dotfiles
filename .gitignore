@@ -2,12 +2,11 @@
 .local
 .npm
 .ssh
-go/pkg
+go
 .wget-hsts
 .config/nvim
 .bash_history
 .bash_logout
-
 .bash_profile
 .config/btop
 .config/lazygit

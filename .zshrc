@@ -21,36 +21,19 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
-# Start of zplug settings
-source ~/.zplug/init.zsh
-
-# theme
-zplug "romkatv/powerlevel10k", as:theme, depth:1
-
-# ls when cd a dir
-zplug "aikow/zsh-auto-ls"
-
-
-if ! zplug check --verbose; then
-  printf "Install? [y/N]: "
-  if read -q; then
-    echo; zplug install
-  fi
-fi
-
-zplug load
-# End of zplug settings
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
 # Start of custom alias
-alias l='pls -d all'
-alias ll='pls -a -d all'
-
-alias pip='python -m pip'
-
 alias plz='sudo'
+
+alias l='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
+alias ls='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
+alias ll='exa -1aalmhF --git --time-style iso -s type --icons '
+alias lt='exa -1almhFT --git -L 3 -I .git --time-style iso -s type --git-ignore --icons'
+
+alias rm='rm -r'
+alias cp='cp -r'
+alias mkdir='mkdir -p'
+
+alias ..='cd ..'
 
 alias nv='nvim'
 alias vim='nvim'
@@ -63,5 +46,44 @@ alias pmr='sudo pacman -R'
 
 alias yas='yay -S'
 alias yar='yay -R'
+
+alias dotfile='cd ~&&nvim&&cd -'
+alias nvcfg='cd ~/.config/nvim&&nvim&&cd -'
+
+alias reload='source ~/.zshrc'
 # End of custom alias
+
+# Start of zplug settings
+export ZSH_LS_DISABLE_GIT=false
+
+source ~/.zplug/init.zsh
+
+zplug "zsh-users/zsh-completions"
+zplug "zsh-users/zsh-history-substring-search"
+zplug "zsh-users/zsh-autosuggestions"
+zplug "zdharma/fast-syntax-highlighting"
+zplug "hlissner/zsh-autopair"
+zplug "djui/alias-tips"
+zplug "zshzoo/cd-ls"
+zplug "ael-code/zsh-colored-man-pages"
+zplug "Freed-Wu/zsh-command-not-found"
+zplug "plugins/sudo", from:oh-my-zsh
+zplug "plugins/extract", from:oh-my-zsh
+
+zplug "romkatv/powerlevel10k", as:theme, depth:1
+
+if ! zplug check --verbose; then
+  printf "Install? [y/N]: "
+  if read -q; then
+    echo; zplug install
+  fi
+fi
+
+zplug load
+# End of zplug settings
+
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
 
