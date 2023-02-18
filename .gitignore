@@ -1,0 +1,16 @@
+.cache
+.local
+.npm
+.ssh
+go/pkg
+.wget-hsts
+.config/nvim
+.bash_history
+.bash_logout
+
+.bash_profile
+.config/btop
+.config/lazygit
+.zplug
+.config/yay
+.python_history
