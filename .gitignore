@@ -13,3 +13,4 @@ go
 .zplug
 .config/yay
 .python_history
+build/yay-bin

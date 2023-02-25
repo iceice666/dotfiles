@@ -2,7 +2,7 @@
 cd ~
 
 # PATH
-export PATH="/home/iceice666/.local/bin:$PATH"
+export PATH="/home/iceice666/bin:/home/iceice666/.local/bin:$PATH"
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
