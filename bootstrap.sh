@@ -2,5 +2,10 @@
 sudo pacman -S lolcat neofetch zsh exa
 chsh -s $(which zsh)
 curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
-python3 -m pip install pipx
-pipx install pls
+
+sudo pacman -S --needed git base-devel
+mkdir ~/build
+cd ~/build
+git clone https://aur.archlinux.org/yay-bin.git
+cd yay-bin
+makepkg -si
