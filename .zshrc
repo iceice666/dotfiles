@@ -25,7 +25,6 @@ compinit
 alias plz='sudo'
 
 alias l='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
-alias ls='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
 alias ll='exa -1aalmhF --git --time-style iso -s type --icons '
 alias lt='exa -1almhFT --git -L 3 -I .git --time-style iso -s type --git-ignore --icons'
 
@@ -43,9 +42,12 @@ alias emacs='nvim'
 alias pm='sudo pacman'
 alias pms='sudo pacman -S'
 alias pmr='sudo pacman -R'
+alias pmu='sudo pacman -Syu'
 
 alias yas='yay -S'
 alias yar='yay -R'
+
+alias sysctl='sudo systemctl'
 
 alias dotfile='cd ~&&nvim&&cd -'
 alias nvcfg='cd ~/.config/nvim&&nvim&&cd -'

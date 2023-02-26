@@ -10,7 +10,25 @@ go
 .bash_profile
 .config/btop
 .config/lazygit
-.zplug
+.mozilla/firefox
+.config/fcitx/dbus
+.config/fcitx5
+.config/ibus
 .config/yay
+.zplug
 .python_history
-build/yay-bin
+.mozilla/firefox/Crash Reports
+.zcompdump
+.hyprland
+Downloads
+build
+.config/BetterDiscord Installer
+.config/brinkervii/grapejuice
+.config/discord
+.config/qt5ct
+.config/user-dirs.dirs
+.config/user-dirs.locale
+.pki/nssdb
+.wine
+.yarnrc
+.config/dconf

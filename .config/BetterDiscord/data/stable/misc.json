@@ -1,0 +1,8 @@
+{
+    "version": "1.8.4",
+    "addonlistControls": {
+        "plugin": {
+            "view": "grid"
+        }
+    }
+}
