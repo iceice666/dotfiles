@@ -1,6 +1,6 @@
 {
     "currentVersionInfo": {
-        "version": "7.0.6",
+        "version": "7.1.0",
         "hasShownChangelog": true
     },
     "cuiSettingsVersion": "9",
@@ -36,7 +36,8 @@
     "serverListButtonActive": "true",
     "channelListButtonActive": "true",
     "msgBarButtonActive": "true",
-    "userAreaButtonActive": "true",
+    "userAreaButtonActive": "false",
     "callContainerButtonActive": "true",
-    "membersListButtonActive": "true"
+    "membersListButtonActive": "true",
+    "profilePanelButtonActive": "true"
 }

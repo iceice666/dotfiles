@@ -8,10 +8,10 @@
 			"downloadable": true
 		},
 		"general": {
-			"notifyOutdated": true,
 			"notifyNewEntries": true,
-			"startDownloaded": false,
-			"startUpdated": false
+			"notifyOutdated": true,
+			"startDownloaded": true,
+			"startUpdated": true
 		}
 	}
 }
