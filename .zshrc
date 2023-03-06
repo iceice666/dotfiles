@@ -2,7 +2,7 @@
 cd ~
 
 # PATH
-export PATH="/home/iceice666/.local/bin:$PATH"
+export PATH="/home/iceice666/.cargo/bin:/home/iceice666/.local/bin:$PATH"
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
@@ -47,10 +47,12 @@ alias pmu='sudo pacman -Syu'
 alias yas='yay -S'
 alias yar='yay -R'
 
+alias self='neofetch | lolcat'
+
 alias dotfile='cd ~&&nvim&&cd -'
 alias nvcfg='cd ~/.config/nvim&&nvim&&cd -'
 
-alias hyprland="~/.config/hypr/wrappedhl"
+alias wrappedhl="~/.config/hypr/wrappedhl"
 
 alias reload='source ~/.zshrc'
 # End of custom alias

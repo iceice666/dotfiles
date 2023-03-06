@@ -50,4 +50,6 @@ sudo pacman -S openssh
 # screenshot / screensharing
 yay -S grimblast grim slurp
 
-# misc
+# waybar
+pacman -S waybar
+pip install gpustat pyroute2

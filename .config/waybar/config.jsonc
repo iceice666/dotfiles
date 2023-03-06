@@ -1,0 +1,135 @@
+[{
+  "height": 24,
+  "name": "top",
+  "layer": "top",
+  "position": "top",
+  "modules-left": [
+    "custom/icon",
+    // "custom/sysinfo",
+    "custom/updates"
+  ],
+  "modules-center": ["hyprland/window"],
+  "modules-right": [
+    "pulseaudio",
+    "pulseaudio#microphone",
+    "custom/weather",
+    "clock"
+  ],
+
+  "hyprland/window": {
+    "format": "{}",
+    "max-length": 200
+  },
+  "custom/icon": {
+    "format": "   I use arch btw;",
+    "on-click-right": "killall  waybar && waybar &"
+  },
+  "custom/updates": {
+    "tooltip": true,
+    "format": "{}",
+    "return-type": "json",
+    "exec": "python ~/.config/waybar/scripts/checkupdate.py",
+    // "on-click-right": "hyprctl dispatch exec [float]kitty btop",
+    "interval": "once"
+  },
+  "custom/sysinfo": {
+    "tooltip": true,
+    "format": "{}",
+    "return-type": "json",
+    "exec": "python ~/.config/waybar/scripts/sysinfo.py",
+    "on-click-right": "hyprctl dispatch exec [float]kitty btop",
+    "restart-interval": 0
+  },
+  "custom/weather": {
+    "tooltip": true,
+    "format": "{}",
+    "restart-interval": 3600,
+    "exec": "python ~/.config/waybar/scripts/waybar-wttr.py",
+    "return-type": "json"
+  },
+  "tray": {
+    "icon-size": 13,
+    "tooltip": false,
+    "spacing": 10
+  },
+  "clock": {
+    "interval": 1,
+    "format": "{: %H:%M:%S   %m/%d}",
+    "timezone": "Asia/Taipei",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "year",
+      "mode-mon-col": 3,
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "on-click-right": "mode",
+      "format": {
+        "months": "<span color='#ffead3'><b>{}</b></span>",
+        "days": "<span color='#ecc6d9'><b>{}</b></span>",
+        "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
+        "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+        "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+      }
+    }
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "tooltip": false,
+    "format-muted": " Muted",
+    "on-click": "pamixer -t",
+    "on-scroll-up": "pamixer -i 5",
+    "on-scroll-down": "pamixer -d 5",
+    "scroll-step": 5,
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", ""]
+    }
+  },
+  "pulseaudio#microphone": {
+    "format": "{format_source}",
+    "tooltip": false,
+    "format-source": " {volume}%",
+    "format-source-muted": " Muted",
+    "on-click": "pamixer --default-source -t",
+    "on-scroll-up": "pamixer --default-source -i 5",
+    "on-scroll-down": "pamixer --default-source -d 5",
+    "scroll-step": 5
+  }
+}, {
+  "height": 32,
+  "name": "btm",
+  "layer": "top",
+  "position": "bottom",
+  "exclusive": true,
+  "passtrough": false,
+  "gtk-layer-shell": true,
+  "modules-left": [
+    "wlr/workspaces"
+  ],
+  "modules-right": [
+    "tray",
+    "custom/space"
+  ],
+  "tray": {
+    "icon-size": 20,
+    "spacing": 10
+  },
+  "wlr/workspaces": {
+    "on-scroll-up": "hyprctl dispatch workspace e+1",
+    "on-scroll-down": "hyprctl dispatch workspace e-1",
+    "all-outputs": true,
+    "on-click": "activate",
+    "format": "{icon}",
+    "format-icons": {
+      "discord": "ﭮ"
+    }
+  },
+  "custom/space": {
+    "format": " "
+  }
+}]

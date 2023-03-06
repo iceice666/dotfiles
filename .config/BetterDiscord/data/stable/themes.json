@@ -2,13 +2,13 @@
     "T1": false,
     "Dark+": false,
     "Discord+": false,
-    "LilyPichu": false,
-    "SettingsModal": false,
+    "LilyPichu": true,
+    "SettingsModal": true,
     "Slate": false,
     "Pyrite": false,
-    "EmojiReplace": false,
+    "EmojiReplace": true,
     "midnight": false,
-    "BlurpleRecolor": false,
+    "BlurpleRecolor": true,
     "Fluent": false,
     "Frosted Glass": false
 }

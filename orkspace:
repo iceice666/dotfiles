@@ -1,0 +1,18 @@
+Window 98af13e0 -> nv:
+	at: 22,44
+	size: 2516,1344
+	workspace: 1 (1)
+	floating: 1
+	monitor: 0
+	class: kitty
+	title: nv
+	pid: 2153348
+	xwayland: 0
+	pinned: 0
+	fullscreen: 1
+	fullscreenmode: 1
+	fakefullscreen: 0
+	grouped: 0
+	swallowing: 0
+
+

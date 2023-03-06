@@ -1,0 +1,60 @@
+* {
+    border: none;
+    font-family: DaddyTimeMono Nerd Font;
+    /* font-weight: bold; */
+    font-size: 17px;
+    min-height: 0;
+
+}
+
+#custom-updates,
+#custom-weather,
+#custom-icon,
+#window,
+#clock,
+#cpu,
+#memory,
+#pulseaudio,
+#network,
+#workspaces,
+#pulseaudio,
+#pulseaudio.microphone{
+  padding: 0px 10px;
+  background: transparent;
+  color: #aaccfd;
+}
+
+window#waybar {
+  background: transparent;
+}
+
+
+
+tooltip {
+    background: rgba(0,0,0,0.9);
+}
+
+#workspaces button {
+    color: #313244;
+  border-radius: 0px;
+}
+
+#workspaces button.active {
+    color: #a6adc8;
+  font-weight:bold;
+  border-top:2px #aaaadd solid;
+}
+
+#workspaces button:hover {
+
+  border-top:2px #aabbdd solid;
+  background: rgba(0,0,0,0);
+}
+
+   
+#clock {
+    color: #ff96ff;
+}
+
+
+

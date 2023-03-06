@@ -3,7 +3,7 @@
         "publicServers": true,
         "voiceDisconnect": false,
         "showToasts": true,
-        "mediaKeys": false
+        "mediaKeys": true
     },
     "addons": {
         "addonErrors": true,

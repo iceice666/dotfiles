@@ -1,6 +1,6 @@
 {
     "currentVersionInfo": {
-        "version": "7.1.0",
+        "version": "7.2.0",
         "hasShownChangelog": true
     },
     "cuiSettingsVersion": "9",
@@ -39,5 +39,9 @@
     "userAreaButtonActive": "false",
     "callContainerButtonActive": "true",
     "membersListButtonActive": "true",
-    "profilePanelButtonActive": "true"
+    "profilePanelButtonActive": "true",
+    "disableMsgBarBtnCollapse": "false",
+    "messageBarButtonsMaxWidth": "200",
+    "messageBarButtonsMinWidth": "40",
+    "buttonCollapseFudgeFactor": "10"
 }
