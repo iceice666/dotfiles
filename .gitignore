@@ -3,7 +3,6 @@
 .ssh
 go
 .wget-hsts
-.config/nvim
 .bash_history
 .bash_logout
 .bash_profile
@@ -82,3 +81,10 @@ tmp.png
 .local/bin/vizviewer
 .local/bin/viztracer
 .local/bin/vdb
+.config/pavucontrol.ini
+.config/kolourpaintrc
+.config/kdeglobals
+.local/share/RecentDocuments
+.local/share/user-places.xbel
+.local/share/user-places.xbel.bak
+.local/share/user-places.xbel.tbcache

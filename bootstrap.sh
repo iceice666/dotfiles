@@ -52,4 +52,4 @@ yay -S grimblast grim slurp
 
 # waybar
 pacman -S waybar
-pip install gpustat pyroute2
+# pip install gpustat pyroute2

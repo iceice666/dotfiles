@@ -69,6 +69,7 @@ zplug "zdharma/fast-syntax-highlighting"
 zplug "hlissner/zsh-autopair"
 zplug "djui/alias-tips"
 zplug "zshzoo/cd-ls"
+zplug "jeffreytse/zsh-vi-mode"
 zplug "ael-code/zsh-colored-man-pages"
 zplug "Freed-Wu/zsh-command-not-found"
 zplug "plugins/sudo", from:oh-my-zsh

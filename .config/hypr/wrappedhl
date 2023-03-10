@@ -27,6 +27,7 @@ export WLR_NO_HARDWARE_CURSORS=1
 # Log
 export HYPRLAND_LOG_WLR=1
 
+
 # Cursor 
 export XCURSOR_THEME=Bibata-Modern-Classic
 export XCURSOR_SIZE=24
