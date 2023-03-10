@@ -34,9 +34,7 @@ sudo pacman -S pipewire pipewire-jack pipewire-pulse pipewire-audio \
 yay -S noto-fonts-emoji noto-fonts-tc noto-fonts-sc otf-cascadia-code-nerd
 
 # neovim
-cd ~/.config
-git clone https://github.com/iceice666/nvim.git
-chmod +x nvim/bootstarp.sh && nvim/bootstarp.sh
+bash .config/nvim/bootstarp.sh
 
 # discord
 yay -S discord betterdiscord-installer 
