@@ -68,6 +68,7 @@ zplug "zsh-users/zsh-autosuggestions"
 zplug "zdharma/fast-syntax-highlighting"
 zplug "hlissner/zsh-autopair"
 zplug "djui/alias-tips"
+zplug "b4b4r07/enhancd", use:init.sh
 zplug "zshzoo/cd-ls"
 zplug "jeffreytse/zsh-vi-mode"
 zplug "ael-code/zsh-colored-man-pages"
