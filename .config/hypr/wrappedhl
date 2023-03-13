@@ -20,7 +20,6 @@ export LIBVA_DRIVER_NAME=nvidia
 export WLR_DRM_NO_ATOMIC=1
 export __GL_VRR_ALLOWED=0
 
-
 export MOZ_ENABLE_WAYLAND=1
 export WLR_NO_HARDWARE_CURSORS=1
 
@@ -39,4 +38,4 @@ export XMODIFIRES=@im=fcitx
 export SDL_IM_MODULE=fcitx
 export GLFW_IM_MODULE=fcitx
 
-exec Hyprland
+exec dbus-run-session Hyprland

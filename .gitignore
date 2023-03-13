@@ -88,3 +88,5 @@ tmp.png
 .local/share/user-places.xbel
 .local/share/user-places.xbel.bak
 .local/share/user-places.xbel.tbcache
+project/learning_rust
+.enhancd

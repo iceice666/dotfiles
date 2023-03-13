@@ -17,6 +17,7 @@ makepkg -si
 
 # hyprland
 yay -S hyprland hyprpaper-git xdg-desktop-portal-hyprland-git
+sudo pacman -S kitty fuzzel firefox
 
 # fcitx5 & rime
 sudo pacman fcitx5 fcitx5-rime

@@ -9,6 +9,7 @@
     "hyprland/window"
   ],
   "modules-right": [
+    "custom/sink-switch",
     "pulseaudio",
     "pulseaudio#microphone",
     "cpu",
@@ -45,10 +46,15 @@
     "icon-size": 20,
     "spacing": 10
   },
+  "custom/sink-switch": {
+    "format": "  ",
+    "on-scroll-up": "pactl set-default-sink 50",
+    "on-scroll-down": "pactl set-default-sink 49"
+  },
   "pulseaudio": {
-    "format": "{icon} {volume}%",
+    "format": "{icon}{volume}%",
     "tooltip": false,
-    "format-muted": " Muted",
+    "format-muted": "Muted",
     "on-click-right": "pavucontrol",
     "on-click": "pamixer -t",
     "on-scroll-up": "pamixer -i 5 --allow-boost",
@@ -65,7 +71,7 @@
   "pulseaudio#microphone": {
     "format": "{format_source}",
     "tooltip": false,
-    "format-source": " {volume}%",
+    "format-source": "{volume}%",
     "format-source-muted": " Muted",
     "on-click": "pamixer --default-source -t",
     "on-scroll-up": "pamixer --default-source -i 5",

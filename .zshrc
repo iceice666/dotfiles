@@ -49,8 +49,8 @@ alias yar='yay -R'
 
 alias self='neofetch | lolcat'
 
-alias dotfile='cd ~&&nvim&&cd -'
-alias nvcfg='cd ~/.config/nvim&&nvim&&cd -'
+alias dotfile='nvim -c "cd ~"'
+alias nvcfg='nvim -c "cd ~/.config/nvim"'
 
 alias wrappedhl="~/.config/hypr/wrappedhl"
 
@@ -69,7 +69,6 @@ zplug "zdharma/fast-syntax-highlighting"
 zplug "hlissner/zsh-autopair"
 zplug "djui/alias-tips"
 zplug "b4b4r07/enhancd", use:init.sh
-zplug "zshzoo/cd-ls"
 zplug "jeffreytse/zsh-vi-mode"
 zplug "ael-code/zsh-colored-man-pages"
 zplug "Freed-Wu/zsh-command-not-found"
