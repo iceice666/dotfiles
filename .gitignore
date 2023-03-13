@@ -90,3 +90,4 @@ tmp.png
 .local/share/user-places.xbel.tbcache
 project/learning_rust
 .enhancd
+.config/hypr/local.conf
