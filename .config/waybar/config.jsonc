@@ -1,5 +1,5 @@
 [{
-  "height": 24,
+  "height": 30,
   "name": "top",
   "layer": "top",
   "position": "top",
@@ -15,6 +15,7 @@
     "cpu",
     "memory",
     "network",
+    "upower",
     // "custom/updates",
     "tray",
     "custom/weather",
@@ -23,6 +24,16 @@
   "hyprland/window": {
     "format": "{}",
     "max-length": 75
+  },
+  "upower":{
+    "icon-size":20,
+    "hide-if-empty":true,
+    "tooltip":true,
+    "tooltip-spacing":20,
+    "interval":10,
+    "format-alt":" {percentage}",
+    "format":" {percentage} {time}",
+    "max-length":25
   },
   "wlr/workspaces": {
     "on-scroll-up": "hyprctl dispatch workspace e+1",
@@ -37,7 +48,7 @@
   "custom/icon": {
     "tooltip": false,
     "format": "  ",
-    "on-click": "fuzzel",
+    "format-alt":"  I use Arch btw;",
     "on-click-right": "killall  waybar && waybar &",
     "on-click-middle": "hyprctl dispatch exec [float]kitty btop"
   },
