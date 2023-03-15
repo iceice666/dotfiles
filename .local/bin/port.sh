@@ -15,4 +15,4 @@ sysctl -w net.ipv4.ip_forward=1
 
 # 設定要轉送的 port (呼叫上面定義的函數)
 # b redirect to a
-remap_tcp_port 34573 30000
+remap_tcp_port 25565 25565
