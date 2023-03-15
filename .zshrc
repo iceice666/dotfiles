@@ -1,7 +1,8 @@
 # cd to $HOME
 cd ~
 
-# PATH
+# ENV
+export EDITOR=nvim
 export PATH="/home/iceice666/.cargo/bin:/home/iceice666/.local/bin:$PATH"
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
@@ -23,6 +24,8 @@ compinit
 
 # Start of custom alias
 alias plz='sudo'
+
+alias lg="lazygit"
 
 alias l='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
 alias ll='exa -1aalmhF --git --time-style iso -s type --icons '
@@ -50,6 +53,7 @@ alias yar='yay -R'
 alias self='neofetch | lolcat'
 
 alias dotfile='nvim -c "cd ~"'
+alias config='nvim -c "cd ~/.config"'
 alias nvcfg='nvim -c "cd ~/.config/nvim"'
 
 alias wrappedhl="~/.config/hypr/wrappedhl"
