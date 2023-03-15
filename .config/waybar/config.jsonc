@@ -90,7 +90,7 @@
   },
   "clock": {
     "interval": 1,
-    "format": " {: %H:%M:%S}",
+    "format": "{: %m/%d  %H:%M:%S}",
     "timezone": "Asia/Taipei",
     "tooltip-format": "<big>{:%Y/%m/%d}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
@@ -140,9 +140,8 @@
   },
   "network": {
     "interval": 1,
-    "interface": "enp7s0",
     "format": "{ifname}",
-    "format-wifi": " {essid} ({signalStrength}%)",
+    "format-wifi": "  {signalStrength}%",
     "format-ethernet": " ",
     "format-disconnected": "", //An empty format will hide the module.
     "tooltip-format": " {bandwidthUpBits}  {bandwidthDownBits}",
