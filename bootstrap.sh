@@ -29,7 +29,7 @@ yay -S hyprland hyprpaper-git xdg-desktop-portal-hyprland-git
 pacman -S kitty fuzzel firefox
 
 # fcitx5 & rime
-pacman fcitx5 fcitx5-rime
+pacman -S fcitx5 fcitx5-rime
 cd ~/build
 curl -fsSL https://raw.githubusercontent.com/rime/plum/master/rime-install \
   | bash
