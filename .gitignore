@@ -90,3 +90,15 @@ build
 go
 project
 tmp.png
+project
+.local/share/fcitx5/rime/emoji_suggestion.yaml
+.local/share/fcitx5/rime/opencc
+.local/share/fcitx5/rime/array30.dict.yaml
+.local/share/fcitx5/rime/array30.schema.yaml
+.local/share/fcitx5/rime/array30_emoji.dict.yaml
+.local/share/fcitx5/rime/array30_main.dict.yaml
+.local/share/fcitx5/rime/array30_phrases.dict.yaml
+.local/share/fcitx5/rime/array30_query.dict.yaml
+.local/share/fcitx5/rime/array30_query.schema.yaml
+.local/share/fcitx5/rime/array30_wsymbols.dict.yaml
+.local/share/fcitx5/rime/array30_wsymbols.schema.yaml
