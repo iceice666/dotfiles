@@ -1,0 +1,216 @@
+;; vars
+(defpoll clock :interval "1s" "date +\"  %m/%d  %H:%M:%S\"")
+(deflisten current_title :initial "..." "bash ~/.config/eww/scripts/get-window-title")
+;; (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
+(deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
+
+(defvar mem-show-avali true)
+
+(defvar sysinfo-show false)
+
+(defvar output-sinks "[{\"id\":123,\"desc\":\"122\"}]")
+(defvar output-selector false)
+(defvar output-vol "?%")
+
+;; widgets
+;; TODO: impl needed
+(defwidget battery []
+  (box 
+    :orientation "horizontal"
+    :halign "center"
+    :class "battery"
+    ""
+  )
+)
+  
+;; TODO: show workspaces
+(defwidget workspaces []
+  (box
+    :orientation "horizontal"
+    :halign "center"
+    :class "workspaces"
+
+    {current_workspace == "discord" ;;if
+      ? "ﭮ" 
+      : current_workspace
+    }
+  )
+)
+
+
+
+
+(defwidget soundsystem []
+  (box
+    :orientation "horizontal"
+    :halign "center"
+    :class "soundsystem"
+    (box 
+      :visible output-selector
+      :spacing 10
+
+      (for sink in output-sinks
+        (eventbox
+          :class "${sink.stat == 'RUNNING' ? 'current':''}"
+          :onclick "pactl set-default-sink ${sink.id} && bash ~/.config/eww/scripts/sink-selector"
+          (label
+            :wrap true
+            :text "${sink.desc} ${sink.stat == 'RUNNING' ? '[current]':''}"
+          )
+        )
+      )
+    )
+
+    (eventbox
+      :onscroll "bash ~/.config/eww/scripts/vol {}"
+      :onclick "pamixer -t && eww update output-vol=\"$(pamixer --get-volume-human)\""
+      :onrightclick "${EWW_CMD} update output-selector=${!output-selector} && bash ~/.config/eww/scripts/sink-selector"
+      (label 
+        :text "${output-selector?"Click to select an output":" ${output-vol}"}"
+      )
+    )
+
+
+
+
+  )
+)
+
+(defwidget icon []
+  (box 
+    :orientation "horizontal"
+    :halign "center"
+    :class "icon"
+  
+    (eventbox
+
+      " "
+    )
+  )
+)
+
+(defwidget title []
+  (box 
+    :orientation "horizontal"
+    :halign "center"
+    :class "title"
+  
+    (label
+     :text current_title
+      :limit-width 50
+    )
+  )
+)
+
+(defwidget clock []
+  (box 
+    :orientation "horizontal"
+    :halign "center"
+    :class "clock"
+
+    clock
+  )
+)
+
+;; TODO: should impl a popup widgets that shows sysinfo
+(defwidget sysinfo []
+  (box
+    :orientation "horizontal"
+    :halign "center"
+    :class "sysinfo sysicon "
+    (box
+      :visible sysinfo-show
+      (mem)
+      (cpu)
+    )
+    (eventbox
+      :onrightclick "hyprctl dispatch exec [float]kitty btop"
+      :onclick "${EWW_CMD} update sysinfo-show=${!sysinfo-show}"
+      (label
+        :text " ${sysinfo-show?'iceice666':' '}"
+      )
+    )
+  )
+)
+
+
+(defwidget mem []
+  (box
+    :orientation "horizontal"
+    :halign "center"
+    :class "mem sysinfo"
+    (eventbox
+      :onclick "${EWW_CMD} update mem-show-avali=${!mem-show-avali}"
+      "${ mem-show-avali == true ? " ${round(EWW_RAM.used_mem/(1024*1024*1024),1)}G"  :" ${round(EWW_RAM.available_mem/(1024*1024*1024),1)}G" }"
+    )
+  )
+)
+
+
+(defwidget cpu []
+  (box 
+    :orientation "horizontal"
+    :halign "center"
+    :class "cpu sysinfo"
+  
+    " ${round(EWW_CPU.avg,0)}%"
+  )
+)
+
+
+
+;; layouts
+
+(defwidget left []
+	(box 
+    :orientation "h" 
+		:space-evenly false  
+    :halign "start"
+		:class "left_modules"
+    :spacing 10
+
+    (icon)
+    (workspaces)
+  (title)
+))
+
+
+
+(defwidget right []
+	(box
+    :orientation "h" 
+		:space-evenly false  
+    :halign "end"
+		:class "right_modules"
+    :spacing 10
+
+  (soundsystem)
+  (sysinfo)
+  (clock)
+
+))
+
+
+(defwidget bar []
+  (box 
+    :orientation "h"
+    :hexpand false
+  (left)
+  (right)
+))
+
+
+(defwindow mainbar 
+  :monitor 0
+  :geometry (geometry 
+    :x "0%"
+    :y "5px"
+    :width "99%"
+    :height "30px"
+    :anchor "top center")
+  :stacking "bg"
+  :exclusive true
+  :focusable false
+  (bar)
+)
+

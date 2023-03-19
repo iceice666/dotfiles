@@ -102,3 +102,15 @@ project
 .local/share/fcitx5/rime/array30_query.schema.yaml
 .local/share/fcitx5/rime/array30_wsymbols.dict.yaml
 .local/share/fcitx5/rime/array30_wsymbols.schema.yaml
+.steam
+.var/app/moe.launcher.an-anime-game-launcher
+.game
+.steampath
+.steampid
+steam.desktop
+.config/cef_user_data/Dictionaries
+.local/share/Steam
+.local/share/anime-game-launcher
+.local/share/flatpak
+.local/share/icons
+.local/share/vulkan/implicit_layer.d

@@ -1,0 +1,49 @@
+* {
+    font-family: DaddyTimeMono Nerd Font;
+    font-size: 17px;
+    text-shadow: none;
+}
+
+button {
+    animation: none;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+.mainbar {
+background: transparent;
+}
+
+.sysinfo {
+  color: #ffccff;
+}
+
+.sysicon {
+  color: #ddaaff
+}
+
+.left_modules,
+.right_modules{
+    color: #aaccfd;
+}
+
+.soundsystem,
+.soundsystem  button {
+  color : #aaccff;
+}
+
+.current {
+  color: #aaffdd
+}
+
+
+
+.clock {
+  color: #ffddaa;
+}
+
+.title {
+  color: #ff99bb;
+  font-weight:bold;
+}

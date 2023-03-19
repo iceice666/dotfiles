@@ -25,15 +25,15 @@
     "format": "{}",
     "max-length": 75
   },
-  "upower":{
-    "icon-size":20,
-    "hide-if-empty":true,
-    "tooltip":true,
-    "tooltip-spacing":20,
-    "interval":10,
-    "format-alt":" {percentage}",
-    "format":" {percentage} {time}",
-    "max-length":25
+  "upower": {
+    "icon-size": 20,
+    "hide-if-empty": true,
+    "tooltip": true,
+    "tooltip-spacing": 20,
+    "interval": 10,
+    "format-alt": " {percentage}",
+    "format": " {percentage} {time}",
+    "max-length": 25
   },
   "wlr/workspaces": {
     "on-scroll-up": "hyprctl dispatch workspace e+1",
@@ -48,7 +48,7 @@
   "custom/icon": {
     "tooltip": false,
     "format": "  ",
-    "format-alt":"  I use Arch btw;",
+    "format-alt": "  I use Arch btw;",
     "on-click-right": "killall  waybar && waybar &",
     "on-click-middle": "hyprctl dispatch exec [float]kitty btop"
   },
