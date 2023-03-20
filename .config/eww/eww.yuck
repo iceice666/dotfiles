@@ -4,8 +4,10 @@
 ;; (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
 (deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
 
-(defvar mem-show-avali true)
+(defvar window_title "title")
+(defvar workspaces_data "{}")
 
+(defvar mem-show-avali true)
 (defvar sysinfo-show true)
 
 (defvar output-sinks "[{\"id\":123,\"desc\":\"122\"}]")
@@ -13,15 +15,6 @@
 (defvar output-vol "?%")
 
 ;; widgets
-;; TODO: impl needed
-(defwidget battery []
-  (box 
-    :orientation "horizontal"
-    :halign "center"
-    :class "battery"
-    ""
-  )
-)
   
 ;; TODO: show workspaces
 (defwidget workspaces []
@@ -86,20 +79,7 @@
 
     (label 
       :text "${
-        status == 'Charging' ? 
-          battery < 10 ? "" :
-          battery < 20 ? "" :
-          battery < 30 ? "" :
-          battery < 40 ? "" :
-          battery < 50 ? "" :
-          battery < 60 ? "" : 
-          battery < 70 ? "" :
-          battery < 80 ? "" :
-          battery < 90 ? "" : 
-                         ""
- 
-        :
-          battery < 10 ? " Need Charge !" :
+          battery < 10 ? "" :
           battery < 20 ? "" :
           battery < 30 ? "" :
           battery < 40 ? "" :
@@ -109,7 +89,9 @@
           battery < 80 ? "" :
           battery < 90 ? "" : 
                          ""
-    } ${battery}%"
+    } 
+      ${status == "Charging" ? "" : ""}
+        ${battery}%"
     )
   )
 )
@@ -196,11 +178,20 @@
     :spacing 10
 
   (sysinfo)
-  (workspaces)
-  (title)
 ))
 
 
+(defwidget center []
+	(box 
+    :orientation "h" 
+		:space-evenly false  
+    :halign "center"
+		:class "center_modules"
+    :spacing 10
+
+  (workspaces)
+  (title)
+))
 
 (defwidget right []
 	(box
@@ -226,6 +217,7 @@
     :hexpand false
     :class "mainbar"
   (left)
+    (center)
   (right)
 ))
 

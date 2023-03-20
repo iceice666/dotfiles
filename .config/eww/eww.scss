@@ -3,6 +3,7 @@
     font-size: 17px;
     text-shadow: none;
    color: #aaccfd;
+  background: transparent;
 
 }
 
@@ -13,10 +14,6 @@ button {
     background: transparent;
 }
 
-.mainbar {
-background: transparent;
-}
-
 .sysinfo {
   color: #ddaaff
 }
@@ -25,14 +22,13 @@ background: transparent;
   color: #b3aaff;
 }
 
-.soundsystem,
-.soundsystem  button {
-  color : #aaccff;
-}
+.soundsystem{
+    .current {
+      color: #aaffdd
+    }
+  }
 
-.current {
-  color: #aaffdd
-}
+
 
 
 
