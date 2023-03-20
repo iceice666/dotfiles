@@ -1,7 +1,9 @@
-* {
+.mainbar {
     font-family: DaddyTimeMono Nerd Font;
     font-size: 17px;
     text-shadow: none;
+   color: #aaccfd;
+
 }
 
 button {
@@ -16,17 +18,9 @@ background: transparent;
 }
 
 .sysinfo {
-  color: #ffccff;
-}
-
-.sysicon {
   color: #ddaaff
 }
 
-.left_modules,
-.right_modules{
-    color: #aaccfd;
-}
 
 .soundsystem,
 .soundsystem  button {

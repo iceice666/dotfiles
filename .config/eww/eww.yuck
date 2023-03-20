@@ -6,7 +6,7 @@
 
 (defvar mem-show-avali true)
 
-(defvar sysinfo-show false)
+(defvar sysinfo-show true)
 
 (defvar output-sinks "[{\"id\":123,\"desc\":\"122\"}]")
 (defvar output-selector false)
@@ -30,10 +30,17 @@
     :halign "center"
     :class "workspaces"
 
-    {current_workspace == "discord" ;;if
-      ? "ﭮ" 
-      : current_workspace
-    }
+    (eventbox
+      :onscroll "bash ${EWW_CONFIG_DIR}/scripts/change-workspace relative {}"
+
+      (label
+      :text "${current_workspace == "discord" ;;if
+          ? "  "
+          : current_workspace
+        }"
+      )
+    )
+
   )
 )
 
@@ -62,29 +69,47 @@
     )
 
     (eventbox
-      :onscroll "bash ~/.config/eww/scripts/vol {}"
-      :onclick "pamixer -t && eww update output-vol=\"$(pamixer --get-volume-human)\""
+      :onscroll "bash ${EWW_CONFIG_DIR}/scripts/vol {}"
+      :onclick "${output-selector?'':'pamixer -t && eww update output-vol="$(pamixer --get-volume-human)"'}"
       :onrightclick "${EWW_CMD} update output-selector=${!output-selector} && bash ~/.config/eww/scripts/sink-selector"
       (label 
         :text "${output-selector?"Click to select an output":" ${output-vol}"}"
       )
     )
-
-
-
-
   )
 )
 
-(defwidget icon []
+(defwidget battery [battery status ]
   (box 
-    :orientation "horizontal"
-    :halign "center"
-    :class "icon"
-  
-    (eventbox
+    :class "bat-box" 
+    :space-evenly false 
 
-      " "
+    (label 
+      :text "${
+        status == 'Charging' ? 
+          battery < 10 ? "" :
+          battery < 20 ? "" :
+          battery < 30 ? "" :
+          battery < 40 ? "" :
+          battery < 50 ? "" :
+          battery < 60 ? "" : 
+          battery < 70 ? "" :
+          battery < 80 ? "" :
+          battery < 90 ? "" : 
+                         ""
+ 
+        :
+          battery < 10 ? " Need Charge !" :
+          battery < 20 ? "" :
+          battery < 30 ? "" :
+          battery < 40 ? "" :
+          battery < 50 ? "" :
+          battery < 60 ? "" : 
+          battery < 70 ? "" :
+          battery < 80 ? "" :
+          battery < 90 ? "" : 
+                         ""
+    } ${battery}%"
     )
   )
 )
@@ -117,18 +142,19 @@
   (box
     :orientation "horizontal"
     :halign "center"
-    :class "sysinfo sysicon "
-    (box
-      :visible sysinfo-show
-      (mem)
-      (cpu)
-    )
     (eventbox
+      :class "sysicon"
       :onrightclick "hyprctl dispatch exec [float]kitty btop"
       :onclick "${EWW_CMD} update sysinfo-show=${!sysinfo-show}"
       (label
-        :text " ${sysinfo-show?'iceice666':' '}"
+        :text "  ${sysinfo-show?'sysinfo':' '}"
       )
+    )
+    (box
+      :class "sysinfo"
+      :visible sysinfo-show
+      (mem)
+      (cpu)
     )
   )
 )
@@ -169,8 +195,8 @@
 		:class "left_modules"
     :spacing 10
 
-    (icon)
-    (workspaces)
+  (sysinfo)
+  (workspaces)
   (title)
 ))
 
@@ -185,7 +211,10 @@
     :spacing 10
 
   (soundsystem)
-  (sysinfo)
+  (battery 
+    :status {EWW_BATTERY.BAT0.status}
+    :battery {EWW_BATTERY.BAT0.capacity}
+    )
   (clock)
 
 ))
@@ -195,6 +224,7 @@
   (box 
     :orientation "h"
     :hexpand false
+    :class "mainbar"
   (left)
   (right)
 ))
