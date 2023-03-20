@@ -1,44 +1,51 @@
 ;; vars
-(defpoll clock :interval "1s" "date +\"  %m/%d  %H:%M:%S\"")
-(deflisten current_title :initial "..." "bash ~/.config/eww/scripts/get-window-title")
-;; (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
-(deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
+(defpoll clock 
+  :interval "1s" 
+  "date +\"  %m/%d  %H:%M:%S\""
+)
+(deflisten current_title 
+  :initial "..." 
+  "bash ~/.config/eww/scripts/get-window-title"
+)
+(deflisten workspaces 
+  :initial "[{\"name\":\"~\",\"active\":true}]" 
+  "bash ~/.config/eww/scripts/get-workspaces"
+)
 
-(defvar window_title "title")
-(defvar workspaces_data "{}")
-
-(defvar mem-show-avali true)
-(defvar sysinfo-show true)
+(defvar show-mem-avali true)
+(defvar show-sysinfo true)
 
 (defvar output-sinks "[{\"id\":123,\"desc\":\"122\"}]")
 (defvar output-selector false)
 (defvar output-vol "?%")
 
 ;; widgets
-  
-;; TODO: show workspaces
-(defwidget workspaces []
+
+(defwidget workspace []
   (box
     :orientation "horizontal"
     :halign "center"
-    :class "workspaces"
 
     (eventbox
-      :onscroll "bash ${EWW_CONFIG_DIR}/scripts/change-workspace relative {}"
+      :onscroll "bash ${EWW_CONFIG_DIR}/scripts/change-workspace {}"
+      
+      (box
+        :space-evenly false
+        :spacing 5
+        (for ws in workspaces
+          (eventbox
+            :onclick "hyprctl dispatch workspace name:${ws.name}"
+            :class "${ws.active ? 'selected':'option'}"
 
-      (label
-      :text "${current_workspace == "discord" ;;if
-          ? "  "
-          : current_workspace
-        }"
+            (label
+              :text "${ws.active ? '[${ws.name}]':'${ws.name}'}"
+            )
+          )
+        )
       )
     )
-
   )
 )
-
-
-
 
 (defwidget soundsystem []
   (box
@@ -51,7 +58,7 @@
 
       (for sink in output-sinks
         (eventbox
-          :class "${sink.stat == 'RUNNING' ? 'current':''}"
+          :class "${sink.stat == 'RUNNING' ? 'selected':'option'}"
           :onclick "pactl set-default-sink ${sink.id} && bash ~/.config/eww/scripts/sink-selector"
           (label
             :wrap true
@@ -119,24 +126,30 @@
   )
 )
 
+(defwidget icon []
+  (label
+    :text " "
+  )
+)
+
 ;; TODO: should impl a popup widgets that shows sysinfo
 (defwidget sysinfo []
   (box
     :orientation "horizontal"
     :halign "center"
-    (eventbox
-      :class "sysicon"
-      :onrightclick "hyprctl dispatch exec [float]kitty btop"
-      :onclick "${EWW_CMD} update sysinfo-show=${!sysinfo-show}"
-      (label
-        :text "  ${sysinfo-show?'sysinfo':' '}"
-      )
-    )
+    :space-evenly false
     (box
       :class "sysinfo"
-      :visible sysinfo-show
+      :visible show-sysinfo
       (mem)
       (cpu)
+    )
+    (eventbox
+      :onrightclick "hyprctl dispatch exec [float]kitty btop"
+      :onclick "${EWW_CMD} update sysinfo-show=${!show-sysinfo}"
+      (label
+        :text "${show-sysinfo?' ':' '}"
+      )
     )
   )
 )
@@ -148,8 +161,8 @@
     :halign "center"
     :class "mem sysinfo"
     (eventbox
-      :onclick "${EWW_CMD} update mem-show-avali=${!mem-show-avali}"
-      "${ mem-show-avali == true ? " ${round(EWW_RAM.used_mem/(1024*1024*1024),1)}G"  :" ${round(EWW_RAM.available_mem/(1024*1024*1024),1)}G" }"
+      :onclick "${EWW_CMD} update mem-show-avali=${!show-mem-avali}"
+      "${ show-mem-avali == true ? " ${round(EWW_RAM.used_mem/(1024*1024*1024),1)}G"  :" ${round(EWW_RAM.available_mem/(1024*1024*1024),1)}G" }"
     )
   )
 )
@@ -177,7 +190,8 @@
 		:class "left_modules"
     :spacing 10
 
-  (sysinfo)
+  (icon)
+  (workspace)
 ))
 
 
@@ -189,7 +203,6 @@
 		:class "center_modules"
     :spacing 10
 
-  (workspaces)
   (title)
 ))
 
@@ -202,6 +215,7 @@
     :spacing 10
 
   (soundsystem)
+  (sysinfo)
   (battery 
     :status {EWW_BATTERY.BAT0.status}
     :battery {EWW_BATTERY.BAT0.capacity}

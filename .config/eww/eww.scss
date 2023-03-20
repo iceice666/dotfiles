@@ -7,12 +7,6 @@
 
 }
 
-button {
-    animation: none;
-    box-shadow: none;
-    border: none;
-    background: transparent;
-}
 
 .sysinfo {
   color: #ddaaff
@@ -22,14 +16,15 @@ button {
   color: #b3aaff;
 }
 
-.soundsystem{
-    .current {
-      color: #aaffdd
-    }
-  }
+.selected  {
+  color: #aaffdd;
+  font-weight: bold;
+}
 
-
-
+.option:hover {
+  color: #ffaadd;
+  font-weight: bold;
+}
 
 
 .clock {
@@ -37,6 +32,6 @@ button {
 }
 
 .title {
-  color: #ff99bb;
+  color: #ffaa99;
   font-weight:bold;
 }
