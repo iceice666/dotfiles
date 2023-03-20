@@ -114,3 +114,4 @@ steam.desktop
 .local/share/flatpak
 .local/share/icons
 .local/share/vulkan/implicit_layer.d
+**/target
