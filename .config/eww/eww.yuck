@@ -81,7 +81,7 @@
 
 (defwidget battery [battery status ]
   (box 
-    :class "bat-box" 
+    :class "battery" 
     :space-evenly false 
 
     (label 
