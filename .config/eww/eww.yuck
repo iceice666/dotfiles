@@ -96,9 +96,7 @@
           battery < 80 ? "" :
           battery < 90 ? "" : 
                          ""
-    } 
-      ${status == "Charging" ? "" : ""}
-        ${battery}%"
+    }${status == "Charging" ? "" : ""} ${battery}%"
     )
   )
 )
