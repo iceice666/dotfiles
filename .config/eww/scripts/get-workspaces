@@ -1,8 +1,4 @@
 #!/bin/bash
 
-socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | stdbuf -o0 grep -P 'workspace>>[\w\W]+|movewindow>>[\w\W]+' | stdbuf -o0 awk -F '>>|,' '{print $2}' | while read -r line; do
-
-echo $( hyprctl -j workspaces | jq --arg current $line "sort_by(.id) | map({name:.name, active:(if .name == \"$line\"then true else false end)})" )
-# echo $line
-
- done
+socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | stdbuf -o0 grep -P 'workspace>>[\w\W]+|movewindow>>[\w\W]+' | stdbuf -o0 awk -F '>>|,' '{print $2}' | \
+echo $( hyprctl -j workspaces | jq  "sort_by(.id) | map({name:.name, active:(if .name == `hyprctl activewindow -j | jq ".workspace.name" ` then true else false end)})" )
