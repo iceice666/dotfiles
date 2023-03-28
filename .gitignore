@@ -123,5 +123,13 @@ go
 project
 project
 steam.desktop
-tmp.png
-.config/mimeapps.list
+.config/cef_user_data/Dictionaries
+.local/share/Steam
+.local/share/anime-game-launcher
+.local/share/flatpak
+.local/share/icons
+.local/share/vulkan/implicit_layer.d
+**/target
+.config/Valve Corporation
+.local/share/Valve Corporation/SteamLink
+.pulse-cookie
