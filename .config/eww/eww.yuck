@@ -15,7 +15,7 @@
 (defvar show-mem-avali true)
 (defvar show-sysinfo true)
 
-(defvar output-sinks "[{\"id\":123,\"desc\":\"122\"}]")
+(defvar output-sinks "[{\"id\":-1,\"desc\":\"None\"}]")
 (defvar output-selector false)
 (defvar output-vol "?%")
 
