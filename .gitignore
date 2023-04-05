@@ -1,6 +1,5 @@
 *
 
-!.config/waybar
 !.config/hypr
 !.config/kitty
 !.config/eww
@@ -14,4 +13,5 @@
 !.zshenv
 !.zshrc
 !README.md
-!bootstrap.sh
+!makefile
+!.xinitrc
