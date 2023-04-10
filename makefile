@@ -1,5 +1,5 @@
 
-basic::
+env:
 	cd ~
 	sudo pacman -Sy
 # git
@@ -11,10 +11,12 @@ basic::
 	curl -sL --proto-redir -all,https \
   https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
 
-basic:: yay
+.PHONY: env
+
+basic: yay
 
 # fcitx5 & rime
-	sudo pacman -S fcitx5 fcitx5-rime
+	sudo pacman -S fcitx5 fcitx5-rime fcitx5-config-qt
 	cd ~/build
 	curl -fsSL https://raw.githubusercontent.com/rime/plum/master/rime-install | bash
 	cd plum
@@ -35,8 +37,15 @@ basic:: yay
 # notification
 	sudo pacman dunst
 
-.PHONY basic
+.PHONY: basic
 
+bspwm: yay
+	sudo pacman -S bspwm sxhkd xorg-xinit rofi picom
+	sudo pacman -S flameshot
+	yay -S eww
+	yay rofi-greenclip
+
+.PHONY: xorg
 
 hyprland: yay
 # hyprland
@@ -47,24 +56,23 @@ hyprland: yay
 # screenshot / screensharing
 	yay -S grimblast grim slurp
 
-.PHONY hyprland
+.PHONY: hyprland
 
 discord:yay
 # discord
 	yay -S discord betterdiscord-installer 
 
-.PHONY discord
+.PHONY: discord
 
 neovim: yay
 	yay -S neovim-nightly
-	cd ~/.config/
-	git clone https://github.com/iceice666/nvim
-	bash nvim/bootstarp.sh
+	cd ~/.config && git clone https://github.com/iceice666/nvim
+	bash ~/.config/nvim/bootstarp.sh
 
-.PHONY neovim
+.PHONY: neovim
 
 yay: build/yay-bin
-.PHONY yay
+.PHONY: yay
 
 build/yay-bin:
 	# yay

@@ -1,4 +1,4 @@
-export DWM=~/build/dwm
-xrandr --output Virtual1 --mode 2560x1440
+# export DWM=~/build/dwm && exec dwm
+exec bspwm
+# exec awesome
 
-exec dwm
