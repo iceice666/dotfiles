@@ -39,13 +39,6 @@ basic: yay
 
 .PHONY: basic
 
-bspwm: yay
-	sudo pacman -S bspwm sxhkd xorg-xinit rofi picom
-	sudo pacman -S flameshot
-	yay -S eww
-	yay rofi-greenclip
-
-.PHONY: xorg
 
 hyprland: yay
 # hyprland

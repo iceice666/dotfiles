@@ -1,2 +1,6 @@
+patch:
+  schema_list:
+    - {schema: array30}
+    - {schema: bopomofo_tw}
 var:
-  last_build_time: 1680928209
+  last_build_time: 1681918993
