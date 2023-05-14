@@ -34,11 +34,11 @@ alias cp='cp -r'
 alias mkdir='mkdir -p'
 
 alias ..='cd ..'
+alias ~='cd ~'
 
 alias nv='nvim'
 alias vim='nvim'
 alias vi='nvim'
-alias emacs='nvim'
 
 alias pm='sudo pacman'
 alias pms='sudo pacman -S'
@@ -55,6 +55,8 @@ alias config='nvim -c "cd ~/.config"'
 alias nvcfg='nvim -c "cd ~/.config/nvim"'
 
 alias wrappedhl="~/.config/hypr/wrappedhl"
+alias chadwm="startx ~/dwm/chadwm/scripts/run.sh"
+alias dwm="startx ~/dwm/dwm/run.sh"
 
 alias reload='source ~/.zshrc'
 # End of custom alias
