@@ -25,9 +25,9 @@ alias plz='sudo'
 
 alias lg="lazygit"
 
-alias l='exa -1aalmhF --git --time-style iso -s type --git-ignore --icons'
-alias ll='exa -1aalmhF --git --time-style iso -s type --icons '
-alias lt='exa -1almhFT --git -L 3 -I .git --time-style iso -s type --git-ignore --icons'
+alias l='exa -aalmhF --git --time-style iso -s type --git-ignore --icons'
+alias ll='exa -aalmhF --git --time-style iso -s type --icons '
+alias lt='exa -almhFT --git -L 3 -I .git --time-style iso -s type --git-ignore --icons'
 
 alias rm='rm -r'
 alias cp='cp -r'
@@ -58,7 +58,7 @@ alias wrappedhl="~/.config/hypr/wrappedhl"
 alias chadwm="startx ~/dwm/chadwm/scripts/run.sh"
 alias dwm="startx ~/dwm/dwm/run.sh"
 
-alias reload='source ~/.zshrc'
+alias reload='unalias -a ; source ~/.zshrc'
 # End of custom alias
 
 # Start of zplug settings
@@ -94,4 +94,8 @@ zplug load
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
