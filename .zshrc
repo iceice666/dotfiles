@@ -58,8 +58,20 @@ alias wrappedhl="~/.config/hypr/wrappedhl"
 alias chadwm="startx ~/dwm/chadwm/scripts/run.sh"
 alias dwm="startx ~/dwm/dwm/run.sh"
 
-alias reload='unalias -a ; source ~/.zshrc'
+alias reload='unalias -a ; source ~/.zshrc ; cd - '
 # End of custom alias
+
+
+# Start of custom funciton
+
+mcd  ()
+{
+  mkdir -p "$1"
+  cd "$1"
+}
+
+
+# End of custom funciton
 
 # Start of zplug settings
 export ZSH_LS_DISABLE_GIT=false
