@@ -20,6 +20,18 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
+# Start of custom funciton
+
+mcd  ()
+{
+  mkdir -p "$1"
+  cd "$1" || return
+}
+
+
+
+# End of custom funciton
+
 # Start of custom alias
 alias plz='sudo'
 
@@ -36,9 +48,8 @@ alias mkdir='mkdir -p'
 alias ..='cd ..'
 alias ~='cd ~'
 
-alias nv='nvim'
-alias vim='nvim'
-alias vi='nvim'
+alias nv='nnvim'
+alias vim='nnvim'
 
 alias pm='sudo pacman'
 alias pms='sudo pacman -S'
@@ -50,9 +61,9 @@ alias yar='yay -R'
 
 alias self='neofetch | lolcat'
 
-alias dotfile='nvim -c "cd ~"'
-alias config='nvim -c "cd ~/.config"'
-alias nvcfg='nvim -c "cd ~/.config/nvim"'
+alias dotfile='nnvim -c "cd ~"'
+alias config='nnvim -c "cd ~/.config"'
+alias nvcfg='nnvim -c "cd ~/.config/nvim"'
 
 alias wrappedhl="~/.config/hypr/wrappedhl"
 alias chadwm="startx ~/dwm/chadwm/scripts/run.sh"
@@ -62,16 +73,6 @@ alias reload='unalias -a ; source ~/.zshrc ; cd - '
 # End of custom alias
 
 
-# Start of custom funciton
-
-mcd  ()
-{
-  mkdir -p "$1"
-  cd "$1"
-}
-
-
-# End of custom funciton
 
 # Start of zplug settings
 export ZSH_LS_DISABLE_GIT=false
