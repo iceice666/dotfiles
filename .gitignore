@@ -1,0 +1,9 @@
+.cache
+.cargo
+.dotfiles.git
+.local
+.npm
+.rustup
+.ssh
+.zplug
+build

@@ -1,5 +1,5 @@
 # cd to $HOME
-cd ~
+cd $HOME
 
 
 
@@ -20,35 +20,26 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
-# Start of custom funciton
 
-mcd  ()
-{
-  mkdir -p "$1"
-  cd "$1" || return
-}
-
-
-
-# End of custom funciton
 
 # Start of custom alias
 alias plz='sudo'
 
 alias lg="lazygit"
 
-alias l='exa -aalmhF --git --time-style iso -s type --git-ignore --icons'
-alias ll='exa -aalmhF --git --time-style iso -s type --icons '
-alias lt='exa -almhFT --git -L 3 -I .git --time-style iso -s type --git-ignore --icons'
+alias l=' exa -almhF --time-style iso -s type --icons --git-ignore'
+alias ll='exa -almhF --time-style iso -s type --icons '
+alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'
 
 alias dotfiles='git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
+alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
 
 alias rm='rm -r'
 alias cp='cp -r'
 alias mkdir='mkdir -p'
 
 alias ..='cd ..'
-alias ~='cd ~'
+alias home='cd ~'
 
 alias nv='nnvim'
 alias vim='nnvim'
@@ -58,8 +49,6 @@ alias pms='sudo pacman -S'
 alias pmr='sudo pacman -R'
 alias pmu='sudo pacman -Syu'
 
-alias yas='yay -S'
-alias yar='yay -R'
 
 alias self='neofetch | lolcat'
 
