@@ -7,3 +7,4 @@
 .ssh
 .zplug
 build
+.bash_history
