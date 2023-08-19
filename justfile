@@ -31,6 +31,10 @@ first-deploy:
   # ssh
   {{ensure}} openssh
 
+  # init language compilers
+  {{ensure}} rustup python3
+  rustup default stable
+
   # install paru
   just paru
 
@@ -58,8 +62,9 @@ paru: # aur manager
 
   cd {{build}}
 
-  sudo pacman -S --needed base-devel
-  git clone https://aur.archlinux.org/paru.git paru --force
+  sudo pacman -S --needed base-devel 
+
+  git clone https://aur.archlinux.org/paru.git
   cd paru 
   makepkg -si
 
@@ -68,5 +73,6 @@ paru: # aur manager
 # For pacakges
 #
 
-hyprland:
+wayland-deploy:
+  {{ensure}} kitty
   {{ensure}} hyprland

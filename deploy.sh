@@ -12,6 +12,9 @@ git clone --bare https://github.com/iceice666/dotfiles.git ~/.dotfiles.git
 
 git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  checkout
 
+# init submodules
+git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  submodule init
+
 # use ssh to do job
 git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  remote set-url origin git@github.com:iceice666/dotfiles.git
 
