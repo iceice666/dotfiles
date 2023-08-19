@@ -9,12 +9,11 @@ mkdir ~/.dotfiles.git
 # clone
 git clone --bare https://github.com/iceice666/dotfiles.git ~/.dotfiles.git
 
-alias dotfiles='git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME '
 
-dotfiles checkout
+git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  checkout
 
 # use ssh to do job
-dotfiles remote set-url origin git@github.com:iceice666/dotfiles.git
+git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  remote set-url origin git@github.com:iceice666/dotfiles.git
 
 ssh-keygen
 
