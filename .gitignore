@@ -12,3 +12,6 @@ build
 project
 .sqlite_history
 .config/lazygit/state.yml
+lazygit.tar.gz
+lazygit
+.sudo_as_admin_successful
