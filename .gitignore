@@ -9,3 +9,6 @@
 build
 .bash_history
 .zcompdump
+project
+.sqlite_history
+.config/lazygit/state.yml
