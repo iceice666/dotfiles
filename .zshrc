@@ -24,6 +24,10 @@ compinit
 
 
 # Start of custom alias
+
+alias wrappedhl='$HOME/.config/hypr/wrappedhl'
+
+
 alias plz='sudo'
 
 alias lg="lazygit"

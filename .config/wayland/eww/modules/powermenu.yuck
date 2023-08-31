@@ -1,0 +1,45 @@
+(defvar is_powerbtns_shown false)
+
+
+(defwidget powermenu [
+  shutdown_cmd shutdown_icon 
+  reboot_cmd reboot_icon
+  logout_cmd logout_icon
+  hibernate_cmd hibernate_icon
+  sleep_cmd sleep_icon
+]
+  (box
+    :class "power-box" 
+    :space-evenly false
+    :orientation "h"
+
+  (eventbox
+      :onhover "${EWW_CMD} update is_powerbtns_shown=true"
+      :onhoverlost "${EWW_CMD} update is_powerbtns_shown=false"
+
+      (box
+        :space-evenly false
+        (revealer
+          :reveal is_powerbtns_shown
+          :transition "slideright"
+          :duration "500ms"
+
+            (box 
+
+              (button :onclick reboot_cmd reboot_icon)
+              (button :onclick logout_cmd logout_icon)
+              (button :onclick sleep_cmd sleep_icon)
+              (button :onclick hibernate_cmd hibernate_icon)
+            )
+        )
+
+
+        (box
+          :class "fg-red"
+          :hexpand false
+          (button :onclick shutdown_cmd shutdown_icon)
+        )
+      )
+  )
+  )
+)

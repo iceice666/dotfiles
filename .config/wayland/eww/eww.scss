@@ -1,0 +1,56 @@
+@import './color.scss';
+
+* { all: unset; }
+
+.bar{
+  font-size: 16px;
+  font-family: DaddyTimeMono Nerd Font;
+  color: rgba($theme-text, 0.8);
+  background-color: $theme-base;
+}
+
+calendar {
+  background-color: $theme-base;
+  border: 1px solid $theme-overlay2;
+  border-radius: 4px;
+}
+
+.clock-box {
+  color: $theme-pink;
+}
+
+.battery-box {
+  color: $theme-green;
+}
+
+.battery-low {
+  color: $theme-red;
+  font-weight: bold;
+}
+
+.power-box {
+  font-size: 1.4em;
+  padding-right: 0.5em;
+
+  button{
+    padding: 0em 0.4em;
+    border-radius: 0.1em;
+  
+    &:hover {
+      transition: 200ms linear background-color, border-radius;
+      background-color: rgba($theme-overlay2, 0.6);
+    }
+  }
+}
+
+.sep {
+  font-size: 1em;
+  padding-top: 0.15em;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  font-weight: 400;
+}
+
+
+
+

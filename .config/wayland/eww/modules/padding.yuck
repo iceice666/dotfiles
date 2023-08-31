@@ -1,0 +1,14 @@
+
+(defwidget padding []
+  (label
+    :text " "
+    :class "padding box"
+  )
+)
+
+(defwidget sep []
+  (label 
+    :text "|"
+    :class "sep box"
+  )
+)

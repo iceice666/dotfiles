@@ -9,9 +9,12 @@
 build
 .bash_history
 .zcompdump
+.lesshst
+.config/btop
+.config/lazygit
+.mozilla/firefox
+.bash_logout
+.bash_profile
 project
-.sqlite_history
-.config/lazygit/state.yml
-lazygit.tar.gz
-lazygit
-.sudo_as_admin_successful
+.config/hypr
+.python_history

@@ -1,0 +1,80 @@
+(include "./variables.yuck")
+
+;; layouts
+
+(defwidget left []
+	(box 
+    :orientation "h" 
+		:space-evenly false  
+    :halign "start"
+		:class "left-modules"
+    :hexpand false
+
+))
+
+
+(defwidget center []
+	(box 
+    :orientation "h" 
+		:space-evenly false  
+    :halign "center"
+		:class "center-modules"
+    :hexpand false
+
+
+))
+
+(defwidget right []
+	(box
+    :orientation "h" 
+		:space-evenly false  
+    :halign "end"
+		:class "right-modules"
+    :hexpand false
+
+    (battery 
+      :status {EWW_BATTERY.BAT0.status}
+      :battery {EWW_BATTERY.BAT0.capacity}
+      :icon_using "󰂌" :icon_charging "󰂄"
+    )
+    (powermenu
+      :shutdown_cmd  "poweroff" :shutdown_icon "󰤆"
+      :reboot_cmd    "systemctl reboot" :reboot_icon ""
+      :logout_cmd    "loginctl kill-session self" :logout_icon "󰗼"
+      :sleep_cmd     "systemctl suspend" :sleep_icon "⏾"
+      :hibernate_cmd "systemctl hibernate" :hibernate_icon "󰋣"
+    )
+    (clock
+      :date date
+      :time time
+    )
+))
+
+
+
+
+(defwidget bar []
+  (box 
+    :orientation "h"
+    :hexpand false
+    :class "mainbar bar"
+    (left)
+    (center)
+    (right)
+))
+
+
+(defwindow mainbar 
+  :monitor 0
+  :geometry (geometry 
+    :x "0%"
+    :y "5px"
+    :width "99%"
+    :height "30px"
+    :anchor "top center")
+  :stacking "bg"
+  :exclusive true
+  :focusable false
+  :hexpand false
+  (bar)
+)

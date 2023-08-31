@@ -1,7 +1,7 @@
 
 [private]
 help:
-  @just --choose
+  @just --list
 
 ensure := "sudo pacman -S --needed"
 aur_ensure := "paru -S --needed"
@@ -31,19 +31,22 @@ first-deploy:
   # ssh
   {{ensure}} openssh
 
+  # system monitor
+  {{ensure}} btop
+
   # init language compilers
-  {{ensure}} rustup python3
+  {{ensure}} rustup python3 npm
   rustup default stable
 
   # install paru
   just paru
 
   # now we can install some aur packages
-  {{aur_ensure}} c-lolcat
+  {{aur_ensure}} c-lolcat # lolcat c implementation
 
 
 
-
+# text editor
 neovim:
   #!/usr/bin/env bash
   {{bash_cfg}}
@@ -52,11 +55,13 @@ neovim:
 
   cd $HOME/.config/nvim
   git pull
-  just first-deploy
+  just deploy
 
 
+# aur manager
 [no-cd]
-paru: # aur manager
+[private]
+paru: 
   #!/usr/bin/env bash
   {{bash_cfg}}
 
@@ -69,10 +74,15 @@ paru: # aur manager
   makepkg -si
 
 
-#
-# For pacakges
-#
 
+
+# a wayland desktop with Hyprland
 wayland-deploy:
-  {{ensure}} kitty
-  {{ensure}} hyprland
+  #!/usr/bin/env bash
+  {{bash_cfg}}
+
+  {{ensure}} kitty hyprland xdg-desktop-portal-hyprland dunst firefox pipewire wireplumber qt6-wayland qt5-wayland cliphist  ttf-cascadia-code-nerd
+
+  {{aur_ensure}} eww-tray-wayland-git  hyprpicker-git  rofi-lbonn-wayland-git watershot noto-fonts noto-fonts-cjk noto-fonts-emoji
+    
+

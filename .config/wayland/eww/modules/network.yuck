@@ -1,0 +1,19 @@
+(defwidget network [
+  strength level_0 level_1 level_2 level_3 level_4 ssid
+]
+  (box 
+    :class "network-box"
+    :space-evenly false
+    :spacing 8
+    (label
+
+      :text "${
+        strength == "" ? level_0 :
+          strength < 26 ? level_1 :
+            strength < 51 ? level_2 :
+              strength < 76 ? level_3 :
+                level_4
+      } ${ssid}"
+    )
+  )
+)

@@ -1,0 +1,5 @@
+(include "./modules/padding.yuck")
+(include "./modules/network.yuck")
+(include "./modules/powermenu.yuck")
+(include "./modules/battery.yuck")
+(include "./modules/clock.yuck")
