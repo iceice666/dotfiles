@@ -18,3 +18,4 @@ build
 project
 .config/hypr
 .python_history
+.config/wayland/hyprland/script/target

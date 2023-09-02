@@ -1,4 +1,4 @@
-(include "./variables.yuck")
+(include "./modules/_mod.yuck")
 
 ;; layouts
 
@@ -9,6 +9,8 @@
     :halign "start"
 		:class "left-modules"
     :hexpand false
+
+  (workspace)
 
 ))
 
@@ -32,22 +34,17 @@
 		:class "right-modules"
     :hexpand false
 
-    (battery 
+    (powermenu
       :status {EWW_BATTERY.BAT0.status}
       :battery {EWW_BATTERY.BAT0.capacity}
       :icon_using "󰂌" :icon_charging "󰂄"
-    )
-    (powermenu
       :shutdown_cmd  "poweroff" :shutdown_icon "󰤆"
       :reboot_cmd    "systemctl reboot" :reboot_icon ""
       :logout_cmd    "loginctl kill-session self" :logout_icon "󰗼"
       :sleep_cmd     "systemctl suspend" :sleep_icon "⏾"
       :hibernate_cmd "systemctl hibernate" :hibernate_icon "󰋣"
     )
-    (clock
-      :date date
-      :time time
-    )
+    (clock)
 ))
 
 

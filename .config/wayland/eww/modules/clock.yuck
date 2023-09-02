@@ -2,9 +2,16 @@
 (defvar is_date_shown false)
 
 
-(defwidget clock [
-  date time
-]
+(defpoll time 
+  :interval "1s" 
+  "date +\" %H:%M:%S\""
+)
+(defpoll date 
+  :interval "60s" 
+  "date +\"  %m/%d\""
+)
+
+(defwidget clock []
   (box
     :class "clock-box"
     :space-evenly false

@@ -15,6 +15,32 @@ calendar {
   border-radius: 4px;
 }
 
+button{
+    padding: 0em 0.4em;
+    border-radius: 0.1em;
+  
+    &:hover {
+      transition: 200ms linear background-color, border-radius;
+      background-color: rgba($theme-overlay2, 0.6);
+    }
+
+    &.powerbtns_confirm {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: $theme-red;
+    }
+
+    &.add-btn {
+
+      font-size: 1.4em; 
+
+      &:hover {
+        color: $theme-green;
+      }
+  }
+
+  }
+
 .clock-box {
   color: $theme-pink;
 }
@@ -28,19 +54,22 @@ calendar {
   font-weight: bold;
 }
 
+.workspace{
+  font-weight: bold;
+}
+.current-ws {
+  color: $theme-blue;
+}
+
 .power-box {
   font-size: 1.4em;
-  padding-right: 0.5em;
-
-  button{
-    padding: 0em 0.4em;
-    border-radius: 0.1em;
-  
-    &:hover {
-      transition: 200ms linear background-color, border-radius;
-      background-color: rgba($theme-overlay2, 0.6);
-    }
+  button {
+    padding-right: 0.5em;
   }
+
+
+
+  
 }
 
 .sep {
