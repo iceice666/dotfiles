@@ -1,0 +1,85 @@
+
+
+;; show battery and power buttons
+(defwidget powermenu [
+  battery status 
+  icon_using icon_charging icon_normal icon_low
+
+  shutdown_cmd shutdown_icon 
+  reboot_cmd reboot_icon
+  logout_cmd logout_icon
+  hibernate_cmd hibernate_icon
+  sleep_cmd sleep_icon
+]
+  (box
+
+    :space-evenly false
+    :orientation "h"
+
+    (eventbox
+      :onhover "${EWW_CMD} update mainbar-is_powerbtns_shown=true"
+      :onhoverlost "${EWW_CMD} update mainbar-is_powerbtns_shown=false mainbar-powerbtns_confirm=false"
+
+      (box
+        :space-evenly false
+        (revealer
+          :reveal mainbar-is_powerbtns_shown
+          :transition "slideright"
+          :duration "500ms"
+
+          (box 
+            (box
+              :visible {mainbar-powerbtns_confirm}
+              (button
+                :class "powerbtns_confirm fg-red"
+                :onclick "${EWW_CMD} update mainbar-is_powerbtns_shown=false mainbar-powerbtns_confirm=false; ${mainbar-powerbtns_cmd}"
+                "Are you sure about that?"
+              )
+            )
+
+            (box
+              :visible {!mainbar-powerbtns_confirm}
+              :class "power-box"
+              (button
+                :class "fg-blue"
+                :onclick "${EWW_CMD} update mainbar-powerbtns_confirm=true mainbar-powerbtns_cmd=\"${reboot_cmd}\"" reboot_icon
+              )
+              (button
+                :class "fg-green"
+                :onclick "${EWW_CMD} update mainbar-powerbtns_confirm=true mainbar-powerbtns_cmd=\"${logout_cmd}\"" logout_icon
+              )
+              (button
+                :class "fg-yellow"
+                :onclick "${EWW_CMD} update mainbar-powerbtns_confirm=true mainbar-powerbtns_cmd=\"${sleep_cmd}\"" sleep_icon
+              )
+              (button
+                :class "fg-mauve"
+                :onclick "${EWW_CMD} update mainbar-powerbtns_confirm=true mainbar-powerbtns_cmd=\"${hibernate_cmd}\"" hibernate_icon
+              )
+              (button
+                :class "fg-red"
+                :onclick "${EWW_CMD} update mainbar-powerbtns_confirm=true mainbar-powerbtns_cmd=\"${shutdown_cmd}\"" shutdown_icon
+              )
+            )
+          )
+        )
+
+
+        (label
+          :class {battery > 75 ? "fg-green" :
+                    battery > 50 ? "fg-yellow" :
+                      battery > 25 ? "fg-peach" : "fg-red"
+          }
+          :style {battery <= 25 || battery == 100 ?  "font-weight: bold;" : ""}
+          :text "${
+            status == "Charging" ? "${icon_charging} ${battery}%" :
+            status == "Not Charging" ? "${icon_normal}PSU!" : 
+            battery == 100 ? "${icon_normal} FULL!" :
+            battery <= 25 ? "${icon_using} ${battery}% ${icon_low}" :
+            "${icon_using} ${battery}%"
+          } "
+        )
+      )
+    )
+  )
+)

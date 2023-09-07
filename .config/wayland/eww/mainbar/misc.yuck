@@ -1,0 +1,33 @@
+
+
+
+
+(defwidget archicon []
+
+  (box
+    :space-evenly false
+    :class "fg-sapphire"
+
+       (padding)
+    (eventbox
+
+      :onhover "${EWW_CMD} update mainbar-is_i_use_arch_btw_shown=true"
+      :onhoverlost "${EWW_CMD} update mainbar-is_i_use_arch_btw_shown=false"
+
+      :onclick "hyprctl dispatch exec kitty -- neofetch"
+      :onrightclick "${EWW_CMD} reload"
+      (box
+        :space-evenly false
+        
+        (revealer
+          :reveal mainbar-is_i_use_arch_btw_shown
+          :transition "slideright"
+          :duration "500ms"
+          (label :text "I use Arch, btw.")
+        )
+
+        (label :text "󰣇 " :style "font-size: 1.4em;")
+      )
+    )
+  )
+)

@@ -1,0 +1,27 @@
+(defpoll mainbar-time 
+  :interval "1s" 
+  "date +\" %H:%M:%S\""
+)
+(defpoll mainbar-date 
+  :interval "60s" 
+  "date +\"  %m/%d\""
+)
+
+(defvar mainbar-is_calendar_shown false)
+(defvar mainbar-is_date_shown false)
+
+(defvar mainbar-is_ram_info_shown false)
+(defvar mainbar-is_cpu_info_shown false)
+(defvar mainbar-cpu_info_type 0)
+
+(defvar mainbar-is_powerbtns_shown false)
+(defvar mainbar-powerbtns_confirm false)
+(defvar mainbar-powerbtns_cmd "")
+
+(defvar mainbar-window_class "kitty")
+(defvar mainbar-window_title "title")
+(defvar mainbar-workspaces "[1]")
+(defvar mainbar-current_workspace "1")
+
+(defvar mainbar-is_i_use_arch_btw_shown false)
+(defvar mainbar-is_sysinfo_shown false)

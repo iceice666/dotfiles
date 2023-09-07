@@ -1,0 +1,29 @@
+
+
+
+
+
+(defwidget clock []
+  (box
+    :class "clock-box fg-pink"
+    :space-evenly false
+    (revealer
+      :reveal mainbar-is_date_shown
+      :transition "slideleft"
+      :duration  "300ms"
+      (box
+        :space-evenly false
+        (label :text mainbar-date)
+        (padding)
+      )
+    )
+    (eventbox
+      :onhover "${EWW_CMD} update mainbar-is_date_shown=true"
+      :onhoverlost "${EWW_CMD} update mainbar-is_date_shown=false"
+
+      (label :text mainbar-time)
+    )
+  )
+)
+
+

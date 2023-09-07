@@ -1,0 +1,45 @@
+
+
+(defwidget workspace [ ]
+
+  (box
+    :class "workspaces-box"
+    :space-evenly false
+
+    (button
+      :onclick "hyprctl dispatch workspace empty"
+      :class "add-btn"
+
+      "󰐖"
+    )
+
+
+    (for space in mainbar-workspaces
+      (button
+        :onclick "hyprctl dispatch workspace ${space}"
+        :class " workspace ${ space == mainbar-current_workspace ? "current-ws":""}"
+        :style "font-weight: bold;"
+
+        {space == mainbar-current_workspace ? "[${space}]":"${space}"}
+      )
+    )
+  )
+)
+
+
+
+(defwidget window [ ]
+  (box
+    :class "fg-peach window-box"
+    :space-evenly false
+    (label
+      :style "font-weight: bold;"
+      :text "[${mainbar-window_class}]"
+    )
+    (padding)
+    (label
+      :text {mainbar-window_title}
+    )
+  )
+)
+

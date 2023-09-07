@@ -1,0 +1,25 @@
+
+(include "./submap/_var.yuck")
+
+
+(defwindow submap
+  :monitor 0
+  :geometry (geometry 
+    :x "50%"
+    :y "5px"
+    :width "10px"
+    :height "5px"
+    :anchor "top center")
+  :stacking "fg"
+  :exclusive false
+  :focusable false
+  :hexpand false
+  (box
+    :class "bar"
+    (label 
+      :text {submap-mode} 
+      :class "fg-yellow" 
+      :style "font-size: 1.5em;"
+    )
+  )
+)

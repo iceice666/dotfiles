@@ -15,7 +15,15 @@ build
 .mozilla/firefox
 .bash_logout
 .bash_profile
-project
-.config/hypr
 .python_history
 .config/wayland/hyprland/script/target
+.config/pulse
+.config/systemd/user
+.config/pavucontrol.ini
+.config/wayland/hyprland/script/Cargo.lock
+.chewing
+.config/ibus/bus
+.config/fcitx/dbus
+.config/dconf
+.config/fcitx5/conf/cached_layouts
+project

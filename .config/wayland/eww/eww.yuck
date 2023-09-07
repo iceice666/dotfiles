@@ -1,1 +1,5 @@
-(include "./main.yuck")
+(include "./mainbar/_main.yuck")
+(include "./submap/_main.yuck")
+
+
+;; super sercet settings menu

@@ -1,4 +1,11 @@
-(include "./modules/_mod.yuck")
+(include "./mainbar/_var.yuck")
+(include "./mainbar/padding.yuck")
+(include "./mainbar/workspace.yuck")
+(include "./mainbar/network.yuck")
+(include "./mainbar/powermenu.yuck")
+(include "./mainbar/clock.yuck")
+(include "./mainbar/sysinfo.yuck")
+(include "./mainbar/misc.yuck")
 
 ;; layouts
 
@@ -8,10 +15,9 @@
 		:space-evenly false  
     :halign "start"
 		:class "left-modules"
-    :hexpand false
 
   (workspace)
-
+  (window)
 ))
 
 
@@ -21,7 +27,6 @@
 		:space-evenly false  
     :halign "center"
 		:class "center-modules"
-    :hexpand false
 
 
 ))
@@ -34,31 +39,24 @@
 		:class "right-modules"
     :hexpand false
 
+
     (powermenu
       :status {EWW_BATTERY.BAT0.status}
       :battery {EWW_BATTERY.BAT0.capacity}
-      :icon_using "󰂌" :icon_charging "󰂄"
+      :icon_using "󰂌" :icon_charging "󰂄" :icon_normal "󰁹" :icon_low ""
       :shutdown_cmd  "poweroff" :shutdown_icon "󰤆"
       :reboot_cmd    "systemctl reboot" :reboot_icon ""
-      :logout_cmd    "loginctl kill-session self" :logout_icon "󰗼"
+      :logout_cmd    "hyprctl dispatch exit" :logout_icon "󰗼"
       :sleep_cmd     "systemctl suspend" :sleep_icon "⏾"
       :hibernate_cmd "systemctl hibernate" :hibernate_icon "󰋣"
     )
+    (sysinfo)
     (clock)
+    (archicon)
 ))
 
 
 
-
-(defwidget bar []
-  (box 
-    :orientation "h"
-    :hexpand false
-    :class "mainbar bar"
-    (left)
-    (center)
-    (right)
-))
 
 
 (defwindow mainbar 
@@ -73,5 +71,11 @@
   :exclusive true
   :focusable false
   :hexpand false
-  (bar)
+  (centerbox
+    :class "mainbar bar"
+
+    (left)
+    (center)
+    (right)
+  )
 )

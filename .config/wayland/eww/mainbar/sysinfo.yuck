@@ -1,0 +1,123 @@
+(defwidget ram [ram_icon]
+
+  (box
+    :space-evenly false
+    :class "ram-box "
+
+    (eventbox 
+      :onhover "${EWW_CMD} update mainbar-is_ram_info_shown=true"
+      :onhoverlost "${EWW_CMD} update mainbar-is_ram_info_shown=false"
+      (box
+        :space-evenly false
+        (label :text "${ram_icon}")
+
+        (revealer
+          :reveal mainbar-is_ram_info_shown
+          :transition "slideright"
+          :duration "500ms"
+          (box
+           :space-evenly false
+            :class "fg-lavender"
+            (padding)                                  ;; 1024^3 = 1073741824
+            (label :text "Used:${round(EWW_RAM.used_mem/1073741824,2)}GB(${round(100*EWW_RAM.used_mem/EWW_RAM.total_mem,0)}%)")
+            (padding)
+            (label :text "Avail:${round(EWW_RAM.available_mem/1073741824,2)}GB(${round(100*EWW_RAM.available_mem/EWW_RAM.total_mem,0)}%)")
+          )
+        )
+
+        (label 
+          :text "${round(100*EWW_RAM.used_mem/EWW_RAM.total_mem,0)}%"
+          :visible {!mainbar-is_ram_info_shown}
+        )
+      )
+    )
+  )
+)
+
+
+(defwidget cpu [cpu_icon ]
+  (box
+    :space-evenly false
+    :class "cpu-box "
+
+    (eventbox 
+      :onhover "${EWW_CMD} update mainbar-is_cpu_info_shown=true"
+      :onhoverlost "${EWW_CMD} update mainbar-is_cpu_info_shown=false"
+      (box
+        :space-evenly false
+        
+        (label :text "${cpu_icon} ")
+
+        (revealer
+          :reveal mainbar-is_cpu_info_shown
+          :transition "slideright"
+          :duration "500ms"
+          (eventbox
+            :onrightclick "${EWW_CMD} update mainbar-cpu_info_type=${(mainbar-cpu_info_type+1)%2}"
+            (box
+              :space-evenly false
+              :class "fg-lavender"
+              (box
+                :space-evenly false
+                (for value in {EWW_CPU.cores}
+                  (box
+                    :space-evenly false
+                    (label :text {
+                        mainbar-cpu_info_type == 0 ? value.freq :
+                          "${value.usage}%"
+                      }
+                    )
+                    (padding)
+                  )
+                )
+              )
+              (label :text {mainbar-cpu_info_type == 0 ? "MHz " : ""})
+            )
+          )
+        )
+
+        (label 
+          :text "${round(EWW_CPU.avg,0)}%"
+          :visible  {!mainbar-is_cpu_info_shown})
+      )
+    )
+  )
+)
+
+
+
+(defwidget sysinfo []
+
+  (box
+    :space-evenly false
+    :class "fg-teal sysinfo-box"
+
+    (revealer
+      :reveal mainbar-is_sysinfo_shown
+      :transition "slideright"
+      :duration "500ms"
+      (box
+          :space-evenly false
+
+        (cpu :cpu_icon "")
+        (padding)
+        (ram :ram_icon "󰫗 " )
+      )
+    )
+
+    (padding)
+    (eventbox
+
+      :onclick "${EWW_CMD} update mainbar-is_sysinfo_shown=${!mainbar-is_sysinfo_shown}"
+      :onrightclick "hyprctl dispatch exec kitty btop"
+      (box
+        :space-evenly false
+        
+
+        (label :text "󰨇 " :style "font-size: 1.4em;")
+      )
+    )
+  )
+)
+
+
