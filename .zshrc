@@ -25,8 +25,9 @@ compinit
 
 # Start of custom alias
 
-alias wrappedhl='$HOME/.config/hypr/wrappedhl'
+alias yee='nmcli device wifi rescan; nmcli device wifi connect \ ∫\ dx\ \(x\^5+1\)\^\(-1\)\ =\ \?+c'
 
+alias wrappedhl='$HOME/.config/hypr/wrappedhl'
 
 alias plz='sudo'
 

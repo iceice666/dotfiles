@@ -27,3 +27,5 @@ build
 .config/dconf
 .config/fcitx5/conf/cached_layouts
 project
+.dotnet
+.nuget

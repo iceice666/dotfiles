@@ -15,10 +15,11 @@
   :focusable false
   :hexpand false
   (box
-    :class "bar"
+    :class "bar submap-bar"
+    :visible {"${submap-mode}"=="" ? false : true}
+
     (label 
       :text {submap-mode} 
-      :class "fg-yellow" 
       :style "font-size: 1.5em;"
     )
   )

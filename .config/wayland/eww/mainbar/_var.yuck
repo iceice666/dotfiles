@@ -24,4 +24,4 @@
 (defvar mainbar-current_workspace "1")
 
 (defvar mainbar-is_i_use_arch_btw_shown false)
-(defvar mainbar-is_sysinfo_shown false)
+(defvar mainbar-is_sysinfo_shown true)

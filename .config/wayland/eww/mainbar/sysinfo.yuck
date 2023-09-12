@@ -53,6 +53,7 @@
           :transition "slideright"
           :duration "500ms"
           (eventbox
+            :onclick "${EWW_CMD} update mainbar-cpu_info_type=${(mainbar-cpu_info_type+1)%2}"
             :onrightclick "${EWW_CMD} update mainbar-cpu_info_type=${(mainbar-cpu_info_type+1)%2}"
             (box
               :space-evenly false
@@ -109,7 +110,7 @@
     (eventbox
 
       :onclick "${EWW_CMD} update mainbar-is_sysinfo_shown=${!mainbar-is_sysinfo_shown}"
-      :onrightclick "hyprctl dispatch exec kitty btop"
+      :onrightclick "hyprctl dispatch exec [float] kitty btop"
       (box
         :space-evenly false
         

@@ -10,6 +10,18 @@
 }
 
 
+.submap-bar {
+  background-color: $theme-base;
+  color: $theme-yellow;
+  border: 1px solid $theme-yellow;
+  border-radius: 3px;
+  font-weight: 600;
+  * {
+    padding: 0.3em; 
+  }
+}
+
+
 calendar {
   background-color: $theme-base;
   border: 1px solid $theme-overlay2;
