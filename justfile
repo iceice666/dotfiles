@@ -21,12 +21,16 @@ first-deploy:
   
   # git
   {{ensure}} lazygit 
+
+  # exa
+  {{ensure}} exa
   
-  # zsh + zplug
-  {{ensure}} zsh exa
+  # zsh + zplug + starship
+  {{ensure}} zsh
   chsh -s /usr/bin/zsh
   curl -sL --proto-redir -all,https \
   https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+  curl -sS https://starship.rs/install.sh | sh
   
   # ssh
   {{ensure}} openssh

@@ -1,0 +1,327 @@
+palette = "catppuccin_mocha"
+
+format='''
+
+$os$all$directory $character'''
+
+add_newline = false 
+
+[character]
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
+vimcmd_symbol = "[❮](green)"
+
+[directory]
+format = "[ ](pink)[$path](lavender bold)"
+truncation_length = 3
+truncate_to_repo=false
+read_only = " 󰌾"
+
+[git_branch]
+format = '\[[$symbol$branch]($style)\]'
+symbol = " "
+style = "peach"
+
+[git_status]
+format = '\[[$all_status$ahead_behind]($style)\]'
+ahead = '⇡${count}'
+diverged = '⇕⇡${ahead_count}⇣${behind_count}'
+behind = '⇣${count}'
+
+[cmd_duration]
+disabled = true
+
+[hostname]
+style = 'bold dimmed green'
+format = '$ssh_symbol\[[$hostname]($style)\]'
+ssh_symbol = '🌐'
+
+[os]
+disabled = false
+format = '\[[$symbol]($style)\]'
+
+[os.symbols]
+Alpaquita = " "
+Alpine = " "
+Amazon = " "
+Android = " "
+Arch = "[ ](blue)"
+Artix = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = "[ ](green)"
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = "[ ](green)"
+Ubuntu = " "
+Unknown = " "
+Windows = "󰍲 "
+
+
+################################## Format #########################################
+
+[aws]
+format = '\[[$symbol($profile)(\($region\))(\[$duration\])]($style)\]'
+symbol = "  "
+
+[buf]
+symbol = " "
+
+[bun]
+format = '\[[$symbol($version)]($style)\]'
+
+[c]
+format = '\[[$symbol($version(-$name))]($style)\]'
+symbol = " "
+
+[cmake]
+format = '\[[$symbol($version)]($style)\]'
+
+[cobol]
+format = '\[[$symbol($version)]($style)\]'
+
+[conda]
+format = '\[[$symbol$environment]($style)\]'
+symbol = " "
+
+[crystal]
+format = '\[[$symbol($version)]($style)\]'
+
+[daml]
+format = '\[[$symbol($version)]($style)\]'
+
+[dart]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[deno]
+format = '\[[$symbol($version)]($style)\]'
+
+[docker_context]
+format = '\[[$symbol$context]($style)\]'
+symbol = " "
+
+[dotnet]
+format = '\[[$symbol($version)(🎯 $tfm)]($style)\]'
+
+[elixir]
+format = '\[[$symbol($version \(OTP $otp_version\))]($style)\]'
+symbol = " "
+
+[elm]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[erlang]
+format = '\[[$symbol($version)]($style)\]'
+
+[fennel]
+format = '\[[$symbol($version)]($style)\]'
+
+[fossil_branch]
+format = '\[[$symbol$branch]($style)\]'
+symbol = " "
+
+[gcloud]
+format = '\[[$symbol$account(@$domain)(\($region\))]($style)\]'
+
+[golang]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[gradle]
+format = '\[[$symbol($version)]($style)\]'
+
+[guix_shell]
+format = '\[[$symbol]($style)\]'
+symbol = " "
+
+[haskell]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[haxe]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[helm]
+format = '\[[$symbol($version)]($style)\]'
+
+[hg_branch]
+format = '\[[$symbol$branch]($style)\]'
+symbol = " "
+
+[java]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[julia]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[kotlin]
+format = '\[[$symbol($version)]($style)\]'
+
+[kubernetes]
+format = '\[[$symbol$context( \($namespace\))]($style)\]'
+
+[lua]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[memory_usage]
+format = '\[$symbol[$ram( | $swap)]($style)\]'
+symbol = "󰍛 "
+
+[meson]
+format = '\[[$symbol$project]($style)\]'
+symbol = "󰔷 "
+
+[nim]
+format = '\[[$symbol($version)]($style)\]'
+symbol = "󰆥 "
+
+[nix_shell]
+format = '\[[$symbol$state( \($name\))]($style)\]'
+symbol = " "
+
+[nodejs]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[ocaml]
+format = '\[[$symbol($version)(\($switch_indicator$switch_name\))]($style)\]'
+
+[opa]
+format = '\[[$symbol($version)]($style)\]'
+
+[openstack]
+format = '\[[$symbol$cloud(\($project\))]($style)\]'
+
+[package]
+format = '\[[$symbol$version]($style)\]'
+symbol = "󰏗 "
+
+[perl]
+format = '\[[$symbol($version)]($style)\]'
+
+[php]
+format = '\[[$symbol($version)]($style)\]'
+
+[pijul_channel]
+format = '\[[$symbol$channel]($style)\]'
+symbol = " "
+
+[pulumi]
+format = '\[[$symbol$stack]($style)\]'
+
+[purescript]
+format = '\[[$symbol($version)]($style)\]'
+
+[python]
+format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
+# symbol = " "
+
+[raku]
+format = '\[[$symbol($version-$vm_version)]($style)\]'
+
+[red]
+format = '\[[$symbol($version)]($style)\]'
+
+[rlang]
+format = '\[[$symbol($version)]($style)\]'
+symbol = "󰟔 "
+
+[ruby]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[rust]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[scala]
+format = '\[[$symbol($version)]($style)\]'
+symbol = " "
+
+[spack]
+format = '\[[$symbol$environment]($style)\]'
+
+[swift]
+format = '\[[$symbol($version)]($style)\]'
+
+[terraform]
+format = '\[[$symbol$workspace]($style)\]'
+
+[time]
+format = '\[[$time]($style)\]'
+
+[username]
+format = '\[[$user]($style)\]'
+
+[vagrant]
+format = '\[[$symbol($version)]($style)\]'
+
+[vlang]
+format = '\[[$symbol($version)]($style)\]'
+
+[zig]
+format = '\[[$symbol($version)]($style)\]'
+
+[solidity]
+format = '\[[$symbol($version)]($style)\]'
+
+
+############################### Theme ###################################################
+
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"

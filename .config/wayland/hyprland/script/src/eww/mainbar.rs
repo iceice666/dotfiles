@@ -56,16 +56,5 @@ pub async fn main() -> hyprland::Result<()> {
 
     event_listener.add_active_window_change_handler(|data| window_change(data.unwrap()));
 
-    event_listener.add_sub_map_change_handler(|data| {
-        let _ = Command::new("eww")
-            .args([
-                "-c",
-                "/home/iceice666/.config/wayland/eww",
-                "update",
-                &format!("submap-mode={}", data),
-            ])
-            .spawn();
-    });
-
     event_listener.start_listener_async().await
 }

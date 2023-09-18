@@ -29,3 +29,14 @@ build
 project
 .dotnet
 .nuget
+.config/fcitx5/conf/notifications.conf
+.config/discord
+.config/ngrok
+.pki/nssdb
+Downloads
+.anthy
+.config/libfm
+.config/discord-flags.conf
+.gnupg
+.pyenv
+.rnd
