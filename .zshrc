@@ -3,7 +3,7 @@ cd $HOME
 
 
 # Start of custom alias
-alias yee='nmcli device wifi rescan; nmcli device wifi connect \ ∫\ dx\ \(x\^5+1\)\^\(-1\)\ =\ \?+c'
+alias yee='nmcli device wifi rescan; nmcli device wifi connect Yee'
 
 alias plz='sudo'
 
