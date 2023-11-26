@@ -53,3 +53,5 @@ temp
 .spacemacs.env
 .spacemacs
 .emacs.d
+.sqlite_history
+.config/GitHub Desktop
