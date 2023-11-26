@@ -63,7 +63,7 @@ nnvim ()
 
 
 # Lines configured by zsh-newuser-install
-bindkey -v
+bindkey -e
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
 zstyle :compinstall filename '/home/iceice666/.zshrc'

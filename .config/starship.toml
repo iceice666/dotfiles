@@ -23,7 +23,7 @@ symbol = " "
 style = "peach"
 
 [git_status]
-format = '\[[$all_status$ahead_behind]($style)\]'
+format = '\[[$state( $progress_current/$progress_total)]($style)\] '
 ahead = '⇡${count}'
 diverged = '⇕⇡${ahead_count}⇣${behind_count}'
 behind = '⇣${count}'

@@ -45,3 +45,8 @@ Downloads
 .jdks
 .gradle
 .viminfo
+.docker/buildx
+temp
+.spacemacs.env
+.spacemacs
+.emacs.d
