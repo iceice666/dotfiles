@@ -40,9 +40,12 @@ Downloads
 .gnupg
 .pyenv
 .rnd
-.sqlite_history
-.config/GitHub Desktop
-.jdks
+.android
+.config/JetBrains/IntelliJIdea2023.2
+.config/cef_user_data/WidevineCdm
+.config/github-copilot
+.config/jgit
+.config/pcmanfm-qt/default/recent-files.conf
 .gradle
 .viminfo
 .docker/buildx
