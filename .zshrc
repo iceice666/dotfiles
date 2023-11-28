@@ -2,44 +2,6 @@
 cd $HOME
 
 
-# Start of custom alias
-alias yee='nmcli device wifi rescan; nmcli device wifi connect Yee'
-
-alias plz='sudo'
-
-alias lg="lazygit"
-
-alias l=' exa -almhF --time-style iso -s type --icons --git-ignore'
-alias ll='exa -almhF --time-style iso -s type --icons '
-alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'
-
-alias dotfiles='git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
-alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
-
-alias rm='rm -r'
-alias cp='cp -r'
-alias mkdir='mkdir -p'
-
-alias ..='cd ..'
-alias home='cd ~'
-
-alias nv='nnvim'
-alias vim='nnvim'
-
-alias pm='sudo pacman'
-alias pms='sudo pacman -S'
-alias pmr='sudo pacman -R'
-alias pmu='sudo pacman -Syu'
-
-
-alias self='neofetch | lolcat'
-
-alias nvcfg='nnvim -c "cd ~/.config/nvim"'
-
-
-# End of custom alias
-
-
 # Start of custom funciton
 
 mcd  ()
@@ -60,10 +22,53 @@ nnvim ()
 
 
 # End of custom funciton
+# Start of custom alias
+
+# network connection 
+alias yee='nmcli device wifi rescan; nmcli device wifi connect Yee'
+alias fhsh-new='nmcli device wifi rescan; nmcli device wifi connect Fhsh-New'
+
+alias plz='sudo'
+
+alias lg="lazygit"
+
+alias l='exa -almhF --time-style iso -s type --icons --git-ignore'
+alias ll='exa -almhF --time-style iso -s type --icons '
+alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'
+
+alias dotfiles='git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
+alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
+
+alias rm='rm -r'
+alias cp='cp -r'
+alias mkdir='mkdir -p'
+
+alias -='cd -'
+alias ..='cd ..'
+alias home='cd ~'
+
+alias nv='nnvim'
+alias vim='nnvim'
+
+alias pm='sudo pacman'
+alias pms='sudo pacman -S'
+alias pmr='sudo pacman -R'
+alias pmu='sudo pacman -Syu'
+
+
+alias self='neofetch | lolcat'
+
+alias nvcfg='nnvim -c "cd ~/.config/nvim"'
+
+
+# End of custom alias
+
+
 
 
 # Lines configured by zsh-newuser-install
-bindkey -e
+bindkey -v
+bindkey -a '^[[3~' vi-delete-char
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
 zstyle :compinstall filename '/home/iceice666/.zshrc'

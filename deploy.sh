@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+
+
 # ensure requirement have been installed
 sudo pacman -S just git openssh --needed
 
@@ -19,6 +21,8 @@ git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  submodule init
 git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  remote set-url origin git@github.com:iceice666/dotfiles.git
 
 ssh-keygen
+
+echo "Ensure to add ssh key to Github!"
 
 # init 
 just first-deploy

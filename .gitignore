@@ -55,3 +55,8 @@ temp
 .emacs.d
 .sqlite_history
 .config/GitHub Desktop
+.java
+.jdks
+.m2/repository/org/jetbrains/externalAnnotations/io/netty
+Arduino/libraries
+.arduino15
