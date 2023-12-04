@@ -43,7 +43,6 @@ alias rm='rm -r'
 alias cp='cp -r'
 alias mkdir='mkdir -p'
 
-alias -='cd -'
 alias ..='cd ..'
 alias home='cd ~'
 

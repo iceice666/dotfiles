@@ -60,3 +60,5 @@ temp
 .m2/repository/org/jetbrains/externalAnnotations/io/netty
 Arduino/libraries
 .arduino15
+.hyprland
+.config/wayland/hyprland/local.conf

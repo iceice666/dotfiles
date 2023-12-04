@@ -16,6 +16,7 @@ git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  checkout
 
 # init submodules
 git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  submodule init
+git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  submodule update
 
 # use ssh to do job
 git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME  remote set-url origin git@github.com:iceice666/dotfiles.git

@@ -6,7 +6,7 @@ help:
 ensure := "sudo pacman -S --needed"
 aur_ensure := "paru -S --needed"
 build := "$HOME/build"
-bash_cfg := "set -euxo pipefail ; source $HOME/.utils"
+bash_cfg := "set -euxo pipefail "
 
 [private]
 first-deploy: 
@@ -19,24 +19,15 @@ first-deploy:
   # pacman update
   sudo pacman -Syu
   
-  # git
-  {{ensure}} lazygit 
+  {{ensure}} lazygit exa zsh openssh btop 
 
-  # exa
-  {{ensure}} exa
   
   # zsh + zplug + starship
-  {{ensure}} zsh
   chsh -s /usr/bin/zsh
   curl -sL --proto-redir -all,https \
   https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   curl -sS https://starship.rs/install.sh | sh
   
-  # ssh
-  {{ensure}} openssh
-
-  # system monitor
-  {{ensure}} btop
 
   # init language compilers
   {{ensure}} rustup python3 npm
@@ -87,6 +78,6 @@ wayland-deploy:
 
   {{ensure}} kitty hyprland xdg-desktop-portal-hyprland dunst firefox pipewire wireplumber qt6-wayland qt5-wayland cliphist  ttf-cascadia-code-nerd
 
-  {{aur_ensure}} eww-tray-wayland-git  hyprpicker-git  rofi-lbonn-wayland-git watershot noto-fonts noto-fonts-cjk noto-fonts-emoji
+  {{aur_ensure}} eww-tray-wayland-git  hyprpicker-git  rofi-lbonn-wayland-git watershot noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-daddytime-mono-nerd ttf-cascadia-code-nerd
     
 
