@@ -62,3 +62,9 @@ Arduino/libraries
 .arduino15
 .hyprland
 .config/wayland/hyprland/local.conf
+.config/WebCord
+.config/fcitx5
+.config/fcitx5
+.config/obs-studio
+.config/pavucontrol-qt
+.config/wayland/hyprland

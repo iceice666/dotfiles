@@ -71,13 +71,5 @@ paru:
 
 
 
-# a wayland desktop with Hyprland
-wayland-deploy:
-  #!/usr/bin/env bash
-  {{bash_cfg}}
-
-  {{ensure}} kitty hyprland xdg-desktop-portal-hyprland dunst firefox pipewire wireplumber qt6-wayland qt5-wayland cliphist  ttf-cascadia-code-nerd
-
-  {{aur_ensure}} eww-tray-wayland-git  hyprpicker-git  rofi-lbonn-wayland-git watershot noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-daddytime-mono-nerd ttf-cascadia-code-nerd
     
 
