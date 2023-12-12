@@ -20,6 +20,25 @@ nnvim ()
   done
 }
 
+connect()
+{
+  err_count=0
+  while true; do
+    nmcli device wifi rescan
+    nmcli device wifi connect "$1"
+    if [ $? -eq 0 ]; then
+      break
+    fi
+    if [ $err_count -gt 10 ]; then
+      echo ""
+      echo "Cannot connect to wifi $1 right now."
+      break
+    fi
+    err_count=$((err_count + 1))
+    sleep 1
+  done
+}
+
 
 # End of custom funciton
 # Start of custom alias
