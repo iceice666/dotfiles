@@ -20,17 +20,17 @@ nnvim ()
   done
 }
 
-connect()
+conn()
 {
   err_count=0
   while true; do
     nmcli device wifi rescan
-    nmcli device wifi connect "$1"
+    nmcli device wifi connect "$1" > /dev/null 2>&1
     if [ $? -eq 0 ]; then
+      echo "Connected to wifi $1."
       break
     fi
     if [ $err_count -gt 10 ]; then
-      echo ""
       echo "Cannot connect to wifi $1 right now."
       break
     fi
@@ -138,3 +138,5 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# Generated for envman. Do not edit.

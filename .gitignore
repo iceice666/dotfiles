@@ -68,3 +68,7 @@ Arduino/libraries
 .config/obs-studio
 .config/pavucontrol-qt
 .config/wayland/hyprland
+.config/envman
+.config/sqlitebrowser
+.config/QtProject.conf
+.Xauthority
