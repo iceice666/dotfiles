@@ -7,9 +7,10 @@ ensure := "sudo pacman -S --needed"
 aur_ensure := "paru -S --needed"
 build := "$HOME/build"
 bash_cfg := "set -euxo pipefail "
+dotgit := "git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME"
 
 [private]
-first-deploy: 
+deploy: 
   #!/usr/bin/env bash
   {{bash_cfg}}
 
@@ -32,6 +33,7 @@ first-deploy:
   # init language compilers
   {{ensure}} rustup python3 npm
   rustup default stable
+  sudo npm install -g pnpm
 
   # install paru
   just paru
@@ -69,7 +71,17 @@ paru:
   makepkg -si
 
 
+# git
+[no-cd]
+[private]
+git:
+  #!/usr/bin/env bash
+  {{bash_cfg}}
+  sudo pacman -S --needed git openssh
+  mkdir $HOME/.dotfiles.giw 
 
-
-    
+  git clone --bare https://github.com/iceice666/dotfiles.git $HOME/.dotfiles.git
+  {{dotgit}} checkout
+  {{dotgit}} remote set-url origin git@github.com:iceice666/dotfiles.git
+  ssh-keygen
 

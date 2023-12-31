@@ -44,8 +44,7 @@ conn()
 # Start of custom alias
 
 # network connection 
-alias yee='nmcli device wifi rescan; nmcli device wifi connect Yee'
-alias fhsh-new='nmcli device wifi rescan; nmcli device wifi connect Fhsh-New'
+alias yee='conn Yee'
 
 alias plz='sudo'
 
@@ -55,8 +54,8 @@ alias l='exa -almhF --time-style iso -s type --icons --git-ignore'
 alias ll='exa -almhF --time-style iso -s type --icons '
 alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'
 
-alias dotfiles='git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
-alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME'
+alias dotgit='git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME'
+alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git --work-tree=$HOME'
 
 alias rm='rm -r'
 alias cp='cp -r'
@@ -68,10 +67,11 @@ alias home='cd ~'
 alias nv='nnvim'
 alias vim='nnvim'
 
-alias pm='sudo pacman'
-alias pms='sudo pacman -S'
-alias pmr='sudo pacman -R'
-alias pmu='sudo pacman -Syu'
+alias pm='paru'
+alias pms='paru -S'
+alias pmr='paru -R'
+alias pmu='paru -Syu'
+alias pmq='paru -Q'
 
 
 alias self='neofetch | lolcat'
