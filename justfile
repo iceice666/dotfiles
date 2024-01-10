@@ -3,32 +3,28 @@
 help:
   @just --list
 
-ensure := "sudo pacman -S --needed"
+ensure := "sudo pacman -Syu --needed"
 aur_ensure := "paru -S --needed"
 build := "$HOME/build"
 bash_cfg := "set -euxo pipefail "
 dotgit := "git --git-dir=$HOME/.dotfiles.git/ --work-tree=$HOME"
 
-[private]
-deploy: 
+deploy:
   #!/usr/bin/env bash
   {{bash_cfg}}
 
   # make a dir for build
   mkdir $HOME/build
 
-  # pacman update
-  sudo pacman -Syu
-  
-  {{ensure}} lazygit exa zsh openssh btop 
+  {{ensure}} lazygit exa zsh openssh btop ripgrep bat
 
-  
+
   # zsh + zplug + starship
   chsh -s /usr/bin/zsh
   curl -sL --proto-redir -all,https \
   https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   curl -sS https://starship.rs/install.sh | sh
-  
+
 
   # init language compilers
   {{ensure}} rustup python3 npm
@@ -51,6 +47,7 @@ neovim:
   {{ensure}} neovim
 
   cd $HOME/.config/nvim
+  git checkout main
   git pull
   just deploy
 
@@ -58,16 +55,16 @@ neovim:
 # aur manager
 [no-cd]
 [private]
-paru: 
+paru:
   #!/usr/bin/env bash
   {{bash_cfg}}
 
   cd {{build}}
 
-  sudo pacman -S --needed base-devel 
+  sudo pacman -S --needed base-devel
 
   git clone https://aur.archlinux.org/paru.git
-  cd paru 
+  cd paru
   makepkg -si
 
 
@@ -78,7 +75,7 @@ git:
   #!/usr/bin/env bash
   {{bash_cfg}}
   sudo pacman -S --needed git openssh
-  mkdir $HOME/.dotfiles.giw 
+  mkdir $HOME/.dotfiles.git
 
   git clone --bare https://github.com/iceice666/dotfiles.git $HOME/.dotfiles.git
   {{dotgit}} checkout

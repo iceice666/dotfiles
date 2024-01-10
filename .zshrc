@@ -39,11 +39,28 @@ conn()
   done
 }
 
+lg()
+{
+  if [[ $PWD = $HOME ]]; then
+    command lazygit --git-dir=.dotfiles.git--work-tree=$HOME "$@"
+  else
+    command lazygit "$@"
+  fi
+}
+
+git()
+{
+  if [[ $PWD = $HOME ]]; then
+    command git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME "$@"
+  else
+    command git "$@"
+  fi
+}
 
 # End of custom funciton
 # Start of custom alias
 
-# network connection 
+# network connection
 alias yee='conn Yee'
 
 alias plz='sudo'
@@ -53,9 +70,6 @@ alias lg="lazygit"
 alias l='exa -almhF --time-style iso -s type --icons --git-ignore'
 alias ll='exa -almhF --time-style iso -s type --icons '
 alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'
-
-alias dotgit='git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME'
-alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git --work-tree=$HOME'
 
 alias rm='rm -r'
 alias cp='cp -r'
@@ -78,6 +92,7 @@ alias self='neofetch | lolcat'
 
 alias nvcfg='nnvim -c "cd ~/.config/nvim"'
 
+alias cat='bat'
 
 # End of custom alias
 
