@@ -4,6 +4,23 @@ cd $HOME
 
 # Start of custom funciton
 
+printcat()
+{
+  echo "Here is your cat.     "
+  echo " "
+  echo "            A____A    "
+  echo "           /*    *\   "
+  echo "          {   _  _ }  "
+  echo "          A\` >  v /< "
+  echo "        / !!!!! !!}   "
+  echo "       / ! \!!!!! |   "
+  echo "  ____{   ) |  |  |   "
+  echo " / ___{ !!c |  |  |   "
+  echo "{ (___ \__\__@@_)@_)  "
+  echo " \____)               "
+  echo "Paradise is no longer paradise if there is no cat."
+}
+
 mcd  ()
 {
   mkdir -p "$1"
@@ -39,15 +56,6 @@ conn()
   done
 }
 
-lg()
-{
-  if [[ $PWD = $HOME ]]; then
-    command lazygit --git-dir=.dotfiles.git--work-tree=$HOME "$@"
-  else
-    command lazygit "$@"
-  fi
-}
-
 git()
 {
   if [[ $PWD = $HOME ]]; then
@@ -62,6 +70,8 @@ git()
 
 # network connection
 alias yee='conn Yee'
+
+alias cat="bat"
 
 alias plz='sudo'
 
@@ -94,15 +104,30 @@ alias nvcfg='nnvim -c "cd ~/.config/nvim"'
 
 alias cat='bat'
 
+alias lg='lazygit'
+alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git --work-tree=$HOME '
+
 # End of custom alias
 
 
 
+# custom keybind
+# bindkey -v # vi mode
+bindkey "\e[1~" beginning-of-line # Home
+bindkey "\e[4~" end-of-line # End
+bindkey "\e[5~" beginning-of-history # PageUp
+bindkey "\e[6~" end-of-history # PageDown
+bindkey "\e[2~" quoted-insert # Ins
+bindkey "\e[3~" delete-char # Del
+bindkey "\e[5C" forward-word
+bindkey "\eOc" emacs-forward-word
+bindkey "\e[5D" backward-word
+bindkey "\eOd" emacs-backward-word
+bindkey "\e\e[C" forward-word
+bindkey "\e\e[D" backward-word
+bindkey "\e[Z" reverse-menu-complete # Shift+Tab
+# End of custom keybind
 
-# Lines configured by zsh-newuser-install
-bindkey -v
-bindkey -a '^[[3~' vi-delete-char
-# End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
 zstyle :compinstall filename '/home/iceice666/.zshrc'
 
@@ -155,3 +180,4 @@ esac
 # pnpm end
 
 # Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
