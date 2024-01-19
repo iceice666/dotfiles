@@ -106,3 +106,9 @@ ntfs
 .vscode-oss
 .Xauthority
 error
+.config/flutter
+.config/lutris
+.dart-tool
+.pub-cache
+.flutter
+.config/mimeapps.list
