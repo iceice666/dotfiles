@@ -8,3 +8,5 @@
 	process = git-lfs filter-process
 [commit]
   template = ~/.gitmessage
+[safe]
+	directory = /opt/flutter

@@ -112,3 +112,17 @@ error
 .pub-cache
 .flutter
 .config/mimeapps.list
+.config/Google/AndroidStudio2023.1
+.config/VSCodium
+.config/mozc
+.config/vlc
+.dart
+.dartServer
+.espup
+.flutter-devtools
+.smartinput
+.wokwi
+motrix
+.nvidia-settings-rc
+export-esp.sh
+.config/configstore
