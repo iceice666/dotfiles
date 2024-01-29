@@ -27,12 +27,22 @@ mcd  ()
   cd "$1" || return
 }
 
-nnvim ()
+nvim ()
 {
   while true; do
-    nvim "$@"  # change path to real nvim binary as necessary
+    command  nvim "$@"  # change path to real nvim binary as necessary
     if [ $? -ne 1 ]; then
         break
+    fi
+  done
+}
+
+neovide ()
+{
+  while true; do
+    command neovide "$@"
+    if [ $? -ne 1 ]; then
+      break
     fi
   done
 }
@@ -88,8 +98,8 @@ alias mkdir='mkdir -p'
 alias ..='cd ..'
 alias home='cd ~'
 
-alias nv='nnvim'
-alias vim='nnvim'
+alias nv='nvim'
+alias vim='nvim'
 
 alias pm='paru'
 alias pms='paru -S'
@@ -100,7 +110,7 @@ alias pmq='paru -Q'
 
 alias self='neofetch | lolcat'
 
-alias nvcfg='nnvim -c "cd ~/.config/nvim"'
+alias nvcfg='nvim -c "cd ~/.config/nvim"'
 
 alias cat='bat'
 

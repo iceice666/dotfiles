@@ -10,3 +10,5 @@
   template = ~/.gitmessage
 [safe]
 	directory = /opt/flutter
+[pull]
+	rebase = true
