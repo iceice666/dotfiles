@@ -30,7 +30,7 @@ mcd  ()
 nvim ()
 {
   while true; do
-    command  nvim "$@"  # change path to real nvim binary as necessary
+    command nvim "$@"  # change path to real nvim binary as necessary
     if [ $? -ne 1 ]; then
         break
     fi
