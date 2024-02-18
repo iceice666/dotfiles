@@ -85,8 +85,6 @@ alias cat="bat"
 
 alias plz='sudo'
 
-alias lg="lazygit"
-
 alias l='exa -almhF --time-style iso -s type --icons --git-ignore'
 alias ll='exa -almhF --time-style iso -s type --icons '
 alias lt='exa -almhF --time-style iso -s type --icons --git-ignore --tree -L 3 -I .git'

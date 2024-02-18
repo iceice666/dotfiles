@@ -92,7 +92,7 @@ hyprland:
   git clone git@github.com:iceice666/hyprland.git $HOME/.config/hypr
 
   cd $HOME/.config/hypr
-  git checkout main
+  git checkout master
   git pull
   just deploy
 
