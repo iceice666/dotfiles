@@ -2,3 +2,14 @@
 *.*
 .*
 
+!.gitignore
+!.gitattributes
+!.gitmodules
+!.gitmessage
+!.gitconfig
+!.zhsrc
+!.zshenv
+!README.md
+!justfile
+!.config/kitty
+!.config/starship.toml
