@@ -126,3 +126,8 @@ motrix
 .nvidia-settings-rc
 export-esp.sh
 .config/configstore
+.config/JetBrains/RustRover2023.3
+.docker
+Desktop
+Games
+.config/menus/applications-merged
