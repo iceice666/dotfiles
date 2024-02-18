@@ -46,6 +46,8 @@ neovim:
 
   {{ensure}} neovim
 
+  git clone git@github.com:iceice666/nvim.git $HOME/.config/nvim
+
   cd $HOME/.config/nvim
   git checkout main
   git pull
@@ -81,4 +83,18 @@ git:
   {{dotgit}} checkout
   {{dotgit}} remote set-url origin git@github.com:iceice666/dotfiles.git
   ssh-keygen
+
+# hyprland
+hyprland:
+  #!/usr/bin/env bash
+  {{bash_cfg}}
+
+  git clone git@github.com:iceice666/hyprland.git $HOME/.config/hypr
+
+  cd $HOME/.config/hypr
+  git checkout main
+  git pull
+  just deploy
+
+
 
