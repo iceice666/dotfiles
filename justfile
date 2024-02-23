@@ -80,7 +80,8 @@ git:
   mkdir $HOME/.dotfiles.git
 
   git clone --bare https://github.com/iceice666/dotfiles.git $HOME/.dotfiles.git
-  {{dotgit}} checkout
+  {{dotgit}} fetch --all
+  {{dotgit}} reset --hard origin/master
   {{dotgit}} remote set-url origin git@github.com:iceice666/dotfiles.git
   ssh-keygen
 
@@ -97,4 +98,14 @@ hyprland:
   just deploy
 
 
+# niri
+niri:
+  #!/usr/bin/env bash
+  {{bash_cfg}}
+
+  {{ensure}} pipewire pipewire-{alsa,jack,pulse} wireplumber noto-fonts-cjk \
+                 kitty fuzzel firefox swaylock mako \
+                 xdg-desktop-portal-gnome gnome-keyring gdm
+
+  {{aur_ensure}} ttf-cascadia-code-nerd niri
 
