@@ -96,6 +96,14 @@ output "DP-3" {
     //position x=1280 y=0
 }
 
+
+output "eDP-1" {
+
+    scale 1.0
+
+    transform "normal"
+}
+
 layout {
     // By default focus ring and border are rendered as a solid background rectangle
     // behind windows. That is, they will show up through semitransparent windows.

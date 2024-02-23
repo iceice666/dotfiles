@@ -6,4 +6,4 @@ export PATH="/home/iceice666/.pub-cache/bin:/home/iceice666/.cargo/bin:/home/ice
 
 export CHROME_EXECUTABLE="/usr/bin/google-chrome-stable"
 
-source $HOME/export-esp.sh
+[ -s $HOME/export-esp.sh ] && source $HOME/export-esp.sh

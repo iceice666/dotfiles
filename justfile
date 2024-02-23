@@ -19,10 +19,8 @@ deploy:
   {{ensure}} lazygit exa zsh openssh btop ripgrep bat
 
 
-  # zsh + zplug + starship
+  # zsh + starship
   chsh -s /usr/bin/zsh
-  curl -sL --proto-redir -all,https \
-  https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   curl -sS https://starship.rs/install.sh | sh
 
 

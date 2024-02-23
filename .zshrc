@@ -1,6 +1,24 @@
-# cd to $HOME
-cd $HOME
+# Start of Znap settings
 
+# Download Znap, if it's not there yet.
+[[ -r $HOME/znap/znap/znap.zsh ]] ||
+    git clone --depth 1 -- \
+        https://github.com/marlonrichert/zsh-snap.git $HOME/znap/znap
+
+source ~/znap/znap/znap.zsh  # Start Znap
+
+znap source marlonrichert/zsh-autocomplete
+znap source marlonrichert/zsh-edit
+
+znap source zsh-users/zsh-syntax-highlighting
+znap source hlissner/zsh-autopair
+znap source djui/alias-tips
+znap source ael-code/zsh-colored-man-pages
+znap source Freed-Wu/zsh-command-not-found
+
+znap source ohmyzsh/ohmyzsh plugins/{git,sudo,extract}
+
+# End of Znap settings
 
 # Start of custom funciton
 
@@ -103,7 +121,7 @@ alias pm='paru'
 alias pms='paru -S'
 alias pmr='paru -R'
 alias pmu='paru -Syu'
-alias pmq='paru -Q'
+alias pmq='paru -Q | rg'
 
 
 alias self='neofetch | lolcat'
@@ -136,40 +154,6 @@ bindkey "\e\e[D" backward-word
 bindkey "\e[Z" reverse-menu-complete # Shift+Tab
 # End of custom keybind
 
-# The following lines were added by compinstall
-zstyle :compinstall filename '/home/iceice666/.zshrc'
-
-autoload -Uz compinit
-compinit
-# End of lines added by compinstall
-
-# Start of zplug settings
-export ZSH_LS_DISABLE_GIT=false
-
-source ~/.zplug/init.zsh
-
-zplug "zsh-users/zsh-completions"
-zplug "zsh-users/zsh-history-substring-search"
-zplug "zsh-users/zsh-autosuggestions"
-zplug "zdharma/fast-syntax-highlighting"
-zplug "hlissner/zsh-autopair"
-zplug "djui/alias-tips"
-zplug "ael-code/zsh-colored-man-pages"
-zplug "Freed-Wu/zsh-command-not-found"
-zplug "plugins/sudo", from:oh-my-zsh
-zplug "plugins/extract", from:oh-my-zsh
-
-
-if ! zplug check --verbose; then
-  printf "Install? [y/N]: "
-  if read -q; then
-    echo; zplug install
-  fi
-fi
-
-zplug load
-# End of zplug settings
-
 
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -188,4 +172,7 @@ esac
 # pnpm end
 
 # Generated for envman. Do not edit.
+
+
+clear
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
