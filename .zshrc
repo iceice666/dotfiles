@@ -39,6 +39,9 @@ printcat()
   echo "Paradise is no longer paradise if there is no cat."
 }
 
+printdog(){
+  echo "no dog"
+}
 mcd  ()
 {
   mkdir -p "$1"
@@ -139,19 +142,19 @@ alias dotlg='lazygit --git-dir=$HOME/.dotfiles.git --work-tree=$HOME '
 
 # custom keybind
 # bindkey -v # vi mode
-bindkey "\e[1~" beginning-of-line # Home
-bindkey "\e[4~" end-of-line # End
-bindkey "\e[5~" beginning-of-history # PageUp
-bindkey "\e[6~" end-of-history # PageDown
-bindkey "\e[2~" quoted-insert # Ins
-bindkey "\e[3~" delete-char # Del
-bindkey "\e[5C" forward-word
-bindkey "\eOc" emacs-forward-word
-bindkey "\e[5D" backward-word
-bindkey "\eOd" emacs-backward-word
-bindkey "\e\e[C" forward-word
-bindkey "\e\e[D" backward-word
-bindkey "\e[Z" reverse-menu-complete # Shift+Tab
+# bindkey "\e[1~" beginning-of-line # Home
+# bindkey "\e[4~" end-of-line # End
+# bindkey "\e[5~" beginning-of-history # PageUp
+# bindkey "\e[6~" end-of-history # PageDown
+# bindkey "\e[2~" quoted-insert # Ins
+# bindkey "\e[3~" delete-char # Del
+# bindkey "\e[5C" forward-word
+# bindkey "\eOc" emacs-forward-word
+# bindkey "\e[5D" backward-word
+# bindkey "\eOd" emacs-backward-word
+# bindkey "\e\e[C" forward-word
+# bindkey "\e\e[D" backward-word
+# bindkey "\e[Z" reverse-menu-complete # Shift+Tab
 # End of custom keybind
 
 
@@ -159,9 +162,7 @@ export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-
 eval "$(starship init zsh)"
-
 
 # pnpm
 export PNPM_HOME="/home/iceice666/.local/share/pnpm"
@@ -172,7 +173,6 @@ esac
 # pnpm end
 
 # Generated for envman. Do not edit.
-
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
 clear
-[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
