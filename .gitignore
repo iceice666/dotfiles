@@ -12,4 +12,4 @@
 !README.md
 !justfile
 !.config/kitty
-!.config/starship.toml
+!.config/fish
