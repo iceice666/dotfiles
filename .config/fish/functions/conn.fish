@@ -13,10 +13,10 @@ function conn
   set -l counter 0
   while test $counter -lt 10 
     nmcli device wifi rescan
-    nmcli device wifi connect "$argv[0]" > /dev/null 2>&1
+    nmcli device wifi connect "$argv[1]" > /dev/null 2>&1
 
     if test $status -eq 0
-      echo "Connect to wifi $argv[0]"
+      echo "Connect to wifi $argv[1]"
       return 0
     end
 
@@ -24,7 +24,7 @@ function conn
     sleep 1
   end
 
-  echo "Cannot connect to wifi $argv[0] now."
+  echo "Cannot connect to wifi $argv[1] now."
   return 1
 
 end
