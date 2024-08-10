@@ -12,3 +12,5 @@
 	directory = /opt/flutter
 [pull]
 	rebase = true
+[color]
+	ui = auto
