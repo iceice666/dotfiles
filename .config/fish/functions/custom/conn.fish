@@ -1,12 +1,12 @@
 function conn --description "Connect wifi with nmcli"
 
-  if test (count $argv) -lt 1
-    echo "Missing wifi SSID."
+  if not type -q nmcli
+    echo "Command 'nmcli' is missing"
     return 1
   end
 
-  if not type -q nmcli
-    echo "Command 'nmcli' is missing"
+  if test (count $argv) -lt 1
+    echo "Missing wifi SSID."
     return 1
   end
 

@@ -1,5 +1,5 @@
 set -U EDITOR nvim
-set -U PROJECT_PATHS ~/project
+set -gx PROJECT_PATHS ~/project
 set -a fish_function_path $HOME/.config/fish/functions/custom
 
 if status is-interactive
