@@ -26,3 +26,7 @@ Public
 project
 .CFUserTextEncoding
 .wakatime.cfg
+.config/jgit
+.config/github-copilot
+.config/zed
+.config/raycast/extensions
