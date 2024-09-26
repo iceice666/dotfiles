@@ -1,0 +1,8 @@
+:: launcher : notify "Switch to launcher mode" "Yabai" | borders active_color=0xffff00fd4 
+
+cmd + ctrl - l ; launcher
+launcher < escape ; default
+
+launcher < k : open -na /Applications/kitty.app/Contents/MacOS/kitty --args -d ~
+launcher < f : /Applications/Firefox.app/Contents/MacOS/firefox --new-window
+launcher < n : neovide &

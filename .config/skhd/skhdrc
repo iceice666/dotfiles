@@ -1,0 +1,10 @@
+# define default layer
+:: default : notify "Switch to default mode" "Yabai" | borders active_color=0xffe1e3e4 
+
+.load "app"
+.load "yabai"
+
+# restart services
+ctrl + alt + cmd - f12 : notify "try reload services" "Yabai";\
+       skhd --restart-service ;\
+       yabai --restart-service
