@@ -19,7 +19,6 @@
   # Related Discussion: https://discourse.nixos.org/t/darwin-again/29331
   environment.systemPackages = with pkgs; [
     git
-    nixd
   ];
 
   # To make this work, homebrew need to be installed manually, see https://brew.sh
@@ -30,7 +29,8 @@
     enable = true;
 
     onActivation = {
-      autoUpdate = false;
+      autoUpdate = true;
+      upgrade = true;
       # 'zap': uninstalls all formulae(and related files) not listed here.
       cleanup = "zap";
     };
@@ -45,15 +45,21 @@
       "pipx"
       "lazygit"
       "just"
+
     ];
 
     # `brew install --cask`
     # Feel free to add your favorite apps here.
     casks = [
-      "zed"
+      "slack"
       "discord"
+
       "firefox"
+      "zed"
+
       "snipaste"
+      "stats"
+
     ];
   };
 }
