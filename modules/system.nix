@@ -1,13 +1,12 @@
-{ pkgs, ... }:
-
-  ###################################################################################
-  #
-  #  macOS's System configuration
-  #
-  #  All the configuration options are documented here:
-  #    https://daiderd.com/nix-darwin/manual/index.html#sec-options
-  #
-  ###################################################################################
+{pkgs, ...}:
+###################################################################################
+#
+#  macOS's System configuration
+#
+#  All the configuration options are documented here:
+#    https://daiderd.com/nix-darwin/manual/index.html#sec-options
+#
+###################################################################################
 {
   system = {
     stateVersion = 5;
@@ -19,42 +18,42 @@
     '';
 
     defaults = {
-      menuExtraClock.Show24Hour = true;  # show 24 hour clock
+      menuExtraClock.Show24Hour = true; # show 24 hour clock
 
       # customize dock
       dock = {
         autohide = true;
-        show-recents = false;  # disable recent apps
+        show-recents = false; # disable recent apps
       };
 
       # customize trackpad
-            trackpad = {
-              # tap - 轻触触摸板, click - 点击触摸板
-              Clicking = true;  # enable tap to click(轻触触摸板相当于点击)
-              TrackpadRightClick = true;  # enable two finger right click
-              TrackpadThreeFingerDrag = true;  # enable three finger drag
-            };
+      trackpad = {
+        # tap - 轻触触摸板, click - 点击触摸板
+        Clicking = true; # enable tap to click(轻触触摸板相当于点击)
+        TrackpadRightClick = true; # enable two finger right click
+        TrackpadThreeFingerDrag = true; # enable three finger drag
+      };
 
-    # Customize settings that not supported by nix-darwin directly
-          # see the source code of this project to get more undocumented options:
-          #    https://github.com/rgcr/m-cli
-          #
-          # All custom entries can be found by running `defaults read` command.
-          # or `defaults read xxx` to read a specific domain.
-          CustomUserPreferences = {
-            "com.apple.desktopservices" = {
-                      # Avoid creating .DS_Store files on network or USB volumes
-                      DSDontWriteNetworkStores = true;
-                      DSDontWriteUSBStores = true;
-                    };
+      # Customize settings that not supported by nix-darwin directly
+      # see the source code of this project to get more undocumented options:
+      #    https://github.com/rgcr/m-cli
+      #
+      # All custom entries can be found by running `defaults read` command.
+      # or `defaults read xxx` to read a specific domain.
+      CustomUserPreferences = {
+        "com.apple.desktopservices" = {
+          # Avoid creating .DS_Store files on network or USB volumes
+          DSDontWriteNetworkStores = true;
+          DSDontWriteUSBStores = true;
+        };
 
-                    "com.apple.screensaver" = {
-                              # Require password immediately after sleep or screen saver begins
-                              askForPassword = 1;
-                              askForPasswordDelay = 0;
-                            };
-          };
-  };
+        "com.apple.screensaver" = {
+          # Require password immediately after sleep or screen saver begins
+          askForPassword = 1;
+          askForPasswordDelay = 0;
+        };
+      };
+    };
   };
 
   # Add ability to used TouchID for sudo authentication
@@ -63,6 +62,4 @@
   # Create /etc/zshrc that loads the nix-darwin environment.
   # this is required if you want to use darwin's default shell - zsh
   programs.zsh.enable = true;
-
-
 }

@@ -15,32 +15,30 @@
 
   programs.eza = {
     enable = true;
-    enableZshIntegration = true;
     icons = "auto";
-
   };
 
   programs.zed-editor = {
-      enable = true;
+    enable = true;
 
-      extensions = [
-        "nix"
-      ];
+    extensions = [
+      "nix"
+    ];
 
-      userSettings = {
-        languages = {
-          Nix = {
-            language_servers = [
-              "nil"
-              "!nixd"
-            ];
-            formatter = {
-              external = {
-                command = "nixfmt";
-              };
+    userSettings = {
+      languages = {
+        Nix = {
+          language_servers = [
+            "nil"
+            "!nixd"
+          ];
+          formatter = {
+            external = {
+              command = "nixfmt";
             };
           };
         };
       };
     };
+  };
 }

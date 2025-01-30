@@ -1,5 +1,4 @@
-{ pkgs, ...}: {
-
+{pkgs, ...}: {
   ##########################################################################
   #
   #  Install all apps and packages here.
@@ -45,7 +44,6 @@
       "pipx"
       "lazygit"
       "just"
-
     ];
 
     # `brew install --cask`
@@ -59,7 +57,6 @@
 
       "snipaste"
       "stats"
-
     ];
   };
 }
