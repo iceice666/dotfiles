@@ -53,7 +53,6 @@
       "discord"
 
       "firefox"
-      "zed"
 
       "snipaste"
       "stats"
