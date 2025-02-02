@@ -1,4 +1,5 @@
-# Start of Znap settings
+
+## Setting up zsh plugins
 
 # Download Znap, if it's not there yet.
 [[ -r $HOME/znap/znap/znap.zsh ]] ||
@@ -18,9 +19,6 @@ znap source Freed-Wu/zsh-command-not-found
 
 znap source ohmyzsh/ohmyzsh plugins/{git,sudo,extract}
 
-# End of Znap settings
-
-# Start of custom funciton
 
 printcat()
 {
@@ -68,4 +66,20 @@ lazygit()
   fi
 }
 
-# End of custom funciton
+urlencode()
+{
+    if [ -z "$1" ]; then
+        python3 -c 'import sys, urllib.parse as ul; print(ul.quote_plus(sys.stdin.read().strip()))'
+    else
+        python3 -c "import urllib.parse as ul; print(ul.quote_plus(\"'$1'\"))"
+    fi
+}
+
+urldecode()
+{
+    if [ -z "$1" ]; then
+        python3 -c 'import sys, urllib.parse as ul; print(ul.unquote_plus(sys.stdin.read().strip()))'
+    else
+        python3 -c "import urllib.parse as ul; print(ul.unquote_plus(\"'$1'\"))"
+    fi
+}
