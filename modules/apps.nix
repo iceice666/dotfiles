@@ -55,6 +55,7 @@
       "firefox"
 
       "snipaste"
+      "jordanbaird-ice"
       "stats"
     ];
   };
