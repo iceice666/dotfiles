@@ -10,14 +10,10 @@
     ijq
     fzf
 
-    glow
+    eza
   ];
 
   programs = {
-    eza = {
-      enable = true;
-      icons = "always";
-      enableZshIntegration = true;
-    };
+
   };
 }

@@ -10,10 +10,10 @@
 
   home.shellAliases = {
     ".." = "cd ..";
-    home = "cd $$HOME";
+    home = "cd $HOME";
     l = "eza -almhF --time-style iso -s type --git-ignore";
     ll = "eza -almhF --time-style iso -s type";
-    lt = "exa -almhF --time-style iso -s type --git-ignore --tree -L 3 -I .git";
+    lt = "eza -almhF --time-style iso -s type --git-ignore --tree -L 3 -I .git";
     lg = "lazygit";
   };
 }
