@@ -61,8 +61,6 @@
       # others
       "firefox"
       "orbstack"
-
-
     ];
   };
 }
