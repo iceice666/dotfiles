@@ -9,8 +9,8 @@
       "docker-compose"
     ];
 
-
     userSettings = {
+      autosave = "on_focus_change";
       languages = {
         Nix = {
           language_servers = [
