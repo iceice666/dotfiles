@@ -1,7 +1,6 @@
 {...}: {
   # Managing package which doesn't included in home-manager on MacOS with homebrew
 
-
   homebrew = {
     enable = true;
 
