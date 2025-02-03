@@ -36,7 +36,7 @@
       modules = [
         ./modules/nix-core.nix
         ./modules/system.nix
-        ./modules/apps.nix
+        ./modules/homebrew.nix
         ./modules/host-users.nix
 
         # home manager
