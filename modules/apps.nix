@@ -49,14 +49,20 @@
     # `brew install --cask`
     # Feel free to add your favorite apps here.
     casks = [
+      # chatting
       "slack"
       "discord"
 
-      "firefox"
-
+      # small tools, utilities
       "snipaste"
       "jordanbaird-ice"
       "stats"
+
+      # others
+      "firefox"
+      "orbstack"
+
+
     ];
   };
 }
