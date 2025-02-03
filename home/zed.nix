@@ -4,7 +4,11 @@
 
     extensions = [
       "nix"
+      "ocaml"
+      "dockerfile"
+      "docker-compose"
     ];
+
 
     userSettings = {
       languages = {
