@@ -1,8 +1,8 @@
 {username, ...}: {
   # import sub modules
   imports = [
-    ./shell.nix
-    ./core.nix
+    ./zsh.nix
+    ./apps.nix
     ./git.nix
     ./starship.nix
     ./zed.nix
