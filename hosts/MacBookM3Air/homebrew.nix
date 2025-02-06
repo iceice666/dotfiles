@@ -35,7 +35,6 @@
       "stats"
 
       # others
-      "firefox"
       "orbstack"
       "obs"
     ];
