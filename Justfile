@@ -1,45 +1,45 @@
-
 hostname := `hostname -s`
+
 
 # List all the just commands
 default:
-  @just --list
+  @just --choose
 
-############################################################################
 #
-#  Darwin related commands
+# For deploy
 #
-############################################################################
 
-[group('desktop')]
+[macos]
 deploy:
-  nix build .#darwinConfigurations.{{hostname}}.system \
-    --extra-experimental-features 'nix-command flakes'
-
+  nix build .#darwinConfigurations.{{hostname}}.system
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}}
 
-[group('desktop')]
+[macos]
 deploy-debug:
-  nix build .#darwinConfigurations.{{hostname}}.system --show-trace --verbose \
-    --extra-experimental-features 'nix-command flakes'
-
+  nix build .#darwinConfigurations.{{hostname}}.system --show-trace --verbose
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}} --show-trace --verbose
 
-############################################################################
+[linux]
+deploy:
+    @echo "Not supported yet!"
+
+[linux]
+deploy-debug:
+    @echo "Not supported yet!"
+
 #
 #  nix related commands
 #
-############################################################################
 
 # Update all the flake inputs
 [group('nix')]
-upd:
+update:
   nix flake update
 
 # Update specific input
 # Usage: just upd-pkg nixpkgs
 [group('nix')]
-upd-pkg input:
+update-pkg input:
   nix flake update {{input}}
 
 # List all generations of the system profile
