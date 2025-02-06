@@ -38,6 +38,13 @@
     #   signByDefault = true;
     # };
 
+    ignores =[
+"**/.idea/"
+"**/.vscode/settings.json"
+"**/.direnv/"
+"**/.DS_Store"
+    ];
+
     delta = {
       enable = true;
       options = {
