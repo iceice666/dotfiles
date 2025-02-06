@@ -30,13 +30,14 @@
     ...
   }: {
     darwinConfigurations."MacBookM3Air" = let
+      hostname = "MacBookM3Air";
       username = "iceice666";
       useremail = "iceice666@outlook.com";
       system = "aarch64-darwin";
       homeDirectory = "/Users/${username}";
 
       specialArgs = {
-        inherit username useremail system homeDirectory;
+        inherit hostname username useremail system homeDirectory ;
       };
     in
       darwin.lib.darwinSystem {
