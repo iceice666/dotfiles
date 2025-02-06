@@ -8,13 +8,15 @@
     unzip
     p7zip
 
+    ### utils
     ripgrep # grep replacemnet
     jq # JSON parser
-    ijq # interactive jq
     fzf # fuzzy finder
-
+    bat # A cat replacement comes with pager
     eza # ls replacement
 
+    ### TUI
+    ijq # interactive jq
     lazygit # A git TUI
   ];
 }
