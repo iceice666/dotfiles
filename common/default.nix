@@ -1,4 +1,6 @@
-{...}:{
-imports = [./nix-core.nix
-  ./users.nix];
+{...}: {
+  imports = [
+    ./nix-core.nix
+    ./users.nix
+  ];
 }
