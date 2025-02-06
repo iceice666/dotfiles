@@ -21,39 +21,40 @@
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
-
   };
 
-  outputs = inputs @{
-    self,
+  outputs = {
     nixpkgs,
     darwin,
-    home
-  }:
-     {
-       darwinConfigurations."MacBookM3Air" = let
-         username = "iceice666";
-         useremail = "iceice666@outlook.com";
-         system = "aarch64-darwin";
-         homeDirectory = "/Users/${username}";
+    home,
+    ...
+  }: {
+    darwinConfigurations."MacBookM3Air" = let
+      username = "iceice666";
+      useremail = "iceice666@outlook.com";
+      system = "aarch64-darwin";
+      homeDirectory = "/Users/${username}";
 
-         specialArgs = {
-          inherit username useremail system homeDirectory;
-         };
-       in darwin.lib.darwinSystem {
-         inherit system specialArgs;
+      specialArgs = {
+        inherit username useremail system homeDirectory;
+      };
+    in
+      darwin.lib.darwinSystem {
+        inherit system specialArgs;
 
-         modules = [
-           home.darwinModules.home-manager
-                   {
-                     home-manager.useGlobalPkgs = true;
-                     home-manager.useUserPackages = true;
-                     home-manager.extraSpecialArgs = specialArgs;
-                     home-manager.users.${username} = import ./home;
-                   }
-         ];
-
-       };
-       formatter."aarch64-darwin" = nixpkgs.legacyPackages."aarch64-darwin".alejandra;
-     };
+        modules = [
+          ./modules/nix-core.nix
+          ./modules/users.nix
+          ./hosts/MacBookM3Air/mod.nix
+          home.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = specialArgs;
+            home-manager.users.${username} = import ./home;
+          }
+        ];
+      };
+    formatter."aarch64-darwin" = nixpkgs.legacyPackages."aarch64-darwin".alejandra;
+  };
 }
