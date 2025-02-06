@@ -10,9 +10,6 @@
     darwin.url = "github:lnl7/nix-darwin";
     home.url = "github:nix-community/home-manager";
 
-    ### language support
-    rust-overlay.url = "github:oxalica/rust-overlay";
-
     ### other
     # upgrade with
     #   nix flake lock --update-input nixpkgs-firefox-darwin
@@ -20,7 +17,6 @@
 
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home.inputs.nixpkgs.follows = "nixpkgs";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs @ {
@@ -44,8 +40,7 @@
         inherit system specialArgs;
 
         modules = [
-          ./modules/nix-core.nix
-          ./modules/users.nix
+          ./common/default.nix
           ./hosts/MacBookM3Air/default.nix
           home.darwinModules.home-manager
           {
