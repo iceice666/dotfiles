@@ -1,6 +1,9 @@
 {pkgs, ...}: {
   programs.firefox = {
     enable = true;
-    package = pkgs.firefox-bin;
+    package =
+          if pkgs.stdenv.isDarwin
+          then pkgs.firefox-bin
+          else pkgs.firefox;
   };
 }
