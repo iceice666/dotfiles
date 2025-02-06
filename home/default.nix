@@ -10,6 +10,7 @@
     ./git.nix
     ./starship.nix
     ./zed.nix
+    ./firefox.nix
   ];
 
   # Home Manager needs a bit of information about you and the
