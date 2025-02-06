@@ -11,5 +11,9 @@
     fzf
 
     eza
+
+    lazygit
+
+    obs-studio
   ];
 }

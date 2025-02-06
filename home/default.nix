@@ -1,4 +1,8 @@
-{username, homeDirectory, ...}: {
+{
+  username,
+  homeDirectory,
+  ...
+}: {
   # import sub modules
   imports = [
     ./zsh.nix

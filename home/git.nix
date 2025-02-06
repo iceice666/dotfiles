@@ -38,11 +38,11 @@
     #   signByDefault = true;
     # };
 
-    ignores =[
-"**/.idea/"
-"**/.vscode/settings.json"
-"**/.direnv/"
-"**/.DS_Store"
+    ignores = [
+      "**/.idea/"
+      "**/.vscode/settings.json"
+      "**/.direnv/"
+      "**/.DS_Store"
     ];
 
     delta = {
