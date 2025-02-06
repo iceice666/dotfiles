@@ -10,12 +10,12 @@ default:
 #
 
 [macos]
-deploy:
+deploy: && fmt
   nix build .#darwinConfigurations.{{hostname}}.system
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}}
 
 [macos]
-deploy-debug:
+deploy-debug: && fmt
   nix build .#darwinConfigurations.{{hostname}}.system --show-trace --verbose
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}} --show-trace --verbose
 
