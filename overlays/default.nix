@@ -1,14 +1,14 @@
-{lib, pkgs, ...} : {
-  imports = [
-    ./common.nix
-
-    (lib.mkIf (pkgs.stdenv.isDarwin) [
-      ./darwin.nix
-    ])
-
-    (lib.mkIf (pkgs.stdenv.isLinux)[
-      ./linux.nix
-    ])
-
-  ];
+{
+  lib,
+  pkgs,
+  inputs,
+  ...
+}: {
+  nixpkgs.overlays = [
+     # Always applied
+      inputs.rust-overlay.overlays.default
+    ] ++ lib.optionals pkgs.stdenv.isDarwin [
+       # Applied on Darwin
+      inputs.nixpkgs-firefox-darwin.overlay
+    ];
 }

@@ -23,7 +23,7 @@
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {
+  outputs = inputs @ {
     nixpkgs,
     darwin,
     home,
@@ -37,7 +37,7 @@
       homeDirectory = "/Users/${username}";
 
       specialArgs = {
-        inherit hostname username useremail system homeDirectory ;
+        inherit inputs hostname username useremail system homeDirectory;
       };
     in
       darwin.lib.darwinSystem {
@@ -46,7 +46,7 @@
         modules = [
           ./modules/nix-core.nix
           ./modules/users.nix
-          ./hosts/MacBookM3Air/mod.nix
+          ./hosts/MacBookM3Air/default.nix
           home.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
