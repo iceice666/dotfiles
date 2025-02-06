@@ -25,25 +25,6 @@ mcd  ()
   cd "$1" || return
 }
 
-
-git()
-{
-  if [[ $PWD = $HOME ]]; then
-    command git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME "$@"
-  else
-    command git "$@"
-  fi
-}
-
-lazygit()
-{
-  if [[ $PWD = $HOME ]]; then
-    command lazygit --git-dir=$HOME/.dotfiles.git --work-tree=$HOME "$@"
-  else
-    command lazygit "$@"
-  fi
-}
-
 urlencode()
 {
     if [ -z "$1" ]; then
