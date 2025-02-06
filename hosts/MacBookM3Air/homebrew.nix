@@ -37,6 +37,7 @@
       # others
       "firefox"
       "orbstack"
+      "obs"
     ];
   };
 }
