@@ -14,9 +14,9 @@
       buffer_font_family = "CaskaydiaCove Nerd Font";
       buffer_font_size = 16;
       ui_font_size = 16;
-      terminal={
-          line_height= "standard";
-        };
+      terminal = {
+        line_height = "standard";
+      };
 
       # Indentation, rainbow indentation
       indent_guides = {
