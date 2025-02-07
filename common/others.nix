@@ -8,5 +8,6 @@
     llt = "eza -almhF --time-style iso -s type --tree -L 3 ";
     lg = "lazygit";
     cat = "bat";
+    nano = "nvim";
   };
 }
