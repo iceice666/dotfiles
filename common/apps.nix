@@ -25,7 +25,6 @@
   ];
 
   fonts.packages = with pkgs-unstable; [
-    ### others
-    nerd-fonts.caskaydia-cove # font
+    nerd-fonts.caskaydia-cove
   ];
 }
