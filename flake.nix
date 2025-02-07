@@ -3,16 +3,17 @@
 
   inputs = {
     ### packages
-    master.url = "github:nixos/nixpkgs/master";
-    stable.url = "github:nixos/nixpkgs/release-24.11";
-    unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    # use 24.11 as default
+    nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
     darwin = {
-      url = "github:lnl7/nix-darwin";
+      url = "github:lnl7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -27,7 +28,8 @@
     nixpkgs,
     darwin,
     home,
-    unstable,
+    nixpkgs-unstable,
+    nixpkgs-master,
     ...
   }: {
     darwinConfigurations."MacBookM3Air" = let
@@ -39,8 +41,10 @@
 
       specialArgs = {
         inherit inputs hostname username useremail system homeDirectory;
-        pkgs-unstable = import unstable {
+
+        pkgs-unstable = import nixpkgs-unstable {
           inherit system;
+          allowUnfree = true;
         };
       };
     in
