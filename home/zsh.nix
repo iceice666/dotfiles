@@ -15,7 +15,7 @@
         {name = "ael-code/zsh-colored-man-pages";}
         {name = "Freed-Wu/zsh-command-not-found";}
         {
-          name = "plugins/{sudo,extract}";
+          name = "plugins/{sudo, extract, direnv}";
           tags = ["from:oh-my-zsh"];
         }
       ];
