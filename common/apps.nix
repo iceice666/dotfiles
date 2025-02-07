@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  pkgs-unstable,
+  ...
+}: {
   environment.systemPackages = with pkgs; [
     devenv
 
@@ -18,5 +22,10 @@
     ### TUI
     ijq # interactive jq
     lazygit # A git TUI
+  ];
+
+  fonts.packages = with pkgs-unstable; [
+    ### others
+    nerd-fonts.caskaydia-cove # font
   ];
 }

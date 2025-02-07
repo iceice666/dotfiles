@@ -23,6 +23,7 @@
     nixpkgs,
     darwin,
     home,
+    unstable,
     ...
   }: {
     darwinConfigurations."MacBookM3Air" = let
@@ -34,6 +35,9 @@
 
       specialArgs = {
         inherit inputs hostname username useremail system homeDirectory;
+        pkgs-unstable = import unstable {
+          inherit system;
+        };
       };
     in
       darwin.lib.darwinSystem {
