@@ -5,6 +5,7 @@
 }: {
   environment.systemPackages = with pkgs; [
     devenv
+    nushell
 
     ### (de)compress tools
     zip

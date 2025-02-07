@@ -5,7 +5,7 @@
 }: {
   # import sub modules
   imports = [
-    ./zsh.nix
+    ./nushell.nix
     ./app.nix
     ./git.nix
     ./starship.nix
