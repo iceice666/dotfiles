@@ -9,4 +9,7 @@
     enable = true;
     defaultEditor = true;
   };
+
+  programs.info.enable = false;
+  programs.bash.enable = false;
 }
