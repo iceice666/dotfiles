@@ -7,16 +7,20 @@
     stable.url = "github:nixos/nixpkgs/release-24.11";
     unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
-    darwin.url = "github:lnl7/nix-darwin";
-    home.url = "github:nix-community/home-manager";
+    darwin = {
+      url = "github:lnl7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    home = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     ### other
+
     # upgrade with
     #   nix flake lock --update-input nixpkgs-firefox-darwin
     nixpkgs-firefox-darwin.url = "github:bandithedoge/nixpkgs-firefox-darwin";
-
-    darwin.inputs.nixpkgs.follows = "nixpkgs";
-    home.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs @ {
