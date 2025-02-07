@@ -2,6 +2,7 @@ hostname := `hostname -s`
 
 
 # List all the just commands
+[private]
 default:
   @just --choose
 
