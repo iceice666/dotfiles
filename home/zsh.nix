@@ -9,7 +9,6 @@
       plugins = [
         {name = "marlonrichert/zsh-edit";}
         {name = "marlonrichert/zsh-autocomplete";}
-        {name = "zsh-users/zsh-syntax-highlighting";}
         {name = "hlissner/zsh-autopair";}
         {name = "djui/alias-tips";}
         {name = "ael-code/zsh-colored-man-pages";}
