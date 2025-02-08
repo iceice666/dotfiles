@@ -26,7 +26,7 @@ in {
       ui_font_size = 16;
       terminal = {
         line_height = {
-          custom = 1.20;
+          custom = 1.18;
         };
       };
 
