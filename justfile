@@ -13,11 +13,19 @@ default:
 [macos]
 deploy: && fmt
   nix build .#darwinConfigurations.{{hostname}}.system
+  @echo ""
+  @echo "Successfully eval config"
+  @echo "Switching..."
+  @echo ""
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}}
 
 [macos]
 deploy-debug: && fmt
   nix build .#darwinConfigurations.{{hostname}}.system --show-trace --verbose
+  @echo ""
+  @echo "Successfully eval config"
+  @echo "Switching..."
+  @echo ""
   ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}} --show-trace --verbose
 
 [linux]
