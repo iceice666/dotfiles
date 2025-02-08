@@ -16,3 +16,5 @@ $env.path = [
     /usr/sbin
     /sbin
 ]
+
+$env.EDITOR = "nvim"

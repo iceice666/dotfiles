@@ -29,3 +29,33 @@ def mcd [path: string] {
     mkdir path
     cd path
 }
+
+#
+# Aliases
+#
+
+alias l = eza -almhF --time-style iso -s type --git-ignore
+alias ll = eza -almhF --time-style iso -s type
+alias lt = eza -almhF --time-style iso -s type --git-ignore --tree -L 3 -I .git
+alias llt = eza -almhF --time-style iso -s type --tree -L 3
+alias lg = lazygit
+alias cat = bat
+alias nano = nvim
+alias vim = nvim
+
+#
+# Custom completions
+#
+
+def get_just_recipes [] {
+    just --dump-format json --dump
+    | jq '.recipes.[].name'
+    | lines
+    | each { |e| $e | str trim --char '"' }
+}
+
+export extern "just" [
+    recipes: string@"get_just_recipes"
+] {
+    just $recipes
+}
