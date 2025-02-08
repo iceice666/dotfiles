@@ -47,20 +47,3 @@ alias lg = lazygit
 alias cat = bat
 alias nano = nvim
 alias vim = nvim
-
-#
-# Custom completions
-#
-
-def get_just_recipes [] {
-    ^just --dump-format json --dump
-    | jq '.recipes | to_entries[] | select(.value.attributes | (. == [] or (type == "array" and all(. != "private")))) | .key'
-    | lines
-    | each { |e| $e | str trim --char '"' }
-}
-
-export extern "just" [
-    recipes: string@"get_just_recipes"
-] {
-    just $recipes
-}
