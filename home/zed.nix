@@ -1,4 +1,13 @@
-{...}: {
+{pkgs, ...}: let
+  themeRepo = pkgs.fetchFromGitHub {
+    owner = "iceice666";
+    repo = "SoftColors";
+    rev = "master";
+    sha256 = "sha256-3ThNMY3nrCxnkGjnb58dyGbSb9cag8J0r0TbNIRWPL8=";
+  };
+in {
+  home.file.".config/zed/themes/soft_color.json".source = "${themeRepo}/themes/zed.jsonc";
+
   programs.zed-editor = {
     enable = true;
 
@@ -19,6 +28,12 @@
         line_height = {
           custom = 1.20;
         };
+      };
+
+      theme = {
+        mode = "system";
+        light = "Rose Quartz";
+        dark = "Rosé Pine";
       };
 
       # Indentation, rainbow indentation
