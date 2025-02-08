@@ -11,6 +11,10 @@ default:
 #
 
 [macos]
+dirty-deploy: && deploy
+    git add .
+
+[macos]
 deploy: && fmt
     nix build .#darwinConfigurations.{{hostname}}.system
     @echo ""
@@ -27,6 +31,10 @@ deploy-debug: && fmt
     @echo "Switching..."
     @echo ""
     ./result/sw/bin/darwin-rebuild switch --flake .#{{hostname}} --show-trace --verbose
+
+[linux]
+dirty-deploy:
+    @echo "Not supported yet!"
 
 [linux]
 deploy:
