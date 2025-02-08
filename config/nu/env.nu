@@ -18,3 +18,4 @@ $env.path = [
 ]
 
 $env.EDITOR = "nvim"
+$env.ProjectDir = ~/Project

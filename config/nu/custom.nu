@@ -30,6 +30,10 @@ def mcd [path: string] {
     cd path
 }
 
+# Jump into directory under project dir
+def pj [project: string]{
+    cd $env.ProjectDir/project
+}
 #
 # Aliases
 #
