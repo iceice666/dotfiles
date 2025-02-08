@@ -7,6 +7,7 @@
       "ocaml"
       "dockerfile"
       "docker-compose"
+      "nu"
     ];
 
     userSettings = {
@@ -15,7 +16,9 @@
       buffer_font_size = 16;
       ui_font_size = 16;
       terminal = {
-        line_height = "standard";
+        line_height = {
+          custom = 1.20;
+        };
       };
 
       # Indentation, rainbow indentation
