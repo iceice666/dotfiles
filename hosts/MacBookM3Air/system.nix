@@ -63,6 +63,8 @@
         KeyRepeat = 2;
         # Choose whether the default file save location is on disk or iCloud
         NSDocumentSaveNewDocumentsToCloud = false;
+        # Sets the level of font smoothing (sub-pixel font rendering).
+        AppleFontSmoothing = 0;
       };
 
       finder = {
