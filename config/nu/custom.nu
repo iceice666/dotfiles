@@ -34,6 +34,7 @@ def mcd [path: string] {
 def pj [project: string]{
     cd $env.ProjectDir/project
 }
+
 #
 # Aliases
 #
@@ -53,7 +54,7 @@ alias vim = nvim
 
 def get_just_recipes [] {
     just --dump-format json --dump
-    | jq '.recipes.[].name'
+    | jq '.recipes | to_entries[] | select(.value.attributes | (. == [] or (type == "array" and all(. != "private")))) | .key'
     | lines
     | each { |e| $e | str trim --char '"' }
 }
