@@ -21,15 +21,27 @@ in {
 
     userSettings = {
       autosave = "on_focus_change";
-      buffer_font_family = "CaskaydiaCove Nerd Font";
+
+      # Buffer font
+      buffer_font_family = "Cascadia Code NF";
+      buffer_font_features = {
+        ss19 = true;
+      };
       buffer_font_size = 16;
-      ui_font_size = 16;
+      buffer_font_weight = 400;
+
+      # UI font
+      ui_font_family = ".SystemUIFont";
+      ui_font_size = 18;
+
+      # Terminal
       terminal = {
         line_height = {
           custom = 1.18;
         };
       };
 
+      # theme
       theme = {
         mode = "system";
         light = "Rose Quartz";

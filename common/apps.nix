@@ -27,6 +27,6 @@
   ];
 
   fonts.packages = with pkgs-unstable; [
-    nerd-fonts.caskaydia-cove
+    cascadia-code
   ];
 }
