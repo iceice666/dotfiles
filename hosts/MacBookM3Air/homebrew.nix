@@ -26,7 +26,6 @@
     casks = [
       # chatting
       "slack"
-      "discord"
 
       # small tools, utilities
       "snipaste"
