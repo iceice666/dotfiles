@@ -1,12 +1,18 @@
-let home = $env.home
-
-use std/util "path add"
-
-path add $"($home)/.orbstack/bin"
-path add $"($home)/.cargo/bin"
-path add $"($home)/bin"
-path add $"($home)/.local/bin"
-
-path add /nix/var/nix/profiles/default/bin
-path add /opt/homebrew/bin
-path add /run/current-system/sw/bin/
+$env.path = [
+    ~/.cargo/bin
+    ~/.local/bin
+    ~/bin
+    ~/.orbstack/bin
+    ~/.nix-profile/bin
+    /etc/profiles/per-user/iceice666/bin
+    /run/current-system/sw/bin/
+    /opt/homebrew/sbin
+    /opt/homebrew/bin
+    /nix/var/nix/profiles/default/bin
+    /usr/local/bin
+    /usr/bin
+    /bin
+    /usr/local/sbin
+    /usr/sbin
+    /sbin
+]
