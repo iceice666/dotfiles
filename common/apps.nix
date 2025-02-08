@@ -4,7 +4,9 @@
   ...
 }: {
   environment.systemPackages = with pkgs; [
+    # Development environment management
     devenv
+    # The best shell
     nushell
 
     ### (de)compress tools
