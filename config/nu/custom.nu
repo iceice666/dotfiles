@@ -31,8 +31,8 @@ def mcd [path: string] {
 }
 
 # Jump into directory under project dir
-def pj [project: string]{
-    cd $env.ProjectDir/project
+def pj [project: string] {
+    cd $"($env.ProjectDir)/($project)"
 }
 
 #
@@ -53,7 +53,7 @@ alias vim = nvim
 #
 
 def get_just_recipes [] {
-    just --dump-format json --dump
+    ^just --dump-format json --dump
     | jq '.recipes | to_entries[] | select(.value.attributes | (. == [] or (type == "array" and all(. != "private")))) | .key'
     | lines
     | each { |e| $e | str trim --char '"' }
