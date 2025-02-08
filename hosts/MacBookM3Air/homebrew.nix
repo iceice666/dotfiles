@@ -19,7 +19,6 @@
     # Feel free to add your favorite apps here.
     brews = [
       "pipx"
-      "just"
     ];
 
     # `brew install --cask`

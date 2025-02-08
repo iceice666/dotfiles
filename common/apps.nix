@@ -18,6 +18,7 @@
     fzf # fuzzy finder
     bat # A cat replacement comes with pager
     eza # ls replacement
+    just # script runner like gnu make
 
     ### TUI
     ijq # interactive jq
