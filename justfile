@@ -93,3 +93,9 @@ fmt:
 [group('nix')]
 gcroot:
     ls -al /nix/var/nix/gcroots/auto/
+
+
+# Calculate the sha256 hash of given url
+[group('nix')]
+hash url:
+    nix hash to-sri --type sha256 $(nix-prefetch-url {{url}})
