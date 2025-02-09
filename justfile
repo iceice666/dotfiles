@@ -11,7 +11,7 @@ default:
 #
 
 [macos]
-dirty-deploy: && deploy
+dirty-deploy: && deploy-debug
     git add .
 
 [macos]
