@@ -1,7 +1,7 @@
 {
+  pkgs ? import <nixpkgs> {},
   config,
   lib,
-  stdenvNoCC,
   ...
 }:
 with lib; let
@@ -21,12 +21,12 @@ with lib; let
   };
 
   # Package definition for kanata-bin
-  kanata-pkg = stdenvNoCC.mkDerivation {
+  kanata-pkg = pkgs.stdenvNoCC.mkDerivation {
     pname = "kanata-bin";
     inherit version;
 
     src =
-      if stdenvNoCC.hostPlatform.system == "x86_64-darwin"
+      if pkgs.stdenvNoCC.hostPlatform.system == "x86_64-darwin"
       then x86_64-darwin
       else aarch64-darwin;
 
