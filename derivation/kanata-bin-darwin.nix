@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  stdenvNoCC,
   ...
 }:
 with lib; let
@@ -21,12 +21,12 @@ with lib; let
   };
 
   # Package definition for kanata-bin
-  kanata-pkg = pkgs.stdenv.mkDerivation {
+  kanata-pkg = stdenvNoCC.mkDerivation {
     pname = "kanata-bin";
     inherit version;
 
     src =
-      if pkgs.stdenv.hostPlatform.system == "x86_64-darwin"
+      if stdenvNoCC.hostPlatform.system == "x86_64-darwin"
       then x86_64-darwin
       else aarch64-darwin;
 
