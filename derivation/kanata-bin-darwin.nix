@@ -36,6 +36,18 @@ with lib; let
       mkdir -p $out/bin
       cp $src $out/bin/kanata
       chmod +x $out/bin/kanata
+
+      runHook postInstall
+    '';
+
+    postInstall = ''
+      KARABINER_PATH="/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
+
+      if [ ! -f "$KARABINER_PATH" ]; then
+        echo "Warning: Karabiner VirtualHIDDevice is not installed!"
+        echo "Please install and activate it to use kanata."
+        echo "Check https://github.com/jtroo/kanata/releases/tag/v${version} for more information."
+      fi
     '';
 
     meta = {
