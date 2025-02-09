@@ -5,17 +5,19 @@
   ...
 }:
 with lib; let
-  version = "1.7.0";
+  KarabinerDriverPath = "/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager";
+
+  version = "1.8.0";
 
   # Package source for kanata-bin
   aarch64-darwin = builtins.fetchurl {
     url = "https://github.com/jtroo/kanata/releases/download/v${version}/kanata_macos_arm64";
-    sha256 = "sha256-g62A+6+Mew7A4XBSoCygswV8u+r4oCOmFUHxUUqTa0M=";
+    sha256 = "sha256-oHIpb1Hvi3gJUYnYJWXGs1QPoHerdWCA1+bHjG4QAQ4=";
   };
 
   x86_64-darwin = builtins.fetchurl {
     url = "https://github.com/jtroo/kanata/releases/download/v${version}/kanata_macos_x86_64";
-    sha256 = "sha256-4/DZnlEqhMXK4fY+ccB+zb/2bcibBTq6CrtPne4MrcA=";
+    sha256 = "sha256-5p7KR0TWmCnDjKR0r2zT7q6Au8S6iNr5xgtitqBBwZ8=";
   };
 
   # Package definition for kanata-bin
@@ -41,12 +43,12 @@ with lib; let
     '';
 
     postInstall = ''
-      KARABINER_PATH="/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
-
-      if [ ! -f "$KARABINER_PATH" ]; then
+      if [ ! -f ${KarabinerDriverPath} ]; then
+        echo ""
         echo "Warning: Karabiner VirtualHIDDevice is not installed!"
         echo "Please install and activate it to use kanata."
         echo "Check https://github.com/jtroo/kanata/releases/tag/v${version} for more information."
+        echo ""
       fi
     '';
 
