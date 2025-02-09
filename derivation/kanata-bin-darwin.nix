@@ -70,6 +70,12 @@ in {
       description = "kanata-bin package to use";
     };
 
+    setupLaunchd = mkOption {
+      default = false;
+      type = types.bool;
+      description = "Setup launchd agent for kanata";
+    };
+
     configFile = {
       text = mkOption {
         type = types.nullOr types.lines;
@@ -92,15 +98,30 @@ in {
   };
   config = let
     cfg = config.programs.kanata-bin-darwin;
-    cfgDir = "Library/Application Support/kanata";
   in
     mkIf cfg.enable {
-      home.packages = [cfg.package];
-      home.file."${cfgDir}/kanata.kbd".text =
+      environment.systemPackages = [cfg.package];
+
+      # path is /etc/kanata/kanata.kbd
+      environment.etc."kanata/kanata.kbd".text =
         if cfg.configFile.text != null
         then cfg.configFile.text
         else if cfg.configFile.source != null
         then builtins.readFile cfg.configFile.source
         else "";
+
+      launchd.agents.kanata = mkIf cfg.setupLaunchd {
+        serviceConfig = {
+          Label = "kanata";
+          RunAtLoad = true;
+          KeepAlive = true;
+          UserName = "root";
+          Program = "/run/current-system/sw/bin/kanata";
+          ProgramArguments = [
+            "-c"
+            "/etc/kanata/kanata.kbd"
+          ];
+        };
+      };
     };
 }
