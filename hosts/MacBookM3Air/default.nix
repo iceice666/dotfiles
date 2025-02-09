@@ -4,5 +4,6 @@
     ./system.nix
     ./overlays.nix
     ./launchd.nix
+    ./apps.nix
   ];
 }

@@ -12,7 +12,6 @@
     ./zed.nix
     ./firefox.nix
     ./direnv.nix
-    ./kanata.nix
   ];
 
   # Home Manager needs a bit of information about you and the
