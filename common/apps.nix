@@ -26,6 +26,7 @@
     ### TUI
     ijq # interactive jq
     lazygit # A git TUI
+    btop # A top replacement
   ];
 
   fonts.packages = with pkgs-unstable; [
