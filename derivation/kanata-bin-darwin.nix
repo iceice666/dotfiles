@@ -5,8 +5,6 @@
   ...
 }:
 with lib; let
-  KarabinerDriverPath = "/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager";
-
   version = "1.8.0";
 
   # Package source for kanata-bin
@@ -43,11 +41,11 @@ with lib; let
     '';
 
     postInstall = ''
-      if [ ! -f ${KarabinerDriverPath} ]; then
+      if [ $(defaults read /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/Info.plist CFBundleVersion) != "5.0.0" ]; then
         echo ""
-        echo "Warning: Karabiner VirtualHIDDevice is not installed!"
-        echo "Please install and activate it to use kanata."
-        echo "Check https://github.com/jtroo/kanata/releases/tag/v${version} for more information."
+        echo "Warning:"
+        echo "The Karabiner VirtualHIDDevice seems not installed or installed a wrong version."
+        echo "Please check https://github.com/jtroo/kanata/releases/tag/v${version} for more information."
         echo ""
       fi
     '';
@@ -110,17 +108,14 @@ in {
         then builtins.readFile cfg.configFile.source
         else "";
 
-      launchd.agents.kanata = mkIf cfg.setupLaunchd {
+      launchd.daemons.kanata = mkIf cfg.setupLaunchd {
         serviceConfig = {
-          Label = "kanata";
+          Label = "com.github.jtroo-kanata";
           RunAtLoad = true;
           KeepAlive = true;
           UserName = "root";
           Program = "/run/current-system/sw/bin/kanata";
-          ProgramArguments = [
-            "-c"
-            "/etc/kanata/kanata.kbd"
-          ];
+          WorkingDirectory = "/etc/kanata";
         };
       };
     };
