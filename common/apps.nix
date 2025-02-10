@@ -9,6 +9,8 @@
     # The best shell
     nushell
 
+    ffmpeg
+
     ### (de)compress tools
     zip
     xz
