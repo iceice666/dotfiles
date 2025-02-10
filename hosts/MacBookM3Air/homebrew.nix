@@ -35,6 +35,9 @@
       # others
       "orbstack"
       "obs"
+
+      # key remapping
+      "karabiner-elements"
     ];
   };
 }
