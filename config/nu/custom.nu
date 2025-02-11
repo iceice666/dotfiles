@@ -26,13 +26,19 @@ def "print dog" [] {
 
 # Make dir then change directory into it
 def mcd [path: string] {
-    mkdir path
-    cd path
+    mkdir $"($path)"
+    cd $"($path)"
 }
 
 # Jump into directory under project dir
 def pj [project: string] {
     cd $"($env.ProjectDir)/($project)"
+}
+
+# Init the development environment
+def devenv-init [lang: string] {
+    let url = $"https://flakehub.com/f/the-nix-way/dev-templates/*#($lang)"
+    nix flake init --template "$url"
 }
 
 #
