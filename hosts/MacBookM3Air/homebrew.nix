@@ -38,6 +38,8 @@
 
       # key remapping
       "karabiner-elements"
+
+      "krita"
     ];
   };
 }
