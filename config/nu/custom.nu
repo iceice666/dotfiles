@@ -38,7 +38,7 @@ def pj [project: string] {
 # Init the development environment
 def devenv-init [lang: string] {
     let url = $"https://flakehub.com/f/the-nix-way/dev-templates/*#($lang)"
-    nix flake init --template "$url"
+    nix flake init --template $"($url)"
 }
 
 #
