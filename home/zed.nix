@@ -117,6 +117,25 @@ in {
       vim_mode = true;
 
       # LSP
+      lsp = {
+        rust-analyzer = {
+          initialization_options = {
+            checkOnSave = {
+              command = "clippy";
+            };
+            inlayHints = {
+              implicitDrops = {enable = true;};
+              maxLength = null;
+              closureReturnTypeHints = {enable = "always";};
+              lifetimeElisionHints = {
+                enable = "skip_trivial";
+                useParameterNames = true;
+              };
+            };
+          };
+        };
+      };
+
       languages = {
         Nix = {
           language_servers = [
