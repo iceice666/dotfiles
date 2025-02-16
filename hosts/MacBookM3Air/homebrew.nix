@@ -40,6 +40,7 @@
       "karabiner-elements"
 
       "krita"
+      "rustrover"
     ];
   };
 }
