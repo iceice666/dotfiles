@@ -17,6 +17,7 @@ in {
       "dockerfile"
       "docker-compose"
       "nu"
+      "wakatime"
     ];
 
     userSettings = {
@@ -55,13 +56,13 @@ in {
       };
 
       # Use Copilot Chat AI as default
-      assistant = {
-        default_model = {
-          provider = "copilot_chat";
-          model = "claude-3-5-sonnet";
-        };
-        version = 2;
-      };
+      # assistant = {
+      #   default_model = {
+      #     provider = "copilot_chat";
+      #     model = "claude-3-5-sonnet";
+      #   };
+      #   version = 2;
+      # };
 
       inlay_hints = {
         enabled = true;
