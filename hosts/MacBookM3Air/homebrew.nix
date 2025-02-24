@@ -19,6 +19,7 @@
     # Feel free to add your favorite apps here.
     brews = [
       "pipx"
+      "scrcpy"
     ];
 
     # `brew install --cask`
@@ -41,6 +42,9 @@
 
       "krita"
       "rustrover"
+      "android-platform-tools"
+      "bitwarden"
+      "yubico-authenticator"
     ];
   };
 }
