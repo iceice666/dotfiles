@@ -1,4 +1,5 @@
 hostname := `hostname -s`
+alias d := dirty-deploy
 
 
 # List all the just commands
