@@ -41,8 +41,8 @@
       "karabiner-elements"
 
       "krita"
-      "rustrover"
       "android-platform-tools"
+      "jetbrains-toolbox"
       "bitwarden"
       "yubico-authenticator"
     ];
