@@ -44,6 +44,7 @@
       "jetbrains-toolbox"
       "bitwarden"
       "yubico-authenticator"
+      "pearcleaner"
     ];
   };
 }
