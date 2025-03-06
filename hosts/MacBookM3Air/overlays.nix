@@ -1,1 +1,1 @@
-{inputs, ...}: {nixpkgs.overlays = [inputs.nixpkgs-firefox-darwin.overlay];}
+{inputs, ...}: {nixpkgs.overlays = [];}

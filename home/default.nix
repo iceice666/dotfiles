@@ -10,7 +10,6 @@
     ./git.nix
     ./starship.nix
     ./zed.nix
-    ./firefox.nix
     ./direnv.nix
     ./link.nix
   ];
