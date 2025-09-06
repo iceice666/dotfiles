@@ -1,0 +1,2 @@
+# Completions for pj function - shows available projects
+complete -c pj -f -a "(test -d \$ProjectDir && find \$ProjectDir -maxdepth 1 -type d ! -name '.*' -exec basename {} \; 2>/dev/null | tail -n +2)"
