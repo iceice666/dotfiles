@@ -1,0 +1,51 @@
+# Fish Shell Configuration
+
+
+# Environment Variables
+set -gx EDITOR nvim
+set -gx ProjectDir ~/Project
+set -gx BUN_INSTALL $HOME/.bun
+set -gx HOSTNAME (hostname)
+{{ if eq .chezmoi.os "darwin" }}
+set -gx DOTNET_ROOT /usr/local/share/dotnet/
+set -gx JAVA_HOME /Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home/
+set -gx ANDROID_NDK_HOME /opt/homebrew/share/android-ndk
+set -gx ANDROID_HOME /Users/iceice666/Library/Android/sdk
+set -gx ANDROID_SDK_ROOT $ANDROID_HOME
+{{ end }}
+
+# PATH setup
+fish_add_path -p ~/go/bin
+fish_add_path -p $BUN_INSTALL/bin
+fish_add_path -p ~/.cargo/bin
+fish_add_path -p $HOME/.local/bin
+fish_add_path -p ~/bin
+{{ if eq .chezmoi.os "darwin" }}
+fish_add_path -p $ANDROID_HOME/cmdline-tools/latest/bin
+fish_add_path -p $ANDROID_HOME/platform-tools
+fish_add_path -p /opt/X11/bin
+fish_add_path -p ~/.orbstack/bin
+fish_add_path -p /opt/homebrew/sbin
+fish_add_path -p /opt/homebrew/bin
+{{ end }}
+
+
+# Better directory colors for ls/eza
+if type -q dircolors
+    eval (dircolors -c ~/.dircolors 2>/dev/null; or dircolors -c)
+end
+
+# Enable vi key bindings (uncomment if preferred)
+# fish_vi_key_bindings
+
+# Set up fzf integration if available
+if type -q fzf
+    set -gx FZF_DEFAULT_OPTS '--height 40% --layout=reverse --border'
+end
+
+
+# Shell appearance and behavior
+set -g fish_greeting ""  # Disable greeting message
+
+# Initialize starship prompt
+starship init fish | source

@@ -1,0 +1,7 @@
+alias l="eza -almhF --time-style iso -s type --git-ignore"
+alias ll="eza -almhF --time-style iso -s type"
+alias lt="eza -almhF --time-style iso -s type --git-ignore --tree -L 2 -I .git"
+alias llt="eza -almhF --time-style iso -s type --tree -L 2"
+alias lg="lazygit"
+alias cat="bat"
+alias plz="sudo"
