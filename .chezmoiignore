@@ -1,2 +1,3 @@
-fish_variables
-.DS_Store
+~/.config/fish/fish_variables
+**/.DS_Store
+**/__pycache__
