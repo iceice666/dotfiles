@@ -1,0 +1,6 @@
+[Unit]
+Description=Kepp track media player activity
+
+[Service]
+type=oneshot
+ExecStart=/usr/bin/playerctld daemon
