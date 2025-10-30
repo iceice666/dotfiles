@@ -271,8 +271,6 @@ layout {
 spawn-at-startup "fcitx5"
 spawn-at-startup "ghostty"
 spawn-at-startup "qutebrowser"
-
-// To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 spawn-sh-at-startup "wl-paste --watch clipvault store"
 
 environment {
@@ -288,7 +286,8 @@ hotkey-overlay {
 }
 
 switch-events {
-    lid-close { spawn "hyprlock"; }
+    lid-close { spawn "bash" "-c" "hyprlock; playerctl pause"; }
+    lid-open { spawn "bash" "-c" "wpctl set-mute @DEFAULT_AUDIO_SINK@ 1"; } // Force mute the output when open the laptop
 }
 
 // Uncomment this line to ask the clients to omit their client-side decorations if possible.
