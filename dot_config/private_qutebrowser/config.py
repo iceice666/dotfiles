@@ -4,6 +4,24 @@ from urllib.request import urlopen
 
 config.load_autoconfig()
 
+
+# Setup bindings
+config.unbind("ga")
+config.unbind("th")
+config.unbind("tl")
+
+config.bind("te", "config-cycle tabs.show multiple never")
+config.bind("td", "config-cycle colors.webpage.darkmode.enabled true false")
+config.bind("h", "history -t")
+config.bind("gh", "back -t")
+config.bind("gl", "forawrd -t")
+config.bind("<Ctrl-Shift-p>", "spawn --userscript qute-bitwarden")
+## Watch videos with mpv
+config.bind(",m", "spawn --userscript umpv {url}")
+config.bind(",M", "hint links spawn --userscript umpv {hint-url}")
+config.bind(";M", "hint --rapid links spawn --userscript umpv {hint-url}")
+
+
 c.auto_save.session = True
 c.content.autoplay = False
 
@@ -79,20 +97,6 @@ c.colors.webpage.darkmode.policy.images = "never"
 c.colors.webpage.darkmode.algorithm = "lightness-cielab"
 config.set("colors.webpage.darkmode.enabled", False, "file://*")
 
-
-# Setup bindings
-config.unbind("ga")
-config.unbind("th")
-config.unbind("tl")
-
-config.bind("te", "config-cycle tabs.show multiple never")
-config.bind("td", "config-cycle colors.webpage.darkmode.enabled true false")
-config.bind("h", "history -t")
-config.bind("gh", "back -t")
-config.bind("gl", "forawrd -t")
-## Watch videos with mpv
-config.bind(";m", "hint links spawn mpv {hint-url}")
-config.bind("gm", "spawn mpv {url}")
 
 # Setup theme
 if not os.path.exists(config.configdir / "theme.py"):
