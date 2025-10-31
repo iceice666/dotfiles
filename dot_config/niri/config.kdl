@@ -271,6 +271,7 @@ layout {
 spawn-at-startup "fcitx5"
 spawn-at-startup "ghostty"
 spawn-at-startup "qutebrowser"
+spawn-at-startup "equibop"
 spawn-sh-at-startup "wl-paste --watch clipvault store"
 
 environment {
