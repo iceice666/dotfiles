@@ -15,7 +15,7 @@ config.bind("td", "config-cycle colors.webpage.darkmode.enabled true false")
 config.bind("h", "history -t")
 config.bind("gh", "back -t")
 config.bind("gl", "forawrd -t")
-config.bind("<Ctrl-Shift-p>", "spawn --userscript qute-bitwarden")
+config.bind("<Ctrl-Shift-p>", "spawn --userscript qute-bitwarden-fuzzel")
 ## Watch videos with mpv
 config.bind(",m", "spawn --userscript umpv {url}")
 config.bind(",M", "hint links spawn --userscript umpv {hint-url}")

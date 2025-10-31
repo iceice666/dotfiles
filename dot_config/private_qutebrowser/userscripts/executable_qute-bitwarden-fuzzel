@@ -250,6 +250,10 @@ def main(arguments):
         argument_parser.print_help()
         return ExitCodes.FAILURE
 
+    import pprint
+
+    pprint.pprint(arguments)
+
     extract_result = tldextract.extract(arguments.url)
 
     # Try to find candidates using targets in the following order: fully-qualified domain name (includes subdomains),
