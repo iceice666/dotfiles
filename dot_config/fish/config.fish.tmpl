@@ -6,9 +6,9 @@
 
 set -gx ProjectDir ~/Project
 set -gx BUN_INSTALL $HOME/.bun
+set -gx EDITOR nvim
 
 {{ if eq .chezmoi.os "darwin" }}
-set -gx EDITOR zed
 set -gx HOSTNAME (hostname)
 set -gx DOTNET_ROOT /usr/local/share/dotnet/
 set -gx JAVA_HOME /Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home/
@@ -18,9 +18,9 @@ set -gx ANDROID_SDK_ROOT $ANDROID_HOME
 set -gx HOMEBREW_NO_ENV_HINTS 1
 
 {{ else if eq .chezmoi.os "linux"}}
-set -gx EDITOR zeditor
-set -gx HOSTNAME (hostnamectl hostname)
 
+set -gx HOSTNAME (hostnamectl hostname)
+set -gx PNPM_HOME $HOME/.local/share/pnpm
 
 {{ end }}
 
@@ -33,6 +33,7 @@ fish_add_path -p $BUN_INSTALL/bin
 fish_add_path -p ~/.cargo/bin
 fish_add_path -p $HOME/.local/bin
 fish_add_path -p ~/bin
+fish_add_path -p $PNPM_HOME
 
 {{ if eq .chezmoi.os "darwin" }}
 fish_add_path -p $ANDROID_HOME/cmdline-tools/latest/bin
@@ -43,7 +44,6 @@ fish_add_path -p /opt/homebrew/sbin
 fish_add_path -p /opt/homebrew/bin
 
 {{ end }}
-
 
 # Better directory colors for ls/eza
 if type -q dircolors
