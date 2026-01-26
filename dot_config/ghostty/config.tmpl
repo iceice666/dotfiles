@@ -2,7 +2,9 @@
 font-size = 12
 
 # Window Configuration
+{{ if eq .chezmoi.os "linux"}}
 window-decoration = false
+{{ end }}
 window-padding-x = 12
 window-padding-y = 12
 background-opacity = 1.0
@@ -48,4 +50,6 @@ keybind = shift+enter=text:\n
 gtk-single-instance = true
 
 # Dank color generation
+{{ if eq .chezmoi.os "linux"}}
 config-file = ./config-dankcolors
+{{ end }}
