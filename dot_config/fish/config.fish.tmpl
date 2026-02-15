@@ -24,6 +24,7 @@ set -gx ANDROID_HOME /Users/iceice666/Library/Android/sdk
 set -gx ANDROID_SDK_ROOT $ANDROID_HOME
 set -gx ANDROID_NDK_HOME (ls -d $ANDROID_SDK_ROOT/ndk/*/ 2>/dev/null | sort -V | tail -n 1)
 set -gx HOMEBREW_NO_ENV_HINTS 1
+set -gx CHROME_EXECUTABLE /Applications/Helium.app/Contents/MacOS/Helium
 
 {{ else if eq .chezmoi.os "linux"}}
 
@@ -71,6 +72,12 @@ if type -q fzf
     set -gx FZF_DEFAULT_OPTS '--height 40% --layout=reverse --border'
 end
 
+# mise integration
+if status is-interactive
+  mise activate fish | source
+else
+  mise activate fish --shims | source
+end
 
 # Shell appearance and behavior
 set -g fish_greeting ""  # Disable greeting message
