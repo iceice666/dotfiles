@@ -1,7 +1,7 @@
 { pkgs, inputs, homeDirectory, lib, ... }:
 
 {
-  imports = [ ./fish ./packages.nix ./user.nix ];
+  imports = [ ./fish ./user.nix ];
 
   home.activation.cloneNotes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -d "${homeDirectory}/Notes/.git" ]; then

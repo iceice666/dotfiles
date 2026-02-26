@@ -1,6 +1,8 @@
 { pkgs, inputs, self, username, homeDirectory, ... }:
 
 {
+  imports = [ ../../../common/system];
+
   nix.settings.experimental-features = "nix-command flakes";
 
   programs.fish.enable = true;
@@ -17,7 +19,7 @@
   # Add ./hardware-configuration.nix when provisioning the actual server:
   # imports = [ ./hardware-configuration.nix ];
 
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
 
   # Adjust to the actual server architecture (x86_64-linux or aarch64-linux)
   nixpkgs.hostPlatform = "x86_64-linux";

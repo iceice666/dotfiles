@@ -1,7 +1,7 @@
 { pkgs, inputs, self, username, homeDirectory, ... }:
 
 {
-  imports = [ ./system-defaults.nix ];
+  imports = [ ./system-defaults.nix ../../../common/configuration];
 
   system.primaryUser = username;
 

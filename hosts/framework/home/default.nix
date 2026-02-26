@@ -1,9 +1,27 @@
-{ pkgs, username, homeDirectory, ... }:
+{ pkgs, lib, username, homeDirectory, ... }:
 
+let
+  # Single source of truth — same list used by environment.systemPackages on other hosts.
+  # On framework (standalone home-manager) these must be installed via XBPS instead.
+  unmanaged = map lib.getName (import ../../../common/configuration/packages.nix { inherit pkgs; });
+in
 {
   imports = [
     ../../../common/home
     ../../../shared/home/zed.nix
+  ];
+
+  warnings = [
+    ''
+      [framework] The following tools from common/configuration/packages.nix are NOT managed
+      by home-manager because this host uses a standalone home-manager configuration and
+      environment.systemPackages is unavailable here:
+
+        ${lib.concatStringsSep ", " unmanaged}
+
+      Install them via XBPS, e.g.:
+        sudo xbps-install -S ${lib.concatStringsSep " " unmanaged}
+    ''
   ];
 
   home.packages = with pkgs; [
