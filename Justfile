@@ -8,7 +8,7 @@ default:
 
 # Rebuild M3Air system
 m3air-rebuild:
-    sudo darwin-rebuild switch --flake .#M3Air
+    sudo darwin-rebuild switch --flake .#iceice666@m3air
 
 # Install Homebrew (first-time setup)
 m3air-homebrew:
@@ -28,7 +28,7 @@ framework-rebuild:
 
 # Rebuild NixOS server
 server-rebuild:
-    sudo nixos-rebuild switch --flake .#server
+    sudo nixos-rebuild switch --flake .#homolab
 
 # Generate hardware config on the server (run on the server itself)
 server-gen-hardware:

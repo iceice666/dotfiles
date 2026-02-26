@@ -42,7 +42,7 @@
     };
 
     # Build with: sudo nixos-rebuild switch --flake .#server
-    nixosConfigurations."server" = nixpkgs.lib.nixosSystem {
+    nixosConfigurations."homolab" = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = {
         inherit inputs self;
