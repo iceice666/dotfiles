@@ -3,11 +3,15 @@
 {
   imports = [ ./fish ./user.nix ];
 
-  home.activation.cloneNotes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ ! -d "${homeDirectory}/Notes/.git" ]; then
-      ${pkgs.git}/bin/git clone ssh://git@justaslime.dev/justaslime/dotfiles.git "${homeDirectory}/Notes"
-    fi
-  '';
+  # home.activation.cloneNotes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  #   if [ ! -d "${homeDirectory}/Notes/.git" ]; then
+  #     ${pkgs.git}/bin/git clone ssh://git@justaslime.dev/justaslime/dotfiles.git "${homeDirectory}/Notes"
+  #   fi
+  # '';
+
+  home.packages = with pkgs; [
+    zulu21
+  ];
 
   programs.git = {
     enable = true;

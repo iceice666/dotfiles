@@ -14,8 +14,10 @@
     };
     brews = [];
     casks = [
-      "helium-browser" # not in nixpkgs
-      "termius"        # nixpkgs has Linux-only build
+      "helium-browser"          # not in nixpkgs
+      "termius"                 # nixpkgs has Linux-only build
+      "android-commandlinetools" # sdkmanager, avdmanager, etc.
+      "android-ndk"             # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
     ];
   };
 
