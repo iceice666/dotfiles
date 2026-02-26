@@ -1,0 +1,22 @@
+{ ... }:
+
+{
+  programs.fish.functions.print_cat = {
+    description = "Summon a cute cat";
+    body = ''
+      echo 'Here is your cat.'
+      echo ""
+      echo '            A____A    '
+      echo '           /*    *\   '
+      echo '          {   _  _ }  '
+      echo '          A\` >  v /< '
+      echo '        / !!!!! !!}   '
+      echo '       / ! \!!!!! |   '
+      echo '  ____{   ) |  |  |   '
+      echo ' / ___{ !!c |  |  |   '
+      echo '{ (___ \__\__@@_)@_)  '
+      echo ' \____)               '
+      echo 'Paradise is no longer paradise if there is no cat.'
+    '';
+  };
+}
