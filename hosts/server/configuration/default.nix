@@ -11,10 +11,10 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../../user/packages.nix ../../user/default.nix ./home.nix ]; };
+    users.${username} = { imports = [ ../../../common/home/packages.nix ../../../common/home ../home ]; };
   };
 
-  # Add hosts/server/hardware-configuration.nix when provisioning the actual server:
+  # Add ./hardware-configuration.nix when provisioning the actual server:
   # imports = [ ./hardware-configuration.nix ];
 
   system.stateVersion = "25.05";

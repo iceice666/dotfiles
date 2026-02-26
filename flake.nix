@@ -17,7 +17,7 @@
 
   outputs = inputs @ { self, nix-darwin, home-manager, nixpkgs, ... }:
   {
-    darwinConfigurations."M3Air" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."iceice666@m3air" = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       specialArgs = {
         inherit inputs self;
@@ -26,7 +26,7 @@
       };
       modules = [
         home-manager.darwinModules.home-manager
-        ./hosts/m3air/configuration.nix
+        ./hosts/m3air/configuration
       ];
     };
 
@@ -38,7 +38,7 @@
         username = "iceice666";
         homeDirectory = "/home/iceice666";
       };
-      modules = [ ./hosts/framework/configuration.nix ];
+      modules = [ ./hosts/framework/home ];
     };
 
     # Build with: sudo nixos-rebuild switch --flake .#server
@@ -51,7 +51,7 @@
       };
       modules = [
         home-manager.nixosModules.home-manager
-        ./hosts/server/configuration.nix
+        ./hosts/server/configuration
       ];
     };
 

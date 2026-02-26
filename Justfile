@@ -32,7 +32,7 @@ server-rebuild:
 
 # Generate hardware config on the server (run on the server itself)
 server-gen-hardware:
-    sudo nixos-generate-config --show-hardware-config > hosts/server/hardware-configuration.nix
+    sudo nixos-generate-config --show-hardware-config > hosts/server/configuration/hardware-configuration.nix
 
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 

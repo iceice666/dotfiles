@@ -47,7 +47,7 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../../user/packages.nix ../../user/default.nix ../../user/desktop ./home.nix ]; };
+    users.${username} = { imports = [ ../../../common/home/packages.nix ../../../common/home ../../../common/home/desktop ../home ]; };
   };
 
   networking.computerName = "M3Air";
