@@ -4,6 +4,7 @@
   imports = [
     ../../../common/home
     ../../../shared/home/zed.nix
+    ../../../shared/home/opencode.nix
   ];
 
   home.packages = with pkgs; [
