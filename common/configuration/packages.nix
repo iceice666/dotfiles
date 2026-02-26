@@ -13,4 +13,10 @@
   fish
   just
   nixfmt
+  xz
+  zstd
+  unrar
+  p7zip
+  gnutar
+  ncompress
 ]
