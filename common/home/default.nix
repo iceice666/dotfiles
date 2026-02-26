@@ -16,7 +16,7 @@
   programs.git = {
     enable = true;
     settings = {
-      user.name  = "iceice666";
+      user.name  = "Brian Duan";
       user.email = "iceice666@outlook.com";
       init.defaultBranch = "main";
       pull.rebase = true;
