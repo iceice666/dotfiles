@@ -1,7 +1,10 @@
 { username, homeDirectory, ... }:
 
 {
-  imports = [ ../../../common/home/base.nix ];
+  imports = [
+    ../../../common/home
+    ../../../shared/home/zed.nix
+  ];
 
   home.stateVersion = "25.11";
 

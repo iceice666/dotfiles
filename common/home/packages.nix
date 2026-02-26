@@ -4,7 +4,6 @@
   home.packages = with pkgs; [
     fzf
     neovim
-    git
     ripgrep
     fd
     bat
@@ -17,6 +16,5 @@
     fish
     just
     nixfmt
-    devenv
   ];
 }

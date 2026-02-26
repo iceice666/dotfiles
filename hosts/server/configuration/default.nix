@@ -11,7 +11,7 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../../../common/home/packages.nix ../../../common/home ../home ]; };
+    users.${username} = { imports = [ ../home ]; };
   };
 
   # Add ./hardware-configuration.nix when provisioning the actual server:

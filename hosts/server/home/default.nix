@@ -1,7 +1,9 @@
 { username, homeDirectory, ... }:
 
 {
-  imports = [ ../../../common/home/base.nix ];
+  imports = [
+    ../../../common/home
+  ];
 
   home.stateVersion = "25.05";
 

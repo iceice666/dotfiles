@@ -1,10 +1,19 @@
-{ pkgs, inputs, username, homeDirectory, ... }:
+{ username, homeDirectory, ... }:
 
 {
   imports = [
-    ../../../common/home/packages.nix
     ../../../common/home
-    ../../../common/home/desktop
-    ./host.nix
+    ../../../shared/home/zed.nix
   ];
+
+  home.stateVersion = "25.11";
+
+  programs.fish.interactiveShellInit = ''
+    # Linux-specific environment variables
+    set -gx HOSTNAME (hostname)
+    set -gx PNPM_HOME $HOME/.local/share/pnpm
+
+    # Linux-specific PATH
+    fish_add_path -p $PNPM_HOME
+  '';
 }

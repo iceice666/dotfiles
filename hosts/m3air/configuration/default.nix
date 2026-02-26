@@ -16,7 +16,6 @@
     casks = [
       "helium-browser" # not in nixpkgs
       "termius"        # nixpkgs has Linux-only build
-      "equibop"        # nixpkgs has Linux-only build
     ];
   };
 
@@ -47,7 +46,7 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../../../common/home/packages.nix ../../../common/home ../../../common/home/desktop ../home ]; };
+    users.${username} = { imports = [ ../home ]; };
   };
 
   networking.computerName = "M3Air";

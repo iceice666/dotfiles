@@ -13,14 +13,24 @@ Nix configuration for three machines managed via [nix-darwin](https://github.com
 ## Structure
 
 ```
-hosts/
-  m3air/        # nix-darwin system config + macOS-specific home
-  framework/    # home-manager standalone config
-  server/       # NixOS system config + server home
-user/
-  default.nix   # shared: git, direnv, starship, fish
-  desktop.nix   # desktop-only packages (zed-editor); not used on server
-  fish/         # fish shell config and functions
+common/           # applied to every host
+  home/           # shared home-manager config (git, fish, starship, direnv, …)
+    fish/         # fish shell config and functions
+  configuration/  # shared system-level config
+
+shared/           # optional config shared across some (but not all) hosts
+  home/
+    zed.nix       # Zed editor config (desktop hosts only)
+
+hosts/            # per-machine config
+  m3air/
+    configuration/  # nix-darwin system config
+    home/           # macOS-specific home-manager config
+  framework/
+    home/           # home-manager standalone config
+  server/
+    configuration/  # NixOS system config (+ hardware-configuration.nix)
+    home/           # server-specific home-manager config
 ```
 
 ## Usage
@@ -33,9 +43,11 @@ just framework-rebuild  # home-manager switch
 just server-rebuild     # nixos-rebuild switch
 
 just update             # nix flake update
+just update-input input # update a single flake input
 just fmt                # format all Nix files with nixfmt
 just check              # nix flake check
 just gc                 # nix-collect-garbage -d
+just search query       # search nixpkgs across platforms
 ```
 
 ## First-time setup
@@ -66,10 +78,9 @@ On a fresh NixOS install, generate the hardware config first:
 
 ```sh
 just server-gen-hardware
-# Review hosts/server/hardware-configuration.nix, commit it, then:
+# Review hosts/server/configuration/hardware-configuration.nix, commit it, then:
 just server-rebuild
 ```
 
-> **Note:** `hosts/server/hardware-configuration.nix` is machine-specific and
-> must be generated on the actual server with `nixos-generate-config`. It is
-> not tracked in this repo. Add it to `.gitignore` or commit a per-server copy.
+> **Note:** `hosts/server/configuration/hardware-configuration.nix` is machine-specific and
+> must be generated on the actual server with `nixos-generate-config`. It is not tracked in this repo.
