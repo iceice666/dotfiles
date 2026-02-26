@@ -16,6 +16,11 @@
   };
 
   outputs = inputs @ { self, nix-darwin, home-manager, nixpkgs, ... }:
+  let
+    overlay = final: prev: {
+      equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+    };
+  in
   {
     darwinConfigurations."iceice666@m3air" = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
@@ -27,12 +32,13 @@
       modules = [
         home-manager.darwinModules.home-manager
         ./hosts/m3air/configuration
+        { nixpkgs.overlays = [ overlay ]; }
       ];
     };
 
     # Build with: home-manager switch --flake .#iceice666@framework
     homeConfigurations."iceice666@framework" = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      pkgs = nixpkgs.legacyPackages.x86_64-linux.extend overlay;
       extraSpecialArgs = {
         inherit inputs self;
         username = "iceice666";
@@ -52,6 +58,7 @@
       modules = [
         home-manager.nixosModules.home-manager
         ./hosts/server/configuration
+        { nixpkgs.overlays = [ overlay ]; }
       ];
     };
 

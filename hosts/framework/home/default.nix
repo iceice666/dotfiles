@@ -1,9 +1,13 @@
-{ username, homeDirectory, ... }:
+{ pkgs, username, homeDirectory, ... }:
 
 {
   imports = [
     ../../../common/home
     ../../../shared/home/zed.nix
+  ];
+
+  home.packages = with pkgs; [
+    equibop-bin
   ];
 
   home.stateVersion = "25.11";

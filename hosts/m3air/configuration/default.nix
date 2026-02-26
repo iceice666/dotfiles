@@ -25,9 +25,7 @@
   environment.systemPackages = with pkgs; [
     orbstack
     ghostty-bin
-    obsidian
     cloudflare-warp
-    pear-desktop
   ];
 
   # Necessary for using flakes on this system.
