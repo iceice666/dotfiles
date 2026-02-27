@@ -33,6 +33,7 @@
       "snipaste"
       "jordanbaird-ice"
       "karabiner-elements"
+      "zen-browser"
     ];
   };
 
