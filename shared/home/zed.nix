@@ -3,44 +3,49 @@
 {
   programs.zed-editor = {
     enable = true;
-    extraPackages = with pkgs; [ nil just ];
+    extraPackages = with pkgs; [ nil nixfmt ];
+
     userSettings = {
       project_panel.sort_mode = "directories_first";
       git_panel = {
         sort_by_path = true;
         tree_view = true;
       };
-      agent_servers.claude = {
-        default_model = "sonnet";
-        default_mode = "plan";
-      };
+
       show_edit_predictions = false;
       base_keymap = "Emacs";
+      vim_mode = true;
+
       icon_theme = {
         mode = "dark";
         light = "Material Icon Theme";
         dark = "Material Icon Theme";
       };
+
       collaboration_panel.dock = "right";
+
       agent = {
         default_profile = "minimal";
         use_modifier_to_send = true;
         play_sound_when_agent_done = true;
         always_allow_tool_actions = true;
-        default_model = {
-          provider = "copilot_chat";
-          model = "gpt-4.1";
-        };
       };
-      auto_install_extensions = {
-        nix = true;
-        ocaml = true;
-        dockerfile = true;
-        docker-compose = true;
-        toml = true;
-        haskell = true;
-      };
+
+      auto_install_extensions = builtins.listToAttrs (map (name: { inherit name; value = true; }) [
+        "nix"
+        "ocaml"
+        "dockerfile"
+        "docker-compose"
+        "toml"
+        "haskell"
+        "make"
+        "zig"
+        "rainbow-csv"
+        "vscode-dark-polished"
+      ]);
+
       autosave = "on_focus_change";
+
       buffer_font_family = "Cascadia Code NF";
       buffer_font_features.ss19 = true;
       buffer_font_size = 16;
@@ -48,20 +53,25 @@
       ui_font_family = ".SystemUIFont";
       ui_font_size = 18;
       terminal.line_height.custom = 1.18;
+
       theme = {
         mode = "dark";
         light = "Gruvbox Light";
         dark = "VSCode Dark Modern";
       };
+
       indent_guides = {
         enabled = true;
         coloring = "indent_aware";
       };
+
       inlay_hints.enabled = true;
+
       file_types = {
         Dockerfile = [ "Dockerfile" "Dockerfile.*" ];
         JSON = [ "json" "jsonc" "*.code-snippets" ];
       };
+
       file_scan_exclusions = [
         "**/.git"
         "**/.svn"
@@ -83,10 +93,12 @@
         "**/report"
         "**/node_modules"
       ];
+
       telemetry = {
         diagnostics = false;
         metrics = false;
       };
+
       edit_predictions = {
         provider = "zed";
         mode = "subtle";
@@ -99,7 +111,8 @@
           "**/secrets.yml"
         ];
       };
-      vim_mode = true;
+
+
       lsp = {
         hls.initialization_options.haskell.formattingProvider = "fourmolu";
         rust-analyzer.initialization_options = {
@@ -115,6 +128,7 @@
           };
         };
       };
+
       languages.Nix = {
         language_servers = [ "nil" "!nixd" ];
         formatter.external.command = "nixfmt .";

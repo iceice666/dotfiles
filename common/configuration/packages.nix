@@ -12,8 +12,6 @@
   lazydocker
   fish
   just
-  nil
-  nixfmt
   xz
   zstd
   unrar
