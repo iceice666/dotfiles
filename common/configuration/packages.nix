@@ -18,4 +18,6 @@
   p7zip
   gnutar
   ncompress
+  nil
+  nixfmt
 ]
