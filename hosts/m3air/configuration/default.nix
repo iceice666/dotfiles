@@ -32,6 +32,7 @@
       "stats"
       "snipaste"
       "jordanbaird-ice"
+      "karabiner-elements"
     ];
   };
 

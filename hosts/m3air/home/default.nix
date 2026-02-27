@@ -6,6 +6,7 @@
     ../../../shared/home/zed.nix
     ../../../shared/home/opencode.nix
     ./aerospace.nix
+    ./karabiner.nix
   ];
 
   home.packages = with pkgs; [
