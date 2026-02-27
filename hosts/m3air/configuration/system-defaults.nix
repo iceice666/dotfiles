@@ -1,6 +1,9 @@
 { ... }:
 
 {
+  # Spaces
+  system.defaults.spaces.spans-displays = true;
+
   # Dock
   system.defaults.dock = {
     autohide = true;
