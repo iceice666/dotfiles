@@ -11,8 +11,14 @@
         # JankyBorders has a built-in detection of already running process,
         # so it won't be run twice on AeroSpace restart
         "exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0"
+        "exec-and-forget aerospace-swipe"
       ];
-      start-at-login = true;
+
+      enable-normalization-flatten-containers = true;
+      enable-normalization-opposite-orientation-for-nested-containers = true;
+      automatically-unhide-macos-hidden-apps = true;
+
+      on-focused-monitor-changed = ["move-mouse monitor-lazy-center"];
 
       gaps = {
         inner.horizontal = 8;
@@ -56,8 +62,7 @@
         # Close focused window
         alt-shift-q = "close";
 
-        # Reload config
-        alt-shift-c = "reload-config";
+        alt-tab = "workspace-back-and-forth";
 
         # Workspace switching
         alt-1 = "workspace 1";
