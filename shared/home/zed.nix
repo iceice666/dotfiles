@@ -117,7 +117,7 @@
       };
       languages.Nix = {
         language_servers = [ "nil" "!nixd" ];
-        formatter.external.command = "just fmt";
+        formatter.external.command = "nixfmt .";
       };
     };
   };
