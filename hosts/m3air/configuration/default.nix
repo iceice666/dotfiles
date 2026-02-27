@@ -1,7 +1,17 @@
-{ pkgs, inputs, self, username, homeDirectory, ... }:
+{
+  pkgs,
+  inputs,
+  self,
+  username,
+  homeDirectory,
+  ...
+}:
 
 {
-  imports = [ ./system-defaults.nix ../../../common/configuration];
+  imports = [
+    ./system-defaults.nix
+    ../../../common/configuration
+  ];
 
   system.primaryUser = username;
 
@@ -12,12 +22,12 @@
       autoUpdate = true;
       cleanup = "zap";
     };
-    brews = [];
+    brews = [ ];
     casks = [
-      "helium-browser"          # not in nixpkgs
-      "termius"                 # nixpkgs has Linux-only build
+      "helium-browser" # not in nixpkgs
+      "termius" # nixpkgs has Linux-only build
       "android-commandlinetools" # sdkmanager, avdmanager, etc.
-      "android-ndk"             # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
+      "android-ndk" # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
       "cloudflare-warp"
       "stats"
       "snipaste"
@@ -31,6 +41,8 @@
   environment.systemPackages = with pkgs; [
     orbstack
     ghostty-bin
+    aerospace-swipe
+    jankyborders
   ];
 
   # Necessary for using flakes on this system.
@@ -48,8 +60,17 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../home ]; };
+    extraSpecialArgs = {
+      inherit
+        inputs
+        self
+        username
+        homeDirectory
+        ;
+    };
+    users.${username} = {
+      imports = [ ../home ];
+    };
   };
 
   networking.computerName = "M3Air";

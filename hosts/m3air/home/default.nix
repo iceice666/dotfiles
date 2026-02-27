@@ -5,12 +5,14 @@
     ../../../common/home
     ../../../shared/home/zed.nix
     ../../../shared/home/opencode.nix
+    ./aerospace.nix
   ];
 
   home.packages = with pkgs; [
     obsidian
     pear-desktop
     equibop-bin
+    aerospace-swipe
   ];
 
   home.stateVersion = "25.11";

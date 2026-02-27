@@ -19,6 +19,7 @@
   let
     overlay = final: prev: {
       equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+      aerospace-swipe = final.callPackage ./pkgs/aerospace-swipe { };
     };
   in
   {
