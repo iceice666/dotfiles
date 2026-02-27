@@ -28,7 +28,6 @@
         default_profile = "minimal";
         use_modifier_to_send = true;
         play_sound_when_agent_done = true;
-        always_allow_tool_actions = true;
       };
 
       auto_install_extensions = builtins.listToAttrs (map (name: { inherit name; value = true; }) [
