@@ -1,12 +1,19 @@
-{ pkgs, username, homeDirectory, ... }:
+{
+  pkgs,
+  username,
+  homeDirectory,
+  ...
+}:
 
 {
   imports = [
     ../../../common/home
     ../../../shared/home/zed.nix
     ../../../shared/home/opencode.nix
+    ../../../shared/home/cursor.nix
     ./aerospace.nix
     ./karabiner.nix
+    ./sketchybar.nix
   ];
 
   home.packages = with pkgs; [

@@ -9,6 +9,7 @@ in
   imports = [
     ../../../common/home
     ../../../shared/home/zed.nix
+    ../../../shared/home/cursor.nix
   ];
 
   warnings = [

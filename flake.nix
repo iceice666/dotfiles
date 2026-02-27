@@ -39,7 +39,11 @@
 
     # Build with: home-manager switch --flake .#iceice666@framework
     homeConfigurations."iceice666@framework" = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux.extend overlay;
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+        overlays = [ overlay ];
+      };
       extraSpecialArgs = {
         inherit inputs self;
         username = "iceice666";
