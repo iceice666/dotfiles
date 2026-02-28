@@ -15,22 +15,23 @@
         tree_view = true;
       };
 
-      show_edit_predictions = false;
       base_keymap = "Emacs";
       vim_mode = true;
 
+      theme = {
+        mode = "system";
+        light = "Gruvbox Light";
+        dark = "VSCode Dark Polished";
+      };
       icon_theme = {
         mode = "dark";
         light = "Material Icon Theme";
         dark = "Material Icon Theme";
       };
 
-      collaboration_panel.dock = "right";
-
       agent = {
         default_profile = "minimal";
         use_modifier_to_send = true;
-        play_sound_when_agent_done = true;
       };
 
       auto_install_extensions = builtins.listToAttrs (
@@ -50,6 +51,7 @@
             "zig"
             "rainbow-csv"
             "vscode-dark-polished"
+            "material-icon-theme"
           ]
       );
 
@@ -62,12 +64,6 @@
       ui_font_family = ".SystemUIFont";
       ui_font_size = 18;
       terminal.line_height.custom = 1.18;
-
-      theme = {
-        mode = "dark";
-        light = "Gruvbox Light";
-        dark = "VSCode Dark Modern";
-      };
 
       indent_guides = {
         enabled = true;
@@ -113,19 +109,6 @@
       telemetry = {
         diagnostics = false;
         metrics = false;
-      };
-
-      edit_predictions = {
-        provider = "zed";
-        mode = "subtle";
-        disabled_globs = [
-          "**/.env*"
-          "**/*.pem"
-          "**/*.key"
-          "**/*.cert"
-          "**/*.crt"
-          "**/secrets.yml"
-        ];
       };
 
       lsp = {
