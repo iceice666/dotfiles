@@ -10,8 +10,8 @@
         # JankyBorders has a built-in detection of already running process,
         # so it won't be run twice on AeroSpace restart
         "exec-and-forget /run/current-system/sw/bin/borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0"
-        "exec-and-forget /run/current-system/sw/bin/aerospace-swipe"
-        "exec-and-forget /run/current-system/sw/bin/sketchybar"
+        "exec-and-forget /etc/profiles/per-user/iceice666/bin/aerospace-swipe"
+        "exec-and-forget /etc/profiles/per-user/iceice666/bin/sketchybar"
       ];
 
       # Notify sketchybar when the focused workspace changes
