@@ -1,6 +1,14 @@
 { ... }:
 
 {
+  home.file.".config/aerospace-swipe/config.json".text = builtins.toJSON {
+    haptic        = false;
+    natural_swipe = true;
+    wrap_around   = true;
+    skip_empty    = true;
+    fingers       = 3;
+  };
+
   programs.aerospace = {
     enable = true;
     launchd.enable = true;
