@@ -39,7 +39,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-
   # macOS-only system packages (desktop apps, macOS-specific tools)
   environment.systemPackages = with pkgs; [
     orbstack
