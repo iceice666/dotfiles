@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 
 {
   # Spaces
@@ -44,6 +44,11 @@
   system.defaults.NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
   system.defaults.NSGlobalDomain.NSWindowShouldDragOnGesture = true;
   system.defaults.NSGlobalDomain._HIHideMenuBar = true;
+
+  # Restart SystemUIServer so _HIHideMenuBar takes effect on Tahoe (26+)
+  system.activationScripts.postActivation.text = ''
+    killall -qu ${config.system.primaryUser} SystemUIServer || true
+  '';
 
   # Bluetooth trackpad (It only costs you NT$3,790! Why don't you get one?)
   system.defaults.CustomUserPreferences = {
