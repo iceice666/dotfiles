@@ -41,6 +41,13 @@
           };
           run = [ "layout floating" ];
         }
+
+        {
+          "if" = {
+            window-title-regex-substring = "Extension: (Bitwarden Password Manager)";
+          };
+          run = [ "layout floating" ];
+        }
       ];
 
       gaps = {
