@@ -30,8 +30,7 @@ in
   programs.sketchybar = {
     enable = true;
 
-    # Keep service disabled — aerospace launches sketchybar via after-startup-command
-    service.enable = false;
+    service.enable = true;
 
     extraPackages = [
       pkgs.jq
