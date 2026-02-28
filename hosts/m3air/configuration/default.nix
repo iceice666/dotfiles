@@ -33,10 +33,12 @@
       "snipaste"
       "karabiner-elements"
       "zen" # zen browser
+      "font-sketchybar-app-font"
     ];
   };
 
   nixpkgs.config.allowUnfree = true;
+
 
   # macOS-only system packages (desktop apps, macOS-specific tools)
   environment.systemPackages = with pkgs; [
