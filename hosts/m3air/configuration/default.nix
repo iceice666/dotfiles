@@ -31,9 +31,8 @@
       "cloudflare-warp"
       "stats"
       "snipaste"
-      "jordanbaird-ice"
       "karabiner-elements"
-      "zen-browser"
+      "zen" # zen browser
     ];
   };
 
