@@ -6,12 +6,19 @@
     launchd.enable = true;
 
     settings = {
-      after-login-command = [];
       after-startup-command = [
         # JankyBorders has a built-in detection of already running process,
         # so it won't be run twice on AeroSpace restart
-        "exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0"
-        "exec-and-forget aerospace-swipe"
+        "exec-and-forget /run/current-system/sw/bin/borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0"
+        "exec-and-forget /run/current-system/sw/bin/aerospace-swipe"
+        "exec-and-forget /run/current-system/sw/bin/sketchybar"
+      ];
+
+      # Notify sketchybar when the focused workspace changes
+      exec-on-workspace-change = [
+        "/bin/bash"
+        "-c"
+        "/run/current-system/sw/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE"
       ];
 
       enable-normalization-flatten-containers = true;
@@ -19,6 +26,14 @@
       automatically-unhide-macos-hidden-apps = true;
 
       on-focused-monitor-changed = ["move-mouse monitor-lazy-center"];
+      on-window-detected = [
+        {
+          "if" = {
+            window-title-regex-substring = "登入";
+          };
+          run = ["layout floating"];
+        }
+      ];
 
       gaps = {
         inner.horizontal = 8;
@@ -42,15 +57,18 @@
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
-        # Resize mode
-        alt-r = "mode resize";
+        # Resize mode — notify sketchybar of mode change
+        alt-r = [
+          "mode resize"
+          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=resize"
+        ];
 
         # Join windows into sub-container (replaces i3-style split)
         alt-v = "join-with right";
         alt-b = "join-with down";
 
         # Layout toggles
-        alt-comma = "layout tiles horizontal vertical";
+        alt-comma  = "layout tiles horizontal vertical";
         alt-period = "layout accordion horizontal vertical";
 
         # Fullscreen
@@ -92,8 +110,15 @@
         j = "resize height +50";
         k = "resize height -50";
         l = "resize width +50";
-        enter = "mode main";
-        esc = "mode main";
+        # Return to main — notify sketchybar to hide the mode indicator
+        enter = [
+          "mode main"
+          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=main"
+        ];
+        esc = [
+          "mode main"
+          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=main"
+        ];
       };
     };
   };
