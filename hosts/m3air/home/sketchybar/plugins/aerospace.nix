@@ -1,5 +1,9 @@
 # Aerospace workspace + mode indicator plugins
-{ pkgs, colors, appFont }:
+{
+  pkgs,
+  colors,
+  appFont,
+}:
 
 {
   workspace = pkgs.writeShellScript "sketchybar-aerospace-workspace" ''

@@ -3,7 +3,10 @@
 {
   programs.zed-editor = {
     enable = true;
-    extraPackages = with pkgs; [ nil nixfmt ];
+    extraPackages = with pkgs; [
+      nil
+      nixfmt
+    ];
 
     userSettings = {
       project_panel.sort_mode = "directories_first";
@@ -30,18 +33,25 @@
         play_sound_when_agent_done = true;
       };
 
-      auto_install_extensions = builtins.listToAttrs (map (name: { inherit name; value = true; }) [
-        "nix"
-        "ocaml"
-        "dockerfile"
-        "docker-compose"
-        "toml"
-        "haskell"
-        "make"
-        "zig"
-        "rainbow-csv"
-        "vscode-dark-polished"
-      ]);
+      auto_install_extensions = builtins.listToAttrs (
+        map
+          (name: {
+            inherit name;
+            value = true;
+          })
+          [
+            "nix"
+            "ocaml"
+            "dockerfile"
+            "docker-compose"
+            "toml"
+            "haskell"
+            "make"
+            "zig"
+            "rainbow-csv"
+            "vscode-dark-polished"
+          ]
+      );
 
       autosave = "on_focus_change";
 
@@ -67,8 +77,15 @@
       inlay_hints.enabled = true;
 
       file_types = {
-        Dockerfile = [ "Dockerfile" "Dockerfile.*" ];
-        JSON = [ "json" "jsonc" "*.code-snippets" ];
+        Dockerfile = [
+          "Dockerfile"
+          "Dockerfile.*"
+        ];
+        JSON = [
+          "json"
+          "jsonc"
+          "*.code-snippets"
+        ];
       };
 
       file_scan_exclusions = [
@@ -111,7 +128,6 @@
         ];
       };
 
-
       lsp = {
         hls.initialization_options.haskell.formattingProvider = "fourmolu";
         rust-analyzer.initialization_options = {
@@ -129,7 +145,10 @@
       };
 
       languages.Nix = {
-        language_servers = [ "nil" "!nixd" ];
+        language_servers = [
+          "nil"
+          "!nixd"
+        ];
         formatter.external.command = "nixfmt .";
       };
     };

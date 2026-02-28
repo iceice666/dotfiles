@@ -1,36 +1,44 @@
 { pkgs, ... }:
 
 {
-  imports = map (f: ./functions/${f})
-    (builtins.filter (f: builtins.match ".*\\.nix" f != null)
-      (builtins.attrNames (builtins.readDir ./functions)));
+  imports = map (f: ./functions/${f}) (
+    builtins.filter (f: builtins.match ".*\\.nix" f != null) (
+      builtins.attrNames (builtins.readDir ./functions)
+    )
+  );
 
   programs.fish = {
     enable = true;
 
     plugins = [
-      { name = "autopair"; src = pkgs.fishPlugins.autopair.src; }
-      { name = "plugin-sudope"; src = pkgs.fishPlugins.plugin-sudope.src; }
+      {
+        name = "autopair";
+        src = pkgs.fishPlugins.autopair.src;
+      }
+      {
+        name = "plugin-sudope";
+        src = pkgs.fishPlugins.plugin-sudope.src;
+      }
     ];
 
     shellAliases = {
-      l   = "eza -almhgF --time-style iso -s type --git-ignore";
-      ll  = "eza -almhgF --time-style iso -s type";
-      lt  = "eza -almhgF --time-style iso -s type --git-ignore --tree -L 2 -I .git";
+      l = "eza -almhgF --time-style iso -s type --git-ignore";
+      ll = "eza -almhgF --time-style iso -s type";
+      lt = "eza -almhgF --time-style iso -s type --git-ignore --tree -L 2 -I .git";
       llt = "eza -almhgF --time-style iso -s type --tree -L 2";
-      lg  = "lazygit";
+      lg = "lazygit";
       cat = "bat";
       ccat = "command cat";
       plz = "sudo";
     };
 
     shellAbbrs = {
-      cp    = "cp -r";
+      cp = "cp -r";
       mkdir = "mkdir -p";
       "/reload" = "source ~/.config/fish/config.fish";
-      "/h"  = "history";
-      "/c"  = "clear";
-      "/clear"  = "clear";
+      "/h" = "history";
+      "/c" = "clear";
+      "/clear" = "clear";
     };
 
     interactiveShellInit = ''

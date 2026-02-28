@@ -1,6 +1,6 @@
 { username, homeDirectory, ... }:
 
 {
-  home.username      = username;
+  home.username = username;
   home.homeDirectory = homeDirectory;
 }

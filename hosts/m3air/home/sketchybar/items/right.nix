@@ -1,5 +1,12 @@
 # Right-side bar items: datetime, battery, input method, network, memory, CPU
-{ colors, battery, inputMethod, network, mem, cpu }:
+{
+  colors,
+  battery,
+  inputMethod,
+  network,
+  mem,
+  cpu,
+}:
 
 ''
   # ── Right: Date / Time ──────────────────────────────────────────────────────

@@ -48,9 +48,9 @@ update-input input:
 check:
     nix flake check
 
-# Format all Nix files
+# Format all files via treefmt-nix
 fmt:
-    nixfmt .
+    nix fmt
 
 # ── Nixpkgs search ───────────────────────────────────────────────────────────
 

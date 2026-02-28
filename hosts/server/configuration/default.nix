@@ -1,7 +1,14 @@
-{ pkgs, inputs, self, username, homeDirectory, ... }:
+{
+  pkgs,
+  inputs,
+  self,
+  username,
+  homeDirectory,
+  ...
+}:
 
 {
-  imports = [ ../../../common/system];
+  imports = [ ../../../common/system ];
 
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -12,8 +19,17 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs self username homeDirectory; };
-    users.${username} = { imports = [ ../home ]; };
+    extraSpecialArgs = {
+      inherit
+        inputs
+        self
+        username
+        homeDirectory
+        ;
+    };
+    users.${username} = {
+      imports = [ ../home ];
+    };
   };
 
   # Add ./hardware-configuration.nix when provisioning the actual server:

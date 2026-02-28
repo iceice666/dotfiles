@@ -25,13 +25,13 @@
       enable-normalization-opposite-orientation-for-nested-containers = true;
       automatically-unhide-macos-hidden-apps = true;
 
-      on-focused-monitor-changed = ["move-mouse monitor-lazy-center"];
+      on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-window-detected = [
         {
           "if" = {
             window-title-regex-substring = "登入";
           };
-          run = ["layout floating"];
+          run = [ "layout floating" ];
         }
       ];
 
@@ -68,7 +68,7 @@
         alt-b = "join-with down";
 
         # Layout toggles
-        alt-comma  = "layout tiles horizontal vertical";
+        alt-comma = "layout tiles horizontal vertical";
         alt-period = "layout accordion horizontal vertical";
 
         # Fullscreen

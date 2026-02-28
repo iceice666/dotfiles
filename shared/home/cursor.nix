@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  programs.vscode= {
+  programs.vscode = {
     enable = true;
     package = pkgs.code-cursor;
   };

@@ -1,4 +1,10 @@
-{ pkgs, lib, username, homeDirectory, ... }:
+{
+  pkgs,
+  lib,
+  username,
+  homeDirectory,
+  ...
+}:
 
 let
   # Single source of truth — same list used by environment.systemPackages on other hosts.

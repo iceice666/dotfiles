@@ -1,7 +1,16 @@
-{ pkgs, inputs, homeDirectory, lib, ... }:
+{
+  pkgs,
+  inputs,
+  homeDirectory,
+  lib,
+  ...
+}:
 
 {
-  imports = [ ./fish ./user.nix ];
+  imports = [
+    ./fish
+    ./user.nix
+  ];
 
   home.activation.cloneNotes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -d "${homeDirectory}/Notes/.git" ]; then
@@ -18,7 +27,7 @@
   programs.git = {
     enable = true;
     settings = {
-      user.name  = "Brian Duan";
+      user.name = "Brian Duan";
       user.email = "iceice666@outlook.com";
       init.defaultBranch = "main";
       pull.rebase = true;

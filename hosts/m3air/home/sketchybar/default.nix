@@ -4,18 +4,25 @@ let
   colors = import ./colors.nix;
 
   # Plugin scripts
-  appFont   = pkgs.sketchybar-app-font;
+  appFont = pkgs.sketchybar-app-font;
   aerospace = import ./plugins/aerospace.nix { inherit pkgs colors appFont; };
-  battery          = import ./plugins/battery.nix   { inherit pkgs colors; };
-  inputMethod      = import ./plugins/input-method.nix { inherit pkgs; };
-  network          = import ./plugins/network.nix   { inherit pkgs; };
-  mem              = import ./plugins/mem.nix        { inherit pkgs; };
-  cpu              = import ./plugins/cpu.nix        { inherit pkgs; };
+  battery = import ./plugins/battery.nix { inherit pkgs colors; };
+  inputMethod = import ./plugins/input-method.nix { inherit pkgs; };
+  network = import ./plugins/network.nix { inherit pkgs; };
+  mem = import ./plugins/mem.nix { inherit pkgs; };
+  cpu = import ./plugins/cpu.nix { inherit pkgs; };
 
   # Bar-config string fragments
-  leftItems  = import ./items/left.nix  { inherit colors aerospace; };
+  leftItems = import ./items/left.nix { inherit colors aerospace; };
   rightItems = import ./items/right.nix {
-    inherit colors battery inputMethod network mem cpu;
+    inherit
+      colors
+      battery
+      inputMethod
+      network
+      mem
+      cpu
+      ;
   };
 
 in
