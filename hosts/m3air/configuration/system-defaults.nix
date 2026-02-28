@@ -43,6 +43,7 @@
   };
   system.defaults.NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
   system.defaults.NSGlobalDomain.NSWindowShouldDragOnGesture = true;
+  system.defaults.NSGlobalDomain._HIHideMenuBar = true;
 
   # Bluetooth trackpad (It only costs you NT$3,790! Why don't you get one?)
   system.defaults.CustomUserPreferences = {
