@@ -2,7 +2,7 @@
 
 {
   programs.sketchybar = {
-    enable = true;
+    enable = false;
     service.enable = true;
 
     extraPackages = [

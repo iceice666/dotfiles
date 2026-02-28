@@ -7,7 +7,7 @@ PLUGIN_DIR="$CONFIG_DIR/plugins"
 
 TEXT_FONT="Cascadia Code NF:Regular:12.0"
 APP_ICON_FONT="sketchybar-app-font:Regular:13.0"
-ICON_FONT="Cascadia Code NF:Regular:14.0"
+ICON_FONT="Cascadia Code NF:Regular:20.0"
 
 sketchybar --bar height=36                                  \
                  corner_radius=12                           \
