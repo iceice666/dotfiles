@@ -22,11 +22,9 @@
         # "exec-and-forget /etc/profiles/per-user/iceice666/bin/sketchybar"
       ];
 
-      # Notify sketchybar when the focused workspace changes
       exec-on-workspace-change = [
-        "/bin/bash"
-        "-c"
-        "/run/current-system/sw/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE"
+        "/bin/bash" "-c"
+        "/etc/profiles/per-user/iceice666/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
       ];
 
       enable-normalization-flatten-containers = true;

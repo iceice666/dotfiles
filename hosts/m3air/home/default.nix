@@ -13,7 +13,7 @@
     ../../../shared/home/cursor.nix
     ./aerospace.nix
     ./karabiner.nix
-    ./sketchybar
+    ./sketchybar.nix
   ];
 
   home.packages = with pkgs; [

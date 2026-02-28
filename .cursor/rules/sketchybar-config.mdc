@@ -1,0 +1,42 @@
+---
+description: How to write SketchyBar bar and item config (sketchybarrc)
+globs: "**/sketchybarrc"
+alwaysApply: false
+---
+
+# SketchyBar configuration
+
+[SketchyBar](https://felixkratz.github.io/SketchyBar/) is configured via a script (default: `~/.config/sketchybar/sketchybarrc`) that runs at launch. Use the CLI; values are not declarative.
+
+## Bar
+
+```bash
+sketchybar --bar position=top height=25 padding_left=5 padding_right=5 color=0x44000000
+```
+
+Common: `position` (top/bottom), `height`, `padding_left`/`padding_right`, `color`, `border_width`, `corner_radius`, `display` (main/all).
+
+## Items
+
+- **Add:** `sketchybar --add item <name> <position>` — position: `left`, `right`, `center`, `q` (left of notch), `e` (right of notch). Name must be unique (no spaces, or quote).
+- **Set:** `sketchybar --set <name> <key>=<value> ...` — e.g. `icon.font="SF Pro:Bold:12"`, `label="foo"`, `script="$CONFIG_DIR/scripts/volume.sh"`.
+- **Defaults:** `sketchybar --default <key>=<value> ...` — applies to all items created after this line.
+- **Reorder:** `sketchybar --reorder <name> ...` or `sketchybar --move <name> before|after <ref>`.
+- **Clone:** `sketchybar --clone <parent> <name> [before|after]`.
+- **Remove:** `sketchybar --remove <name>` (name can be regex: `/pattern/`).
+
+Item properties: `drawing`, `position`, `padding_left`/`padding_right`, `width` (number or `dynamic`), `icon`, `label`, `script`, `click_script`, `update_freq`, `updates` (on/off/when_shown). Text/icon: `icon.font`, `label.color`, `icon.highlight`, etc. Background: `background.color`, `background.corner_radius`, etc.
+
+## Events and scripts
+
+- **Subscribe:** `sketchybar --subscribe <item> <event> ...` — e.g. `volume_change`, `space_change`, `front_app_switched`, `mouse.clicked`, `system_woke`.
+- **Custom event:** `sketchybar --add event <name> [NSDistributedNotificationName]` then `sketchybar --trigger <name> [VAR=value ...]`.
+- **Refresh all scripts:** `sketchybar --update` (use once after init, not inside item scripts).
+
+Script env: `$NAME`, `$SENDER`, `$CONFIG_DIR`; on click: `$BUTTON`, `$MODIFIER`; on scroll: `$SCROLL_DELTA`. Event payload in `$INFO` where applicable. Prefer subscribing to events over high `update_freq` polling.
+
+## Conventions
+
+- Run bar setup and defaults first, then add items left-to-right or right-to-left in desired order.
+- End the config with `sketchybar --update` so all item scripts run once.
+- Use `$CONFIG_DIR` in scripts so config is relocatable; reference helpers (e.g. `jq`, `bc`) by path or ensure they are on `PATH` when the bar runs.

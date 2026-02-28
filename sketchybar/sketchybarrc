@@ -1,0 +1,134 @@
+#!/usr/bin/env sh
+
+CONFIG_DIR="$HOME/.config/sketchybar"
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+. "$CONFIG_DIR/colors.sh"
+
+TEXT_FONT="Cascadia Code NF:Regular:12.0"
+APP_ICON_FONT="sketchybar-app-font:Regular:13.0"
+ICON_FONT="Cascadia Code NF:Regular:14.0"
+
+sketchybar --bar height=36                                  \
+                 corner_radius=12                           \
+                 blur_radius=20                             \
+                 color="$BAR_BG"                            \
+                 position=top                               \
+                 sticky=on                                  \
+                 shadow=off
+
+sketchybar --default icon.font="$APP_ICON_FONT" \
+                     label.font="$TEXT_FONT"    \
+                     icon.color="$TEXT"                     \
+                     label.color="$TEXT"                    \
+                     icon.padding_left=8                    \
+                     icon.padding_right=6                   \
+                     label.padding_left=0                   \
+                     label.padding_right=10                 \
+                     background.color="$ITEM_BG"            \
+                     background.corner_radius=8             \
+                     background.height=24                   \
+                     background.drawing=off                 \
+                     popup.background.corner_radius=8
+
+sketchybar --add event aerospace_mode_change
+sketchybar --add event aerospace_workspace_change
+sketchybar --add event space_windows_change
+
+sketchybar --add item mode left                             \
+           --set mode icon="mode"                           \
+                     label="RESIZE"                         \
+                     icon.color="$RED"                      \
+                     label.color="$RED"                     \
+                     background.drawing=off                 \
+                     drawing=off                            \
+                     script="$PLUGIN_DIR/aerospace_mode.sh" \
+           --subscribe mode aerospace_mode_change
+
+for sid in $(aerospace list-workspaces --all); do
+  sketchybar --add item "space.$sid" left                         \
+              --set "space.$sid" icon="$sid"                       \
+                                label=""                          \
+                                background.drawing=on             \
+                                background.color="$ITEM_BG"       \
+                                click_script="aerospace workspace $sid" \
+                                script="$PLUGIN_DIR/aerospace.sh" \
+              --subscribe "space.$sid" aerospace_workspace_change space_windows_change
+done
+
+sketchybar --add item app_windows left                              \
+           --set app_windows icon="apps"                            \
+                            icon.font="$APP_ICON_FONT"                   \
+                            label=""                                \
+                            background.drawing=on                   \
+                            script="$PLUGIN_DIR/app_windows.sh"     \
+           --subscribe app_windows aerospace_workspace_change       \
+                                 front_app_switched                 \
+                                 space_windows_change
+
+sketchybar --add item front_app left                                \
+           --set front_app icon=""                                  \
+                          label=""                                  \
+                          background.drawing=on                     \
+                          script="$PLUGIN_DIR/front_app.sh"         \
+           --subscribe front_app front_app_switched
+
+sketchybar --add item clock right                                   \
+           --set clock icon=""                           \
+                      icon.font="$ICON_FONT"                  \
+                      label=""                                      \
+                      update_freq=30                                \
+                      click_script="date '+%Y-%m-%d %H:%M:%S'"      \
+                      background.drawing=off                        \
+                      script="$PLUGIN_DIR/clock.sh"
+
+sketchybar --add item battery right                                 \
+           --set battery icon="$BAT_ICON"                            \
+                        icon.font="$ICON_FONT"                \
+                        label=""                                    \
+                        update_freq=60                              \
+                        background.drawing=off                      \
+                        script="$PLUGIN_DIR/battery.sh"             \
+           --subscribe battery power_source_change
+
+sketchybar --add item cpu right                                     \
+           --set cpu icon=""                               \
+                    icon.font="$ICON_FONT"                    \
+                    label=""                                        \
+                    update_freq=5                                   \
+                    background.drawing=off                          \
+                    script="$PLUGIN_DIR/cpu.sh"
+
+sketchybar --add item memory right                                  \
+           --set memory icon="󰍛"                                    \
+                       icon.font="$ICON_FONT"                       \
+                       label=""                                     \
+                       update_freq=10                               \
+                       background.drawing=off                       \
+                       script="$PLUGIN_DIR/memory.sh"
+
+sketchybar --add item net right                                     \
+           --set net icon="󰖩"                                       \
+                    icon.font="$ICON_FONT"                          \
+                    label=""                                        \
+                    update_freq=3                                   \
+                    background.drawing=off                          \
+                    script="$PLUGIN_DIR/network.sh"
+
+sketchybar --add item mic right                                     \
+           --set mic icon="󰍬"                                       \
+                    update_freq=3                                   \
+                    background.drawing=off                          \
+                    script="$PLUGIN_DIR/mic.sh"
+
+sketchybar --add item media right                                   \
+           --set media icon="󰝚"                          \
+                      icon.font="$ICON_FONT"                  \
+                      label=""                                      \
+                      max_chars=30                                  \
+                      scroll_texts=on                               \
+                      background.drawing=off                        \
+                      script="$PLUGIN_DIR/media.sh"                 \
+           --subscribe media media_change
+
+sketchybar --update
