@@ -14,6 +14,10 @@
     launchd.enable = true;
 
     settings = {
+      enable-normalization-flatten-containers = true;
+      enable-normalization-opposite-orientation-for-nested-containers = true;
+      automatically-unhide-macos-hidden-apps = true;
+
       after-startup-command = [
         # JankyBorders has a built-in detection of already running process,
         # so it won't be run twice on AeroSpace restart
@@ -24,13 +28,12 @@
 
       exec-on-workspace-change = [
         "/bin/bash" "-c"
-        "/etc/profiles/per-user/iceice666/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
+        "printf 'FOCUSED_WORKSPACE=%s\n' \"$AEROSPACE_FOCUSED_WORKSPACE\" > /tmp/mybar-aerospace-focused-workspace"
       ];
 
-      enable-normalization-flatten-containers = true;
-      enable-normalization-opposite-orientation-for-nested-containers = true;
-      automatically-unhide-macos-hidden-apps = true;
-
+      on-mode-changed = [
+        "exec-and-forget /bin/bash -c printf 'AEROSPACE_MODE=%s\n' \"$AEROSPACE_MODE\" > /tmp/aerospace-mode"
+      ];
       on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-window-detected = [
         {
@@ -42,7 +45,7 @@
 
         {
           "if" = {
-            window-title-regex-substring = "Extension: (Bitwarden Password Manager)";
+            window-title-regex-substring = "Extension:(Bitwarden Password Manager)";
           };
           run = [ "layout floating" ];
         }
