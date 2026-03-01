@@ -22,4 +22,5 @@ with pkgs;
   ncompress
   nil
   nixfmt
+  tldr
 ]
