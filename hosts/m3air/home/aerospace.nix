@@ -27,12 +27,12 @@
       ];
 
       exec-on-workspace-change = [
-        "/bin/bash" "-c"
-        "printf 'FOCUSED_WORKSPACE=%s\n' \"$AEROSPACE_FOCUSED_WORKSPACE\" > /tmp/mybar-aerospace-focused-workspace"
+        "/bin/bash"
+        "-c"
+        "echo FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE | nc -U /tmp/mybar-wm-bridge.sock"
       ];
 
       on-mode-changed = [
-        "exec-and-forget /bin/bash -c printf 'AEROSPACE_MODE=%s\n' \"$AEROSPACE_MODE\" > /tmp/aerospace-mode"
       ];
       on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
       on-window-detected = [
@@ -73,15 +73,9 @@
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
-        # Resize mode — notify sketchybar of mode change
-        alt-r = [
-          "mode resize"
-          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=resize"
-        ];
-
-        # Join windows into sub-container (replaces i3-style split)
-        alt-v = "join-with right";
-        alt-b = "join-with down";
+        # Resize (quick)
+        alt-minus = "resize smart -50";
+        alt-equal = "resize smart +50";
 
         # Layout toggles
         alt-comma = "layout tiles horizontal vertical";
@@ -97,6 +91,7 @@
         alt-shift-q = "close";
 
         alt-tab = "workspace-back-and-forth";
+        alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
 
         # Workspace switching
         alt-1 = "workspace 1";
@@ -119,21 +114,134 @@
         alt-shift-7 = "move-node-to-workspace 7";
         alt-shift-8 = "move-node-to-workspace 8";
         alt-shift-9 = "move-node-to-workspace 9";
+
+        # Mode switches
+        alt-r = [
+          "mode resize"
+          "exec-and-forget echo MODE=resize | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        alt-m = [
+          "mode monitor"
+          "exec-and-forget echo MODE=monitor | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        alt-shift-semicolon = [
+          "mode service"
+          "exec-and-forget echo MODE=service | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
       };
 
+      # Resize mode
       mode.resize.binding = {
         h = "resize width -50";
         j = "resize height +50";
         k = "resize height -50";
         l = "resize width +50";
-        # Return to main — notify sketchybar to hide the mode indicator
         enter = [
           "mode main"
-          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         esc = [
           "mode main"
-          "exec-and-forget /run/current-system/sw/bin/sketchybar --trigger aerospace_mode_change MODE=main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+      };
+
+      # Monitor mode — focus/move across monitors
+      mode.monitor.binding = {
+        h = [
+          "focus-monitor left"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        j = [
+          "focus-monitor down"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        k = [
+          "focus-monitor up"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        l = [
+          "focus-monitor right"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        shift-h = [
+          "move-node-to-monitor left"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        shift-j = [
+          "move-node-to-monitor down"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        shift-k = [
+          "move-node-to-monitor up"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        shift-l = [
+          "move-node-to-monitor right"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        enter = [
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        esc = [
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+      };
+
+      # Service mode — maintenance & join-with
+      mode.service.binding = {
+        # Managed by Nix
+        # esc = [
+        #   "reload-config"
+        #   "mode main"
+        #   "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        # ];
+        r = [
+          "flatten-workspace-tree"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        f = [
+          "layout floating tiling"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        backspace = [
+          "close-all-windows-but-current"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+
+        # Join-with (all 4 directions)
+        alt-shift-h = [
+          "join-with left"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        alt-shift-j = [
+          "join-with down"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        alt-shift-k = [
+          "join-with up"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        ];
+        alt-shift-l = [
+          "join-with right"
+          "mode main"
+          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
         ];
       };
     };
