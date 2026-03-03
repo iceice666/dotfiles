@@ -32,12 +32,15 @@
       exec-on-workspace-change = [
         "/bin/bash"
         "-c"
-        "echo FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE | nc -U /tmp/mybar-wm-bridge.sock"
+        "printf \"FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE\\n\" | nc -U /tmp/mybar-wm-bridge.sock "
       ];
 
       on-mode-changed = [
       ];
-      on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
+      on-focused-monitor-changed = [
+        "move-mouse monitor-lazy-center"
+        "exec-and-forget printf \"UPDATE_ALL\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
+      ];
       on-window-detected = [
         {
           "if" = {
@@ -62,7 +65,7 @@
         outer.right = 8;
       };
 
-      persistent-workspaces = [];
+      persistent-workspaces = [ ];
 
       mode.main.binding = {
         # Focus movement (vim-style)
@@ -122,15 +125,15 @@
         # Mode switches
         alt-r = [
           "mode resize"
-          "exec-and-forget echo MODE=resize | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=resize\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         alt-m = [
           "mode monitor"
-          "exec-and-forget echo MODE=monitor | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=monitor\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         alt-shift-semicolon = [
           "mode service"
-          "exec-and-forget echo MODE=service | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=service\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
       };
 
@@ -142,11 +145,11 @@
         l = "resize width +50";
         enter = [
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         esc = [
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
       };
 
@@ -155,50 +158,50 @@
         h = [
           "focus-monitor left"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         j = [
           "focus-monitor down"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         k = [
           "focus-monitor up"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         l = [
           "focus-monitor right"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         shift-h = [
           "move-node-to-monitor left"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         shift-j = [
           "move-node-to-monitor down"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         shift-k = [
           "move-node-to-monitor up"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         shift-l = [
           "move-node-to-monitor right"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         enter = [
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         esc = [
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
       };
 
@@ -208,44 +211,44 @@
         # esc = [
         #   "reload-config"
         #   "mode main"
-        #   "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+        #   "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         # ];
         r = [
           "flatten-workspace-tree"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         f = [
           "layout floating tiling"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         backspace = [
           "close-all-windows-but-current"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
 
         # Join-with (all 4 directions)
         alt-shift-h = [
           "join-with left"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         alt-shift-j = [
           "join-with down"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         alt-shift-k = [
           "join-with up"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
         alt-shift-l = [
           "join-with right"
           "mode main"
-          "exec-and-forget echo MODE=main | nc -U /tmp/mybar-wm-bridge.sock"
+          "exec-and-forget printf \"MODE=main\\n\" | nc -U /tmp/mybar-wm-bridge.sock"
         ];
       };
     };
