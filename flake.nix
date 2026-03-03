@@ -33,6 +33,7 @@
       overlay = final: prev: {
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         aerospace-swipe = final.callPackage ./pkgs/aerospace-swipe { };
+        aerospace-help = final.callPackage ./pkgs/aerospace-help { };
       };
 
       treefmtEval =

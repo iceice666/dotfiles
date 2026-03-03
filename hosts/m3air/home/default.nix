@@ -21,6 +21,7 @@
     pear-desktop
     equibop-bin
     aerospace-swipe
+    aerospace-help
   ];
 
   home.stateVersion = "25.11";
