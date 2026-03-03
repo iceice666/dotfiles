@@ -14,6 +14,8 @@
     launchd.enable = true;
 
     settings = {
+      config-version = 2;
+
       enable-normalization-flatten-containers = true;
       enable-normalization-opposite-orientation-for-nested-containers = true;
       automatically-unhide-macos-hidden-apps = true;
@@ -43,7 +45,6 @@
           };
           run = [ "layout floating" ];
         }
-
         {
           "if" = {
             window-title-regex-substring = "Extension:(Bitwarden Password Manager)";
@@ -60,6 +61,8 @@
         outer.top = 8;
         outer.right = 8;
       };
+
+      persistent-workspaces = [];
 
       mode.main.binding = {
         # Focus movement (vim-style)
