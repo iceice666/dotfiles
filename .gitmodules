@@ -1,0 +1,3 @@
+[submodule "mybar"]
+	path = mybar
+	url = git@github.com:iceice666/mybar.git

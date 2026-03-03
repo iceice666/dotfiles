@@ -20,6 +20,7 @@
     obsidian
     pear-desktop
     equibop-bin
+    mybar
     aerospace-swipe
     aerospace-help
   ];
