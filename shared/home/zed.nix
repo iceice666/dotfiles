@@ -8,6 +8,18 @@
       nixfmt
     ];
 
+    userKeymaps = [
+      {
+        context = "vim_mode == visual";
+        bindings = {
+          "shift-s" = [
+            "vim::PushAddSurrounds"
+            { }
+          ];
+        };
+      }
+    ];
+
     userSettings = {
       project_panel.sort_mode = "directories_first";
       git_panel = {
@@ -20,7 +32,7 @@
 
       theme = {
         mode = "system";
-        light = "Gruvbox Light";
+        light = "VSCode Light+";
         dark = "VSCode Dark Polished";
       };
       icon_theme = {
