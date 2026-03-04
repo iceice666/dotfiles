@@ -48,13 +48,8 @@
         }
         {
           "if" = {
-            window-title-regex-substring = "登入";
-          };
-          run = [ "layout floating" ];
-        }
-        {
-          "if" = {
-            window-title-regex-substring = "Extension:(Bitwarden Password Manager)";
+            app-id = "app.zen-browser.zen";
+            window-title-regex-substring = "Extension:|登入";
           };
           run = [ "layout floating" ];
         }
