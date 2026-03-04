@@ -43,6 +43,10 @@
       ];
       on-window-detected = [
         {
+          "if".app-id = "com.mitchellh.ghostty";
+          run = [ "layout tiling" ];
+        }
+        {
           "if" = {
             window-title-regex-substring = "登入";
           };
