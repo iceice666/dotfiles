@@ -106,7 +106,7 @@
         "**/.classpath"
         "**/.settings"
         "**/out"
-        "**/dist"
+        "**/dist*"
         "**/.husky"
         "**/.turbo"
         "**/.vscode*"
@@ -114,6 +114,8 @@
         "**/.storybook"
         "**/.tap"
         "**/.nyc_output"
+        "**/.direnv"
+        "**/.devenv"
         "**/report"
         "**/node_modules"
       ];
@@ -124,7 +126,6 @@
       };
 
       lsp = {
-        hls.initialization_options.haskell.formattingProvider = "fourmolu";
         rust-analyzer.initialization_options = {
           checkOnSave = true;
           inlayHints = {
