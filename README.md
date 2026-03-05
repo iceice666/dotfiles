@@ -50,6 +50,16 @@ just gc                 # nix-collect-garbage -d
 just search query       # search nixpkgs across platforms
 ```
 
+## Bootstrap
+
+Clone the repo and switch the remote to SSH in one step:
+
+```sh
+curl -fsSL https://code.justaslime.dev/justaslime/dotfiles/raw/branch/main/scripts/bootstrap.sh | sh
+```
+
+This clones to `~/dotfiles` over HTTPS (no SSH key required) and then reconfigures the `origin` remote to the SSH URL so subsequent `git push` / `git pull` operations use your key.
+
 ## First-time setup
 
 ### M3 Air
