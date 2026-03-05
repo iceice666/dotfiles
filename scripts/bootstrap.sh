@@ -11,6 +11,23 @@
 
 set -e
 
+# ── Dependency checks ────────────────────────────────────────────────────────
+
+missing=""
+for cmd in git just; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    missing="$missing $cmd"
+  fi
+done
+
+if [ -n "$missing" ]; then
+  echo "Error: the following required tools are not installed:$missing"
+  echo ""
+  echo "  git  — https://git-scm.com/downloads"
+  echo "  just — https://just.systems/man/en/packages.html"
+  exit 1
+fi
+
 HTTPS_URL="https://code.justaslime.dev/justaslime/dotfiles.git"
 SSH_URL="ssh://git@justaslime.dev/justaslime/dotfiles.git"
 DEST="$HOME/dotfiles"
