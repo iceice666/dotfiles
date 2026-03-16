@@ -27,7 +27,7 @@ framework-rebuild:
 # ── NixOS Server ─────────────────────────────────────────────────────────────
 
 # Rebuild NixOS server
-server-rebuild: server-gen-hardware
+server-rebuild:
     sudo nixos-rebuild switch --flake .#homolab
 
 # Generate hardware config on the server (run on the server itself)
