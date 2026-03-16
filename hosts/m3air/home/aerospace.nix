@@ -53,6 +53,13 @@
           };
           run = [ "layout floating" ];
         }
+	{
+	  "if" = {
+	    app-id = "org.equicord.equibop";
+	    window-title-regex-substring = "Equicord QuickCSS Editor|Developer Tools";
+	  };
+          run = [ "layout floating" ];
+	}
       ];
 
       gaps = {
@@ -109,6 +116,9 @@
         alt-7 = "workspace 7";
         alt-8 = "workspace 8";
         alt-9 = "workspace 9";
+
+	alt-leftSquareBracket = "workspace prev";
+	alt-rightSquareBracket = "workspace next";
 
         # Move window to workspace
         alt-shift-1 = "move-node-to-workspace 1";
