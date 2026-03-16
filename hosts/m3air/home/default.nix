@@ -2,15 +2,16 @@
   pkgs,
   username,
   homeDirectory,
+  dotfiles,
   ...
 }:
 
 {
   imports = [
-    ../../../common/home
-    ../../../shared/home/zed.nix
-    ../../../shared/home/opencode.nix
-    ../../../shared/home/cursor.nix
+    (dotfiles + /common/home)
+    (dotfiles + /shared/home/zed.nix)
+    (dotfiles + /shared/home/opencode.nix)
+    (dotfiles + /shared/home/cursor.nix)
     ./aerospace.nix
     ./karabiner.nix
     ./sketchybar.nix

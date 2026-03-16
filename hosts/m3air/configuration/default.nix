@@ -4,13 +4,14 @@
   self,
   username,
   homeDirectory,
+  dotfiles,
   ...
 }:
 
 {
   imports = [
     ./system-defaults.nix
-    ../../../common/configuration
+    (dotfiles + /common/configuration)
   ];
 
   system.primaryUser = username;
@@ -72,6 +73,7 @@
         self
         username
         homeDirectory
+        dotfiles
         ;
     };
     users.${username} = {

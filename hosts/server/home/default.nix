@@ -1,8 +1,13 @@
-{ username, homeDirectory, ... }:
+{
+  username,
+  homeDirectory,
+  dotfiles,
+  ...
+}:
 
 {
   imports = [
-    ../../../common/home
+    (dotfiles + /common/home)
   ];
 
   home.stateVersion = "25.05";

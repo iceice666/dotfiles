@@ -4,11 +4,12 @@
   self,
   username,
   homeDirectory,
+  dotfiles,
   ...
 }:
 
 {
-  imports = [ ../../../common/system ];
+  imports = [ (dotfiles + /common/configuration) ];
 
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -25,6 +26,7 @@
         self
         username
         homeDirectory
+        dotfiles
         ;
     };
     users.${username} = {

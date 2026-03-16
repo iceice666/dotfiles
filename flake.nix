@@ -50,6 +50,7 @@
           inherit inputs self;
           username = "iceice666";
           homeDirectory = "/Users/iceice666";
+          dotfiles = ./.;
         };
         modules = [
           home-manager.darwinModules.home-manager
@@ -69,6 +70,7 @@
           inherit inputs self;
           username = "iceice666";
           homeDirectory = "/home/iceice666";
+          dotfiles = ./.;
         };
         modules = [ ./hosts/framework/home ];
       };
@@ -80,6 +82,7 @@
           inherit inputs self;
           username = "root";
           homeDirectory = "/root";
+          dotfiles = ./.;
         };
         modules = [
           home-manager.nixosModules.home-manager

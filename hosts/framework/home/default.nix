@@ -3,19 +3,20 @@
   lib,
   username,
   homeDirectory,
+  dotfiles,
   ...
 }:
 
 let
-  # Single source of truth — same list used by environment.systemPackages on other hosts.
-  # On framework (standalone home-manager) these must be installed via XBPS instead.
-  unmanaged = map lib.getName (import ../../../common/configuration/packages.nix { inherit pkgs; });
+  unmanaged = map lib.getName (
+    import (dotfiles + /common/configuration/packages.nix) { inherit pkgs; }
+  );
 in
 {
   imports = [
-    ../../../common/home
-    ../../../shared/home/zed.nix
-    ../../../shared/home/cursor.nix
+    (dotfiles + /common/home)
+    (dotfiles + /shared/home/zed.nix)
+    (dotfiles + /shared/home/cursor.nix)
   ];
 
   warnings = [

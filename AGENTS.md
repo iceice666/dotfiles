@@ -150,8 +150,8 @@ Short lists on one line: `imports = [ ./fish ./user.nix ];`
 Longer lists — one item per line:
 ```nix
 imports = [
-  ../../../common/home
-  ../../../shared/home/zed.nix
+  (dotfiles + /common/home)
+  (dotfiles + /shared/home/zed.nix)
   ./aerospace.nix
 ];
 ```
@@ -187,9 +187,9 @@ External config key names (macOS preferences, etc.) use their native casing
 ### Standard Module Shape
 
 ```nix
-{ pkgs, lib, username, ... }:
+{ pkgs, lib, username, dotfiles, ... }:
 {
-  imports = [ ../../../common/home ./local-file.nix ];
+  imports = [ (dotfiles + /common/home) ./local-file.nix ];
 
   programs.foo.enable = true;
   programs.foo.settings = { ... };
@@ -199,7 +199,8 @@ External config key names (macOS preferences, etc.) use their native casing
 - No custom `options` / `mkOption` / `mkEnableOption` — these are pure configuration modules.
 - No `mkIf` / `mkMerge` — host differentiation is structural (separate files, explicit imports).
 - `imports` always appears first in the returned attrset.
-- Import directories by path without trailing `/default.nix`: `../../../common/home`.
+- Use `(dotfiles + /path)` for imports from `common/`, `shared/`, or root-level directories.
+- Import directories by path without trailing `/default.nix`: `(dotfiles + /common/home)`.
 
 ### Overlay (adding custom packages)
 
@@ -292,9 +293,9 @@ Reference executables by Nix store path (`${pkgs.git}/bin/git`) — never rely o
 ## Adding a New Host
 
 1. Create `hosts/<hostname>/configuration/default.nix` (system config, if applicable).
-2. Create `hosts/<hostname>/home/default.nix`; start with `imports = [ ../../../common/home ];`.
+2. Create `hosts/<hostname>/home/default.nix`; start with `imports = [ (dotfiles + /common/home) ];`.
 3. Add the flake output in `flake.nix` following the `user@host` naming pattern.
-4. Pass `username`, `homeDirectory`, `inputs`, and `self` via `specialArgs` / `extraSpecialArgs`.
+4. Pass `username`, `homeDirectory`, `inputs`, `self`, and `dotfiles` via `specialArgs` / `extraSpecialArgs`.
 5. Run `just check` to validate, then apply with the appropriate rebuild recipe.
 
 ## Adding a New Package

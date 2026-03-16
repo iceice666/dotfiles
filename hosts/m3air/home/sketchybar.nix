@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, dotfiles, ... }:
 
 {
   programs.sketchybar = {
@@ -13,7 +13,7 @@
     ];
 
     config = {
-      source = ../../../sketchybar;
+      source = (dotfiles + /sketchybar);
       recursive = true;
     };
   };
