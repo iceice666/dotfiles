@@ -11,13 +11,6 @@
     ./user.nix
   ];
 
-  home.activation.cloneNotes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ ! -d "${homeDirectory}/Notes/.git" ]; then
-      ${pkgs.git}/bin/git clone https://code.justaslime.dev/justaslime/notes.git "${homeDirectory}/Notes"
-      ${pkgs.git}/bin/git -C "${homeDirectory}/Notes" remote set-url origin ssh://git@justaslime.dev/justaslime/notes.git
-    fi
-  '';
-
   programs.git = {
     enable = true;
     settings = {
