@@ -55,7 +55,7 @@ just search query       # search nixpkgs across platforms
 Clone the repo and switch the remote to SSH in one step:
 
 ```sh
-curl -fsSL https://code.justaslime.dev/justaslime/dotfiles/raw/branch/main/scripts/bootstrap.sh | sh
+curl -fsSL https://gist.githubusercontent.com/iceice666/24813ec91379a4ca37dbb1810e95f60b/raw/91e4c917c225072a395b9733b8cea5543cd6828d/bootstrap.sh| sh
 ```
 
 This clones to `~/dotfiles` over HTTPS (no SSH key required) and then reconfigures the `origin` remote to the SSH URL so subsequent `git push` / `git pull` operations use your key.
