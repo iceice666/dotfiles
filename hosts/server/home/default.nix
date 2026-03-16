@@ -10,7 +10,7 @@
     (dotfiles + /common/home)
   ];
 
-  home.stateVersion = "25.05";
+  home.stateVersion = "25.11";
 
   programs.fish.interactiveShellInit = ''
     set -gx HOSTNAME (hostname)
