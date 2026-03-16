@@ -80,8 +80,8 @@
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs self;
-          username = "root";
-          homeDirectory = "/root";
+          username = "iceice666";
+          homeDirectory = "/home/iceice666";
           dotfiles = ./.;
         };
         modules = [

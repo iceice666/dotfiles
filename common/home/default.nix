@@ -1,6 +1,5 @@
 {
   pkgs,
-  inputs,
   homeDirectory,
   lib,
   ...
@@ -18,11 +17,6 @@
       ${pkgs.git}/bin/git -C "${homeDirectory}/Notes" remote set-url origin ssh://git@justaslime.dev/justaslime/notes.git
     fi
   '';
-
-  home.packages = with pkgs; [
-    cloudflared
-    zulu21
-  ];
 
   programs.git = {
     enable = true;

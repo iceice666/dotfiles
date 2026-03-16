@@ -23,4 +23,6 @@ with pkgs;
   nil
   nixfmt
   tldr
+  cloudflared
+  zulu21
 ]
