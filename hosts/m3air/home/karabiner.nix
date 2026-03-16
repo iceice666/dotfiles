@@ -9,7 +9,9 @@
         {
           name = "Default profile";
           selected = true;
-          virtual_hid_keyboard = { keyboard_type_v2= "ansi"; };
+          virtual_hid_keyboard = {
+            keyboard_type_v2 = "ansi";
+          };
           complex_modifications = {
             rules = [
               {
