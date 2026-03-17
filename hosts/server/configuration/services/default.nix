@@ -7,5 +7,6 @@
     ./docker.nix
     ./ollama.nix
     ./openssh.nix
+    ./database.nix
   ];
 }
