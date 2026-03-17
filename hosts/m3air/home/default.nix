@@ -10,7 +10,6 @@
   imports = [
     (dotfiles + /common/home)
     (dotfiles + /shared/home/zed.nix)
-    (dotfiles + /shared/home/opencode.nix)
     (dotfiles + /shared/home/cursor.nix)
     ./aerospace.nix
     ./karabiner.nix

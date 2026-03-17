@@ -31,5 +31,10 @@
     enableFishIntegration = true;
   };
 
+  programs.opencode = {
+    enable = true;
+    settings.plugin = [ "@tarquinen/opencode-dcp@latest" ];
+  };
+
   programs.home-manager.enable = true;
 }
