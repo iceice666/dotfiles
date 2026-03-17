@@ -29,12 +29,16 @@
     '';
   };
 
-  # Native Valkey (Redis-compatible)
-  services.valkey = {
-    enable = true;
-    settings = {
+  services.redis = {
+    package = pkgs.valkey;
+
+    servers."" = {
+      enable = true;
       port = 6379;
-      appendonly = "no";
+
+      settings = {
+        appendonly = "no";
+      };
     };
   };
 }
