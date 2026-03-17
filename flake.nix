@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -26,16 +28,30 @@
       nix-darwin,
       home-manager,
       nixpkgs,
+      nixpkgs-unstable,
       treefmt-nix,
       ...
     }:
     let
-      overlay = final: prev: {
-        equibop-bin = final.callPackage ./pkgs/equibop-bin { };
-        mybar = final.callPackage ./pkgs/mybar { };
-        aerospace-swipe = final.callPackage ./pkgs/aerospace-swipe { };
-        aerospace-help = final.callPackage ./pkgs/aerospace-help { };
-      };
+      overlay =
+        final: prev:
+        let
+          unstablePkgs = import nixpkgs-unstable {
+            system = prev.stdenv.hostPlatform.system;
+            config = {
+              allowUnfree = true;
+              cudaSupport = true;
+            };
+          };
+        in
+        {
+          equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+          mybar = final.callPackage ./pkgs/mybar { };
+          aerospace-swipe = final.callPackage ./pkgs/aerospace-swipe { };
+          aerospace-help = final.callPackage ./pkgs/aerospace-help { };
+
+          ollama-unstable = unstablePkgs.ollama;
+        };
 
       treefmtEval =
         system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} (self + /treefmt.nix);

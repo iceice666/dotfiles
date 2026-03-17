@@ -1,6 +1,8 @@
 { config, pkgs, ... }:
 
 {
+  nixpkgs.config.cudaSupport = true;
+
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware = {
@@ -20,6 +22,9 @@
 
   services.ollama = {
     enable = true;
-    package = pkgs.ollama-cuda;
+    host = "192.168.1.127";
+    port = 11434;
+    package = pkgs.ollama-unstable;
+    loadModels = [ "qwen3.5:9b" ];
   };
 }
