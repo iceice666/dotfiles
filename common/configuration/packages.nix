@@ -25,4 +25,5 @@ with pkgs;
   tldr
   cloudflared
   zulu21
+  age
 ]
