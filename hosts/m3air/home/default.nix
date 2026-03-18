@@ -18,7 +18,6 @@
 
   home.packages = with pkgs; [
     obsidian
-    pear-desktop
     equibop-bin
     mybar
     aerospace-swipe
