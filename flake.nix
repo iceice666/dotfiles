@@ -20,6 +20,11 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -30,6 +35,7 @@
       nixpkgs,
       nixpkgs-unstable,
       treefmt-nix,
+      sops-nix,
       ...
     }:
     let
@@ -70,8 +76,9 @@
           dotfiles = ./.;
         };
         modules = [
-          home-manager.darwinModules.home-manager
           ./hosts/m3air/configuration
+          sops-nix.darwinModules.sops
+          home-manager.darwinModules.home-manager
           { nixpkgs.overlays = [ overlay ]; }
         ];
       };
@@ -89,7 +96,10 @@
           homeDirectory = "/home/iceice666";
           dotfiles = ./.;
         };
-        modules = [ ./hosts/framework/home ];
+        modules = [
+          ./hosts/framework/home
+          sops-nix.homeManagerModules.sops
+        ];
       };
 
       # Build with: sudo nixos-rebuild switch --flake .#server
@@ -102,8 +112,9 @@
           dotfiles = ./.;
         };
         modules = [
-          home-manager.nixosModules.home-manager
           ./hosts/server/configuration
+          sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
           { nixpkgs.overlays = [ overlay ]; }
         ];
       };
