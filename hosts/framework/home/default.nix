@@ -34,7 +34,6 @@ in
 
   home.packages = with pkgs; [
     equibop-bin
-    mybar
   ];
 
   home.stateVersion = "25.11";

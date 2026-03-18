@@ -11,17 +11,12 @@
     (dotfiles + /common/home)
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/cursor.nix)
-    ./aerospace.nix
     ./karabiner.nix
-    ./sketchybar.nix
   ];
 
   home.packages = with pkgs; [
     obsidian
     equibop-bin
-    mybar
-    aerospace-swipe
-    aerospace-help
   ];
 
   home.stateVersion = "25.11";

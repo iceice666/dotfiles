@@ -23,9 +23,10 @@
       autoUpdate = true;
       cleanup = "zap";
     };
+    taps = [
+    ];
     brews = [ ];
     casks = [
-      "helium-browser" # not in nixpkgs
       "termius" # nixpkgs has Linux-only build
       "android-commandlinetools" # sdkmanager, avdmanager, etc.
       "android-ndk" # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
@@ -44,8 +45,6 @@
   environment.systemPackages = with pkgs; [
     orbstack
     ghostty-bin
-    aerospace-swipe
-    jankyborders
   ];
 
   # Necessary for using flakes on this system.

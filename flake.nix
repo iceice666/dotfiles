@@ -52,9 +52,6 @@
         in
         {
           equibop-bin = final.callPackage ./pkgs/equibop-bin { };
-          mybar = final.callPackage ./pkgs/mybar { };
-          aerospace-swipe = final.callPackage ./pkgs/aerospace-swipe { };
-          aerospace-help = final.callPackage ./pkgs/aerospace-help { };
           zed-editor-unstable = unstablePkgs.zed-editor;
 
           ollama-unstable = unstablePkgs.ollama;
