@@ -13,7 +13,7 @@
     enable = true;
     launchd.enable = true;
 
-    settings = {
+    userSettings = {
       config-version = 2;
 
       enable-normalization-flatten-containers = true;
