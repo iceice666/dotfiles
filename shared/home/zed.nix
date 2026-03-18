@@ -3,6 +3,7 @@
 {
   programs.zed-editor = {
     enable = true;
+    package = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.zed-editor-unstable else pkgs.zed-editor;
     extraPackages = with pkgs; [
       nil
       nixfmt
