@@ -57,7 +57,7 @@
         DISABLE_SSH = false;
       };
       database = {
-        DB_TYPE = "postgres";
+        DB_TYPE = lib.mkForce "postgres";
         HOST = "/run/postgresql";
         NAME = "forgejo";
         USER = "forgejo";
