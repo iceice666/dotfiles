@@ -16,7 +16,7 @@
 
   sops = {
     defaultSopsFormat = "yaml";
-    age.sshKeyPaths   = [ "${homeDirectory}/.ssh/id_ed25519" ];
+    age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
   };
 
   system.primaryUser = username;
