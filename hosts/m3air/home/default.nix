@@ -17,6 +17,7 @@
   home.packages = with pkgs; [
     obsidian
     equibop-bin
+    ssh-to-age
   ];
 
   home.stateVersion = "25.11";

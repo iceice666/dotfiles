@@ -14,6 +14,11 @@
     (dotfiles + /common/configuration)
   ];
 
+  sops = {
+    defaultSopsFormat = "yaml";
+    age.sshKeyPaths   = [ "${homeDirectory}/.ssh/id_ed25519" ];
+  };
+
   system.primaryUser = username;
 
   # Homebrew (only packages unavailable or unsupported on macOS in nixpkgs)

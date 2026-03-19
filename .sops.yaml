@@ -1,0 +1,29 @@
+# .sops.yaml (repo root)
+# Public file: contains only public recipients / fingerprints and matching rules.
+
+keys:
+  # Per-device age recipients (public)
+  - &m3air age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
+  - &framework age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  - &server age1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  # Optional recovery recipient (public)
+  - &recovery age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+
+creation_rules:
+  # Shared secrets: decryptable on all three devices (+ recovery)
+  - path_regex: ^secrets/shared/.*\.(yaml|yml|json|env|ini|key)$
+    age:
+      - *m3air
+      - *framework
+      - *server
+      - *recovery
+
+  # Per-device secrets: only the device (+ recovery)
+  - path_regex: ^secrets/hosts/m3air/.*\.(yaml|yml|json|env|ini|key)$
+    age: [*m3air, *recovery]
+
+  - path_regex: ^secrets/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
+    age: [*framework, *recovery]
+
+  - path_regex: ^secrets/hosts/server/.*\.(yaml|yml|json|env|ini|key)$
+    age: [*server, *recovery]
