@@ -71,6 +71,7 @@
         APP_DATA_PATH = "/var/lib/forgejo/data";
         DOMAIN = "code.justaslime.dev";
         SSH_DOMAIN = "justaslime.dev";
+        HTTP_ADDR = "127.0.0.1";
         HTTP_PORT = 3000;
         ROOT_URL = "https://code.justaslime.dev/";
         DISABLE_SSH = false;

@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./caddy.nix
     ./cloudflare-ips.nix
     ./cloudflared-tunnel.nix
     ./docker.nix
