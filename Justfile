@@ -46,7 +46,7 @@ update-input input:
 
 # Check flake outputs for errors
 check:
-    nix flake check
+    nix flake check --all-systems
 
 # Format all files via treefmt-nix
 fmt:
