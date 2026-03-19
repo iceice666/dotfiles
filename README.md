@@ -1,96 +1,162 @@
 # dotfiles
 
-Nix configuration for three machines managed via [nix-darwin](https://github.com/nix-darwin/nix-darwin), [home-manager](https://github.com/nix-community/home-manager), and [just](https://github.com/casey/just).
+Multi-host Nix dotfiles for my personal machines and server.
 
-## Machines
+This repo uses:
 
-| Host | OS | Config type | Username |
+- [nix-darwin](https://github.com/nix-darwin/nix-darwin) for macOS system management
+- [home-manager](https://github.com/nix-community/home-manager) for user environment management
+- [sops-nix](https://github.com/Mic92/sops-nix) for runtime secret provisioning
+- [just](https://github.com/casey/just) for common workflows
+- a small local overlay for custom and unstable packages
+
+## Hosts
+
+| Host | Flake output | Platform | What it manages |
 |---|---|---|---|
-| `M3Air` | macOS (aarch64) | nix-darwin + home-manager | `iceice666` |
-| `framework` | Void Linux (x86_64) | home-manager standalone | `iceice666` |
-| `server` | NixOS (x86_64) | nixos + home-manager | `root` |
+| `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | full macOS system + home-manager |
+| `framework` | `.#iceice666@framework` | `x86_64-linux` | standalone home-manager only |
+| `homolab` | `.#homolab` | `x86_64-linux` | full NixOS system + home-manager |
 
-## Structure
+## Layout
 
+```text
+flake.nix            # flake entrypoint and all outputs
+Justfile             # rebuild / check / update workflows
+treefmt.nix          # formatter configuration
+
+common/              # imported everywhere
+  configuration/     # shared system-level packages/modules
+  home/              # shared home-manager modules
+    fish/            # fish config + auto-imported functions
+
+shared/              # opt-in modules used by some hosts
+  home/              # editor/app modules such as zed and cursor
+
+hosts/               # per-host entrypoints
+  m3air/             # nix-darwin host
+  framework/         # standalone home-manager host
+  server/            # NixOS host for homolab
+
+pkgs/                # custom derivations exposed through the overlay
+secrets/             # SOPS-encrypted host secrets
 ```
-common/           # applied to every host
-  home/           # shared home-manager config (git, fish, starship, direnv, …)
-    fish/         # fish shell config and functions
-  configuration/  # shared system-level config
 
-shared/           # optional config shared across some (but not all) hosts
-  home/
-    zed.nix       # Zed editor config (desktop hosts only)
+Composition is structural:
 
-hosts/            # per-machine config
-  m3air/
-    configuration/  # nix-darwin system config
-    home/           # macOS-specific home-manager config
-  framework/
-    home/           # home-manager standalone config
-  server/
-    configuration/  # NixOS system config (+ hardware-configuration.nix)
-    home/           # server-specific home-manager config
+```text
+common/ -> shared/ -> hosts/<name>/
 ```
 
-## Usage
+## What It Manages
 
-Run `just` to list all available recipes. Common ones:
+- Shared shell and CLI tooling through Home Manager: `fish`, `git`, `direnv`, `starship`, `opencode`, and `codex`
+- Shared system packages through [`common/configuration`](/home/iceice666/dotfiles/common/configuration)
+- Optional editor/app modules in [`shared/home`](/home/iceice666/dotfiles/shared/home), currently Zed and Cursor
+- Local overlay packages and pinned unstable packages from `nixpkgs-unstable`
+- A custom `equibop-bin` derivation in [`pkgs/equibop-bin`](/home/iceice666/dotfiles/pkgs/equibop-bin/default.nix)
+- NixOS server services in [`hosts/server/configuration/services`](/home/iceice666/dotfiles/hosts/server/configuration/services): Caddy, Forgejo, PostgreSQL, Valkey, Docker, Ollama, Cloudflare DDNS, Cloudflare Tunnel, Cloudflare IP allowlists, and OpenSSH
+
+## Common Commands
+
+Run everything from the repo root:
 
 ```sh
-just m3air-rebuild      # darwin-rebuild switch
-just framework-rebuild  # home-manager switch
-just server-rebuild     # nixos-rebuild switch
+just m3air-rebuild
+just framework-rebuild
+just server-rebuild
 
-just update             # nix flake update
-just update-input input # update a single flake input
-just fmt                # format all Nix files with nixfmt
-just check              # nix flake check
-just gc                 # nix-collect-garbage -d
-just search query       # search nixpkgs across platforms
+just fmt
+just check
+just update
+just update-input nixpkgs
+just search zed
+just gc
+just store-size
 ```
 
-## Bootstrap
+## Validation
 
-Clone the repo and switch the remote to SSH in one step:
+There are no unit tests here. Validation is mostly formatting, flake evaluation, and dry builds.
 
 ```sh
-curl -fsSL https://gist.githubusercontent.com/iceice666/24813ec91379a4ca37dbb1810e95f60b/raw/43e53c936bac5d424e2eb7051d30a107310c1755/bootstrap.sh | sh
+just fmt
+just check
 ```
 
-This clones to `~/dotfiles` over HTTPS (no SSH key required) and then reconfigures the `origin` remote to the SSH URL so subsequent `git push` / `git pull` operations use your key.
-
-## First-time setup
-
-### M3 Air
+To evaluate a single target without switching:
 
 ```sh
-# 1. Install Nix (if not already)
+sudo darwin-rebuild build --flake .#iceice666@m3air
+home-manager build --flake .#iceice666@framework
+sudo nixos-rebuild build --flake .#homolab
+```
+
+## Host Notes
+
+### `m3air`
+
+First-time setup:
+
+```sh
 curl -fsSL https://install.determinate.systems/nix | sh
-
-# 2. Install Homebrew
 just m3air-homebrew
-
-# 3. Build and activate
 just m3air-rebuild
 ```
 
-### Framework (Void Linux)
+This host imports:
+
+- [`common/home`](/home/iceice666/dotfiles/common/home)
+- [`shared/home/zed.nix`](/home/iceice666/dotfiles/shared/home/zed.nix)
+- [`shared/home/cursor.nix`](/home/iceice666/dotfiles/shared/home/cursor.nix)
+- [`hosts/m3air/home/karabiner.nix`](/home/iceice666/dotfiles/hosts/m3air/home/karabiner.nix)
+
+If you only changed macOS defaults and want them applied immediately:
 
 ```sh
-# Install home-manager, then:
+just m3air-activate
+```
+
+### `framework`
+
+After installing Nix and Home Manager:
+
+```sh
 just framework-rebuild
 ```
 
-### NixOS Server
+This host uses standalone Home Manager, so packages from [`common/configuration/packages.nix`](/home/iceice666/dotfiles/common/configuration/packages.nix) are not installed automatically. The config emits a warning listing the same package set to install with the system package manager.
 
-On a fresh NixOS install, generate the hardware config first:
+### `homolab`
+
+On a fresh machine, generate hardware config on the target host first:
 
 ```sh
 just server-gen-hardware
-# Review hosts/server/configuration/hardware-configuration.nix, commit it, then:
 just server-rebuild
 ```
 
-> **Note:** `hosts/server/configuration/hardware-configuration.nix` is machine-specific and
-> must be generated on the actual server with `nixos-generate-config`. It is not tracked in this repo.
+[`hosts/server/configuration/hardware-configuration.nix`](/home/iceice666/dotfiles/hosts/server/configuration/hardware-configuration.nix) is machine-specific and should be generated on that server.
+
+## Secrets
+
+Secrets are managed with `sops-nix`.
+
+- Repo guidance lives in [`sops_guide.md`](/home/iceice666/dotfiles/sops_guide.md)
+- SOPS rules live in [`.sops.yaml`](/home/iceice666/dotfiles/.sops.yaml)
+- Current server secrets live under [`secrets/hosts/server`](/home/iceice666/dotfiles/secrets/hosts/server)
+
+Expected server secret files:
+
+- `forgejo.yaml`
+- `cloudflare-ddns.key`
+- `cloudflared-token.key`
+
+On the server, decryption uses a local age identity at `/var/lib/sops-nix/key.txt`.
+
+## Notes
+
+- `just check` runs `nix flake check --all-systems`
+- `just fmt` runs `nix fmt` via `treefmt-nix`
+- `framework` deliberately keeps system package installation outside Home Manager
+- The server firewall is intentionally restrictive: SSH is LAN-only on port `2222`, and HTTP/HTTPS are limited to LAN plus Cloudflare IP ranges
