@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 
 {
   systemd.services.cloudflared-tunnel = {
@@ -12,7 +16,9 @@
       User = "root";
       Restart = "always";
       RestartSec = "5s";
-      ExecStart = "${pkgs.bash}/bin/bash -lc 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token \"$(< /var/lib/secrets/cloudflared-token)\"'";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token \"$(< ${
+        config.sops.secrets."cloudflared-token".path
+      })\"'";
     };
   };
 }

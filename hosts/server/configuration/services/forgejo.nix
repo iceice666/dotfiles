@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   systemd.mounts = [
@@ -12,26 +17,6 @@
 
   systemd.services.forgejo = {
     unitConfig.RequiresMountsFor = "/var/lib/forgejo";
-  };
-
-  systemd.services.forgejo-secrets.script = lib.mkForce ''
-    for path in \
-      /run/keys/forgejo-secret-key \
-      /run/keys/forgejo-internal-token \
-      /run/keys/forgejo-oauth2-jwt-secret \
-      /run/keys/forgejo-lfs-jwt-secret
-    do
-      if [ ! -s "$path" ]; then
-        echo "missing Forgejo secret: $path" >&2
-        exit 1
-      fi
-    done
-  '';
-
-  systemd.services.forgejo-secrets.serviceConfig = {
-    User = lib.mkForce "root";
-    Group = lib.mkForce "root";
-    ReadWritePaths = lib.mkForce [ ];
   };
 
   services.forgejo = {
@@ -49,7 +34,7 @@
       socket = "/run/postgresql";
       name = "forgejo";
       user = "forgejo";
-      passwordFile = "/run/keys/forgejo-db-password";
+      passwordFile = config.sops.secrets."forgejo-db-password".path;
     };
 
     settings = {
@@ -142,14 +127,14 @@
     };
 
     secrets = {
-      server.LFS_JWT_SECRET = lib.mkForce "/run/keys/forgejo-lfs-jwt-secret";
+      server.LFS_JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-lfs-jwt-secret".path;
 
       security = {
-        INTERNAL_TOKEN = lib.mkForce "/run/keys/forgejo-internal-token";
-        SECRET_KEY = lib.mkForce "/run/keys/forgejo-secret-key";
+        INTERNAL_TOKEN = lib.mkForce config.sops.secrets."forgejo-internal-token".path;
+        SECRET_KEY = lib.mkForce config.sops.secrets."forgejo-secret-key".path;
       };
 
-      oauth2.JWT_SECRET = lib.mkForce "/run/keys/forgejo-oauth2-jwt-secret";
+      oauth2.JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-oauth2-jwt-secret".path;
     };
   };
 }
