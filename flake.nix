@@ -55,6 +55,7 @@
           zed-editor-unstable = unstablePkgs.zed-editor;
 
           ollama-unstable = unstablePkgs.ollama;
+          devenv = unstablePkgs.devenv;
         };
 
       treefmtEval =
