@@ -48,4 +48,8 @@
   };
 
   programs.home-manager.enable = true;
+
+  home.packages = [
+    pkgs.codex-unstable
+  ];
 }
