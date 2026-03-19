@@ -75,6 +75,46 @@ just gc
 just store-size
 ```
 
+## Devenv + Direnv
+
+`direnv` with `nix-direnv` is enabled in the shared home-manager config for all hosts.
+`devenv` is also installed through home-manager, so the same workflow works on `m3air`,
+`framework`, and the server user environment.
+
+In any project where you want an automatic dev shell:
+
+```sh
+cat > .envrc <<'EOF'
+use flake
+EOF
+
+cat > devenv.nix <<'EOF'
+{ pkgs, ... }:
+{
+  packages = with pkgs; [
+    git
+    just
+  ];
+
+  enterShell = ''
+    echo "devenv loaded"
+  '';
+}
+EOF
+
+direnv allow
+devenv shell
+```
+
+If you prefer a pure `devenv` entrypoint instead of `use flake`, use this `.envrc`:
+
+```sh
+use devenv
+```
+
+That requires a `devenv.nix` (or `devenv.yaml`) in the project root. After editing
+either file, run `direnv reload` or re-enter the directory.
+
 ## Validation
 
 There are no unit tests here. Validation is mostly formatting, flake evaluation, and dry builds.

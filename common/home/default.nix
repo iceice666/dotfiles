@@ -50,6 +50,7 @@
   programs.home-manager.enable = true;
 
   home.packages = [
+    pkgs.devenv
     pkgs.codex-unstable
   ];
 }

@@ -26,5 +26,4 @@ with pkgs;
   cloudflared
   zulu21
   age
-  devenv
 ]
