@@ -191,6 +191,8 @@ Expected server secret files:
 - `forgejo.yaml`
 - `cloudflare-ddns.key`
 - `cloudflared-token.key`
+- `cloudflare-origin-ca-cert.pem`
+- `cloudflare-origin-ca-key.pem`
 
 On the server, decryption uses a local age identity at `/var/lib/sops-nix/key.txt`.
 
