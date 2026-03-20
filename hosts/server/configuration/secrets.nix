@@ -1,5 +1,4 @@
 { dotfiles, ... }:
-
 {
   sops = {
     defaultSopsFormat = "yaml";
@@ -71,6 +70,24 @@
         group = "root";
         mode = "0400";
         restartUnits = [ "cloudflared-tunnel.service" ];
+      };
+
+      "cloudflare-origin-ca-cert" = {
+        sopsFile = dotfiles + /secrets/hosts/server/cloudflare-origin-ca-cert.pem;
+        format = "binary";
+        owner = "nginx";
+        group = "nginx";
+        mode = "0400";
+        restartUnits = [ "nginx.service" ];
+      };
+
+      "cloudflare-origin-ca-key" = {
+        sopsFile = dotfiles + /secrets/hosts/server/cloudflare-origin-ca-key.pem;
+        format = "binary";
+        owner = "nginx";
+        group = "nginx";
+        mode = "0400";
+        restartUnits = [ "nginx.service" ];
       };
     };
   };

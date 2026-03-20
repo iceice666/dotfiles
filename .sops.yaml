@@ -25,5 +25,5 @@ creation_rules:
   - path_regex: ^secrets/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
     age: [*framework]
 
-  - path_regex: ^secrets/hosts/server/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^secrets/hosts/server/.*\.(yaml|yml|json|env|ini|key|pem)$
     age: [*server]
