@@ -16,6 +16,7 @@
         owner = "forgejo";
         group = "forgejo";
         mode = "0400";
+        restartUnits = [ "forgejo.service" ];
       };
 
       "forgejo-secret-key" = {
@@ -24,6 +25,7 @@
         owner = "forgejo";
         group = "forgejo";
         mode = "0400";
+        restartUnits = [ "forgejo.service" ];
       };
 
       "forgejo-internal-token" = {
@@ -32,6 +34,7 @@
         owner = "forgejo";
         group = "forgejo";
         mode = "0400";
+        restartUnits = [ "forgejo.service" ];
       };
 
       "forgejo-oauth2-jwt-secret" = {
@@ -40,6 +43,7 @@
         owner = "forgejo";
         group = "forgejo";
         mode = "0400";
+        restartUnits = [ "forgejo.service" ];
       };
 
       "forgejo-lfs-jwt-secret" = {
@@ -48,6 +52,7 @@
         owner = "forgejo";
         group = "forgejo";
         mode = "0400";
+        restartUnits = [ "forgejo.service" ];
       };
 
       "cloudflare-ddns-key" = {
@@ -56,6 +61,7 @@
         owner = "root";
         group = "root";
         mode = "0400";
+        restartUnits = [ "cloudflare-dyndns.service" ];
       };
 
       "cloudflared-token" = {
@@ -64,6 +70,7 @@
         owner = "root";
         group = "root";
         mode = "0400";
+        restartUnits = [ "cloudflared-tunnel.service" ];
       };
     };
   };
