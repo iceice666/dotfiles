@@ -4,9 +4,11 @@ let
   refreshCloudflareIps = pkgs.writeShellApplication {
     name = "refresh-cloudflare-ips";
     runtimeInputs = [
+      pkgs.bash
       pkgs.coreutils
       pkgs.curl
       pkgs.ipset
+      pkgs.systemd
     ];
     text = ''
       set -euo pipefail
@@ -14,6 +16,10 @@ let
       state_dir=/var/lib/cloudflare-ips
       ipv4_file="$state_dir/ips-v4"
       ipv6_file="$state_dir/ips-v6"
+      nginx_v4_file="$state_dir/nginx-real-ip-v4.conf"
+      nginx_v6_file="$state_dir/nginx-real-ip-v6.conf"
+      nginx_v4_tmp="$nginx_v4_file.tmp"
+      nginx_v6_tmp="$nginx_v6_file.tmp"
       tmp_v4=cloudflare-v4-next
       tmp_v6=cloudflare-v6-next
 
@@ -36,19 +42,40 @@ let
         [ -n "$cidr" ] && ipset add "$tmp_v4" "$cidr"
       done < "$ipv4_file"
 
+      : > "$nginx_v4_tmp"
+      while IFS= read -r cidr; do
+        [ -n "$cidr" ] && printf 'set_real_ip_from %s;\n' "$cidr" >> "$nginx_v4_tmp"
+      done < "$ipv4_file"
+
       while IFS= read -r cidr; do
         [ -n "$cidr" ] && ipset add "$tmp_v6" "$cidr"
+      done < "$ipv6_file"
+
+      : > "$nginx_v6_tmp"
+      while IFS= read -r cidr; do
+        [ -n "$cidr" ] && printf 'set_real_ip_from %s;\n' "$cidr" >> "$nginx_v6_tmp"
       done < "$ipv6_file"
 
       ipset swap cloudflare-v4 "$tmp_v4"
       ipset swap cloudflare-v6 "$tmp_v6"
       ipset destroy "$tmp_v4"
       ipset destroy "$tmp_v6"
+
+      mv "$nginx_v4_tmp" "$nginx_v4_file"
+      mv "$nginx_v6_tmp" "$nginx_v6_file"
+
+      if systemctl is-active --quiet nginx.service; then
+        systemctl reload nginx.service
+      fi
     '';
   };
 in
 {
-  systemd.tmpfiles.rules = [ "d /var/lib/cloudflare-ips 0755 root root -" ];
+  systemd.tmpfiles.rules = [
+    "d /var/lib/cloudflare-ips 0755 root root -"
+    "f /var/lib/cloudflare-ips/nginx-real-ip-v4.conf 0644 root root -"
+    "f /var/lib/cloudflare-ips/nginx-real-ip-v6.conf 0644 root root -"
+  ];
 
   systemd.services.cloudflare-ips-refresh = {
     description = "Refresh Cloudflare IP sets";

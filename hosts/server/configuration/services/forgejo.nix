@@ -93,7 +93,7 @@
       security = {
         INSTALL_LOCK = true;
         REVERSE_PROXY_LIMIT = 1;
-        REVERSE_PROXY_TRUSTED_PROXIES = "*";
+        REVERSE_PROXY_TRUSTED_PROXIES = "127.0.0.0/8,::1/128";
         PASSWORD_HASH_ALGO = "pbkdf2_hi";
       };
 
