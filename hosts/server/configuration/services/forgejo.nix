@@ -55,13 +55,14 @@
       server = {
         APP_DATA_PATH = "/var/lib/forgejo/data";
         DOMAIN = "code.justaslime.dev";
-        SSH_DOMAIN = "justaslime.dev";
+        SSH_DOMAIN = "ssh.code.justaslime.dev";
         HTTP_ADDR = "127.0.0.1";
         HTTP_PORT = 3000;
         ROOT_URL = "https://code.justaslime.dev/";
+        START_SSH_SERVER = true;
         DISABLE_SSH = false;
-        SSH_PORT = 22;
-        SSH_LISTEN_PORT = 22;
+        SSH_PORT = 2244;
+        SSH_LISTEN_PORT = 2244;
         LFS_START_SERVER = true;
         OFFLINE_MODE = false;
       };
