@@ -131,7 +131,7 @@
           checkOnSave = true;
           inlayHints = {
             implicitDrops.enable = true;
-            maxLength = 100;
+            maxLength = 30;
             closureReturnTypeHints.enable = "always";
             lifetimeElisionHints = {
               enable = "skip_trivial";
