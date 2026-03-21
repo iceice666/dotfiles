@@ -52,5 +52,6 @@
   home.packages = [
     pkgs.devenv
     pkgs.codex-unstable
+    pkgs.git-lfs
   ];
 }
