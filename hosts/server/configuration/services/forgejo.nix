@@ -91,6 +91,8 @@
         ROOT_PATH = "/var/lib/forgejo/data/log";
       };
 
+      webhook.ALLOWED_HOST_LIST = "external,loopback";
+
       security = {
         INSTALL_LOCK = true;
         REVERSE_PROXY_LIMIT = 1;

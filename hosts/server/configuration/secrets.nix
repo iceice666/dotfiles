@@ -1,4 +1,8 @@
-{ dotfiles, ... }:
+{
+  config,
+  dotfiles,
+  ...
+}:
 {
   sops = {
     defaultSopsFormat = "yaml";
@@ -54,6 +58,36 @@
         restartUnits = [ "forgejo.service" ];
       };
 
+      "woodpecker-grpc-secret" = {
+        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        key = "woodpeckerGrpcSecret";
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [
+          "woodpecker-server.service"
+          "woodpecker-agent-docker.service"
+        ];
+      };
+
+      "woodpecker-forgejo-client" = {
+        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        key = "woodpeckerForgejoClient";
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "woodpecker-server.service" ];
+      };
+
+      "woodpecker-forgejo-secret" = {
+        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        key = "woodpeckerForgejoSecret";
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "woodpecker-server.service" ];
+      };
+
       "cloudflare-ddns-key" = {
         sopsFile = dotfiles + /secrets/hosts/server/cloudflare-ddns.key;
         format = "binary";
@@ -75,19 +109,84 @@
       "cloudflare-origin-ca-cert" = {
         sopsFile = dotfiles + /secrets/hosts/server/cloudflare-origin-ca-cert.pem;
         format = "binary";
-        owner = "nginx";
-        group = "nginx";
+        owner = "traefik";
+        group = "traefik";
         mode = "0400";
-        restartUnits = [ "nginx.service" ];
+        restartUnits = [ "traefik.service" ];
       };
 
       "cloudflare-origin-ca-key" = {
         sopsFile = dotfiles + /secrets/hosts/server/cloudflare-origin-ca-key.pem;
         format = "binary";
-        owner = "nginx";
-        group = "nginx";
+        owner = "traefik";
+        group = "traefik";
         mode = "0400";
-        restartUnits = [ "nginx.service" ];
+        restartUnits = [ "traefik.service" ];
+      };
+
+      "authelia-jwt-secret" = {
+        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        key = "jwtSecret";
+        owner = "authelia-main";
+        group = "authelia-main";
+        mode = "0400";
+        restartUnits = [ "authelia-main.service" ];
+      };
+
+      "authelia-storage-encryption-key" = {
+        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        key = "storageEncryptionKey";
+        owner = "authelia-main";
+        group = "authelia-main";
+        mode = "0400";
+        restartUnits = [ "authelia-main.service" ];
+      };
+
+      "authelia-user-password-hash" = {
+        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        key = "userPasswordHash";
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+    };
+
+    templates = {
+      "woodpecker-server.env" = {
+        content = ''
+          WOODPECKER_AGENT_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
+          WOODPECKER_GRPC_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
+          WOODPECKER_FORGEJO_CLIENT=${config.sops.placeholder."woodpecker-forgejo-client"}
+          WOODPECKER_FORGEJO_SECRET=${config.sops.placeholder."woodpecker-forgejo-secret"}
+        '';
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+
+      "woodpecker-agent.env" = {
+        content = ''
+          WOODPECKER_AGENT_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
+        '';
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+
+      "authelia-users-database.yml" = {
+        content = ''
+          users:
+            iceice666:
+              disabled: false
+              displayname: iceice666
+              password: ${config.sops.placeholder."authelia-user-password-hash"}
+              email: iceice666@justaslime.dev
+              groups:
+                - admins
+        '';
+        owner = "authelia-main";
+        group = "authelia-main";
+        mode = "0400";
       };
     };
   };

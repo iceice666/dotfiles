@@ -8,16 +8,16 @@
 
     # Create the databases and users automatically on startup
     ensureDatabases = [
+      "authelia"
       "forgejo"
-      "atcb"
     ];
     ensureUsers = [
       {
-        name = "forgejo";
+        name = "authelia";
         ensureDBOwnership = true;
       }
       {
-        name = "atcb";
+        name = "forgejo";
         ensureDBOwnership = true;
       }
     ];
