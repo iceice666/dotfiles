@@ -1,8 +1,4 @@
 { config, ... }:
-
-let
-  forgejoUrl = "http://127.0.0.1:3000";
-in
 {
   services.woodpecker-server = {
     enable = true;
@@ -16,7 +12,7 @@ in
       WOODPECKER_ADMIN = "iceice666";
 
       WOODPECKER_FORGEJO = "true";
-      WOODPECKER_FORGEJO_URL = forgejoUrl;
+      WOODPECKER_FORGEJO_URL = "http://code.justaslime.dev";
     };
 
     environmentFile = [ config.sops.templates."woodpecker-server.env".path ];
