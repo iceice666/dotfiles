@@ -53,5 +53,15 @@
     pkgs.devenv
     pkgs.codex-unstable
     pkgs.git-lfs
+    pkgs.zellij
   ];
+
+  home.file.".config/zellij/config.kdl".text = ''
+    default_shell "${pkgs.fish}/bin/fish"
+    mouse_mode true
+    pane_frames true
+    simplified_ui false
+    copy_on_select false
+    scroll_buffer_size 10000
+  '';
 }

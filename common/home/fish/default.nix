@@ -27,6 +27,7 @@
       lt = "eza -almhgF --time-style iso -s type --git-ignore --tree -L 2 -I .git";
       llt = "eza -almhgF --time-style iso -s type --tree -L 2";
       lg = "lazygit";
+      zj = "zellij";
       cat = "bat";
       ccat = "command cat";
       plz = "sudo";
