@@ -9,6 +9,9 @@
       storageEncryptionKeyFile = config.sops.secrets."authelia-storage-encryption-key".path;
     };
 
+    environmentVariables.AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE =
+      config.sops.secrets."authelia-smtp-password".path;
+
     settings = {
       theme = "auto";
       default_2fa_method = "webauthn";
@@ -59,7 +62,13 @@
         username = "authelia";
       };
 
-      notifier.filesystem.filename = "/var/lib/authelia-main/notifications.txt";
+      notifier.smtp = {
+        address = "submissions://smtp.resend.com:465";
+        username = "resend";
+        sender = "Authelia <noreply@justaslime.dev>";
+        identifier = "auth.justaslime.dev";
+        startup_check_address = "iceice666@justaslime.dev";
+      };
 
       webauthn = {
         display_name = "JustaSlime";

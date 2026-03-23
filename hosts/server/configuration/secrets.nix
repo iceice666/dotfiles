@@ -58,6 +58,15 @@
         restartUnits = [ "forgejo.service" ];
       };
 
+      "forgejo-mailer-password" = {
+        sopsFile = dotfiles + /secrets/hosts/server/resend.yaml;
+        key = "apiKey";
+        owner = "forgejo";
+        group = "forgejo";
+        mode = "0400";
+        restartUnits = [ "forgejo.service" ];
+      };
+
       "woodpecker-grpc-secret" = {
         sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
         key = "woodpeckerGrpcSecret";
@@ -148,6 +157,15 @@
         owner = "root";
         group = "root";
         mode = "0400";
+      };
+
+      "authelia-smtp-password" = {
+        sopsFile = dotfiles + /secrets/hosts/server/resend.yaml;
+        key = "apiKey";
+        owner = "authelia-main";
+        group = "authelia-main";
+        mode = "0400";
+        restartUnits = [ "authelia-main.service" ];
       };
     };
 

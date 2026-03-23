@@ -104,18 +104,25 @@
         DISABLE_REGISTRATION = true;
         REQUIRE_SIGNIN_VIEW = true;
         REGISTER_EMAIL_CONFIRM = false;
-        ENABLE_NOTIFY_MAIL = false;
+        ENABLE_NOTIFY_MAIL = true;
         ALLOW_ONLY_EXTERNAL_REGISTRATION = true;
         ENABLE_CAPTCHA = false;
         DEFAULT_KEEP_EMAIL_PRIVATE = false;
         DEFAULT_ALLOW_CREATE_ORGANIZATION = true;
         DEFAULT_ENABLE_TIMETRACKING = true;
-        NO_REPLY_ADDRESS = "noreply.localhost";
+        NO_REPLY_ADDRESS = "noreply.justaslime.dev";
       };
 
       lfs.PATH = "/var/lib/forgejo/data/lfs";
 
-      mailer.ENABLED = false;
+      mailer = {
+        ENABLED = true;
+        PROTOCOL = "smtps";
+        SMTP_ADDR = "smtp.resend.com";
+        SMTP_PORT = 465;
+        FROM = "Forgejo <noreply@justaslime.dev>";
+        USER = "resend";
+      };
 
       openid = {
         ENABLE_OPENID_SIGNIN = true;
@@ -136,6 +143,8 @@
         INTERNAL_TOKEN = lib.mkForce config.sops.secrets."forgejo-internal-token".path;
         SECRET_KEY = lib.mkForce config.sops.secrets."forgejo-secret-key".path;
       };
+
+      mailer.PASSWD = lib.mkForce config.sops.secrets."forgejo-mailer-password".path;
 
       oauth2.JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-oauth2-jwt-secret".path;
     };
