@@ -11,6 +11,7 @@
 
       WOODPECKER_OPEN = "false";
       WOODPECKER_ADMIN = "justaslime";
+      WOODPECKER_PLUGINS_PRIVILEGED = "woodpeckerci/plugin-docker-buildx";
 
       WOODPECKER_FORGEJO = "true";
       WOODPECKER_FORGEJO_URL = "https://code.justaslime.dev";
