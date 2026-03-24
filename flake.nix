@@ -60,6 +60,7 @@
           ollama-unstable = unstablePkgs.ollama;
           devenv = unstablePkgs.devenv;
           codex-unstable = unstablePkgs.codex;
+          opencode-unstable = unstablePkgs.opencode;
         };
 
       treefmtEval =

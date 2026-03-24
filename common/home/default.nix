@@ -33,6 +33,7 @@
 
   programs.opencode = {
     enable = true;
+    package = pkgs.opencode-unstable;
     settings = {
       plugin = [ "@tarquinen/opencode-dcp@latest" ];
       provider.ollama = {
