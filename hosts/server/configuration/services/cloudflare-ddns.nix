@@ -7,7 +7,10 @@
     # This secret must contain only the raw Cloudflare API token.
     apiTokenFile = config.sops.secrets."cloudflare-ddns-key".path;
 
-    domains = [  "justaslime.dev" "proxy.justaslime.dev" ];
+    domains = [
+      "justaslime.dev"
+      "proxy.justaslime.dev"
+    ];
 
     frequency = "hourly";
     proxied = true;

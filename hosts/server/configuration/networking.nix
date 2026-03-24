@@ -58,6 +58,9 @@ in
         ${mkIpv4AcceptRule 2222 lanCidr}
         iptables -A INPUT -i enp7s0 -p tcp --dport 2222 -j DROP
 
+        # Forgejo SSH: public
+        iptables -A INPUT -i enp7s0 -p tcp --dport 2244 -j ACCEPT
+
         # HTTP/HTTPS: LAN + Cloudflare only
         ${mkIpv4AcceptRule 80 lanCidr}
         ${mkIpv4AcceptRule 443 lanCidr}
@@ -75,6 +78,8 @@ in
       extraStopCommands = ''
         ${mkIpv4DeleteRule 2222 lanCidr}
         iptables -D INPUT -i enp7s0 -p tcp --dport 2222 -j DROP || true
+
+        iptables -D INPUT -i enp7s0 -p tcp --dport 2244 -j ACCEPT || true
 
         ${mkIpv4DeleteRule 80 lanCidr}
         ${mkIpv4DeleteRule 443 lanCidr}
