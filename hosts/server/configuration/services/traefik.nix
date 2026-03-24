@@ -90,7 +90,7 @@ in
         };
 
         woodpecker-hook = {
-          rule = "Host(`ci.justaslime.dev`) && Path(`/hook`)";
+          rule = "Host(`ci.justaslime.dev`) && Path(`/api/hook`)";
           entryPoints = [ "websecure" ];
           priority = 100;
 
