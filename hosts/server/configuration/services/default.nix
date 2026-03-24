@@ -8,6 +8,7 @@
     ./cloudflared-tunnel.nix
     ./docker.nix
     ./forgejo.nix
+    ./homepage.nix
     ./ollama.nix
     ./openssh.nix
     ./database.nix

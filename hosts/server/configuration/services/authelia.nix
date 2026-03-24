@@ -36,6 +36,10 @@
             domain = "ci.justaslime.dev";
             policy = "two_factor";
           }
+          {
+            domain = "home.justaslime.dev";
+            policy = "two_factor";
+          }
         ];
       };
 

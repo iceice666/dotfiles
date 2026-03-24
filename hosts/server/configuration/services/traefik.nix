@@ -106,11 +106,21 @@ in
           service = "woodpecker";
           tls = true;
         };
+
+        homepage = {
+          rule = "Host(`home.justaslime.dev`)";
+          entryPoints = [ "websecure" ];
+          middlewares = [ "authelia@file" ];
+
+          service = "homepage";
+          tls = true;
+        };
       };
 
       http.services = {
         authelia.loadBalancer.servers = [ { url = "http://127.0.0.1:9091"; } ];
         forgejo.loadBalancer.servers = [ { url = "http://127.0.0.1:3000"; } ];
+        homepage.loadBalancer.servers = [ { url = "http://127.0.0.1:8082"; } ];
         woodpecker.loadBalancer.servers = [ { url = "http://127.0.0.1:8000"; } ];
       };
     };

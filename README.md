@@ -55,7 +55,7 @@ common/ -> shared/ -> hosts/<name>/
 - Optional editor/app modules in [`shared/home`](/home/iceice666/dotfiles/shared/home), currently Zed and Cursor
 - Local overlay packages and pinned unstable packages from `nixpkgs-unstable`
 - A custom `equibop-bin` derivation in [`pkgs/equibop-bin`](/home/iceice666/dotfiles/pkgs/equibop-bin/default.nix)
-- NixOS server services in [`hosts/server/configuration/services`](/home/iceice666/dotfiles/hosts/server/configuration/services): Nginx, Forgejo, PostgreSQL, Valkey, Docker, Ollama, Cloudflare DDNS, Cloudflare Tunnel, Cloudflare IP allowlists, and OpenSSH
+- NixOS server services in [`hosts/server/configuration/services`](/home/iceice666/dotfiles/hosts/server/configuration/services): Traefik, Homepage Dashboard, Forgejo, PostgreSQL, Valkey, Docker, Ollama, Cloudflare DDNS, Cloudflare Tunnel, Cloudflare IP allowlists, and OpenSSH
 
 ## Common Commands
 
