@@ -53,6 +53,9 @@
     pkgs.devenv
     pkgs.codex-unstable
     pkgs.git-lfs
+    pkgs.python3
+    pkgs.uv
+    pkgs.yq
     pkgs.zellij
   ];
 
