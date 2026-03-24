@@ -9,7 +9,7 @@
       WOODPECKER_GRPC_ADDR = "127.0.0.1:9000";
 
       WOODPECKER_OPEN = "false";
-      WOODPECKER_ADMIN = "iceice666";
+      WOODPECKER_ADMIN = "justaslime";
 
       WOODPECKER_FORGEJO = "true";
       WOODPECKER_FORGEJO_URL = "https://code.justaslime.dev";
