@@ -33,10 +33,6 @@
             policy = "bypass";
           }
           {
-            domain = "code.justaslime.dev";
-            policy = "two_factor";
-          }
-          {
             domain = "ci.justaslime.dev";
             policy = "two_factor";
           }

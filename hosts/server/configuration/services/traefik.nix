@@ -84,7 +84,6 @@ in
         forgejo = {
           rule = "Host(`code.justaslime.dev`)";
           entryPoints = [ "websecure" ];
-          middlewares = [ "authelia@file" ];
 
           service = "forgejo";
           tls = true;
