@@ -1,7 +1,8 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   services.woodpecker-server = {
     enable = true;
+    package = pkgs.woodpecker-server-unstable;
 
     environment = {
       WOODPECKER_HOST = "https://ci.justaslime.dev";
@@ -20,6 +21,7 @@
 
   services.woodpecker-agents.agents.docker = {
     enable = true;
+    package = pkgs.woodpecker-agent-unstable;
 
     environment = {
       WOODPECKER_SERVER = "127.0.0.1:9000";

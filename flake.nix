@@ -54,6 +54,8 @@
           equibop-bin = final.callPackage ./pkgs/equibop-bin { };
           zed-editor-unstable = unstablePkgs.zed-editor;
 
+          woodpecker-agent-unstable = unstablePkgs.woodpecker-agent;
+          woodpecker-server-unstable = unstablePkgs.woodpecker-server;
           ollama-unstable = unstablePkgs.ollama;
           devenv = unstablePkgs.devenv;
           codex-unstable = unstablePkgs.codex;
