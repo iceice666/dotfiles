@@ -131,6 +131,8 @@
         ENABLE_OPENID_SIGNUP = true;
       };
 
+      packages.ENABLED = true;
+
       "cron.update_checker".ENABLED = true;
 
       "repository.pull-request".DEFAULT_MERGE_STYLE = "merge";
