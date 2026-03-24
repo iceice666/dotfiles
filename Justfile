@@ -52,6 +52,68 @@ check:
 fmt:
     nix fmt
 
+# ── Secrets ───────────────────────────────────────────────────────────────────
+
+# Encrypt a secret file in place, or from a plaintext source file
+secret-encrypt secret plaintext='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
+
+    secret='{{ secret }}'
+    plaintext='{{ plaintext }}'
+
+    case "$secret" in
+        *.yaml|*.yml|*.json|*.env|*.ini)
+            if [[ -n "$plaintext" ]]; then
+                sops encrypt --output "$secret" "$plaintext"
+            else
+                sops encrypt --in-place "$secret"
+            fi
+            ;;
+        *.key|*.pem)
+            if [[ -n "$plaintext" ]]; then
+                sops encrypt --input-type binary --output-type binary --output "$secret" "$plaintext"
+            else
+                sops encrypt --input-type binary --output-type binary --in-place "$secret"
+            fi
+            ;;
+        *)
+            echo "Unsupported secret file type: $secret" >&2
+            exit 1
+            ;;
+    esac
+
+# Decrypt a secret file to stdout (text) or an output file
+secret-decrypt secret output='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
+
+    secret='{{ secret }}'
+    output='{{ output }}'
+
+    case "$secret" in
+        *.yaml|*.yml|*.json|*.env|*.ini)
+            if [[ -n "$output" ]]; then
+                sops decrypt --output "$output" "$secret"
+            else
+                sops decrypt "$secret"
+            fi
+            ;;
+        *.key|*.pem)
+            if [[ -z "$output" ]]; then
+                echo "Binary secrets require an output path: just secret-decrypt $secret /tmp/output" >&2
+                exit 1
+            fi
+            sops decrypt --input-type binary --output-type binary --output "$output" "$secret"
+            ;;
+        *)
+            echo "Unsupported secret file type: $secret" >&2
+            exit 1
+            ;;
+    esac
+
 # ── Nixpkgs search ───────────────────────────────────────────────────────────
 
 # Search nixpkgs for a package across platforms (filters by actual platform support)
