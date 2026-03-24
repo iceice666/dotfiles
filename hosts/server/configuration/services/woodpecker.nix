@@ -12,7 +12,7 @@
       WOODPECKER_ADMIN = "iceice666";
 
       WOODPECKER_FORGEJO = "true";
-      WOODPECKER_FORGEJO_URL = "http://code.justaslime.dev";
+      WOODPECKER_FORGEJO_URL = "https://code.justaslime.dev";
     };
 
     environmentFile = [ config.sops.templates."woodpecker-server.env".path ];

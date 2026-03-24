@@ -172,10 +172,10 @@
     templates = {
       "woodpecker-server.env" = {
         content = ''
-          WOODPECKER_AGENT_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
-          WOODPECKER_GRPC_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
-          WOODPECKER_FORGEJO_CLIENT=${config.sops.placeholder."woodpecker-forgejo-client"}
-          WOODPECKER_FORGEJO_SECRET=${config.sops.placeholder."woodpecker-forgejo-secret"}
+          WOODPECKER_AGENT_SECRET="${config.sops.placeholder."woodpecker-grpc-secret"}"
+          WOODPECKER_GRPC_SECRET="${config.sops.placeholder."woodpecker-grpc-secret"}"
+          WOODPECKER_FORGEJO_CLIENT="${config.sops.placeholder."woodpecker-forgejo-client"}"
+          WOODPECKER_FORGEJO_SECRET="${config.sops.placeholder."woodpecker-forgejo-secret"}"
         '';
         owner = "root";
         group = "root";
@@ -184,7 +184,7 @@
 
       "woodpecker-agent.env" = {
         content = ''
-          WOODPECKER_AGENT_SECRET=${config.sops.placeholder."woodpecker-grpc-secret"}
+          WOODPECKER_AGENT_SECRET="${config.sops.placeholder."woodpecker-grpc-secret"}"
         '';
         owner = "root";
         group = "root";

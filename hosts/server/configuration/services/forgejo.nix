@@ -71,6 +71,8 @@
         LOG_SQL = false;
       };
 
+      api.MAX_RESPONSE_ITEMS = 50;
+
       indexer.ISSUE_INDEXER_PATH = "/var/lib/forgejo/data/indexers/issues.bleve";
 
       session = {
