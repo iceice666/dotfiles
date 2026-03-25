@@ -12,6 +12,7 @@
     ./ollama.nix
     ./openssh.nix
     ./database.nix
+    ./rustfs.nix
     ./traefik.nix
     ./woodpecker.nix
   ];

@@ -5,6 +5,11 @@
   ...
 }:
 
+let
+  legacyLfsPath = "/var/lib/forgejo/data/lfs";
+  lfsMigrationMarker = "/var/lib/forgejo/.lfs-storage-migrated-to-rustfs";
+  rustfsEndpoint = "127.0.0.1:9100";
+in
 {
   systemd.mounts = [
     {
@@ -17,6 +22,14 @@
 
   systemd.services.forgejo = {
     unitConfig.RequiresMountsFor = "/var/lib/forgejo";
+    after = [
+      "rustfs.service"
+      "rustfs-init.service"
+    ];
+    requires = [
+      "rustfs.service"
+      "rustfs-init.service"
+    ];
   };
 
   services.forgejo = {
@@ -63,6 +76,7 @@
         DISABLE_SSH = false;
         SSH_PORT = 22;
         SSH_LISTEN_PORT = 2244;
+        LFS_HTTP_AUTH_EXPIRY = "180m";
         LFS_START_SERVER = true;
         OFFLINE_MODE = false;
       };
@@ -115,7 +129,15 @@
         NO_REPLY_ADDRESS = "noreply.justaslime.dev";
       };
 
-      lfs.PATH = "/var/lib/forgejo/data/lfs";
+      lfs = {
+        STORAGE_TYPE = "minio";
+        MINIO_ENDPOINT = rustfsEndpoint;
+        MINIO_BUCKET = "forgejo-lfs";
+        MINIO_BUCKET_LOOKUP = "path";
+        MINIO_LOCATION = "us-east-1";
+        MINIO_USE_SSL = false;
+        SERVE_DIRECT = false;
+      };
 
       mailer = {
         ENABLED = true;
@@ -143,6 +165,11 @@
     secrets = {
       server.LFS_JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-lfs-jwt-secret".path;
 
+      lfs = {
+        MINIO_ACCESS_KEY_ID = lib.mkForce config.sops.secrets."rustfs-access-key".path;
+        MINIO_SECRET_ACCESS_KEY = lib.mkForce config.sops.secrets."rustfs-secret-key".path;
+      };
+
       security = {
         INTERNAL_TOKEN = lib.mkForce config.sops.secrets."forgejo-internal-token".path;
         SECRET_KEY = lib.mkForce config.sops.secrets."forgejo-secret-key".path;
@@ -151,6 +178,69 @@
       mailer.PASSWD = lib.mkForce config.sops.secrets."forgejo-mailer-password".path;
 
       oauth2.JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-oauth2-jwt-secret".path;
+    };
+  };
+
+  # Migrate existing local LFS objects before Forgejo switches to RustFS-backed
+  # storage.
+  systemd.services.forgejo-lfs-migrate = {
+    description = "Migrate Forgejo LFS storage to RustFS";
+    before = [ "forgejo.service" ];
+    requiredBy = [ "forgejo.service" ];
+    after = [
+      "rustfs.service"
+      "rustfs-init.service"
+    ];
+    requires = [
+      "rustfs.service"
+      "rustfs-init.service"
+    ];
+
+    path = [
+      config.services.forgejo.package
+      pkgs.coreutils
+      pkgs.findutils
+    ];
+
+    script = ''
+      marker='${lfsMigrationMarker}'
+      legacy_lfs='${legacyLfsPath}'
+      source_config='${config.services.forgejo.customDir}/conf/app.ini'
+
+      if [ -e "$marker" ]; then
+        exit 0
+      fi
+
+      if [ ! -d "$legacy_lfs" ] || [ -z "$(find "$legacy_lfs" -mindepth 1 -print -quit)" ]; then
+        touch "$marker"
+        exit 0
+      fi
+
+      if [ ! -r "$source_config" ]; then
+        echo "missing source Forgejo config at $source_config" >&2
+        exit 1
+      fi
+
+      ${lib.getExe config.services.forgejo.package} migrate-storage \
+        --config "$source_config" \
+        --work-path '${config.services.forgejo.stateDir}' \
+        --type lfs \
+        --storage minio \
+        --minio-endpoint ${rustfsEndpoint} \
+        --minio-access-key-id "$(tr -d '\n' < '${config.sops.secrets."rustfs-access-key".path}')" \
+        --minio-secret-access-key "$(tr -d '\n' < '${config.sops.secrets."rustfs-secret-key".path}')" \
+        --minio-bucket forgejo-lfs \
+        --minio-location us-east-1
+
+      touch "$marker"
+    '';
+
+    serviceConfig = {
+      Type = "oneshot";
+      User = "forgejo";
+      Group = "forgejo";
+      WorkingDirectory = config.services.forgejo.stateDir;
+      ReadWritePaths = [ config.services.forgejo.stateDir ];
     };
   };
 }

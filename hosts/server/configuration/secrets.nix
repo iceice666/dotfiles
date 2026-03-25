@@ -67,6 +67,32 @@
         restartUnits = [ "forgejo.service" ];
       };
 
+      "rustfs-access-key" = {
+        sopsFile = dotfiles + /secrets/hosts/server/rustfs.yaml;
+        key = "accessKey";
+        owner = "forgejo";
+        group = "forgejo";
+        mode = "0400";
+        restartUnits = [
+          "forgejo.service"
+          "rustfs.service"
+          "rustfs-init.service"
+        ];
+      };
+
+      "rustfs-secret-key" = {
+        sopsFile = dotfiles + /secrets/hosts/server/rustfs.yaml;
+        key = "secretKey";
+        owner = "forgejo";
+        group = "forgejo";
+        mode = "0400";
+        restartUnits = [
+          "forgejo.service"
+          "rustfs.service"
+          "rustfs-init.service"
+        ];
+      };
+
       "woodpecker-grpc-secret" = {
         sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
         key = "woodpeckerGrpcSecret";
@@ -185,6 +211,16 @@
       "woodpecker-agent.env" = {
         content = ''
           WOODPECKER_AGENT_SECRET="${config.sops.placeholder."woodpecker-grpc-secret"}"
+        '';
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+
+      "rustfs.env" = {
+        content = ''
+          RUSTFS_ACCESS_KEY=${config.sops.placeholder."rustfs-access-key"}
+          RUSTFS_SECRET_KEY=${config.sops.placeholder."rustfs-secret-key"}
         '';
         owner = "root";
         group = "root";
