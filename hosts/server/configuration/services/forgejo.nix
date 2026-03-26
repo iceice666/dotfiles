@@ -30,6 +30,13 @@ in
       "rustfs.service"
       "rustfs-init.service"
     ];
+
+    serviceConfig = {
+      AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+      CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
+      # PrivateUsers breaks CAP_NET_BIND_SERVICE for low ports.
+      PrivateUsers = lib.mkForce false;
+    };
   };
 
   services.forgejo = {
