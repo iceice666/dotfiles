@@ -51,7 +51,7 @@
   programs.home-manager.enable = true;
 
   home.packages = [
-    pkgs.devenv
+    pkgs.mise
     pkgs.codex-unstable
     pkgs.git-lfs
     pkgs.python3

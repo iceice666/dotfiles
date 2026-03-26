@@ -50,7 +50,7 @@ common/ -> shared/ -> hosts/<name>/
 
 ## What It Manages
 
-- Shared shell and CLI tooling through `common/home`: `fish`, `git`, `direnv`, `starship`, `opencode`, `codex`, `devenv`, `zellij`, and other CLI basics
+- Shared shell and CLI tooling through `common/home`: `fish`, `git`, `direnv`, `starship`, `opencode`, `codex`, `mise`, `zellij`, and other CLI basics
 - Shared system packages through `common/configuration`
 - Optional editor and app modules in `shared/home`, currently Zed and Cursor
 - Overlay packages in `flake.nix`, including `equibop-bin` and selected unstable packages
@@ -99,42 +99,37 @@ home-manager build --flake .#iceice666@framework
 sudo nixos-rebuild build --flake .#homolab
 ```
 
-## Devenv + Direnv
+## Mise + Direnv
 
-`direnv` with `nix-direnv` is enabled in `common/home` for every host. `devenv` is also installed through Home Manager, so the same project workflow works on `m3air`, `framework`, and the server user environment.
+`direnv` with `nix-direnv` is enabled in `common/home` for every host. `mise` is also installed through Home Manager, so the same project workflow works on `m3air`, `framework`, and the server user environment.
 
-For a simple flake-backed project:
+For a simple project with mise:
 
 ```sh
 cat > .envrc <<'EOF'
-use flake
+use mise
 EOF
 
-cat > devenv.nix <<'EOF'
-{ pkgs, ... }:
-{
-  packages = with pkgs; [
-    git
-    just
-  ];
+cat > mise.toml <<'EOF'
+[tools]
+node = "20"
+just = "latest"
 
-  enterShell = ''
-    echo "devenv loaded"
-  '';
-}
+[tasks]
+hello = "echo hello from mise"
 EOF
 
 direnv allow
-devenv shell
+mise run hello
 ```
 
-If you prefer a pure `devenv` entrypoint, use:
+If you prefer a pure `mise` entrypoint, use:
 
 ```sh
-use devenv
+use mise
 ```
 
-That requires a `devenv.nix` or `devenv.yaml` in the project root.
+That requires a `mise.toml` in the project root.
 
 ## Host Notes
 

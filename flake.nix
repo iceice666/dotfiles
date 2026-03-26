@@ -58,7 +58,6 @@
           woodpecker-agent-unstable = unstablePkgs.woodpecker-agent;
           woodpecker-server-unstable = unstablePkgs.woodpecker-server;
           ollama-unstable = unstablePkgs.ollama;
-          devenv = unstablePkgs.devenv;
           codex-unstable = unstablePkgs.codex;
           opencode-unstable = unstablePkgs.opencode;
         };
