@@ -53,7 +53,7 @@ common/ -> shared/ -> hosts/<name>/
 
 ## What It Manages
 
-- Shared shell and CLI tooling through `common/home`: `fish`, `git`, `direnv`, `starship`, `opencode`, `codex`, `mise`, `zellij`, and other CLI basics
+- Shared shell and CLI tooling through `common/home`: `fish`, `git`, `direnv`, `starship`, `opencode`, `mise`, `zellij`, and other CLI basics
 - Shared system packages through `common/configuration`
 - Optional editor and app modules in `shared/home`, currently Zed and Cursor
 - Overlay packages in `flake.nix`, including `equibop-bin` and selected unstable packages

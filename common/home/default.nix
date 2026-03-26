@@ -53,7 +53,6 @@
 
   home.packages = [
     pkgs.mise
-    unstablePkgs.codex
     pkgs.git-lfs
     pkgs.python3
     pkgs.uv
