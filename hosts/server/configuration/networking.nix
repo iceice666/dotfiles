@@ -54,6 +54,11 @@ in
         ${ipset} create cloudflare-v4 hash:net family inet -exist
         ${ipset} create cloudflare-v6 hash:net family inet6 -exist
 
+        # Docker bridge: allow local DNS + HTTPS to host services.
+        iptables -A INPUT -i docker0 -p udp --dport 53 -j ACCEPT
+        iptables -A INPUT -i docker0 -p tcp --dport 53 -j ACCEPT
+        iptables -A INPUT -i docker0 -p tcp --dport 443 -j ACCEPT
+
         # SSH: LAN only
         ${mkIpv4AcceptRule 2222 lanCidr}
         iptables -A INPUT -i enp7s0 -p tcp --dport 2222 -j DROP
@@ -76,6 +81,10 @@ in
       '';
 
       extraStopCommands = ''
+        iptables -D INPUT -i docker0 -p udp --dport 53 -j ACCEPT || true
+        iptables -D INPUT -i docker0 -p tcp --dport 53 -j ACCEPT || true
+        iptables -D INPUT -i docker0 -p tcp --dport 443 -j ACCEPT || true
+
         ${mkIpv4DeleteRule 2222 lanCidr}
         iptables -D INPUT -i enp7s0 -p tcp --dport 2222 -j DROP || true
 

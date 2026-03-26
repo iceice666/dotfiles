@@ -1,4 +1,9 @@
 { config, pkgs, ... }:
+
+let
+  caBundle = config.environment.etc."ssl/certs/ca-certificates.crt".source;
+  registryCa = config.environment.etc."docker/certs.d/code.justaslime.dev/ca.crt".source;
+in
 {
   services.woodpecker-server = {
     enable = true;
@@ -27,6 +32,7 @@
     environment = {
       WOODPECKER_SERVER = "127.0.0.1:9000";
       WOODPECKER_BACKEND = "docker";
+      WOODPECKER_BACKEND_DOCKER_VOLUMES = "${caBundle}:/etc/ssl/certs/ca-certificates.crt:ro,${registryCa}:/etc/docker/certs.d/code.justaslime.dev/ca.crt:ro";
       WOODPECKER_HEALTHCHECK_ADDR = "127.0.0.1:3001";
     };
 

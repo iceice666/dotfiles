@@ -1,5 +1,14 @@
-{ ... }:
+{ dotfiles, ... }:
 
 {
-  virtualisation.docker.enable = true;
+  environment.etc."docker/certs.d/code.justaslime.dev/ca.crt".source =
+    dotfiles + /sensitive/hosts/server/cloudflare-origin-ca/root-rsa-cert.pem;
+
+  virtualisation.docker = {
+    enable = true;
+
+    daemon.settings = {
+      dns = [ "172.17.0.1" ];
+    };
+  };
 }

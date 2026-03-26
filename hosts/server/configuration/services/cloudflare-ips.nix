@@ -56,8 +56,14 @@ in
 
   systemd.services.cloudflare-ips-refresh = {
     description = "Refresh Cloudflare IP sets";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
+    after = [
+      "network-online.target"
+      "dnsmasq.service"
+    ];
+    wants = [
+      "network-online.target"
+      "dnsmasq.service"
+    ];
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
