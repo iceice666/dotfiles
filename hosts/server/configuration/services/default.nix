@@ -6,6 +6,7 @@
     ./cloudflare-ddns.nix
     ./cloudflare-ips.nix
     ./cloudflared-tunnel.nix
+    ./dnsmasq.nix
     ./docker.nix
     ./forgejo.nix
     ./homepage.nix
