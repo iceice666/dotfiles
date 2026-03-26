@@ -237,6 +237,6 @@
   };
 
   security.pki.certificateFiles = [
-    (dotfiles + /secrets/hosts/server/cloudflare-origin-ca-cert.pem)
+    (dotfiles + /secrets/hosts/server/cloudflare-origin-ca-root-rsa-cert.pem)
   ];
 }
