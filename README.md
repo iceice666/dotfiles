@@ -39,7 +39,7 @@ hosts/               # per-host entrypoints
   server/            # NixOS host for homolab
 
 pkgs/                # custom derivations exposed through the overlay
-secrets/             # SOPS-encrypted host secrets
+sensitive/           # encrypted and plaintext sensitive host material
 ```
 
 Composition is structural:
@@ -178,21 +178,21 @@ just server-rebuild
 
 [`hosts/server/configuration/hardware-configuration.nix`](/home/iceice666/dotfiles/hosts/server/configuration/hardware-configuration.nix) is machine-specific and should be generated on that server.
 
-## Secrets
+## Sensitive Material
 
-Secrets are managed with `sops-nix`.
+Encrypted secrets and related sensitive files are managed with `sops-nix`.
 
 - Repo guidance lives in [`sops_guide.md`](/home/iceice666/dotfiles/sops_guide.md)
 - SOPS rules live in [`.sops.yaml`](/home/iceice666/dotfiles/.sops.yaml)
-- Current server secrets live under [`secrets/hosts/server`](/home/iceice666/dotfiles/secrets/hosts/server)
+- Current server files live under [`sensitive/hosts/server`](/home/iceice666/dotfiles/sensitive/hosts/server)
 
 Expected server secret files:
 
 - `forgejo.yaml`
 - `cloudflare-ddns.key`
 - `cloudflared-token.key`
-- `cloudflare-origin-ca-cert.pem`
-- `cloudflare-origin-ca-key.pem`
+- `cloudflare-origin-ca/cert.pem`
+- `cloudflare-origin-ca/key.pem`
 
 On the server, decryption uses a local age identity at `/var/lib/sops-nix/key.txt`.
 

@@ -14,7 +14,7 @@
 
     secrets = {
       "forgejo-db-password" = {
-        sopsFile = dotfiles + /secrets/hosts/server/forgejo.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/forgejo.yaml;
         key = "dbPassword";
         owner = "forgejo";
         group = "forgejo";
@@ -23,7 +23,7 @@
       };
 
       "forgejo-secret-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/forgejo.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/forgejo.yaml;
         key = "secretKey";
         owner = "forgejo";
         group = "forgejo";
@@ -32,7 +32,7 @@
       };
 
       "forgejo-internal-token" = {
-        sopsFile = dotfiles + /secrets/hosts/server/forgejo.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/forgejo.yaml;
         key = "internalToken";
         owner = "forgejo";
         group = "forgejo";
@@ -41,7 +41,7 @@
       };
 
       "forgejo-oauth2-jwt-secret" = {
-        sopsFile = dotfiles + /secrets/hosts/server/forgejo.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/forgejo.yaml;
         key = "oauth2JwtSecret";
         owner = "forgejo";
         group = "forgejo";
@@ -50,7 +50,7 @@
       };
 
       "forgejo-lfs-jwt-secret" = {
-        sopsFile = dotfiles + /secrets/hosts/server/forgejo.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/forgejo.yaml;
         key = "lfsJwtSecret";
         owner = "forgejo";
         group = "forgejo";
@@ -59,7 +59,7 @@
       };
 
       "forgejo-mailer-password" = {
-        sopsFile = dotfiles + /secrets/hosts/server/resend.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/resend.yaml;
         key = "apiKey";
         owner = "forgejo";
         group = "forgejo";
@@ -68,7 +68,7 @@
       };
 
       "rustfs-access-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/rustfs.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/rustfs.yaml;
         key = "accessKey";
         owner = "forgejo";
         group = "forgejo";
@@ -81,7 +81,7 @@
       };
 
       "rustfs-secret-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/rustfs.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/rustfs.yaml;
         key = "secretKey";
         owner = "forgejo";
         group = "forgejo";
@@ -94,7 +94,7 @@
       };
 
       "woodpecker-grpc-secret" = {
-        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/woodpecker.yaml;
         key = "woodpeckerGrpcSecret";
         owner = "root";
         group = "root";
@@ -106,7 +106,7 @@
       };
 
       "woodpecker-forgejo-client" = {
-        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/woodpecker.yaml;
         key = "woodpeckerForgejoClient";
         owner = "root";
         group = "root";
@@ -115,7 +115,7 @@
       };
 
       "woodpecker-forgejo-secret" = {
-        sopsFile = dotfiles + /secrets/hosts/server/woodpecker.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/woodpecker.yaml;
         key = "woodpeckerForgejoSecret";
         owner = "root";
         group = "root";
@@ -124,7 +124,7 @@
       };
 
       "cloudflare-ddns-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/cloudflare-ddns.key;
+        sopsFile = dotfiles + /sensitive/hosts/server/cloudflare-ddns.key;
         format = "binary";
         owner = "root";
         group = "root";
@@ -133,7 +133,7 @@
       };
 
       "cloudflared-token" = {
-        sopsFile = dotfiles + /secrets/hosts/server/cloudflared-token.key;
+        sopsFile = dotfiles + /sensitive/hosts/server/cloudflared-token.key;
         format = "binary";
         owner = "root";
         group = "root";
@@ -142,7 +142,7 @@
       };
 
       "cloudflare-origin-ca-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/cloudflare-origin-ca-key.pem;
+        sopsFile = dotfiles + /sensitive/hosts/server/cloudflare-origin-ca/key.pem;
         format = "binary";
         owner = "traefik";
         group = "traefik";
@@ -151,7 +151,7 @@
       };
 
       "authelia-jwt-secret" = {
-        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/authelia.yaml;
         key = "jwtSecret";
         owner = "authelia-main";
         group = "authelia-main";
@@ -160,7 +160,7 @@
       };
 
       "authelia-storage-encryption-key" = {
-        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/authelia.yaml;
         key = "storageEncryptionKey";
         owner = "authelia-main";
         group = "authelia-main";
@@ -169,7 +169,7 @@
       };
 
       "authelia-user-password-hash" = {
-        sopsFile = dotfiles + /secrets/hosts/server/authelia.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/authelia.yaml;
         key = "userPasswordHash";
         owner = "root";
         group = "root";
@@ -177,7 +177,7 @@
       };
 
       "authelia-smtp-password" = {
-        sopsFile = dotfiles + /secrets/hosts/server/resend.yaml;
+        sopsFile = dotfiles + /sensitive/hosts/server/resend.yaml;
         key = "apiKey";
         owner = "authelia-main";
         group = "authelia-main";
@@ -237,6 +237,6 @@
   };
 
   security.pki.certificateFiles = [
-    (dotfiles + /secrets/hosts/server/cloudflare-origin-ca-root-rsa-cert.pem)
+    (dotfiles + /sensitive/hosts/server/cloudflare-origin-ca/root-rsa-cert.pem)
   ];
 }

@@ -11,7 +11,7 @@ keys:
 
 creation_rules:
   # Shared secrets: decryptable on all three devices (+ recovery)
-  - path_regex: ^secrets/shared/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key)$
     age:
       - *m3air
       - *framework
@@ -19,11 +19,11 @@ creation_rules:
       # - *recovery
 
   # Per-device secrets: only the device (+ recovery)
-  - path_regex: ^secrets/hosts/m3air/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^sensitive/hosts/m3air/.*\.(yaml|yml|json|env|ini|key)$
     age: [*m3air]
 
-  - path_regex: ^secrets/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
     age: [*framework]
 
-  - path_regex: ^secrets/hosts/server/.*\.(yaml|yml|json|env|ini|key|pem)$
+  - path_regex: ^sensitive/hosts/server/.*\.(yaml|yml|json|env|ini|key|pem)$
     age: [*server]

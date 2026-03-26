@@ -47,7 +47,7 @@ in
     dynamicConfigOptions = {
       tls.certificates = [
         {
-          certFile = "${dotfiles + /secrets/hosts/server/cloudflare-origin-ca-cert.pem}";
+          certFile = "${dotfiles + /sensitive/hosts/server/cloudflare-origin-ca/cert.pem}";
           keyFile = config.sops.secrets."cloudflare-origin-ca-key".path;
         }
       ];
