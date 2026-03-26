@@ -6,8 +6,6 @@
 }:
 
 let
-  legacyLfsPath = "/var/lib/forgejo/data/lfs";
-  lfsMigrationMarker = "/var/lib/forgejo/.lfs-storage-migrated-to-rustfs";
   rustfsEndpoint = "127.0.0.1:9100";
 in
 {
@@ -185,69 +183,6 @@ in
       mailer.PASSWD = lib.mkForce config.sops.secrets."forgejo-mailer-password".path;
 
       oauth2.JWT_SECRET = lib.mkForce config.sops.secrets."forgejo-oauth2-jwt-secret".path;
-    };
-  };
-
-  # Migrate existing local LFS objects before Forgejo switches to RustFS-backed
-  # storage.
-  systemd.services.forgejo-lfs-migrate = {
-    description = "Migrate Forgejo LFS storage to RustFS";
-    before = [ "forgejo.service" ];
-    requiredBy = [ "forgejo.service" ];
-    after = [
-      "rustfs.service"
-      "rustfs-init.service"
-    ];
-    requires = [
-      "rustfs.service"
-      "rustfs-init.service"
-    ];
-
-    path = [
-      config.services.forgejo.package
-      pkgs.coreutils
-      pkgs.findutils
-    ];
-
-    script = ''
-      marker='${lfsMigrationMarker}'
-      legacy_lfs='${legacyLfsPath}'
-      source_config='${config.services.forgejo.customDir}/conf/app.ini'
-
-      if [ -e "$marker" ]; then
-        exit 0
-      fi
-
-      if [ ! -d "$legacy_lfs" ] || [ -z "$(find "$legacy_lfs" -mindepth 1 -print -quit)" ]; then
-        touch "$marker"
-        exit 0
-      fi
-
-      if [ ! -r "$source_config" ]; then
-        echo "missing source Forgejo config at $source_config" >&2
-        exit 1
-      fi
-
-      ${lib.getExe config.services.forgejo.package} migrate-storage \
-        --config "$source_config" \
-        --work-path '${config.services.forgejo.stateDir}' \
-        --type lfs \
-        --storage minio \
-        --minio-endpoint ${rustfsEndpoint} \
-        --minio-access-key-id "$(tr -d '\n' < '${config.sops.secrets."rustfs-access-key".path}')" \
-        --minio-secret-access-key "$(tr -d '\n' < '${config.sops.secrets."rustfs-secret-key".path}')" \
-        --minio-bucket forgejo-lfs \
-        --minio-location us-east-1
-
-      touch "$marker"
-    '';
-
-    serviceConfig = {
-      Type = "oneshot";
-      User = "forgejo";
-      Group = "forgejo";
-      WorkingDirectory = config.services.forgejo.stateDir;
-      ReadWritePaths = [ config.services.forgejo.stateDir ];
     };
   };
 }
