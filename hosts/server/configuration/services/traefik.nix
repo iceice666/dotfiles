@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, dotfiles, ... }:
 
 let
   autheliaUrl = "https://auth.justaslime.dev/";
@@ -47,7 +47,7 @@ in
     dynamicConfigOptions = {
       tls.certificates = [
         {
-          certFile = config.sops.secrets."cloudflare-origin-ca-cert".path;
+          certFile = "${dotfiles + /secrets/hosts/server/cloudflare-origin-ca-cert.pem}";
           keyFile = config.sops.secrets."cloudflare-origin-ca-key".path;
         }
       ];
