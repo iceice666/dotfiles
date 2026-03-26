@@ -12,6 +12,7 @@
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/cursor.nix)
     ./karabiner.nix
+    ./wallpaper.nix
   ];
 
   home.packages = with pkgs; [

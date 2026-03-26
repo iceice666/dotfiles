@@ -46,8 +46,14 @@
   # system.defaults.NSGlobalDomain._HIHideMenuBar = true;
 
   # Restart SystemUIServer so _HIHideMenuBar takes effect on Tahoe (26+)
+  # Also kick the wallpaper launch agent so the desktop wallpaper refreshes on rebuild.
   system.activationScripts.postActivation.text = ''
     killall -qu ${config.system.primaryUser} SystemUIServer || true
+
+    uid="$(id -u ${config.system.primaryUser} 2>/dev/null || true)"
+    if [ -n "$uid" ]; then
+      launchctl kickstart -k "gui/$uid/com.iceice666.wallpaper-refresh" || true
+    fi
   '';
 
   # Bluetooth trackpad (It only costs you NT$3,790! Why don't you get one?)
