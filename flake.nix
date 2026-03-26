@@ -39,6 +39,19 @@
       ...
     }:
     let
+      overlay = final: prev: {
+        equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+        direnv = prev.direnv.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            for makefile in Makefile GNUmakefile; do
+              if [ -f "$makefile" ]; then
+                substituteInPlace "$makefile" --replace "-linkmode=external" ""
+              fi
+            done
+          '';
+        });
+      };
+
       unstablePkgsFor =
         system:
         import nixpkgs-unstable {
@@ -47,11 +60,8 @@
             allowUnfree = true;
             cudaSupport = true;
           };
+          overlays = [ overlay ];
         };
-
-      overlay = final: prev: {
-        equibop-bin = final.callPackage ./pkgs/equibop-bin { };
-      };
 
       treefmtEval =
         system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} (self + /treefmt.nix);

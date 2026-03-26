@@ -49,7 +49,7 @@
 
       # Mise activation
       if type -q mise
-          ~/.local/bin/mise activate fish | source
+          mise activate fish | source
       end
 
       # # ZVM

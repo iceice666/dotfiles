@@ -24,6 +24,7 @@
 
   programs.direnv = {
     enable = true;
+    package = pkgs.direnv;
     nix-direnv.enable = true;
   };
 
@@ -52,7 +53,7 @@
   programs.home-manager.enable = true;
 
   home.packages = [
-    pkgs.mise
+    unstablePkgs.mise
     pkgs.git-lfs
     pkgs.python3
     pkgs.uv
