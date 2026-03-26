@@ -1,305 +1,155 @@
-# AGENTS.md — Coding Agent Guide
+# AGENTS.md - Repository Guide
 
-This repository is a multi-host Nix dotfiles configuration managed with
-[nix-darwin](https://github.com/nix-darwin/nix-darwin),
-[home-manager](https://github.com/nix-community/home-manager), and
-[just](https://github.com/casey/just).
+This repository is a multi-host Nix dotfiles setup built around `flake.nix`, `nix-darwin`, `home-manager`, `sops-nix`, `treefmt-nix`, and `just`.
+Use this file as the working agreement for coding agents editing this repo.
 
----
+## Repository Shape
+```text
+flake.nix            # all flake inputs and outputs
+Justfile             # rebuild, validation, secrets, maintenance workflows
+treefmt.nix          # formatter configuration
 
-## Repository Structure
+common/              # imported by every host
+  configuration/     # shared system-level modules and packages
+  home/              # shared Home Manager modules
+    fish/            # fish config + auto-imported function modules
 
+shared/              # optional modules used by some hosts
+  home/              # editor/app modules such as zed and cursor
+
+hosts/               # per-host entrypoints
+  m3air/             # macOS via nix-darwin
+  framework/         # standalone Home Manager on Linux
+  server/            # NixOS host named homolab
+
+pkgs/                # custom derivations exposed through the overlay
+sensitive/           # encrypted secret material managed by sops
 ```
-flake.nix            # Flake entrypoint: all outputs (darwin/HM/NixOS)
-Justfile             # Task runner (just)
-common/              # Applied to every host
-  configuration/     # Shared system-level packages
-  home/              # Shared home-manager config (git, fish, starship, direnv)
-    fish/            # Fish shell config + per-function .nix files
-shared/              # Optional — imported by some but not all hosts
-  home/              # e.g. zed.nix (desktop only), opencode.nix
-hosts/               # Per-machine overrides
-  m3air/             # macOS aarch64 (nix-darwin + home-manager)
-  framework/         # Void Linux x86_64 (standalone home-manager)
-  server/            # NixOS x86_64
-pkgs/                # Custom derivations, added via overlay in flake.nix
-```
+Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
 
-Three-tier composition: `common/` (all hosts) → `shared/` (opt-in) → `hosts/<x>/` (machine-specific).
+## Build, Format, and Validation Commands
+Run commands from the repository root.
 
----
-
-## Build / Apply Commands
-
-All commands are run via `just` from the repo root.
-
-| Recipe | Effect |
-|---|---|
-| `just m3air-rebuild` | `sudo darwin-rebuild switch --flake .#iceice666@m3air` |
-| `just framework-rebuild` | `home-manager switch --flake .#iceice666@framework` |
-| `just server-rebuild` | `sudo nixos-rebuild switch --flake .#homolab` |
-| `just fmt` | Format all `.nix` files with `nixfmt` |
-| `just check` | `nix flake check` — validates all flake outputs |
-| `just update` | `nix flake update` — update all inputs |
-| `just update-input <input>` | Update a single flake input, e.g. `just update-input nixpkgs` |
-| `just gc` | `sudo nix-collect-garbage -d` |
-| `just search <query>` | Search nixpkgs across `aarch64-darwin` and `x86_64-linux` |
-
-### Validation (closest to "tests")
-
-There are no unit tests. Use these to validate changes:
-
+### Primary workflows
 ```sh
-# Check the flake parses and all outputs evaluate without errors
-just check
-
-# Dry-run a specific host to see what would change without applying
-sudo darwin-rebuild build --flake .#iceice666@m3air       # macOS
-home-manager build --flake .#iceice666@framework           # framework
-sudo nixos-rebuild build --flake .#homolab                 # server
-
-# Format before committing
 just fmt
+just check
+just m3air-rebuild
+just framework-rebuild
+just server-rebuild
 ```
+- `just fmt` runs `nix fmt` through `treefmt-nix`.
+- `just check` runs `nix flake check --all-systems`.
+- Rebuild commands apply changes; prefer dry builds while iterating.
 
-For a single package derivation:
+### Dry builds / targeted validation
+There is no unit-test suite here. The closest equivalent to a test is the narrowest host or package build that covers your change.
 ```sh
-nix build .#packages.aarch64-darwin.equibop-bin
-nix build .#packages.aarch64-darwin.aerospace-swipe
-```
+sudo darwin-rebuild build --flake .#iceice666@m3air
+home-manager build --flake .#iceice666@framework
+sudo nixos-rebuild build --flake .#homolab
 
----
+nix build .#packages.aarch64-darwin.equibop-bin
+```
+- `hosts/m3air/**` -> dry-build `m3air`.
+- `hosts/framework/**` or shared Home Manager modules -> dry-build `framework`.
+- `hosts/server/**` -> dry-build `homolab`.
+- `pkgs/equibop-bin` -> build that package directly.
+
+### Single-test guidance
+- There is no per-test runner.
+- For a "single test", run the smallest build that covers the change.
+- One host change -> build only that host.
+- One package change -> `nix build` that package.
+- One file formatting check -> run `nixfmt path/to/file.nix` if available, then `just fmt` before finishing.
+
+### Other useful commands
+`just update`, `just update-input nixpkgs`, `just search zed`, `just gc`, `just store-size`
+
+### Secrets helpers
+```sh
+just secret-encrypt sensitive/hosts/server/forgejo.yaml ./forgejo.yaml
+just secret-decrypt sensitive/hosts/server/forgejo.yaml
+just secret-decrypt sensitive/hosts/server/cloudflared-token.key /tmp/cloudflared-token
+```
+Never commit plaintext secrets. Keep secret material in `sensitive/` encrypted with `sops`.
+
+## Editor Rule Files
+Checked locations:
+- `.cursor/rules/`
+- `.cursorrules`
+- `.github/copilot-instructions.md`
+No repository-local Cursor or Copilot instruction files are present, so this `AGENTS.md` is the canonical instruction file in the repo.
 
 ## Code Style
+### Formatting and whitespace
+- Use 2 spaces for indentation; never use tabs.
+- Keep one blank line between major top-level bindings in large attrsets.
+- Keep closing `}` and `]` aligned with the opening expression.
+- Run `just fmt` before finishing; formatting is enforced through `treefmt-nix`.
 
-### Indentation & Whitespace
+### Imports and module shape
+- Returned attrsets start with `imports` when imports exist.
+- Import shared modules with `(dotfiles + /path)`.
+- Import directories by path, not by `/default.nix`.
+- Keep host differences structural through separate files and explicit imports.
+- Do not introduce `options`, `mkOption`, `mkEnableOption`, `mkIf`, or `mkMerge` unless explicitly requested.
 
-- **2 spaces** for all indentation — no tabs.
-- One blank line between top-level attribute bindings in large attribute sets.
-- Closing `}` or `]` at the same indent level as the opening line.
-
-### Attribute Alignment (Columnar Style)
-
-When multiple related assignments appear together, align values vertically:
-
+Canonical module shape:
 ```nix
-home.username      = username;
-home.homeDirectory = homeDirectory;
-
-username      = "iceice666";
-homeDirectory = "/Users/iceice666";
-```
-
-Use this pattern for `specialArgs`, `extraSpecialArgs`, and any group of
-conceptually related bindings. Do not apply it globally — only where it
-genuinely improves readability.
-
-### Function Argument Lists
-
-Short (1–2 args): inline.
-```nix
-{ pkgs, ... }:
-{ username, homeDirectory, ... }:
-```
-
-Long (3+ args): one per line, trailing `...`, closing brace on its own line:
-```nix
-{
-  pkgs,
-  lib,
-  inputs,
-  username,
-  homeDirectory,
-  ...
-}:
-```
-
-Stub modules that need no arguments: `{ ... }:`.
-
-### `inherit` Style
-
-Vertical form (preferred for 3+ names):
-```nix
-inherit
-  inputs
-  self
-  username
-  homeDirectory
-  ;
-```
-
-Inline form for 1–2 names: `inherit pname version src;`
-
-### `let`-`in` Blocks
-
-Use only when a value is used more than once, or to name an otherwise-opaque expression.
-`let` and the bindings are indented 2 spaces; `in` is at the outer level before `{`:
-
-```nix
-let
-  pname   = "equibop-bin";
-  version = "3.1.9";
-in
-stdenvNoCC.mkDerivation { ... }
-```
-
-### Lists
-
-Short lists on one line: `imports = [ ./fish ./user.nix ];`
-
-Longer lists — one item per line:
-```nix
-imports = [
-  (dotfiles + /common/home)
-  (dotfiles + /shared/home/zed.nix)
-  ./aerospace.nix
-];
-```
-
-### Comments
-
-- `# Comment` on its own line above, or trailing on the same line.
-- Use trailing comments for brief annotations: `"termius" # Linux-only in nixpkgs`.
-- No block (`/* */`) comments in `.nix` files.
-- Section banners (`# ── Title ───`) are reserved for the `Justfile`.
-
----
-
-## Naming Conventions
-
-| Thing | Convention | Examples |
-|---|---|---|
-| File names | `kebab-case.nix` | `system-defaults.nix`, `equibop-bin` |
-| Directory names | `kebab-case` or single word | `m3air`, `aerospace-swipe`, `common`, `hosts` |
-| Entry points | `default.nix` | every directory has one |
-| Nix attribute keys | camelCase (follows upstream) | `shellAliases`, `extraPackages`, `stateVersion` |
-| `pname` / overlay keys | `kebab-case` | `"equibop-bin"`, `"aerospace-swipe"` |
-| Flake output keys | `user@host` or `hostname` | `"iceice666@m3air"`, `"homolab"` |
-| Fish function files | match function name | `__expand_tilde_prefix.nix`, `mcd.nix` |
-
-External config key names (macOS preferences, etc.) use their native casing
-(`AppleShowAllExtensions`, `NSGlobalDomain`) — do not reformat these.
-
----
-
-## Module Patterns
-
-### Standard Module Shape
-
-```nix
-{ pkgs, lib, username, dotfiles, ... }:
+{ pkgs, dotfiles, ... }:
 {
   imports = [ (dotfiles + /common/home) ./local-file.nix ];
-
   programs.foo.enable = true;
-  programs.foo.settings = { ... };
 }
 ```
 
-- No custom `options` / `mkOption` / `mkEnableOption` — these are pure configuration modules.
-- No `mkIf` / `mkMerge` — host differentiation is structural (separate files, explicit imports).
-- `imports` always appears first in the returned attrset.
-- Use `(dotfiles + /path)` for imports from `common/`, `shared/`, or root-level directories.
-- Import directories by path without trailing `/default.nix`: `(dotfiles + /common/home)`.
+### Function arguments, `inherit`, and `let`
+- Inline short argument sets: `{ pkgs, ... }:`.
+- For 3 or more arguments, put one name per line and keep `...` last.
+- Use inline `inherit` for 1-2 names; use vertical `inherit` blocks for 3+ names.
+- Use `let` only for reused values or to name an otherwise opaque expression.
 
-### Overlay (adding custom packages)
+### Lists, attrs, and naming
+- Keep short lists on one line; longer lists go one item per line.
+- Align related assignments vertically when that improves readability.
+- File names and package names use `kebab-case`.
+- Nix attribute keys use upstream casing, usually `camelCase`.
+- Preserve native external key casing like `NSGlobalDomain` and `AppleShowAllExtensions`.
+- Fish function module names should match the function name.
 
-Defined once in `flake.nix` and injected into every host:
+### Types and data generation
+- Prefer native Nix values over pre-serialized strings.
+- Generate JSON config with `builtins.toJSON`.
+- Generate attrsets from simple lists with `builtins.listToAttrs` plus `map`.
+- Use `builtins.readDir` plus filtering when auto-importing `.nix` files from a directory.
+- Limit `with pkgs;` to clear package-list contexts.
 
-```nix
-let
-  overlay = final: prev: {
-    my-pkg = final.callPackage ./pkgs/my-pkg { };
-  };
-in {
-  darwinConfigurations."..." = nix-darwin.lib.darwinSystem {
-    modules = [ ... { nixpkgs.overlays = [ overlay ]; } ];
-  };
-  homeConfigurations."..." = home-manager.lib.homeManagerConfiguration {
-    pkgs = nixpkgs.legacyPackages.x86_64-linux.extend overlay;
-  };
-}
-```
+### Packages and overlays
+- Register custom packages once in the overlay in `flake.nix`.
+- New derivations live under `pkgs/<name>/default.nix`.
+- Derivations should set `meta.mainProgram` and `meta.platforms`.
+- Respect `runHook pre*` and `runHook post*` in custom phases.
+- Use `lib.optionals` for platform-specific inputs.
+- For platform-specific sources, follow the existing `srcs.${stdenvNoCC.hostPlatform.system} or (throw ...)` pattern.
 
-### Custom Derivations (`pkgs/`)
+### Error handling and safety
+- Fail clearly for unsupported platforms with `throw`.
+- Reference executables in activation scripts by Nix store path, not ambient `PATH`.
+- Wire secrets through `config.sops.secrets.*.path` or `config.sops.placeholder.*`, not plaintext literals.
+- When adding a secret, set `owner`, `group`, `mode`, and `restartUnits` deliberately.
+- Keep comments sparse and useful; prefer short line comments.
 
-```nix
-{ lib, stdenv, fetchFromGitHub }:  # args one-per-line
-stdenv.mkDerivation rec {           # use `rec` only when version is self-referenced
-  pname   = "my-pkg";
-  version = "1.2.3";
-  src     = fetchFromGitHub { ... };
-  buildPhase   = '' runHook preBuild  ... runHook postBuild  '';
-  installPhase = '' runHook preInstall ... runHook postInstall '';
-  meta = {
-    description = "...";
-    homepage    = "...";
-    license     = lib.licenses.mit;
-    mainProgram = "my-pkg";
-    platforms   = lib.platforms.all;
-  };
-}
-```
+## Repository Conventions
+- `common/` is the baseline for all hosts.
+- `shared/` is opt-in and should stay reusable across hosts.
+- `hosts/<name>/` contains machine-specific choices only.
+- `framework` is standalone Home Manager and warns about packages that cannot come from `environment.systemPackages`.
+- `hosts/server/configuration/hardware-configuration.nix` is machine-specific and should only be regenerated on the target server.
 
-- Always respect `runHook pre*/post*` in phases.
-- Use `lib.optionals` for conditional `nativeBuildInputs` / `buildInputs`.
-- Use `srcs.${stdenvNoCC.hostPlatform.system} or (throw "unsupported: ${...}")` for multi-platform binaries.
-- Always provide `meta.mainProgram` and `meta.platforms`.
-
-### Auto-Import Pattern (fish functions)
-
-```nix
-imports = map (f: ./functions/${f})
-  (builtins.filter (f: builtins.match ".*\\.nix" f != null)
-    (builtins.attrNames (builtins.readDir ./functions)));
-```
-
-Use `builtins.readDir` + `builtins.filter` to auto-discover `.nix` files in a
-directory rather than maintaining a manual list.
-
-### Generating Config Files in Nix
-
-Prefer `builtins.toJSON` for JSON-format configs to keep everything in Nix:
-
-```nix
-home.file.".config/app/config.json".text = builtins.toJSON {
-  key = "value";
-};
-```
-
-Use `builtins.listToAttrs` + `map` to turn a simple name list into a
-`{ name = true; }` attribute set:
-
-```nix
-extensions = builtins.listToAttrs (map (name: { inherit name; value = true; }) [
-  "nix" "ocaml" "dockerfile"
-]);
-```
-
-### home-manager Activation Scripts
-
-```nix
-home.activation.myScript = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  if [ ! -d "${homeDirectory}/.something" ]; then
-    ${pkgs.git}/bin/git clone https://... "${homeDirectory}/.something"
-  fi
-'';
-```
-
-Reference executables by Nix store path (`${pkgs.git}/bin/git`) — never rely on ambient `PATH`.
-
----
-
-## Adding a New Host
-
-1. Create `hosts/<hostname>/configuration/default.nix` (system config, if applicable).
-2. Create `hosts/<hostname>/home/default.nix`; start with `imports = [ (dotfiles + /common/home) ];`.
-3. Add the flake output in `flake.nix` following the `user@host` naming pattern.
-4. Pass `username`, `homeDirectory`, `inputs`, `self`, and `dotfiles` via `specialArgs` / `extraSpecialArgs`.
-5. Run `just check` to validate, then apply with the appropriate rebuild recipe.
-
-## Adding a New Package
-
-1. Create `pkgs/<pname>/default.nix` as a standard derivation.
-2. Register it in the `overlay` in `flake.nix`.
-3. Reference it by name in `home.packages` or `environment.systemPackages` where needed.
+## Change Strategy for Agents
+- Make the smallest structural change that matches existing patterns.
+- Prefer extending an existing host/shared/common module over adding parallel abstractions.
+- If a change affects runtime behavior, validate the narrowest relevant host or package build.
+- If you touch formatting-sensitive files, run `just fmt`.
+- If you touch flake wiring or shared modules, run `just check`.

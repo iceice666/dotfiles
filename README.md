@@ -7,8 +7,11 @@ This repo is built around:
 - [nix-darwin](https://github.com/nix-darwin/nix-darwin) for macOS system management
 - [home-manager](https://github.com/nix-community/home-manager) for user environment management
 - [sops-nix](https://github.com/Mic92/sops-nix) for runtime secret provisioning
+- [treefmt-nix](https://github.com/numtide/treefmt-nix) for formatting
 - [just](https://github.com/casey/just) for day-to-day workflows
 - a small overlay for custom packages plus selected `nixpkgs-unstable` packages
+
+Repository-specific instructions for coding agents live in `AGENTS.md`.
 
 ## Hosts
 
@@ -98,6 +101,14 @@ sudo darwin-rebuild build --flake .#iceice666@m3air
 home-manager build --flake .#iceice666@framework
 sudo nixos-rebuild build --flake .#homolab
 ```
+
+For a package-only change, build the smallest affected derivation directly:
+
+```sh
+nix build .#packages.aarch64-darwin.equibop-bin
+```
+
+Treat the narrowest host or package build that covers your change as the effective "single test" for this repo.
 
 ## Mise + Direnv
 
