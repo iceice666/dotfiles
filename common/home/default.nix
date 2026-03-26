@@ -2,6 +2,7 @@
   pkgs,
   homeDirectory,
   lib,
+  unstablePkgs,
   ...
 }:
 
@@ -33,7 +34,7 @@
 
   programs.opencode = {
     enable = true;
-    package = pkgs.opencode-unstable;
+    package = unstablePkgs.opencode;
     settings = {
       plugin = [ "@tarquinen/opencode-dcp@latest" ];
       provider.ollama = {
@@ -52,7 +53,7 @@
 
   home.packages = [
     pkgs.mise
-    pkgs.codex-unstable
+    unstablePkgs.codex
     pkgs.git-lfs
     pkgs.python3
     pkgs.uv

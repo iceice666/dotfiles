@@ -5,6 +5,7 @@
   username,
   homeDirectory,
   dotfiles,
+  unstablePkgs,
   ...
 }:
 
@@ -31,6 +32,7 @@
         username
         homeDirectory
         dotfiles
+        unstablePkgs
         ;
     };
     users.${username} = {

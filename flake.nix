@@ -39,28 +39,19 @@
       ...
     }:
     let
-      overlay =
-        final: prev:
-        let
-          unstablePkgs = import nixpkgs-unstable {
-            system = prev.stdenv.hostPlatform.system;
-            config = {
-              allowUnfree = true;
-              cudaSupport = true;
-            };
+      unstablePkgsFor =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
           };
-        in
-        {
-          equibop-bin = final.callPackage ./pkgs/equibop-bin { };
-          zed-editor-unstable = unstablePkgs.zed-editor;
-
-          woodpecker-cli-unstable = unstablePkgs.woodpecker-cli;
-          woodpecker-agent-unstable = unstablePkgs.woodpecker-agent;
-          woodpecker-server-unstable = unstablePkgs.woodpecker-server;
-          ollama-unstable = unstablePkgs.ollama;
-          codex-unstable = unstablePkgs.codex;
-          opencode-unstable = unstablePkgs.opencode;
         };
+
+      overlay = final: prev: {
+        equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+      };
 
       treefmtEval =
         system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} (self + /treefmt.nix);
@@ -76,6 +67,7 @@
           username = "iceice666";
           homeDirectory = "/Users/iceice666";
           dotfiles = ./.;
+          unstablePkgs = unstablePkgsFor "aarch64-darwin";
         };
         modules = [
           ./hosts/m3air/configuration
@@ -97,6 +89,7 @@
           username = "iceice666";
           homeDirectory = "/home/iceice666";
           dotfiles = ./.;
+          unstablePkgs = unstablePkgsFor "x86_64-linux";
         };
         modules = [
           ./hosts/framework/home
@@ -112,6 +105,7 @@
           username = "iceice666";
           homeDirectory = "/home/iceice666";
           dotfiles = ./.;
+          unstablePkgs = unstablePkgsFor "x86_64-linux";
         };
         modules = [
           ./hosts/server/configuration

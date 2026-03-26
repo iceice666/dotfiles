@@ -1,5 +1,5 @@
 {
-  pkgs,
+  unstablePkgs,
   username,
   homeDirectory,
   dotfiles,
@@ -14,7 +14,7 @@
   home.stateVersion = "25.11";
 
   home.packages = [
-    pkgs.woodpecker-cli-unstable
+    unstablePkgs.woodpecker-cli
   ];
 
   programs.fish.interactiveShellInit = ''

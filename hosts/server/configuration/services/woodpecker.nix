@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, unstablePkgs, ... }:
 
 let
   caBundle = config.environment.etc."ssl/certs/ca-certificates.crt".source;
@@ -7,7 +7,7 @@ in
 {
   services.woodpecker-server = {
     enable = true;
-    package = pkgs.woodpecker-server-unstable;
+    package = unstablePkgs.woodpecker-server;
 
     environment = {
       WOODPECKER_HOST = "https://ci.justaslime.dev";
@@ -27,7 +27,7 @@ in
 
   services.woodpecker-agents.agents.docker = {
     enable = true;
-    package = pkgs.woodpecker-agent-unstable;
+    package = unstablePkgs.woodpecker-agent;
 
     environment = {
       WOODPECKER_SERVER = "127.0.0.1:9000";

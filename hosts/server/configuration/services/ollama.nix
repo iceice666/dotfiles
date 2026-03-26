@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, unstablePkgs, ... }:
 
 {
   nixpkgs.config.cudaSupport = true;
@@ -24,7 +24,7 @@
     enable = true;
     host = "192.168.1.127";
     port = 11434;
-    package = pkgs.ollama-unstable;
+    package = unstablePkgs.ollama;
     loadModels = [ "qwen3.5:9b" ];
   };
 }
