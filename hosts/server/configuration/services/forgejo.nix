@@ -75,7 +75,7 @@ in
         START_SSH_SERVER = true;
         DISABLE_SSH = false;
         SSH_PORT = 22;
-        SSH_LISTEN_PORT = 2244;
+        SSH_LISTEN_PORT = 22;
         LFS_HTTP_AUTH_EXPIRY = "180m";
         LFS_START_SERVER = true;
         OFFLINE_MODE = false;
