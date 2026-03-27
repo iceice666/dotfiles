@@ -5,7 +5,7 @@
 }:
 
 let
-  desktopWallpaper = dotfiles + /assets/m3air-desktop.png;
+  desktopWallpaper = dotfiles + /assets/desktop_wallpaper.png;
 
   applyWallpaper = pkgs.writeShellScript "m3air-apply-wallpaper" ''
     #!/usr/bin/env bash
