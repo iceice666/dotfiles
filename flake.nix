@@ -41,6 +41,7 @@
     let
       overlay = final: prev: {
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+        mise-bin = final.callPackage ./pkgs/mise-bin { };
         direnv = prev.direnv.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             for makefile in Makefile GNUmakefile; do
