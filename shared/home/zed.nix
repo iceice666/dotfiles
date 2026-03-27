@@ -139,6 +139,16 @@
             };
           };
         };
+
+        zls.binary = {
+          ignore_system_version = true;
+          path = "${unstablePkgs.mise-bin}/bin/mise";
+          arguments = [
+            "x"
+            "--"
+            "zls"
+          ];
+        };
       };
 
       languages.Nix = {
