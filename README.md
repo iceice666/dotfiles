@@ -64,6 +64,9 @@ common/ -> shared/ -> hosts/<name>/
 Run everything from the repo root:
 
 ```sh
+just build
+just switch
+
 just m3air-rebuild
 just framework-rebuild
 just server-rebuild
@@ -90,6 +93,7 @@ just secret-decrypt sensitive/hosts/server/cloudflared-token.key /tmp/cloudflare
 There are no unit tests here. Validation is mostly formatting, flake evaluation, and dry builds.
 
 ```sh
+just build
 just fmt
 just check
 ```
@@ -151,7 +155,7 @@ First-time setup:
 ```sh
 curl -fsSL https://install.determinate.systems/nix | sh
 just m3air-homebrew
-just m3air-rebuild
+just switch
 ```
 
 Home Manager imports:
@@ -172,7 +176,7 @@ just m3air-activate
 After installing Nix and Home Manager:
 
 ```sh
-just framework-rebuild
+just switch
 ```
 
 This host uses standalone Home Manager, so packages from `common/configuration/packages.nix` are not installed automatically. The config emits a warning listing the equivalent package set to install with the system package manager.
@@ -183,10 +187,12 @@ On a fresh machine, generate the hardware config on the target host first:
 
 ```sh
 just server-gen-hardware
-just server-rebuild
+just switch
 ```
 
 `hosts/server/configuration/hardware-configuration.nix` is machine-specific and should be generated on that server.
+
+The explicit `just server-build`, `just server-rebuild`, and `just server-gen-hardware` recipes are guarded and refuse to run on non-server hosts.
 
 ## Sensitive Material
 
@@ -212,6 +218,8 @@ On the server, decryption uses the local age identity at `/var/lib/sops-nix/key.
 
 ## Notes
 
+- `just build` auto-detects the current host and runs the matching dry build
+- `just switch` auto-detects the current host and applies the matching configuration
 - `just check` runs `nix flake check --all-systems`
 - `just fmt` runs `nix fmt` via `treefmt-nix`
 - `framework` intentionally keeps system package installation outside Home Manager

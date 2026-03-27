@@ -1,14 +1,76 @@
 # Dotfiles management recipes
 
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+m3air_target := ".#iceice666@m3air"
+framework_target := ".#iceice666@framework"
+server_target := ".#homolab"
+
 # Show available recipes
 default:
     @just --choose --unsorted
+
+# Dry-build the current machine configuration
+build:
+    #!/usr/bin/env bash
+    host=$(hostname | tr '[:upper:]' '[:lower:]')
+    os=$(uname -s)
+
+    case "$host" in
+        m3air)
+            sudo darwin-rebuild build --flake {{ m3air_target }}
+            ;;
+        framework)
+            home-manager build --flake {{ framework_target }}
+            ;;
+        homolab|server)
+            sudo nixos-rebuild build --flake {{ server_target }}
+            ;;
+        *)
+            if [[ "$os" == "Darwin" ]]; then
+                echo "Unknown Darwin host '$host'. Use 'just m3air-rebuild' or add a host mapping." >&2
+            else
+                echo "Unknown host '$host'. Use an explicit host recipe or add a host mapping." >&2
+            fi
+            exit 1
+            ;;
+    esac
+
+# Apply the current machine configuration
+switch:
+    #!/usr/bin/env bash
+    host=$(hostname | tr '[:upper:]' '[:lower:]')
+    os=$(uname -s)
+
+    case "$host" in
+        m3air)
+            sudo darwin-rebuild switch --flake {{ m3air_target }}
+            ;;
+        framework)
+            home-manager switch --flake {{ framework_target }}
+            ;;
+        homolab|server)
+            sudo nixos-rebuild switch --flake {{ server_target }}
+            ;;
+        *)
+            if [[ "$os" == "Darwin" ]]; then
+                echo "Unknown Darwin host '$host'. Use 'just m3air-rebuild' or add a host mapping." >&2
+            else
+                echo "Unknown host '$host'. Use an explicit host recipe or add a host mapping." >&2
+            fi
+            exit 1
+            ;;
+    esac
 
 # ── M3 Air (macOS, nix-darwin) ───────────────────────────────────────────────
 
 # Rebuild M3Air system
 m3air-rebuild:
-    sudo darwin-rebuild switch --flake .#iceice666@m3air
+    sudo darwin-rebuild switch --flake {{ m3air_target }}
+
+# Dry-build M3Air system
+m3air-build:
+    sudo darwin-rebuild build --flake {{ m3air_target }}
 
 # Install Homebrew (first-time setup)
 m3air-homebrew:
@@ -22,17 +84,62 @@ m3air-activate:
 
 # Rebuild Framework home environment
 framework-rebuild:
-    home-manager switch --flake .#iceice666@framework
+    home-manager switch --flake {{ framework_target }}
+
+# Dry-build Framework home environment
+framework-build:
+    home-manager build --flake {{ framework_target }}
 
 # ── NixOS Server ─────────────────────────────────────────────────────────────
 
 # Rebuild NixOS server
 server-rebuild:
-    sudo nixos-rebuild switch --flake .#homolab
+    #!/usr/bin/env bash
+    host=$(hostname | tr '[:upper:]' '[:lower:]')
+
+    case "$host" in
+        homolab|server)
+            sudo nixos-rebuild switch --flake {{ server_target }}
+            ;;
+        *)
+            echo "Refusing to run server-rebuild from '$host'. Run this recipe on homolab instead." >&2
+            exit 1
+            ;;
+    esac
+
+# Dry-build NixOS server
+server-build:
+    #!/usr/bin/env bash
+    host=$(hostname | tr '[:upper:]' '[:lower:]')
+
+    case "$host" in
+        homolab|server)
+            sudo nixos-rebuild build --flake {{ server_target }}
+            ;;
+        *)
+            echo "Refusing to run server-build from '$host'. Run this recipe on homolab instead." >&2
+            exit 1
+            ;;
+    esac
 
 # Generate hardware config on the server (run on the server itself)
 server-gen-hardware:
-    sudo nixos-generate-config --show-hardware-config > hosts/server/configuration/hardware-configuration.nix
+    #!/usr/bin/env bash
+    host=$(hostname | tr '[:upper:]' '[:lower:]')
+    output=hosts/server/configuration/hardware-configuration.nix
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+
+    case "$host" in
+        homolab|server)
+            sudo nixos-generate-config --show-hardware-config > "$tmp"
+            mv "$tmp" "$output"
+            ;;
+        *)
+            echo "Refusing to overwrite $output from '$host'. Run this recipe on homolab instead." >&2
+            exit 1
+            ;;
+    esac
 
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 
