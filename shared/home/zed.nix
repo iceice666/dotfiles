@@ -33,8 +33,8 @@
 
       theme = {
         mode = "system";
-        light = "VSCode Light+";
-        dark = "VSCode Dark Polished";
+        light = "Matugen Light";
+        dark = "Matugen Dark";
       };
       icon_theme = {
         mode = "dark";
