@@ -184,9 +184,30 @@
         mode = "0400";
         restartUnits = [ "authelia-main.service" ];
       };
+
+      "freshrss-api-password" = {
+        sopsFile = dotfiles + /sensitive/hosts/server/freshrss.yaml;
+        key = "apiPassword";
+        owner = "freshrss";
+        group = "freshrss";
+        mode = "0400";
+        restartUnits = [
+          "freshrss-api-password-setup.service"
+          "homepage-dashboard.service"
+        ];
+      };
     };
 
     templates = {
+      "homepage-dashboard.env" = {
+        content = ''
+          HOMEPAGE_VAR_FRESHRSS_API_PASSWORD=${config.sops.placeholder."freshrss-api-password"}
+        '';
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+
       "woodpecker-server.env" = {
         content = ''
           WOODPECKER_AGENT_SECRET="${config.sops.placeholder."woodpecker-grpc-secret"}"
