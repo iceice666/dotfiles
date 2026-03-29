@@ -9,6 +9,7 @@
     ./dnsmasq.nix
     ./docker.nix
     ./forgejo.nix
+    ./freshrss.nix
     ./homepage.nix
     ./ollama.nix
     ./openssh.nix
@@ -16,6 +17,5 @@
     ./rustfs.nix
     ./traefik.nix
     ./woodpecker.nix
-    ./youtube-rss-proxy.nix
   ];
 }

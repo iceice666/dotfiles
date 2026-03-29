@@ -40,6 +40,10 @@
             domain = "home.justaslime.dev";
             policy = "two_factor";
           }
+          {
+            domain = "rss.justaslime.dev";
+            policy = "two_factor";
+          }
         ];
       };
 

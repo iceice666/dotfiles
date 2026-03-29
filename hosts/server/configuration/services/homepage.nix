@@ -1,21 +1,5 @@
 { ... }:
 
-let
-  techYoutubeChannels = builtins.concatStringsSep "," [
-    "UCbRP3c757lWg9M-U7TyEkXA"
-    "UCEbYhDd6c6vngsF5PQpFVWg"
-    "UCrqM0Ym_NbK1fqeQG2VIohg"
-    "UCUyeluBRhGPCW4rPe_UvBZQ"
-    "UC6biysICWOJ-C3P4Tyeggzg"
-    "UCsBjURrPoezykLs9EqgamOA"
-  ];
-  musicYoutubeChannels = builtins.concatStringsSep "," [
-    "UCam3IAA-nyfxRL8_wDQ35VA"
-    "UCah4_WVjmr8XA7i5aigwV-Q"
-  ];
-  youtubeTechProxyUrl = "http://127.0.0.1:8095/videos?limit=8&channels=${techYoutubeChannels}";
-  youtubeMusicProxyUrl = "http://127.0.0.1:8095/videos?limit=8&channels=${musicYoutubeChannels}";
-in
 {
   services.homepage-dashboard = {
     enable = true;
@@ -249,45 +233,11 @@ in
       {
         Media = [
           {
-            "YouTube Tech" = {
-              href = "https://www.youtube.com";
-              description = "Latest uploads from your tech channels";
+            FreshRSS = {
+              href = "https://rss.justaslime.dev";
+              description = "RSS reader with your migrated YouTube subscriptions";
+              siteMonitor = "https://rss.justaslime.dev";
               ping = "127.0.0.1";
-              widget = {
-                type = "customapi";
-                url = youtubeTechProxyUrl;
-                refreshInterval = 300000;
-                display = "dynamic-list";
-                mappings = {
-                  items = "videos";
-                  name = "displayTitle";
-                  label = "published";
-                  format = "relativeDate";
-                  target = "{url}";
-                  limit = 8;
-                };
-              };
-            };
-          }
-          {
-            "YouTube Music" = {
-              href = "https://www.youtube.com";
-              description = "Latest uploads from your music channels";
-              ping = "127.0.0.1";
-              widget = {
-                type = "customapi";
-                url = youtubeMusicProxyUrl;
-                refreshInterval = 300000;
-                display = "dynamic-list";
-                mappings = {
-                  items = "videos";
-                  name = "displayTitle";
-                  label = "published";
-                  format = "relativeDate";
-                  target = "{url}";
-                  limit = 8;
-                };
-              };
             };
           }
         ];
