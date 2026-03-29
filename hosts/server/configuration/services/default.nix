@@ -16,5 +16,6 @@
     ./rustfs.nix
     ./traefik.nix
     ./woodpecker.nix
+    ./youtube-rss-proxy.nix
   ];
 }

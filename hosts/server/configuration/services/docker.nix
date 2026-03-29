@@ -9,6 +9,10 @@
 
     daemon.settings = {
       dns = [ "172.17.0.1" ];
+      hosts = [
+        "unix:///var/run/docker.sock"
+        "tcp://127.0.0.1:2375"
+      ];
     };
   };
 }
