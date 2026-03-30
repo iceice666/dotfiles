@@ -53,7 +53,6 @@
   programs.home-manager.enable = true;
 
   home.packages = [
-    unstablePkgs.matugen
     unstablePkgs.mise-bin
     pkgs.git-lfs
     pkgs.python3
