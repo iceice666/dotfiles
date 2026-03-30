@@ -101,7 +101,6 @@ in
         woodpecker = {
           rule = "Host(`ci.justaslime.dev`)";
           entryPoints = [ "websecure" ];
-          middlewares = [ "authelia@file" ];
 
           service = "woodpecker";
           tls = true;
