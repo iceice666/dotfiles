@@ -6,10 +6,10 @@ use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use image::{DynamicImage, GenericImageView, imageops::FilterType};
 use material_colors::color::{Argb, Lab};
+use material_colors::dynamic_color::DynamicScheme;
 use material_colors::dynamic_color::variant::Variant;
 use material_colors::hct::Hct;
 use material_colors::scheme::Scheme;
-use material_colors::theme::ThemeBuilder;
 use serde::Serialize;
 
 #[derive(Parser, Debug)]
@@ -23,6 +23,24 @@ struct Cli {
 
     #[arg(long)]
     template: Option<PathBuf>,
+
+    #[arg(long, default_value_t = 0.0, value_parser = parse_contrast)]
+    material_contrast: f64,
+
+    #[arg(long, default_value_t = 0.0, value_parser = parse_contrast)]
+    base16_contrast: f64,
+}
+
+fn parse_contrast(value: &str) -> Result<f64, String> {
+    let contrast = value
+        .parse::<f64>()
+        .map_err(|_| format!("invalid contrast value `{value}`"))?;
+
+    if (-1.0..=1.0).contains(&contrast) {
+        Ok(contrast)
+    } else {
+        Err(format!("contrast must be between -1 and 1, got {contrast}"))
+    }
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -137,14 +155,20 @@ fn main() -> Result<()> {
         .with_context(|| format!("failed to read image {}", cli.image.display()))?;
 
     let source = extract_source_color(&image)?;
-    let theme = ThemeBuilder::with_source(source)
-        .variant(cli.r#type.variant())
-        .build();
-
-    let material_light = scheme_to_map(theme.schemes.light);
-    let material_dark = scheme_to_map(theme.schemes.dark);
-    let base16_light = build_base16(source, true);
-    let base16_dark = build_base16(source, false);
+    let material_light = scheme_to_map(build_material_scheme(
+        source,
+        cli.r#type.variant(),
+        false,
+        cli.material_contrast,
+    ));
+    let material_dark = scheme_to_map(build_material_scheme(
+        source,
+        cli.r#type.variant(),
+        true,
+        cli.material_contrast,
+    ));
+    let base16_light = build_base16(source, true, cli.base16_contrast);
+    let base16_dark = build_base16(source, false, cli.base16_contrast);
 
     if let Some(template_path) = cli.template {
         let template = fs::read_to_string(&template_path)
@@ -369,10 +393,20 @@ fn scheme_to_map(scheme: Scheme) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn build_base16(source: Argb, light: bool) -> Base16Palette {
+fn build_material_scheme(source: Argb, variant: Variant, is_dark: bool, contrast: f64) -> Scheme {
+    let dynamic = DynamicScheme::by_variant(source, &variant, is_dark, Some(contrast));
+    Scheme::from(dynamic)
+}
+
+fn build_base16(source: Argb, light: bool, contrast: f64) -> Base16Palette {
     let base = Hct::new(source);
     let hue = base.get_hue();
     let chroma = base.get_chroma().max(20.0);
+    let text_low_ratio = contrast_target(2.0, contrast, 1.5, 3.5);
+    let text_mid_ratio = contrast_target(4.0, contrast, 2.5, 7.0);
+    let text_high_ratio = contrast_target(6.0, contrast, 3.5, 10.0);
+    let text_max_ratio = contrast_target(8.0, contrast, 4.5, 12.0);
+    let accent_ratio = contrast_target(3.0, contrast, 2.0, 5.5);
 
     let neutral_hue = hue;
     let neutral_chroma = (chroma * 0.12).clamp(4.0, 10.0);
@@ -413,21 +447,30 @@ fn build_base16(source: Argb, light: bool) -> Base16Palette {
         base01: base01.to_hex_with_pound(),
         base02: base02.to_hex_with_pound(),
         base03: base03.to_hex_with_pound(),
-        base04: ensure_readable(base04, base00, 2.0).to_hex_with_pound(),
-        base05: ensure_readable(base05, base00, 4.0).to_hex_with_pound(),
-        base06: ensure_readable(base06, base00, 6.0).to_hex_with_pound(),
-        base07: ensure_readable(base07, base00, 8.0).to_hex_with_pound(),
-        base08: ensure_readable(accents[0], base00, 3.0).to_hex_with_pound(),
-        base09: ensure_readable(accents[1], base00, 3.0).to_hex_with_pound(),
-        base0_a: ensure_readable(accents[2], base00, 3.0).to_hex_with_pound(),
-        base0_b: ensure_readable(accents[3], base00, 3.0).to_hex_with_pound(),
-        base0_c: ensure_readable(accents[4], base00, 3.0).to_hex_with_pound(),
-        base0_d: ensure_readable(accents[5], base00, 3.0).to_hex_with_pound(),
-        base0_e: ensure_readable(accents[6], base00, 3.0).to_hex_with_pound(),
-        base0_f: ensure_readable(mix(accents[0], accents[1], 0.5), base00, 3.0).to_hex_with_pound(),
+        base04: ensure_readable(base04, base00, text_low_ratio).to_hex_with_pound(),
+        base05: ensure_readable(base05, base00, text_mid_ratio).to_hex_with_pound(),
+        base06: ensure_readable(base06, base00, text_high_ratio).to_hex_with_pound(),
+        base07: ensure_readable(base07, base00, text_max_ratio).to_hex_with_pound(),
+        base08: ensure_readable(accents[0], base00, accent_ratio).to_hex_with_pound(),
+        base09: ensure_readable(accents[1], base00, accent_ratio).to_hex_with_pound(),
+        base0_a: ensure_readable(accents[2], base00, accent_ratio).to_hex_with_pound(),
+        base0_b: ensure_readable(accents[3], base00, accent_ratio).to_hex_with_pound(),
+        base0_c: ensure_readable(accents[4], base00, accent_ratio).to_hex_with_pound(),
+        base0_d: ensure_readable(accents[5], base00, accent_ratio).to_hex_with_pound(),
+        base0_e: ensure_readable(accents[6], base00, accent_ratio).to_hex_with_pound(),
+        base0_f: ensure_readable(mix(accents[0], accents[1], 0.5), base00, accent_ratio)
+            .to_hex_with_pound(),
     };
 
     palette
+}
+
+fn contrast_target(standard: f64, contrast: f64, minimum: f64, maximum: f64) -> f64 {
+    if contrast < 0.0 {
+        interpolate(standard, minimum, -contrast)
+    } else {
+        interpolate(standard, maximum, contrast)
+    }
 }
 
 fn accent(hue: f64, chroma: f64, tone: f64) -> Argb {

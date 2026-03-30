@@ -3,6 +3,9 @@
 let
   wallpaper = dotfiles + /assets/desktop_wallpaper.png;
   templates = dotfiles + /shared/themegen/templates;
+  render = template: output: ''
+    themegen "${wallpaper}" --type scheme-tonal-spot --base16-contrast 0.3 --template "${templates}/${template}" > "${output}"
+  '';
   generated =
     pkgs.runCommandLocal "themegen-themes"
       {
@@ -14,12 +17,12 @@ let
         mkdir -p "$out/zed/themes"
         mkdir -p "$out/fish/conf.d"
 
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/ghostty-dark" > "$out/ghostty/themes/themegen-dark"
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/ghostty-light" > "$out/ghostty/themes/themegen-light"
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/opencode-colors.json" > "$out/opencode/themes/themegen.json"
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/zed-colors.json" > "$out/zed/themes/themegen.json"
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/starship.toml" > "$out/starship.toml"
-        themegen "${wallpaper}" --type scheme-tonal-spot --template "${templates}/terminal-sequences.fish" > "$out/fish/conf.d/themegen-terminal-sequences.fish"
+        ${render "ghostty-dark" "$out/ghostty/themes/themegen-dark"}
+        ${render "ghostty-light" "$out/ghostty/themes/themegen-light"}
+        ${render "opencode-colors.json" "$out/opencode/themes/themegen.json"}
+        ${render "zed-colors.json" "$out/zed/themes/themegen.json"}
+        ${render "starship.toml" "$out/starship.toml"}
+        ${render "terminal-sequences.fish" "$out/fish/conf.d/themegen-terminal-sequences.fish"}
       '';
 in
 {
