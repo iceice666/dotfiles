@@ -53,7 +53,7 @@
   programs.home-manager.enable = true;
 
   home.packages = [
-    unstablePkgs.mise-bin
+    (if pkgs.stdenv.hostPlatform.isLinux then pkgs.mise else unstablePkgs.mise-bin)
     pkgs.git-lfs
     pkgs.python3
     pkgs.uv
