@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  unstablePkgs,
   dotfiles,
   homeDirectory,
   ...
@@ -54,7 +55,7 @@ in
     $DRY_RUN_CMD mkdir -p "$HOME/.config/zed/themes"
 
     if [ -f "${wallpaper}" ]; then
-      $DRY_RUN_CMD ${pkgs.matugen}/bin/matugen image -c "${matugenConfigFile}" "${wallpaper}"
+      $DRY_RUN_CMD ${unstablePkgs.matugen}/bin/matugen image -c "${matugenConfigFile}" "${wallpaper}"
     else
       echo "matugen source image not found: ${wallpaper}" >&2
     fi
