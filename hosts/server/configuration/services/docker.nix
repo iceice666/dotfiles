@@ -8,6 +8,7 @@
     enable = true;
 
     daemon.settings = {
+      bip = "172.17.0.1/16";
       dns = [ "172.17.0.1" ];
       hosts = [
         "unix:///var/run/docker.sock"

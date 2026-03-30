@@ -18,7 +18,6 @@
     shell = pkgs.fish;
     extraGroups = [
       "wheel"
-      "docker"
     ];
   };
 
