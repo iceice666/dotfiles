@@ -33,11 +33,11 @@
 
       theme = {
         mode = "system";
-        light = "Matugen Light";
-        dark = "Matugen Dark";
+        light = "Themegen Light";
+        dark = "Themegen Dark";
       };
       icon_theme = {
-        mode = "dark";
+        mode = "system";
         light = "Material Icon Theme";
         dark = "Material Icon Theme";
       };
@@ -63,8 +63,8 @@
             "make"
             "zig"
             "rainbow-csv"
-            "vscode-dark-polished"
             "material-icon-theme"
+            "fish"
           ]
       );
 

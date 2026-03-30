@@ -1,0 +1,14 @@
+
+palette = 'colors'
+
+[palettes.colors]
+color1 = '{{color.dark.primary_fixed_dim}}'
+color2 = '{{color.dark.on_primary}}'
+color3 = '{{color.dark.on_surface_variant}}'
+color4 = '{{color.dark.surface_container}}'
+color5 = '{{color.dark.on_primary}}'
+color6 = '{{color.dark.surface_dim}}'
+color7 = '{{color.dark.surface}}'
+color8 = '{{color.dark.primary}}'
+color9 = '{{color.dark.tertiary}}'
+error = '{{color.dark.error}}'

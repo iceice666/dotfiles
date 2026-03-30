@@ -44,6 +44,7 @@
       overlay = final: prev: {
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         mise-bin = final.callPackage ./pkgs/mise-bin { };
+        themegen = final.callPackage ./pkgs/themegen { };
         direnv = prev.direnv.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             for makefile in Makefile GNUmakefile; do

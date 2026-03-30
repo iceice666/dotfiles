@@ -2,3 +2,4 @@
 .direnv/
 .claude/
 __pycache__
+target
