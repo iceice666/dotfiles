@@ -16,9 +16,9 @@
       User = "root";
       Restart = "always";
       RestartSec = "5s";
-      ExecStart = "${pkgs.bash}/bin/bash -lc 'exec ${pkgs.cloudflared}/bin/cloudflared tunnel run --token \"$(< ${
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run --token-file ${
         config.sops.secrets."cloudflared-token".path
-      })\"'";
+      }";
     };
   };
 }

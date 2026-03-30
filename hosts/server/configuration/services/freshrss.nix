@@ -57,10 +57,25 @@
     };
 
     script = ''
-      api_password="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."freshrss-api-password".path})"
-
       ./cli/reconfigure.php --api-enabled
-      ./cli/update-user.php --user ${config.services.freshrss.defaultUser} --api-password "$api_password"
+
+      php_bin=
+      IFS= read -r php_bin < ./cli/update-user.php
+      php_bin="''${php_bin#\#!}"
+
+      "$php_bin" -r '
+        declare(strict_types=1);
+        require getcwd() . "/cli/_cli.php";
+        $username = cliInitUser("${config.services.freshrss.defaultUser}");
+        $apiPassword = trim(file_get_contents("${config.sops.secrets."freshrss-api-password".path}"));
+        $error = FreshRSS_api_Controller::updatePassword($apiPassword);
+        if ($error !== false) {
+          fail($error);
+        }
+        invalidateHttpCache($username);
+        accessRights();
+        done();
+      '
     '';
   };
 
