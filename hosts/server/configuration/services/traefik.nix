@@ -106,30 +106,21 @@ in
           tls = true;
         };
 
-        homepage = {
+        dynacat = {
           rule = "Host(`home.justaslime.dev`)";
           entryPoints = [ "websecure" ];
           middlewares = [ "authelia@file" ];
 
-          service = "homepage";
+          service = "dynacat";
           tls = true;
         };
 
-        freshrss = {
-          rule = "Host(`rss.justaslime.dev`)";
-          entryPoints = [ "websecure" ];
-          middlewares = [ "authelia@file" ];
-
-          service = "freshrss";
-          tls = true;
-        };
       };
 
       http.services = {
         authelia.loadBalancer.servers = [ { url = "http://127.0.0.1:9091"; } ];
-        freshrss.loadBalancer.servers = [ { url = "http://127.0.0.1:8083"; } ];
         forgejo.loadBalancer.servers = [ { url = "http://127.0.0.1:3000"; } ];
-        homepage.loadBalancer.servers = [ { url = "http://127.0.0.1:8082"; } ];
+        dynacat.loadBalancer.servers = [ { url = "http://127.0.0.1:8082"; } ];
         woodpecker.loadBalancer.servers = [ { url = "http://127.0.0.1:8000"; } ];
       };
     };

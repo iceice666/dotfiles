@@ -6,11 +6,10 @@
     ./cloudflare-ddns.nix
     ./cloudflare-ips.nix
     ./cloudflared-tunnel.nix
+    ./dynacat.nix
     ./dnsmasq.nix
     ./docker.nix
     ./forgejo.nix
-    ./freshrss.nix
-    ./homepage.nix
     ./ollama.nix
     ./openssh.nix
     ./database.nix
