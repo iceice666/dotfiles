@@ -35,11 +35,11 @@ let
     };
 
     theme = {
-      "background-color" = "222 47 11";
-      "primary-color" = "164 74 58";
-      "positive-color" = "159 84 45";
-      "negative-color" = "0 75 62";
-      "contrast-multiplier" = 1.1;
+      "background-color" = "294 9 22";
+      "primary-color" = "30 19 75";
+      "positive-color" = "150 4 61";
+      "negative-color" = "9 24 54";
+      "contrast-multiplier" = 1.25;
     };
 
     pages = [
