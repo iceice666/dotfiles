@@ -22,6 +22,10 @@ in
       log.level = "INFO";
 
       entryPoints = {
+        ping = {
+          address = "127.0.0.1:8081";
+        };
+
         web = {
           address = ":80";
 
@@ -40,6 +44,8 @@ in
           forwardedHeaders.trustedIPs = trustedProxyCidrs;
         };
       };
+
+      ping.entryPoint = "ping";
 
       providers.file.watch = true;
     };
