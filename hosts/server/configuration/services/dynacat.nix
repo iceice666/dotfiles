@@ -1,6 +1,26 @@
 { pkgs, ... }:
 
 let
+  mkVideosWidget = title: channels: {
+    type = "videos";
+    inherit title channels;
+    style = "grid-cards";
+    "include-shorts" = false;
+    "collapse-after-rows" = 3;
+  };
+
+  mkRedditWidget = subreddit: {
+    type = "reddit";
+    inherit subreddit;
+    "show-thumbnails" = true;
+    "collapse-after-rows" = 9;
+  };
+
+  mkRedditGroup = subreddits: {
+    type = "group";
+    widgets = builtins.map mkRedditWidget subreddits;
+  };
+
   dynacatConfig = (pkgs.formats.yaml { }).generate "dynacat.yml" {
     server = {
       host = "127.0.0.1";
@@ -131,32 +151,18 @@ let
                 type = "split-column";
                 "max-columns" = 2;
                 widgets = [
-                  {
-                    type = "videos";
-                    title = "Music";
-                    style = "grid-cards";
-                    "include-shorts" = false;
-                    "collapse-after-rows" = 3;
-                    channels = [
-                      "UCam3IAA-nyfxRL8_wDQ35VA"
-                      "UCah4_WVjmr8XA7i5aigwV-Q"
-                    ];
-                  }
-                  {
-                    type = "videos";
-                    title = "Tech";
-                    style = "grid-cards";
-                    "include-shorts" = false;
-                    "collapse-after-rows" = 3;
-                    channels = [
-                      "UCsBjURrPoezykLs9EqgamOA"
-                      "UC6biysICWOJ-C3P4Tyeggzg"
-                      "UCUyeluBRhGPCW4rPe_UvBZQ"
-                      "UCbRP3c757lWg9M-U7TyEkXA"
-                      "UCEbYhDd6c6vngsF5PQpFVWg"
-                      "UCrqM0Ym_NbK1fqeQG2VIohg"
-                    ];
-                  }
+                  (mkVideosWidget "Music" [
+                    "UCam3IAA-nyfxRL8_wDQ35VA"
+                    "UCah4_WVjmr8XA7i5aigwV-Q"
+                  ])
+                  (mkVideosWidget "Tech" [
+                    "UCsBjURrPoezykLs9EqgamOA"
+                    "UC6biysICWOJ-C3P4Tyeggzg"
+                    "UCUyeluBRhGPCW4rPe_UvBZQ"
+                    "UCbRP3c757lWg9M-U7TyEkXA"
+                    "UCEbYhDd6c6vngsF5PQpFVWg"
+                    "UCrqM0Ym_NbK1fqeQG2VIohg"
+                  ])
                 ];
               }
             ];
@@ -173,93 +179,24 @@ let
                 type = "split-column";
                 "max-columns" = 3;
                 widgets = [
-                  {
-                    type = "group";
-                    widgets = [
-                      {
-                        type = "reddit";
-                        subreddit = "opencodeCLI";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "LocalLLaMA";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "ClaudeAI";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                    ];
-                  }
-                  {
-                    type = "group";
-                    widgets = [
-                      {
-                        type = "reddit";
-                        subreddit = "selfhosted";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "browser";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "theprimeagen";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "rust";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "zig";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "neovim";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                    ];
-                  }
-                  {
-                    type = "group";
-                    widgets = [
-                      {
-                        type = "reddit";
-                        subreddit = "KeqingMains";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "C_AT";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                      {
-                        type = "reddit";
-                        subreddit = "BlueArchive";
-                        "show-thumbnails" = true;
-                        "collapse-after-rows" = 9;
-                      }
-                    ];
-                  }
+                  (mkRedditGroup [
+                    "opencodeCLI"
+                    "LocalLLaMA"
+                    "ClaudeAI"
+                  ])
+                  (mkRedditGroup [
+                    "selfhosted"
+                    "browser"
+                    "theprimeagen"
+                    "rust"
+                    "zig"
+                    "neovim"
+                  ])
+                  (mkRedditGroup [
+                    "KeqingMains"
+                    "C_AT"
+                    "BlueArchive"
+                  ])
                 ];
               }
             ];
