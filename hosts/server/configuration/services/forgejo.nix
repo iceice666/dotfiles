@@ -75,7 +75,7 @@ in
         DOMAIN = "code.justaslime.dev";
         SSH_DOMAIN = "git.justaslime.dev";
         HTTP_ADDR = "127.0.0.1";
-        HTTP_PORT = 3000;
+        HTTP_PORT = 17303;
         ROOT_URL = "https://code.justaslime.dev/";
         START_SSH_SERVER = true;
         DISABLE_SSH = false;

@@ -23,7 +23,7 @@ in
 
       entryPoints = {
         ping = {
-          address = "127.0.0.1:8081";
+          address = "127.0.0.1:18081";
         };
 
         web = {
@@ -125,9 +125,9 @@ in
 
       http.services = {
         authelia.loadBalancer.servers = [ { url = "http://127.0.0.1:9091"; } ];
-        forgejo.loadBalancer.servers = [ { url = "http://127.0.0.1:3000"; } ];
-        dynacat.loadBalancer.servers = [ { url = "http://127.0.0.1:8082"; } ];
-        woodpecker.loadBalancer.servers = [ { url = "http://127.0.0.1:8000"; } ];
+        forgejo.loadBalancer.servers = [ { url = "http://127.0.0.1:17303"; } ];
+        dynacat.loadBalancer.servers = [ { url = "http://127.0.0.1:18082"; } ];
+        woodpecker.loadBalancer.servers = [ { url = "http://127.0.0.1:17800"; } ];
       };
     };
   };

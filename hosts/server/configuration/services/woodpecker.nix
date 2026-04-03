@@ -11,7 +11,7 @@ in
 
     environment = {
       WOODPECKER_HOST = "https://ci.justaslime.dev";
-      WOODPECKER_SERVER_ADDR = "127.0.0.1:8000";
+      WOODPECKER_SERVER_ADDR = "127.0.0.1:17800";
       WOODPECKER_GRPC_ADDR = "127.0.0.1:9000";
 
       WOODPECKER_OPEN = "false";
@@ -33,7 +33,7 @@ in
       WOODPECKER_SERVER = "127.0.0.1:9000";
       WOODPECKER_BACKEND = "docker";
       WOODPECKER_BACKEND_DOCKER_VOLUMES = "${caBundle}:/etc/ssl/certs/ca-certificates.crt:ro,${registryCa}:/etc/docker/certs.d/code.justaslime.dev/ca.crt:ro";
-      WOODPECKER_HEALTHCHECK_ADDR = "127.0.0.1:3001";
+      WOODPECKER_HEALTHCHECK_ADDR = "127.0.0.1:17301";
     };
 
     extraGroups = [ "docker" ];

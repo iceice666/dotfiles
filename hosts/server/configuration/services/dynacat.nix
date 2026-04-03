@@ -54,7 +54,7 @@ let
     url = "https://code.justaslime.dev";
     icon = "sh:forgejo";
     description = "Git hosting";
-    checkUrl = "http://127.0.0.1:3000";
+    checkUrl = "http://127.0.0.1:17303";
   };
 
   woodpeckerSite = mkMonitorSite {
@@ -62,7 +62,7 @@ let
     url = "https://ci.justaslime.dev";
     icon = "https://woodpecker-ci.org/img/logo.svg";
     description = "CI pipelines";
-    checkUrl = "http://127.0.0.1:8000";
+    checkUrl = "http://127.0.0.1:17800";
   };
 
   traefikSite = mkMonitorSite {
@@ -70,7 +70,7 @@ let
     url = "https://home.justaslime.dev";
     icon = "sh:traefik";
     description = "Ingress and TLS";
-    checkUrl = "http://127.0.0.1:8081/ping";
+    checkUrl = "http://127.0.0.1:18081/ping";
   };
 
   dockerApiSite = mkMonitorSite {
@@ -127,7 +127,7 @@ let
   dynacatConfig = (pkgs.formats.yaml { }).generate "dynacat.yml" {
     server = {
       host = "127.0.0.1";
-      port = 8082;
+      port = 18082;
       proxied = true;
     };
 
