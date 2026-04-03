@@ -12,8 +12,10 @@ let
   mkRedditWidget = subreddit: {
     type = "reddit";
     inherit subreddit;
+    style = "vertical-list";
     "show-thumbnails" = true;
-    "collapse-after-rows" = 9;
+    limit = 50;
+    "collapse-after" = -1;
   };
 
   mkRedditGroup = subreddits: {
@@ -263,34 +265,25 @@ let
       }
       {
         name = "Reddit";
+        width = "wide";
         columns = [
           {
             size = "full";
             widgets = [
-              {
-                type = "split-column";
-                "max-columns" = 3;
-                widgets = [
-                  (mkRedditGroup [
-                    "opencodeCLI"
-                    "LocalLLaMA"
-                    "ClaudeAI"
-                  ])
-                  (mkRedditGroup [
-                    "selfhosted"
-                    "browser"
-                    "theprimeagen"
-                    "rust"
-                    "zig"
-                    "neovim"
-                  ])
-                  (mkRedditGroup [
-                    "KeqingMains"
-                    "C_AT"
-                    "BlueArchive"
-                  ])
-                ];
-              }
+              (mkRedditGroup [
+                "opencodeCLI"
+                "LocalLLaMA"
+                "ClaudeAI"
+                "selfhosted"
+                "browser"
+                "theprimeagen"
+                "rust"
+                "zig"
+                "neovim"
+                "KeqingMains"
+                "C_AT"
+                "BlueArchive"
+              ])
             ];
           }
         ];
