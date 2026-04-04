@@ -20,7 +20,7 @@ let
         ${render "ghostty-dark" "$out/ghostty/themes/themegen-dark"}
         ${render "ghostty-light" "$out/ghostty/themes/themegen-light"}
         ${render "opencode-colors.json" "$out/opencode/themes/themegen.json"}
-        ${render "zed-colors.json" "$out/zed/themes/themegen.json"}
+        ${render "zed-themes.jsonc" "$out/zed/themes/themegen.json"}
         ${render "starship.toml" "$out/starship.toml"}
         ${render "terminal-sequences.fish" "$out/fish/conf.d/themegen-terminal-sequences.fish"}
       '';
