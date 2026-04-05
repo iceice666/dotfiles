@@ -20,6 +20,9 @@ pub(crate) struct Cli {
 
     #[arg(long, default_value_t = 0.0, value_parser = parse_contrast)]
     pub(crate) base16_contrast: f64,
+
+    #[arg(long, value_enum, default_value_t = Base16Mode::SourceOffsets)]
+    pub(crate) base16_mode: Base16Mode,
 }
 
 fn parse_contrast(value: &str) -> Result<f64, String> {
@@ -84,4 +87,12 @@ impl SchemeType {
             Self::Vibrant => "scheme-vibrant",
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+pub(crate) enum Base16Mode {
+    #[value(name = "source-offsets")]
+    SourceOffsets,
+    #[value(name = "follow-palette")]
+    FollowPalette,
 }

@@ -11,6 +11,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 use crate::cli::Cli;
+use crate::color::{parse_hex_value, rgba_to_argb};
 use crate::model::{Base16Schemes, Output, SourceInfo, ThemeSchemes};
 use crate::palette::{build_base16, build_material_scheme, scheme_to_map};
 use crate::source::extract_source_color;
@@ -34,8 +35,13 @@ fn main() -> Result<()> {
         true,
         cli.material_contrast,
     ));
-    let base16_light = build_base16(source, true, cli.base16_contrast);
-    let base16_dark = build_base16(source, false, cli.base16_contrast);
+    let primary = material_light
+        .get("primary")
+        .context("generated material scheme is missing `primary`")
+        .and_then(|color| parse_hex_value(color))
+        .map(rgba_to_argb)?;
+    let base16_light = build_base16(source, primary, true, cli.base16_contrast, cli.base16_mode);
+    let base16_dark = build_base16(source, primary, false, cli.base16_contrast, cli.base16_mode);
 
     if let Some(template_path) = cli.template {
         let template = fs::read_to_string(&template_path)

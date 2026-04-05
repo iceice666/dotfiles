@@ -8,7 +8,7 @@
 let
   templates = dotfiles + /shared/themegen/templates;
   render = template: output: ''
-    themegen "${desktopWallpaper}" --type scheme-tonal-spot --base16-contrast 0.3 --template "${templates}/${template}" > "${output}"
+    themegen "${desktopWallpaper}" --type scheme-tonal-spot --base16-contrast 0.3 --base16-mode follow-palette --template "${templates}/${template}" > "${output}"
   '';
   generated =
     pkgs.runCommandLocal "themegen-themes"
