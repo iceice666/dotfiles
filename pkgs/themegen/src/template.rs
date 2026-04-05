@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 use crate::cli::SchemeType;
 use crate::color::{
-    argb_to_rgba, ensure_readable, format_number, hct_to_rgba, hsv_to_rgba, interpolate, mix,
-    normalize_hue, oklch_to_rgba, parse_hex_value, rgba_to_argb, rgba_to_hct, rgba_to_hsv,
-    rgba_to_oklch, HctColor, HsvColor, OklchColor, RgbaColor,
+    HctColor, HsvColor, OklchColor, RgbaColor, argb_to_rgba, ensure_readable, format_number,
+    hct_to_rgba, hsv_to_rgba, interpolate, mix, normalize_hue, oklch_to_rgba, parse_hex_value,
+    rgba_to_argb, rgba_to_hct, rgba_to_hsv, rgba_to_oklch,
 };
 use crate::model::Base16Palette;
 
@@ -533,6 +533,44 @@ fn apply_color_operation(color: ColorValue, name: &str, args: &[Value]) -> Resul
                 mix_amount(args)?,
             )))
         }
+        (ColorValue::Oklch(color), "rotate") => Ok(ColorValue::Oklch(OklchColor {
+            hue: color.hue + as_number("degrees", single_arg(name, args)?)?,
+            ..color
+        })),
+        (ColorValue::Oklch(color), "chroma") => Ok(ColorValue::Oklch(OklchColor {
+            chroma: as_number("chroma", single_arg(name, args)?)?.max(0.0),
+            ..color
+        })),
+        (ColorValue::Oklch(color), "chroma_add") => Ok(ColorValue::Oklch(OklchColor {
+            chroma: (color.chroma + as_number("delta", single_arg(name, args)?)?).max(0.0),
+            ..color
+        })),
+        (ColorValue::Oklch(color), "lightness") => Ok(ColorValue::Oklch(OklchColor {
+            lightness: as_number("lightness", single_arg(name, args)?)?.clamp(0.0, 1.0),
+            ..color
+        })),
+        (ColorValue::Oklch(color), "lightness_add") => Ok(ColorValue::Oklch(OklchColor {
+            lightness: (color.lightness + as_number("delta", single_arg(name, args)?)?)
+                .clamp(0.0, 1.0),
+            ..color
+        })),
+        (ColorValue::Oklch(color), "readable") => {
+            if args.len() != 2 {
+                bail!("`readable` expects 2 arguments, got {}", args.len());
+            }
+
+            // Enforce contrast in rendered RGB space, then convert back to OKLCH.
+            let background = expect_color(args[0].clone())?.to_hex();
+            let ratio = as_number("ratio", &args[1])?;
+            let readable = ensure_readable(
+                rgba_to_argb(oklch_to_rgba(color)),
+                rgba_to_argb(background),
+                ratio,
+            );
+            let mut readable_oklch = rgba_to_oklch(argb_to_rgba(readable));
+            readable_oklch.alpha = color.alpha;
+            Ok(ColorValue::Oklch(readable_oklch))
+        }
         (ColorValue::Hex(_), _) => bail!("`{name}` is not available for HEX colors"),
         (ColorValue::Hct(_), _) => bail!("unknown HCT operation `{name}`"),
         (ColorValue::Hsv(_), _) => bail!("`{name}` is not available for HSV colors"),
@@ -753,6 +791,18 @@ mod tests {
     }
 
     #[test]
+    fn applies_pipe_color_operations_in_oklch() {
+        let values = test_values();
+        let rendered = render_template(
+            "{{ source.color | to_oklch() | rotate(145) | chroma(0.18) | lightness(0.7) }}",
+            &values,
+        )
+        .unwrap();
+
+        assert!(rendered.starts_with("OKLCH("));
+    }
+
+    #[test]
     fn converts_between_formats() {
         let rendered = render_template("{{ HEX(ffff00) | to_hsv() }}", &test_values()).unwrap();
 
@@ -772,6 +822,23 @@ mod tests {
         let values = test_values();
         let rendered = render_template(
             "{{ source.color | to_hct() | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
+            &values,
+        )
+        .unwrap();
+
+        let foreground = rgba_to_argb(parse_hex_value(&rendered).unwrap());
+        let background = rgba_to_argb(
+            parse_hex_value(values.get("color.dark.surface_container_low").unwrap()).unwrap(),
+        );
+
+        assert!(contrast_ratio(foreground, background) >= 4.5);
+    }
+
+    #[test]
+    fn oklch_readable_keeps_contrast() {
+        let values = test_values();
+        let rendered = render_template(
+            "{{ source.color | to_oklch() | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
             &values,
         )
         .unwrap();

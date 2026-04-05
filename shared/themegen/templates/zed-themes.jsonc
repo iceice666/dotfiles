@@ -165,52 +165,52 @@
         ],
         "syntax": {
           "boolean": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "comment": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "comment.doc": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "constant": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "constructor": {
-            "color": "{{source.color | to_hct() | rotate(-32) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "emphasis": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "emphasis.strong": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": 700
           },
           "function": {
-            "color": "{{source.color | to_hct() | rotate(-80) | chroma(28) | tone(72) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-80) | chroma(0.12) | lightness(0.72) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "keyword": {
-            "color": "{{source.color | to_hct() | rotate(-52) | chroma(38) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "number": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -220,7 +220,7 @@
             "font_weight": null
           },
           "property": {
-            "color": "{{source.color | to_hct() | rotate(18) | chroma(34) | tone(80) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -245,72 +245,72 @@
             "font_weight": null
           },
           "punctuation.special": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.escape": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(46) | tone(82) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.regex": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(48) | tone(82) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.26) | lightness(0.83) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(46) | tone(82) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special.symbol": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(46) | tone(82) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "tag": {
-            "color": "{{source.color | to_hct() | rotate(18) | chroma(34) | tone(80) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "text.literal": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "type": {
-            "color": "{{source.color | to_hct() | rotate(-32) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable": {
-            "color": "{{source.color | to_hct() | rotate(18) | chroma(34) | tone(80) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable.special": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "attribute": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "embedded": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "enum": {
-            "color": "{{source.color | to_hct() | rotate(-32) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -320,7 +320,7 @@
             "font_weight": null
           },
           "label": {
-            "color": "{{source.color | to_hct() | rotate(18) | chroma(34) | tone(80) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -330,12 +330,12 @@
             "font_weight": null
           },
           "link_uri": {
-            "color": "{{source.color | to_hct() | rotate(145) | chroma(46) | tone(82) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "namespace": {
-            "color": "{{source.color | to_hct() | rotate(-32) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -345,7 +345,7 @@
             "font_weight": null
           },
           "preproc": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -355,27 +355,27 @@
             "font_weight": null
           },
           "punctuation.markup": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector": {
-            "color": "{{source.color | to_hct() | rotate(18) | chroma(34) | tone(80) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector.pseudo": {
-            "color": "{{source.color | to_hct() | chroma(42) | tone(76) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "title": {
-            "color": "{{source.color | to_hct() | rotate(170) | chroma(32) | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variant": {
-            "color": "{{source.color | to_hct() | rotate(-32) | chroma(40) | tone(78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           }
