@@ -1,10 +1,14 @@
-{ pkgs, dotfiles, ... }:
+{
+  pkgs,
+  dotfiles,
+  desktopWallpaper,
+  ...
+}:
 
 let
-  wallpaper = dotfiles + /assets/desktop_wallpaper.png;
   templates = dotfiles + /shared/themegen/templates;
   render = template: output: ''
-    themegen "${wallpaper}" --type scheme-tonal-spot --base16-contrast 0.3 --template "${templates}/${template}" > "${output}"
+    themegen "${desktopWallpaper}" --type scheme-tonal-spot --base16-contrast 0.3 --template "${templates}/${template}" > "${output}"
   '';
   generated =
     pkgs.runCommandLocal "themegen-themes"

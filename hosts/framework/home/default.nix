@@ -8,6 +8,7 @@
 }:
 
 let
+  desktopWallpaper = dotfiles + /assets/mzen.png;
   unmanaged = map lib.getName (
     import (dotfiles + /common/configuration/packages.nix) { inherit pkgs; }
   );
@@ -19,6 +20,10 @@ in
     (dotfiles + /shared/home/themegen.nix)
     # (dotfiles + /shared/home/vscodium.nix)
   ];
+
+  _module.args = {
+    inherit desktopWallpaper;
+  };
 
   warnings = [
     ''

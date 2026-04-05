@@ -6,6 +6,9 @@
   ...
 }:
 
+let
+  desktopWallpaper = dotfiles + /assets/win_chan.jpg;
+in
 {
   imports = [
     (dotfiles + /common/home)
@@ -15,6 +18,10 @@
     ./karabiner.nix
     ./wallpaper.nix
   ];
+
+  _module.args = {
+    inherit desktopWallpaper;
+  };
 
   home.packages = with pkgs; [
     obsidian

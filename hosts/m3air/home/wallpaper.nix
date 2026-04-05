@@ -1,12 +1,10 @@
 {
   pkgs,
-  dotfiles,
+  desktopWallpaper,
   ...
 }:
 
 let
-  desktopWallpaper = dotfiles + /assets/desktop_wallpaper.png;
-
   applyWallpaper = pkgs.writeShellScript "m3air-apply-wallpaper" ''
     #!/usr/bin/env bash
     set -euo pipefail
