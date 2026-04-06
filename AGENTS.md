@@ -8,6 +8,7 @@ Use this file as the working agreement for coding agents editing this repo.
 flake.nix            # all flake inputs and outputs
 Justfile             # rebuild, validation, secrets, maintenance workflows
 treefmt.nix          # formatter configuration
+assets/              # wallpaper/source images used by theme generation
 
 common/              # imported by every host
   configuration/     # shared system-level modules and packages
@@ -15,7 +16,8 @@ common/              # imported by every host
     fish/            # fish config + auto-imported function modules
 
 shared/              # optional modules used by some hosts
-  home/              # editor/app modules such as zed and cursor
+  home/              # shared Home Manager modules such as zed, themegen, vscodium
+  themegen/          # theme templates rendered from wallpaper-derived palettes
 
 hosts/               # per-host entrypoints
   m3air/             # macOS via nix-darwin
@@ -23,7 +25,7 @@ hosts/               # per-host entrypoints
   server/            # NixOS host named homolab
 
 pkgs/                # custom derivations exposed through the overlay
-sensitive/           # encrypted secret material managed by sops
+sensitive/           # encrypted secret and certificate material managed by sops
 ```
 Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
 
@@ -32,15 +34,21 @@ Run commands from the repository root.
 
 ### Primary workflows
 ```sh
+just build
+just switch
+
 just fmt
 just check
+
 just m3air-rebuild
 just framework-rebuild
 just server-rebuild
 ```
+- `just build` auto-detects the current host and runs the matching dry build.
+- `just switch` auto-detects the current host and applies the matching configuration.
 - `just fmt` runs `nix fmt` through `treefmt-nix`.
 - `just check` runs `nix flake check --all-systems`.
-- Rebuild commands apply changes; prefer dry builds while iterating.
+- Explicit rebuild commands apply changes; prefer dry builds while iterating.
 
 ### Dry builds / targeted validation
 There is no unit-test suite here. The closest equivalent to a test is the narrowest host or package build that covers your change.
@@ -52,15 +60,18 @@ sudo nixos-rebuild build --flake .#homolab
 nix build .#packages.aarch64-darwin.equibop-bin
 ```
 - `hosts/m3air/**` -> dry-build `m3air`.
-- `hosts/framework/**` or shared Home Manager modules -> dry-build `framework`.
+- `hosts/framework/**` -> dry-build `framework`.
 - `hosts/server/**` -> dry-build `homolab`.
-- `pkgs/equibop-bin` -> build that package directly.
+- `common/configuration/**` -> dry-build `m3air` and `homolab`.
+- `common/home/**` -> build each consuming host: `m3air`, `framework`, and `homolab`.
+- `shared/home/**` or `shared/themegen/**` -> build each importing host, currently `m3air` and `framework`.
+- `pkgs/<name>` -> build that package directly; if it is wired into a host, also dry-build the affected host when practical.
 
 ### Single-test guidance
 - There is no per-test runner.
 - For a "single test", run the smallest build that covers the change.
 - One host change -> build only that host.
-- One package change -> `nix build` that package.
+- One package change -> `nix build .#packages.<system>.<name>`.
 - One file formatting check -> run `nixfmt path/to/file.nix` if available, then `just fmt` before finishing.
 
 ### Other useful commands
@@ -143,8 +154,10 @@ Canonical module shape:
 ## Repository Conventions
 - `common/` is the baseline for all hosts.
 - `shared/` is opt-in and should stay reusable across hosts.
+- `shared/themegen/` supports wallpaper-driven theme generation for hosts that import `shared/home/themegen.nix`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is standalone Home Manager and warns about packages that cannot come from `environment.systemPackages`.
+- `hosts/server/configuration/services/dynacat.nix` is the dashboard service; do not refer to it as Homepage.
 - `hosts/server/configuration/hardware-configuration.nix` is machine-specific and should only be regenerated on the target server.
 
 ## Change Strategy for Agents
