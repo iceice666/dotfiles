@@ -35,9 +35,6 @@ in
   home.file = {
     ".config/fish/conf.d/themegen-terminal-sequences.fish".source =
       "${generated}/fish/conf.d/themegen-terminal-sequences.fish";
-    ".config/ghostty/config".text = ''
-      theme = light:themegen-light,dark:themegen-dark
-    '';
     ".config/ghostty/themes/themegen-dark".source = "${generated}/ghostty/themes/themegen-dark";
     ".config/ghostty/themes/themegen-light".source = "${generated}/ghostty/themes/themegen-light";
     ".config/opencode/themes/themegen.json".source = "${generated}/opencode/themes/themegen.json";

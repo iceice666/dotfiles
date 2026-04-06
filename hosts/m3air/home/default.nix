@@ -14,6 +14,7 @@ in
   imports = [
     inputs.sops-nix.homeManagerModules.sops
     (dotfiles + /common/home)
+    (dotfiles + /shared/home/ghostty.nix)
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
