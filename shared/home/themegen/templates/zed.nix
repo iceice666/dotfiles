@@ -14,52 +14,40 @@ let
     let
       syntax = t.syntax mode;
       terminal = t.terminal mode;
+      colors = t.color.${mode};
+      base16Colors = t.base16.${mode};
 
-      color = token: t.render (t.colorExpr mode token);
-      colorExpr = token: t.colorExpr mode token;
       background =
-        token:
-        if mode == "light" then t.render (t.seededLightBackgroundExpr (colorExpr token)) else color token;
-      base16 = token: t.render (t.base16Expr mode token);
-      base16Expr = token: t.base16Expr mode token;
-      alpha = token: amount: t.alpha (colorExpr token) amount;
-      syntaxBackgroundExpr =
+        value: if mode == "light" then t.render (t.seededLightBackground value) else t.render value;
+      alpha = value: amount: t.alpha value amount;
+      syntaxBackground =
         if mode == "light" then
-          t.seededLightBackgroundExpr (colorExpr "surface_container_low")
+          t.seededLightBackground colors.surface_container_low
         else
-          colorExpr "surface_container_low";
-      zedLiteralSyntax = t.renderPipe t.seedExpr [
-        (t.call "to_oklch" [ ])
-        (t.call "rotate" [ 56 ])
-        (t.call "chroma" [ 0.18 ])
-        (t.call "lightness" [ (if mode == "dark" then 0.78 else 0.46) ])
-        (t.call "readable" [
-          syntaxBackgroundExpr
-          4.5
-        ])
-        (t.call "to_hex" [ ])
+          colors.surface_container_low;
+      zedLiteralSyntax = t.r t.seed [
+        t.toOklch
+        (t.rotate 56)
+        (t.chroma 0.18)
+        (t.lightness (if mode == "dark" then 0.78 else 0.46))
+        (t.readable syntaxBackground 4.5)
+        t.toHex
       ];
-      zedStringSpecialSyntax = t.renderPipe t.seedExpr [
-        (t.call "to_oklch" [ ])
-        (t.call "rotate" [ 96 ])
-        (t.call "chroma" [ 0.24 ])
-        (t.call "lightness" [ (if mode == "dark" then 0.84 else 0.38) ])
-        (t.call "readable" [
-          syntaxBackgroundExpr
-          4.5
-        ])
-        (t.call "to_hex" [ ])
+      zedStringSpecialSyntax = t.r t.seed [
+        t.toOklch
+        (t.rotate 96)
+        (t.chroma 0.24)
+        (t.lightness (if mode == "dark" then 0.84 else 0.38))
+        (t.readable syntaxBackground 4.5)
+        t.toHex
       ];
-      zedStringRegexSyntax = t.renderPipe t.seedExpr [
-        (t.call "to_oklch" [ ])
-        (t.call "rotate" [ 290 ])
-        (t.call "chroma" [ 0.26 ])
-        (t.call "lightness" [ (if mode == "dark" then 0.83 else 0.4) ])
-        (t.call "readable" [
-          syntaxBackgroundExpr
-          4.5
-        ])
-        (t.call "to_hex" [ ])
+      zedStringRegexSyntax = t.r t.seed [
+        t.toOklch
+        (t.rotate 290)
+        (t.chroma 0.26)
+        (t.lightness (if mode == "dark" then 0.83 else 0.4))
+        (t.readable syntaxBackground 4.5)
+        t.toHex
       ];
 
       mkState = name: stateColor: background: border: {
@@ -68,21 +56,18 @@ let
         "${name}.border" = border;
       };
 
-      warningBackground = t.renderPipe (base16Expr "base0A") [
-        t.toHctStep
-        (t.toneStep (if mode == "dark" then 28 else 90))
-        (t.withAlphaStep 80)
-        t.toHexStep
+      warningBackground = t.r base16Colors.base0A [
+        t.toHct
+        (t.tone (if mode == "dark" then 28 else 90))
+        (t.withAlpha 80)
+        t.toHex
       ];
 
-      warningBorder = t.renderPipe (base16Expr "base0A") [
-        t.toHctStep
-        (t.toneStep (if mode == "dark" then 74 else 36))
-        (t.call "readable" [
-          (colorExpr "surface_container_low")
-          3.2
-        ])
-        t.toHexStep
+      warningBorder = t.r base16Colors.base0A [
+        t.toHct
+        (t.tone (if mode == "dark" then 74 else 36))
+        (t.readable colors.surface_container_low 3.2)
+        t.toHex
       ];
     in
     {
@@ -90,77 +75,77 @@ let
       appearance = mode;
       style = {
         accents = [
-          (color "primary")
-          (color "secondary")
-          (color "tertiary")
+          (t.render colors.primary)
+          (t.render colors.secondary)
+          (t.render colors.tertiary)
         ];
         "background.appearance" = "opaque";
-        border = color "outline_variant";
-        "border.variant" = color "outline";
-        "border.focused" = color "primary";
-        "border.selected" = color "primary";
-        "border.transparent" = alpha "outline_variant" 40;
-        "border.disabled" = alpha "outline_variant" 60;
-        "elevated_surface.background" = background "surface_container_high";
-        "surface.background" = background "surface_container";
-        background = background "background";
-        "element.background" = background "surface_container";
-        "element.hover" = color "surface_container_high";
-        "element.active" = color "surface_container_highest";
-        "element.selected" = color "secondary_container";
-        "element.disabled" = color "surface_variant";
-        "drop_target.background" = alpha "primary_container" 80;
+        border = t.render colors.outline_variant;
+        "border.variant" = t.render colors.outline;
+        "border.focused" = t.render colors.primary;
+        "border.selected" = t.render colors.primary;
+        "border.transparent" = alpha colors.outline_variant 40;
+        "border.disabled" = alpha colors.outline_variant 60;
+        "elevated_surface.background" = background colors.surface_container_high;
+        "surface.background" = background colors.surface_container;
+        background = background colors.background;
+        "element.background" = background colors.surface_container;
+        "element.hover" = t.render colors.surface_container_high;
+        "element.active" = t.render colors.surface_container_highest;
+        "element.selected" = t.render colors.secondary_container;
+        "element.disabled" = t.render colors.surface_variant;
+        "drop_target.background" = alpha colors.primary_container 80;
         "ghost_element.background" = null;
-        "ghost_element.hover" = alpha "surface_container" 80;
-        "ghost_element.active" = color "surface_container_high";
-        "ghost_element.selected" = alpha "secondary_container" 80;
-        "ghost_element.disabled" = alpha "surface_variant" 60;
-        text = color "on_surface";
-        "text.muted" = color "on_surface_variant";
-        "text.placeholder" = alpha "on_surface_variant" 99;
-        "text.disabled" = alpha "on_surface" 60;
-        "text.accent" = color "primary";
-        icon = color "on_surface";
-        "icon.muted" = color "on_surface_variant";
-        "icon.disabled" = alpha "on_surface" 60;
-        "icon.placeholder" = alpha "on_surface_variant" 80;
-        "icon.accent" = color "primary";
-        "status_bar.background" = background "surface";
-        "title_bar.background" = background "surface";
-        "title_bar.inactive_background" = background "surface_dim";
-        "toolbar.background" = background "surface_container_low";
-        "tab_bar.background" = background "surface_container";
-        "tab.inactive_background" = background "surface_container";
-        "tab.active_background" = background "surface_container_low";
-        "search.match_background" = alpha "tertiary_container" 80;
-        "panel.background" = background "surface_container";
-        "panel.focused_border" = color "primary";
-        "panel.indent_guide" = alpha "outline_variant" 60;
-        "panel.indent_guide_active" = color "outline";
-        "panel.indent_guide_hover" = alpha "outline" 80;
-        "pane.focused_border" = color "primary";
-        "pane_group.border" = color "outline";
-        "scrollbar.thumb.background" = alpha "on_surface_variant" 80;
-        "scrollbar.thumb.hover_background" = alpha "on_surface_variant" "c0";
-        "scrollbar.thumb.border" = alpha "outline_variant" 40;
-        "scrollbar.track.background" = background "surface_container";
-        "scrollbar.track.border" = alpha "outline_variant" 20;
-        "editor.foreground" = color "on_surface";
-        "editor.background" = background "surface_container_low";
-        "editor.gutter.background" = background "surface_container_low";
-        "editor.subheader.background" = background "surface_container";
-        "editor.indent_guide" = alpha "outline_variant" 60;
-        "editor.indent_guide_active" = color "outline";
-        "editor.active_line.background" = alpha "surface_container_high" 80;
-        "editor.highlighted_line.background" = alpha "surface_container_high" 60;
-        "editor.line_number" = color "on_surface_variant";
-        "editor.active_line_number" = color "primary";
-        "editor.invisible" = alpha "outline_variant" 80;
-        "editor.wrap_guide" = alpha "outline_variant" 40;
-        "editor.active_wrap_guide" = alpha "outline" 80;
-        "editor.document_highlight.bracket_background" = alpha "primary_container" 60;
-        "editor.document_highlight.read_background" = alpha "primary_container" 60;
-        "editor.document_highlight.write_background" = alpha "secondary_container" 80;
+        "ghost_element.hover" = alpha colors.surface_container 80;
+        "ghost_element.active" = t.render colors.surface_container_high;
+        "ghost_element.selected" = alpha colors.secondary_container 80;
+        "ghost_element.disabled" = alpha colors.surface_variant 60;
+        text = t.render colors.on_surface;
+        "text.muted" = t.render colors.on_surface_variant;
+        "text.placeholder" = alpha colors.on_surface_variant 99;
+        "text.disabled" = alpha colors.on_surface 60;
+        "text.accent" = t.render colors.primary;
+        icon = t.render colors.on_surface;
+        "icon.muted" = t.render colors.on_surface_variant;
+        "icon.disabled" = alpha colors.on_surface 60;
+        "icon.placeholder" = alpha colors.on_surface_variant 80;
+        "icon.accent" = t.render colors.primary;
+        "status_bar.background" = background colors.surface;
+        "title_bar.background" = background colors.surface;
+        "title_bar.inactive_background" = background colors.surface_dim;
+        "toolbar.background" = background colors.surface_container_low;
+        "tab_bar.background" = background colors.surface_container;
+        "tab.inactive_background" = background colors.surface_container;
+        "tab.active_background" = background colors.surface_container_low;
+        "search.match_background" = alpha colors.tertiary_container 80;
+        "panel.background" = background colors.surface_container;
+        "panel.focused_border" = t.render colors.primary;
+        "panel.indent_guide" = alpha colors.outline_variant 60;
+        "panel.indent_guide_active" = t.render colors.outline;
+        "panel.indent_guide_hover" = alpha colors.outline 80;
+        "pane.focused_border" = t.render colors.primary;
+        "pane_group.border" = t.render colors.outline;
+        "scrollbar.thumb.background" = alpha colors.on_surface_variant 80;
+        "scrollbar.thumb.hover_background" = alpha colors.on_surface_variant "c0";
+        "scrollbar.thumb.border" = alpha colors.outline_variant 40;
+        "scrollbar.track.background" = background colors.surface_container;
+        "scrollbar.track.border" = alpha colors.outline_variant 20;
+        "editor.foreground" = t.render colors.on_surface;
+        "editor.background" = background colors.surface_container_low;
+        "editor.gutter.background" = background colors.surface_container_low;
+        "editor.subheader.background" = background colors.surface_container;
+        "editor.indent_guide" = alpha colors.outline_variant 60;
+        "editor.indent_guide_active" = t.render colors.outline;
+        "editor.active_line.background" = alpha colors.surface_container_high 80;
+        "editor.highlighted_line.background" = alpha colors.surface_container_high 60;
+        "editor.line_number" = t.render colors.on_surface_variant;
+        "editor.active_line_number" = t.render colors.primary;
+        "editor.invisible" = alpha colors.outline_variant 80;
+        "editor.wrap_guide" = alpha colors.outline_variant 40;
+        "editor.active_wrap_guide" = alpha colors.outline 80;
+        "editor.document_highlight.bracket_background" = alpha colors.primary_container 60;
+        "editor.document_highlight.read_background" = alpha colors.primary_container 60;
+        "editor.document_highlight.write_background" = alpha colors.secondary_container 80;
         "terminal.background" = terminal.background;
         "terminal.ansi.background" = terminal.background;
         "terminal.foreground" = terminal.foreground;
@@ -190,62 +175,72 @@ let
         "terminal.ansi.white" = terminal.ansi.white;
         "terminal.ansi.bright_white" = terminal.ansi.brightWhite;
         "terminal.ansi.dim_white" = terminal.dim.white;
-        "link_text.hover" = color "primary";
+        "link_text.hover" = t.render colors.primary;
       }
       // lib.optionalAttrs (mode == "light") {
-        "status_bar.foreground" = color "on_surface";
-        "title_bar.foreground" = color "on_surface";
-        "title_bar.inactive_foreground" = color "on_surface_variant";
-        "panel.foreground" = color "on_surface";
-        "tab.active_foreground" = color "on_surface";
-        "tab.inactive_foreground" = color "on_surface_variant";
+        "status_bar.foreground" = t.render colors.on_surface;
+        "title_bar.foreground" = t.render colors.on_surface;
+        "title_bar.inactive_foreground" = t.render colors.on_surface_variant;
+        "panel.foreground" = t.render colors.on_surface;
+        "tab.active_foreground" = t.render colors.on_surface;
+        "tab.inactive_foreground" = t.render colors.on_surface_variant;
       }
       // t.mergeAll [
-        (mkState "conflict" (color "error") (alpha "error_container" 80) (color "on_error_container"))
-        (mkState "created" (color "tertiary") (alpha "tertiary_container" 80) (
-          color "on_tertiary_container"
+        (mkState "conflict" (t.render colors.error) (alpha colors.error_container 80) (
+          t.render colors.on_error_container
         ))
-        (mkState "deleted" (color "error") (alpha "error_container" 80) (color "on_error_container"))
-        (mkState "error" (color "error") (alpha "error_container" 80) (color "on_error_container"))
-        (mkState "hidden" (color "outline_variant") (alpha "surface_variant" 40) (
-          alpha "outline_variant" 60
+        (mkState "created" (t.render colors.tertiary) (alpha colors.tertiary_container 80) (
+          t.render colors.on_tertiary_container
         ))
-        (mkState "hint" (color "primary") (alpha "primary_container" 80) (color "on_primary_container"))
-        (mkState "ignored" (alpha "on_surface_variant" 60) (alpha "surface_variant" 40) (
-          alpha "outline_variant" 40
+        (mkState "deleted" (t.render colors.error) (alpha colors.error_container 80) (
+          t.render colors.on_error_container
         ))
-        (mkState "info" (color "primary") (alpha "primary_container" 80) (color "on_primary_container"))
-        (mkState "modified" (color "secondary") (alpha "secondary_container" 80) (
-          color "on_secondary_container"
+        (mkState "error" (t.render colors.error) (alpha colors.error_container 80) (
+          t.render colors.on_error_container
         ))
-        (mkState "renamed" (color "secondary") (alpha "secondary_container" 80) (
-          color "on_secondary_container"
+        (mkState "hidden" (t.render colors.outline_variant) (alpha colors.surface_variant 40) (
+          alpha colors.outline_variant 60
         ))
-        (mkState "success" (color "tertiary") (alpha "tertiary_container" 80) (
-          color "on_tertiary_container"
+        (mkState "hint" (t.render colors.primary) (alpha colors.primary_container 80) (
+          t.render colors.on_primary_container
         ))
-        (mkState "unreachable" (alpha "on_surface_variant" 60) (alpha "surface_variant" 40) (
-          alpha "outline_variant" 60
+        (mkState "ignored" (alpha colors.on_surface_variant 60) (alpha colors.surface_variant 40) (
+          alpha colors.outline_variant 40
         ))
-        (mkState "warning" (base16 "base0A") warningBackground warningBorder)
+        (mkState "info" (t.render colors.primary) (alpha colors.primary_container 80) (
+          t.render colors.on_primary_container
+        ))
+        (mkState "modified" (t.render colors.secondary) (alpha colors.secondary_container 80) (
+          t.render colors.on_secondary_container
+        ))
+        (mkState "renamed" (t.render colors.secondary) (alpha colors.secondary_container 80) (
+          t.render colors.on_secondary_container
+        ))
+        (mkState "success" (t.render colors.tertiary) (alpha colors.tertiary_container 80) (
+          t.render colors.on_tertiary_container
+        ))
+        (mkState "unreachable" (alpha colors.on_surface_variant 60) (alpha colors.surface_variant 40) (
+          alpha colors.outline_variant 60
+        ))
+        (mkState "warning" (t.render base16Colors.base0A) warningBackground warningBorder)
       ]
       // {
         predictive = syntax.predictive;
-        "predictive.border" = color "outline";
-        "predictive.background" = alpha "surface_container_highest" 80;
+        "predictive.border" = t.render colors.outline;
+        "predictive.background" = alpha colors.surface_container_highest 80;
         players = [
           {
-            cursor = color "primary";
-            background = alpha "primary_container" 80;
-            selection = alpha "primary_container" 60;
+            cursor = t.render colors.primary;
+            background = alpha colors.primary_container 80;
+            selection = alpha colors.primary_container 60;
           }
           {
-            cursor = color "secondary";
-            background = alpha "secondary_container" 80;
-            selection = alpha "secondary_container" 60;
+            cursor = t.render colors.secondary;
+            background = alpha colors.secondary_container 80;
+            selection = alpha colors.secondary_container 60;
           }
         ];
-        syntax = {
+        syntax = rec {
           boolean = mkSyntaxEntry zedLiteralSyntax null null;
           comment = mkSyntaxEntry syntax.comment "italic" null;
           "comment.doc" = mkSyntaxEntry syntax.comment "italic" null;
@@ -259,7 +254,7 @@ let
           operator = mkSyntaxEntry syntax.operator null null;
           property = mkSyntaxEntry syntax.variable null null;
           punctuation = mkSyntaxEntry syntax.punctuation null null;
-          "punctuation.bracket" = mkSyntaxEntry (color "on_surface") null null;
+          "punctuation.bracket" = mkSyntaxEntry (t.render colors.on_surface) null null;
           "punctuation.delimiter" = mkSyntaxEntry syntax.punctuation null null;
           "punctuation.list_marker" = mkSyntaxEntry syntax.punctuation null null;
           "punctuation.special" = mkSyntaxEntry syntax.number null null;
@@ -276,14 +271,15 @@ let
           attribute = mkSyntaxEntry syntax.title null null;
           embedded = mkSyntaxEntry syntax.string null null;
           enum = mkSyntaxEntry syntax.type null null;
-          hint = mkSyntaxEntry (color "primary") null null;
+          hint = mkSyntaxEntry (t.render colors.primary) null null;
           label = mkSyntaxEntry syntax.variable null null;
-          link_text = mkSyntaxEntry (color "primary") null null;
+          lifetime.color = constant.color;
+          link_text = mkSyntaxEntry (t.render colors.primary) null null;
           link_uri = mkSyntaxEntry syntax.link null null;
           namespace = mkSyntaxEntry syntax.type null null;
           predictive = mkSyntaxEntry syntax.predictive null null;
           preproc = mkSyntaxEntry syntax.number null null;
-          primary = mkSyntaxEntry (color "on_surface") null null;
+          primary = mkSyntaxEntry (t.render colors.on_surface) null null;
           "punctuation.markup" = mkSyntaxEntry syntax.number null null;
           selector = mkSyntaxEntry syntax.variable null null;
           "selector.pseudo" = mkSyntaxEntry syntax.number null null;
@@ -292,7 +288,6 @@ let
         }
         // lib.optionalAttrs (mode == "light") {
           "keyword.control" = mkSyntaxEntry syntax.keyword null null;
-          lifetime = mkSyntaxEntry syntax.type null null;
         };
       };
     };

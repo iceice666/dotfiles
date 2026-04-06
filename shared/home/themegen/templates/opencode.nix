@@ -2,6 +2,8 @@
 
 let
   t = import ./lib.nix { inherit lib; };
+  color = t.color;
+  base16 = t.base16;
 
   syntaxDark = t.syntax "dark";
   syntaxLight = t.syntax "light";
@@ -9,56 +11,39 @@ let
   pair = dark: light: { inherit dark light; };
 
   defs = t.flattenPairs {
-    primary = pair (t.render (t.colorExpr "dark" "primary")) (t.render (t.colorExpr "light" "primary"));
-    secondary = pair (t.render (t.colorExpr "dark" "secondary")) (
-      t.render (t.colorExpr "light" "secondary")
+    primary = pair (t.render color.dark.primary) (t.render color.light.primary);
+    secondary = pair (t.render color.dark.secondary) (t.render color.light.secondary);
+    tertiary = pair (t.render color.dark.tertiary) (t.render color.light.tertiary);
+    error = pair (t.render color.dark.error) (t.render color.light.error);
+    warning = pair (t.render base16.dark.base0A) (t.render base16.light.base0A);
+    text = pair (t.render color.dark.on_surface) (t.render color.light.on_surface);
+    text_muted = pair (t.render color.dark.on_surface_variant) (
+      t.render color.light.on_surface_variant
     );
-    tertiary = pair (t.render (t.colorExpr "dark" "tertiary")) (
-      t.render (t.colorExpr "light" "tertiary")
+    background = pair (t.render color.dark.background) (
+      t.render (t.seededLightBackground color.light.background)
     );
-    error = pair (t.render (t.colorExpr "dark" "error")) (t.render (t.colorExpr "light" "error"));
-    warning = pair (t.render (t.base16Expr "dark" "base0A")) (t.render (t.base16Expr "light" "base0A"));
-    text = pair (t.render (t.colorExpr "dark" "on_surface")) (
-      t.render (t.colorExpr "light" "on_surface")
+    surface_low = pair (t.render color.dark.surface_container_low) (
+      t.render color.light.surface_container_low
     );
-    text_muted = pair (t.render (t.colorExpr "dark" "on_surface_variant")) (
-      t.render (t.colorExpr "light" "on_surface_variant")
+    surface_panel = pair (t.render color.dark.surface_container) (
+      t.render (t.seededLightBackground color.light.surface_container)
     );
-    background = pair (t.render (t.colorExpr "dark" "background")) (
-      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "background"))
+    surface_element = pair (t.render color.dark.surface_container_high) (
+      t.render (t.seededLightBackground color.light.surface_container_high)
     );
-    surface_low = pair (t.render (t.colorExpr "dark" "surface_container_low")) (
-      t.render (t.colorExpr "light" "surface_container_low")
+    border = pair (t.render color.dark.outline_variant) (t.render color.light.outline_variant);
+    border_active = pair (t.render color.dark.primary) (t.render color.light.primary);
+    border_subtle = pair (t.blend color.dark.outline_variant color.dark.surface_container 0.55) (
+      t.blend color.light.outline_variant color.light.surface_container 0.55
     );
-    surface_panel = pair (t.render (t.colorExpr "dark" "surface_container")) (
-      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "surface_container"))
+    created = pair (t.render color.dark.tertiary) (t.render color.light.tertiary);
+    created_bg = pair (t.render color.dark.tertiary_container) (
+      t.render color.light.tertiary_container
     );
-    surface_element = pair (t.render (t.colorExpr "dark" "surface_container_high")) (
-      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "surface_container_high"))
-    );
-    border = pair (t.render (t.colorExpr "dark" "outline_variant")) (
-      t.render (t.colorExpr "light" "outline_variant")
-    );
-    border_active = pair (t.render (t.colorExpr "dark" "primary")) (
-      t.render (t.colorExpr "light" "primary")
-    );
-    border_subtle = pair (t.mix (t.colorExpr "dark" "outline_variant")
-      (t.colorExpr "dark" "surface_container")
-      0.55
-    ) (t.mix (t.colorExpr "light" "outline_variant") (t.colorExpr "light" "surface_container") 0.55);
-    created = pair (t.render (t.colorExpr "dark" "tertiary")) (
-      t.render (t.colorExpr "light" "tertiary")
-    );
-    created_bg = pair (t.render (t.colorExpr "dark" "tertiary_container")) (
-      t.render (t.colorExpr "light" "tertiary_container")
-    );
-    deleted = pair (t.render (t.colorExpr "dark" "error")) (t.render (t.colorExpr "light" "error"));
-    deleted_bg = pair (t.render (t.colorExpr "dark" "error_container")) (
-      t.render (t.colorExpr "light" "error_container")
-    );
-    modified = pair (t.render (t.colorExpr "dark" "secondary")) (
-      t.render (t.colorExpr "light" "secondary")
-    );
+    deleted = pair (t.render color.dark.error) (t.render color.light.error);
+    deleted_bg = pair (t.render color.dark.error_container) (t.render color.light.error_container);
+    modified = pair (t.render color.dark.secondary) (t.render color.light.secondary);
     syntax_comment = pair syntaxDark.comment syntaxLight.comment;
     syntax_emphasis = pair syntaxDark.emphasis syntaxLight.emphasis;
     syntax_function = pair syntaxDark.function syntaxLight.function;
