@@ -23,6 +23,44 @@ let
       base16 = token: t.render (t.base16Expr mode token);
       base16Expr = token: t.base16Expr mode token;
       alpha = token: amount: t.alpha (colorExpr token) amount;
+      syntaxBackgroundExpr =
+        if mode == "light" then
+          t.seededLightBackgroundExpr (colorExpr "surface_container_low")
+        else
+          colorExpr "surface_container_low";
+      zedLiteralSyntax = t.renderPipe t.seedExpr [
+        (t.call "to_oklch" [ ])
+        (t.call "rotate" [ 56 ])
+        (t.call "chroma" [ 0.18 ])
+        (t.call "lightness" [ (if mode == "dark" then 0.78 else 0.46) ])
+        (t.call "readable" [
+          syntaxBackgroundExpr
+          4.5
+        ])
+        (t.call "to_hex" [ ])
+      ];
+      zedStringSpecialSyntax = t.renderPipe t.seedExpr [
+        (t.call "to_oklch" [ ])
+        (t.call "rotate" [ 96 ])
+        (t.call "chroma" [ 0.24 ])
+        (t.call "lightness" [ (if mode == "dark" then 0.84 else 0.38) ])
+        (t.call "readable" [
+          syntaxBackgroundExpr
+          4.5
+        ])
+        (t.call "to_hex" [ ])
+      ];
+      zedStringRegexSyntax = t.renderPipe t.seedExpr [
+        (t.call "to_oklch" [ ])
+        (t.call "rotate" [ 290 ])
+        (t.call "chroma" [ 0.26 ])
+        (t.call "lightness" [ (if mode == "dark" then 0.83 else 0.4) ])
+        (t.call "readable" [
+          syntaxBackgroundExpr
+          4.5
+        ])
+        (t.call "to_hex" [ ])
+      ];
 
       mkState = name: stateColor: background: border: {
         "${name}" = stateColor;
@@ -208,16 +246,16 @@ let
           }
         ];
         syntax = {
-          boolean = mkSyntaxEntry syntax.boolean null null;
+          boolean = mkSyntaxEntry zedLiteralSyntax null null;
           comment = mkSyntaxEntry syntax.comment "italic" null;
           "comment.doc" = mkSyntaxEntry syntax.comment "italic" null;
-          constant = mkSyntaxEntry syntax.number null null;
+          constant = mkSyntaxEntry zedLiteralSyntax null null;
           constructor = mkSyntaxEntry syntax.type null null;
           emphasis = mkSyntaxEntry syntax.emphasis "italic" null;
           "emphasis.strong" = mkSyntaxEntry syntax.emphasis null 700;
           function = mkSyntaxEntry syntax.function null null;
           keyword = mkSyntaxEntry syntax.keyword null null;
-          number = mkSyntaxEntry syntax.number null null;
+          number = mkSyntaxEntry zedLiteralSyntax null null;
           operator = mkSyntaxEntry syntax.operator null null;
           property = mkSyntaxEntry syntax.variable null null;
           punctuation = mkSyntaxEntry syntax.punctuation null null;
@@ -226,10 +264,10 @@ let
           "punctuation.list_marker" = mkSyntaxEntry syntax.punctuation null null;
           "punctuation.special" = mkSyntaxEntry syntax.number null null;
           string = mkSyntaxEntry syntax.string null null;
-          "string.escape" = mkSyntaxEntry syntax.link null null;
-          "string.regex" = mkSyntaxEntry syntax.stringRegex null null;
-          "string.special" = mkSyntaxEntry syntax.link null null;
-          "string.special.symbol" = mkSyntaxEntry syntax.link null null;
+          "string.escape" = mkSyntaxEntry zedStringSpecialSyntax null null;
+          "string.regex" = mkSyntaxEntry zedStringRegexSyntax null null;
+          "string.special" = mkSyntaxEntry zedStringSpecialSyntax null null;
+          "string.special.symbol" = mkSyntaxEntry zedStringSpecialSyntax null null;
           tag = mkSyntaxEntry syntax.variable null null;
           "text.literal" = mkSyntaxEntry syntax.string null null;
           type = mkSyntaxEntry syntax.type null null;
