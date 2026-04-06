@@ -52,7 +52,7 @@ common/              # baseline shared by every host
 
 shared/              # optional modules reused by some hosts
   home/              # shared Home Manager modules such as zed, themegen, vscodium
-  themegen/          # theme templates rendered from wallpaper-derived palettes
+    themegen/        # Nix theme generators rendered from wallpaper-derived palettes
 
 hosts/               # host entrypoints
   m3air/             # nix-darwin host
@@ -71,6 +71,10 @@ sensitive/           # encrypted secrets and supporting certificate/key material
 - Per-host behavior in `hosts/`, including macOS defaults and Homebrew integration on `m3air`, standalone Home Manager on `framework`, and the homelab service stack on `homolab`.
 - Custom overlay packages exposed through `flake.nix`, currently `equibop-bin`, `mise-bin`, and `themegen`.
 - Server services behind Traefik and SSO, including Forgejo, Woodpecker, Dynacat, Ollama, PostgreSQL, Valkey, RustFS, dnsmasq, Cloudflare DDNS, and the Cloudflare tunnel.
+
+## Focused Docs
+
+- `shared/home/themegen/README.md` explains the themegen pipeline, the shared Nix template layer, and how to change or validate themed apps.
 
 ## Daily Commands
 

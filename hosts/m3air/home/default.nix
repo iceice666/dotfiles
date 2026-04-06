@@ -13,7 +13,7 @@ in
   imports = [
     (dotfiles + /common/home)
     (dotfiles + /shared/home/zed.nix)
-    (dotfiles + /shared/home/themegen.nix)
+    (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
     ./karabiner.nix
     ./wallpaper.nix

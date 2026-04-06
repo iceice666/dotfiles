@@ -64,7 +64,7 @@ nix build .#packages.aarch64-darwin.equibop-bin
 - `hosts/server/**` -> dry-build `homolab`.
 - `common/configuration/**` -> dry-build `m3air` and `homolab`.
 - `common/home/**` -> build each consuming host: `m3air`, `framework`, and `homolab`.
-- `shared/home/**` or `shared/themegen/**` -> build each importing host, currently `m3air` and `framework`.
+- `shared/home/**` -> build each importing host, currently `m3air` and `framework`.
 - `pkgs/<name>` -> build that package directly; if it is wired into a host, also dry-build the affected host when practical.
 
 ### Single-test guidance
@@ -154,7 +154,7 @@ Canonical module shape:
 ## Repository Conventions
 - `common/` is the baseline for all hosts.
 - `shared/` is opt-in and should stay reusable across hosts.
-- `shared/themegen/` supports wallpaper-driven theme generation for hosts that import `shared/home/themegen.nix`.
+- `shared/home/themegen/` supports wallpaper-driven theme generation for hosts that import `shared/home/themegen/default.nix`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is standalone Home Manager and warns about packages that cannot come from `environment.systemPackages`.
 - `hosts/server/configuration/services/dynacat.nix` is the dashboard service; do not refer to it as Homepage.

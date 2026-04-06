@@ -1,12 +1,15 @@
 {
   pkgs,
+  lib,
   dotfiles,
   desktopWallpaper,
   ...
 }:
 
 let
-  templates = dotfiles + /shared/themegen/templates;
+  templates = import (dotfiles + /shared/home/themegen/templates) {
+    inherit lib pkgs;
+  };
   generated =
     pkgs.runCommandLocal "themegen-themes"
       {
@@ -18,12 +21,12 @@ let
           --scheme tonal-spot \
           --base16-contrast 0.3 \
           --base16-mode follow-palette \
-          --render "${templates}/ghostty-dark=$out/ghostty/themes/themegen-dark" \
-          --render "${templates}/ghostty-light=$out/ghostty/themes/themegen-light" \
-          --render "${templates}/opencode-colors.json=$out/opencode/themes/themegen.json" \
-          --render "${templates}/zed-themes.jsonc=$out/zed/themes/themegen.json" \
-          --render "${templates}/starship.toml=$out/starship.toml" \
-          --render "${templates}/terminal-sequences.fish=$out/fish/conf.d/themegen-terminal-sequences.fish"
+          --render "${templates.ghosttyDark}=$out/ghostty/themes/themegen-dark" \
+          --render "${templates.ghosttyLight}=$out/ghostty/themes/themegen-light" \
+          --render "${templates.opencodeColors}=$out/opencode/themes/themegen.json" \
+          --render "${templates.zedThemes}=$out/zed/themes/themegen.json" \
+          --render "${templates.starship}=$out/starship.toml" \
+          --render "${templates.terminalSequences}=$out/fish/conf.d/themegen-terminal-sequences.fish"
       '';
 in
 {
