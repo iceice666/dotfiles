@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow::Result;
-use image::{DynamicImage, GenericImageView, imageops::FilterType};
+use image::{imageops::FilterType, DynamicImage, GenericImageView};
 use material_colors::color::Argb;
 use material_colors::hct::Hct;
 

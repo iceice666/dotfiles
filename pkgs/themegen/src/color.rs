@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use material_colors::color::{Argb, Lab};
 use material_colors::hct::Hct;
 use palette::{FromColor, Hsv, LinSrgb, Oklch, Srgb};

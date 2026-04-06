@@ -119,7 +119,7 @@
         "deleted.background": "{{ color.dark.error_container | with_alpha(80) | to_hex() }}",
         "deleted.border": "{{color.dark.on_error_container}}",
         "error": "{{color.dark.error}}",
-        "error.background": "{{color.dark.error_container}}",
+        "error.background": "{{ color.dark.error_container | with_alpha(80) | to_hex() }}",
         "error.border": "{{color.dark.on_error_container}}",
         "hidden": "{{color.dark.outline_variant}}",
         "hidden.background": "{{ color.dark.surface_variant | with_alpha(40) | to_hex() }}",
@@ -165,52 +165,52 @@
         ],
         "syntax": {
           "boolean": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "comment": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "comment.doc": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.66) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "constant": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "constructor": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "emphasis": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "emphasis.strong": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": 700
           },
           "function": {
-            "color": "{{source.color | to_oklch() | rotate(-80) | chroma(0.12) | lightness(0.72) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-80) | chroma(0.12) | lightness(0.72) | readable(color.dark.surface_container_low, 3.2) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "keyword": {
-            "color": "{{source.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "number": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -220,7 +220,7 @@
             "font_weight": null
           },
           "property": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -245,72 +245,72 @@
             "font_weight": null
           },
           "punctuation.special": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.escape": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.regex": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.26) | lightness(0.83) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.26) | lightness(0.83) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special.symbol": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "tag": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "text.literal": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "type": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable.special": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "attribute": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "embedded": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.79) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "enum": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -320,7 +320,7 @@
             "font_weight": null
           },
           "label": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -330,12 +330,12 @@
             "font_weight": null
           },
           "link_uri": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.84) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "namespace": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -345,7 +345,7 @@
             "font_weight": null
           },
           "preproc": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -355,27 +355,27 @@
             "font_weight": null
           },
           "punctuation.markup": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector.pseudo": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.78) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "title": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variant": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.8) | readable(color.dark.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           }
@@ -469,9 +469,9 @@
         "terminal.foreground": "{{color.light.on_surface}}",
         "terminal.bright_foreground": "{{color.light.on_surface}}",
         "terminal.dim_foreground": "{{color.light.on_surface_variant}}",
-        "terminal.ansi.black": "{{color.light.surface_dim}}",
-        "terminal.ansi.bright_black": "{{color.light.surface_container_high}}",
-        "terminal.ansi.dim_black": "{{color.light.surface}}",
+        "terminal.ansi.black": "{{color.light.on_surface}}",
+        "terminal.ansi.bright_black": "{{color.light.on_surface}}",
+        "terminal.ansi.dim_black": "{{color.light.on_surface_variant}}",
         "terminal.ansi.red": "{{base16.light.base08}}",
         "terminal.ansi.bright_red": "{{base16.light.base08}}",
         "terminal.ansi.dim_red": "{{ base16.light.base08 | mix(color.light.surface_container_low, 0.35) | to_hex() }}",
@@ -490,9 +490,9 @@
         "terminal.ansi.cyan": "{{base16.light.base0C}}",
         "terminal.ansi.bright_cyan": "{{base16.light.base0C}}",
         "terminal.ansi.dim_cyan": "{{ base16.light.base0C | mix(color.light.surface_container_low, 0.35) | to_hex() }}",
-        "terminal.ansi.white": "{{color.light.on_surface}}",
-        "terminal.ansi.bright_white": "{{color.light.on_surface}}",
-        "terminal.ansi.dim_white": "{{color.light.on_surface_variant}}",
+        "terminal.ansi.white": "{{color.light.surface_dim}}",
+        "terminal.ansi.bright_white": "{{color.light.surface_container_high}}",
+        "terminal.ansi.dim_white": "{{color.light.surface}}",
         "link_text.hover": "{{color.light.primary}}",
         "conflict": "{{color.light.error}}",
         "conflict.background": "{{ color.light.error_container | with_alpha(80) | to_hex() }}",
@@ -504,7 +504,7 @@
         "deleted.background": "{{ color.light.error_container | with_alpha(80) | to_hex() }}",
         "deleted.border": "{{color.light.on_error_container}}",
         "error": "{{color.light.error}}",
-        "error.background": "{{color.light.error_container}}",
+        "error.background": "{{ color.light.error_container| with_alpha(80) | to_hex() }}",
         "error.border": "{{color.light.on_error_container}}",
         "hidden": "{{color.light.outline_variant}}",
         "hidden.background": "{{ color.light.surface_variant | with_alpha(40) | to_hex() }}",
@@ -550,57 +550,57 @@
         ],
         "syntax": {
           "boolean": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "comment": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.56) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.56) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "comment.doc": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.56) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.08) | lightness(0.56) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "constant": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "constructor": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "emphasis": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": "italic",
             "font_weight": null
           },
           "emphasis.strong": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": 700
           },
           "function": {
-            "color": "{{source.color | to_oklch() | rotate(-80) | chroma(0.12) | lightness(0.5) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-80) | chroma(0.12) | lightness(0.5) | readable(color.light.surface_container_low, 3.2) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "keyword": {
-            "color": "{{source.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "keyword.control": {
-            "color": "{{source.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-52) | chroma(0.16) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "number": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -610,7 +610,7 @@
             "font_weight": null
           },
           "property": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -635,72 +635,72 @@
             "font_weight": null
           },
           "punctuation.special": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.escape": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.regex": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.26) | lightness(0.4) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.26) | lightness(0.4) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "string.special.symbol": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "tag": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "text.literal": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "type": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variable.special": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "attribute": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "embedded": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.2) | lightness(0.44) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "enum": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -710,7 +710,7 @@
             "font_weight": null
           },
           "label": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -720,17 +720,17 @@
             "font_weight": null
           },
           "link_uri": {
-            "color": "{{source.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(145) | chroma(0.24) | lightness(0.38) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "lifetime": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "namespace": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -740,7 +740,7 @@
             "font_weight": null
           },
           "preproc": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
@@ -750,27 +750,27 @@
             "font_weight": null
           },
           "punctuation.markup": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector": {
-            "color": "{{source.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(18) | chroma(0.14) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "selector.pseudo": {
-            "color": "{{source.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | chroma(0.18) | lightness(0.46) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "title": {
-            "color": "{{source.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(170) | chroma(0.1) | lightness(0.5) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           },
           "variant": {
-            "color": "{{source.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
+            "color": "{{seed.color | to_oklch() | rotate(-32) | chroma(0.16) | lightness(0.42) | readable(color.light.surface_container_low, 4.5) | to_hex()}}",
             "font_style": null,
             "font_weight": null
           }

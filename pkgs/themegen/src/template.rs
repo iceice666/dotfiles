@@ -1,37 +1,26 @@
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 
-use crate::cli::SchemeType;
 use crate::color::{
-    HctColor, HsvColor, OklchColor, RgbaColor, argb_to_rgba, ensure_readable, format_number,
-    hct_to_rgba, hsv_to_rgba, interpolate, mix, normalize_hue, oklch_to_rgba, parse_hex_value,
-    rgba_to_argb, rgba_to_hct, rgba_to_hsv, rgba_to_oklch,
+    argb_to_rgba, ensure_readable, format_number, hct_to_rgba, hsv_to_rgba, interpolate, mix,
+    normalize_hue, oklch_to_rgba, parse_hex_value, rgba_to_argb, rgba_to_hct, rgba_to_hsv,
+    rgba_to_oklch, HctColor, HsvColor, OklchColor, RgbaColor,
 };
-use crate::model::Base16Palette;
+use crate::model::{Base16Palette, PaletteOutput};
 
-pub(crate) fn template_values(
-    image: &PathBuf,
-    scheme_type: SchemeType,
-    source: material_colors::color::Argb,
-    material_light: &BTreeMap<String, String>,
-    material_dark: &BTreeMap<String, String>,
-    base16_light: &Base16Palette,
-    base16_dark: &Base16Palette,
-) -> BTreeMap<String, String> {
+pub(crate) fn template_values(output: &PaletteOutput) -> BTreeMap<String, String> {
     let mut values = BTreeMap::new();
 
-    values.insert("source.image".to_string(), image.display().to_string());
-    values.insert("source.type".to_string(), scheme_type.label().to_string());
-    values.insert("source.color".to_string(), source.to_hex_with_pound());
+    values.insert("input.kind".to_string(), output.input.kind.clone());
+    values.insert("input.value".to_string(), output.input.value.clone());
+    values.insert("scheme".to_string(), output.scheme.clone());
+    values.insert("seed.color".to_string(), output.seed.color.clone());
 
-    extend_prefixed(&mut values, "material.light", material_light);
-    extend_prefixed(&mut values, "material.dark", material_dark);
-    extend_prefixed(&mut values, "color.light", material_light);
-    extend_prefixed(&mut values, "color.dark", material_dark);
-    extend_base16(&mut values, "base16.light", base16_light);
-    extend_base16(&mut values, "base16.dark", base16_dark);
+    extend_prefixed(&mut values, "color.light", &output.color.light);
+    extend_prefixed(&mut values, "color.dark", &output.color.dark);
+    extend_base16(&mut values, "base16.light", &output.base16.light);
+    extend_base16(&mut values, "base16.dark", &output.base16.dark);
 
     values
 }
@@ -205,6 +194,10 @@ fn evaluate_atom(expression: &str, values: &BTreeMap<String, String>) -> Result<
 
     if let Ok(number) = expression.parse::<f64>() {
         return Ok(Value::Number(number));
+    }
+
+    if let Some(value) = values.get(expression) {
+        return Ok(Value::String(value.clone()));
     }
 
     if expression.contains('.') {
@@ -730,8 +723,9 @@ mod tests {
 
     fn test_values() -> BTreeMap<String, String> {
         BTreeMap::from([
-            ("source.color".to_string(), "#336699".to_string()),
-            ("source.type".to_string(), "scheme-tonal-spot".to_string()),
+            ("input.kind".to_string(), "image".to_string()),
+            ("input.value".to_string(), "/tmp/wallpaper.png".to_string()),
+            ("scheme".to_string(), "tonal-spot".to_string()),
             (
                 "color.light.surface_container_low".to_string(),
                 "#f8f9ff".to_string(),
@@ -751,13 +745,10 @@ mod tests {
 
     #[test]
     fn renders_plain_placeholders_unchanged() {
-        let rendered = render_template(
-            "{{ color.light.primary }} {{ source.type }}",
-            &test_values(),
-        )
-        .unwrap();
+        let rendered =
+            render_template("{{ color.light.primary }} {{ scheme }}", &test_values()).unwrap();
 
-        assert_eq!(rendered, "#3f6aa1 scheme-tonal-spot");
+        assert_eq!(rendered, "#3f6aa1 tonal-spot");
     }
 
     #[test]
@@ -782,7 +773,7 @@ mod tests {
     fn applies_pipe_color_operations_in_hct() {
         let values = test_values();
         let rendered = render_template(
-            "{{ source.color | to_hct() | rotate(145) | chroma(40) | tone(34) }}",
+            "{{ color.dark.primary | to_hct() | rotate(145) | chroma(40) | tone(34) }}",
             &values,
         )
         .unwrap();
@@ -794,7 +785,7 @@ mod tests {
     fn applies_pipe_color_operations_in_oklch() {
         let values = test_values();
         let rendered = render_template(
-            "{{ source.color | to_oklch() | rotate(145) | chroma(0.18) | lightness(0.7) }}",
+            "{{ color.dark.primary | to_oklch() | rotate(145) | chroma(0.18) | lightness(0.7) }}",
             &values,
         )
         .unwrap();
@@ -821,7 +812,7 @@ mod tests {
     fn mix_and_readable_keep_contrast() {
         let values = test_values();
         let rendered = render_template(
-            "{{ source.color | to_hct() | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
+            "{{ color.dark.primary | to_hct() | tone(74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
             &values,
         )
         .unwrap();
@@ -838,7 +829,7 @@ mod tests {
     fn oklch_readable_keeps_contrast() {
         let values = test_values();
         let rendered = render_template(
-            "{{ source.color | to_oklch() | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
+            "{{ color.dark.primary | to_oklch() | lightness(0.74) | readable(color.dark.surface_container_low, 4.5) | to_hex() }}",
             &values,
         )
         .unwrap();
@@ -898,11 +889,24 @@ mod tests {
     fn reports_invalid_operations() {
         let error = format!(
             "{:#}",
-            render_template("{{ source.color | to_hsv() | tone(45) }}", &test_values())
-                .unwrap_err()
+            render_template(
+                "{{ color.dark.primary | to_hsv() | tone(45) }}",
+                &test_values()
+            )
+            .unwrap_err()
         );
 
         assert!(error.contains("`tone` is not available for HSV colors"));
+    }
+
+    #[test]
+    fn rejects_removed_source_namespace() {
+        let error = format!(
+            "{:#}",
+            render_template("{{ source.color }}", &test_values()).unwrap_err()
+        );
+
+        assert!(error.contains("unknown template placeholder `source.color`"));
     }
 
     #[test]

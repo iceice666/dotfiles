@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
 use material_colors::color::Argb;
-use material_colors::dynamic_color::DynamicScheme;
 use material_colors::dynamic_color::variant::Variant;
+use material_colors::dynamic_color::DynamicScheme;
 use material_colors::hct::Hct;
 use material_colors::scheme::Scheme;
 
@@ -171,7 +171,7 @@ fn hue_distance(left: f64, right: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{SEMANTIC_HUES, build_base16, hue_distance};
+    use super::{build_base16, hue_distance, SEMANTIC_HUES};
     use crate::cli::Base16Mode;
     use crate::color::{contrast_ratio, parse_hex_value, rgba_to_argb, tone_color};
     use material_colors::color::Argb;
@@ -214,11 +214,9 @@ mod tests {
             color_hue(&palette.base0_f),
         ];
 
-        assert!(
-            accent_hues
-                .into_iter()
-                .any(|hue| hue_distance(hue, anchor_hue) <= 16.0)
-        );
+        assert!(accent_hues
+            .into_iter()
+            .any(|hue| hue_distance(hue, anchor_hue) <= 16.0));
     }
 
     #[test]

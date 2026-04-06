@@ -3,16 +3,22 @@ use std::collections::BTreeMap;
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub(crate) struct Output {
-    pub(crate) source: SourceInfo,
-    pub(crate) material: ThemeSchemes,
+pub(crate) struct PaletteOutput {
+    pub(crate) input: InputInfo,
+    pub(crate) scheme: String,
+    pub(crate) seed: SeedInfo,
+    pub(crate) color: ThemeSchemes,
     pub(crate) base16: Base16Schemes,
 }
 
+#[derive(Clone, Serialize)]
+pub(crate) struct InputInfo {
+    pub(crate) kind: String,
+    pub(crate) value: String,
+}
+
 #[derive(Serialize)]
-pub(crate) struct SourceInfo {
-    pub(crate) image: String,
-    pub(crate) r#type: String,
+pub(crate) struct SeedInfo {
     pub(crate) color: String,
 }
 
