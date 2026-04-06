@@ -18,7 +18,7 @@ in
     (dotfiles + /common/home)
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/themegen.nix)
-    # (dotfiles + /shared/home/vscodium.nix)
+    (dotfiles + /shared/home/vscodium.nix)
   ];
 
   _module.args = {
