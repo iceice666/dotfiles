@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   username,
   homeDirectory,
@@ -11,10 +12,12 @@ let
 in
 {
   imports = [
+    inputs.sops-nix.homeManagerModules.sops
     (dotfiles + /common/home)
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
+    (dotfiles + /shared/home/opencode.nix)
     ./karabiner.nix
     ./wallpaper.nix
   ];
@@ -22,6 +25,8 @@ in
   _module.args = {
     inherit desktopWallpaper;
   };
+
+  sops.age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
 
   home.packages = with pkgs; [
     obsidian

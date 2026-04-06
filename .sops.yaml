@@ -14,7 +14,7 @@ creation_rules:
   - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key)$
     age:
       - *m3air
-      - *framework
+      # - *framework  # TODO: uncomment when framework sops is ready
       - *server
       # - *recovery
 
