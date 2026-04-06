@@ -148,9 +148,9 @@
         "unreachable": "{{ color.dark.on_surface_variant | with_alpha(60) | to_hex() }}",
         "unreachable.background": "{{ color.dark.surface_variant | with_alpha(40) | to_hex() }}",
         "unreachable.border": "{{ color.dark.outline_variant | with_alpha(60) | to_hex() }}",
-        "warning": "{{color.dark.tertiary_fixed_dim}}",
-        "warning.background": "{{ color.dark.tertiary_container | with_alpha(80) | to_hex() }}",
-        "warning.border": "{{color.dark.on_tertiary_container}}",
+        "warning": "{{base16.dark.base0A}}",
+        "warning.background": "{{ base16.dark.base0A | to_hct() | tone(28) | with_alpha(80) | to_hex() }}",
+        "warning.border": "{{ base16.dark.base0A | to_hct() | tone(74) | readable(color.dark.surface_container_low, 3.2) | to_hex() }}",
         "players": [
           {
             "cursor": "{{color.dark.primary}}",
@@ -533,9 +533,9 @@
         "unreachable": "{{ color.light.on_surface_variant | with_alpha(60) | to_hex() }}",
         "unreachable.background": "{{ color.light.surface_variant | with_alpha(40) | to_hex() }}",
         "unreachable.border": "{{ color.light.outline_variant | with_alpha(60) | to_hex() }}",
-        "warning": "{{color.light.tertiary_fixed_dim}}",
-        "warning.background": "{{ color.light.tertiary_container | with_alpha(80) | to_hex() }}",
-        "warning.border": "{{color.light.on_tertiary_container}}",
+        "warning": "{{base16.light.base0A}}",
+        "warning.background": "{{ base16.light.base0A | to_hct() | tone(90) | with_alpha(80) | to_hex() }}",
+        "warning.border": "{{ base16.light.base0A | to_hct() | tone(36) | readable(color.light.surface_container_low, 3.2) | to_hex() }}",
         "players": [
           {
             "cursor": "{{color.light.primary}}",
