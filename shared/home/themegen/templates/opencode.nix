@@ -25,16 +25,16 @@ let
       t.render (t.colorExpr "light" "on_surface_variant")
     );
     background = pair (t.render (t.colorExpr "dark" "background")) (
-      t.render (t.colorExpr "light" "background")
+      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "background"))
     );
     surface_low = pair (t.render (t.colorExpr "dark" "surface_container_low")) (
       t.render (t.colorExpr "light" "surface_container_low")
     );
     surface_panel = pair (t.render (t.colorExpr "dark" "surface_container")) (
-      t.render (t.colorExpr "light" "surface_container")
+      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "surface_container"))
     );
     surface_element = pair (t.render (t.colorExpr "dark" "surface_container_high")) (
-      t.render (t.colorExpr "light" "surface_container_high")
+      t.render (t.seededLightBackgroundExpr (t.colorExpr "light" "surface_container_high"))
     );
     border = pair (t.render (t.colorExpr "dark" "outline_variant")) (
       t.render (t.colorExpr "light" "outline_variant")

@@ -22,6 +22,13 @@ let
   base16Expr = mode: token: "base16.${mode}.${token}";
 
   seedExpr = "seed.color";
+  seededLightBackgroundExpr =
+    expression:
+    pipeExpr expression [
+      toHctStep
+      (mixStep (pipeExpr seedExpr [ toHctStep ]) 0.08)
+      toHexStep
+    ];
 
   withAlphaStep = amount: call "with_alpha" [ amount ];
   mixStep =
@@ -60,7 +67,11 @@ let
   syntax =
     mode:
     let
-      background = colorExpr mode "surface_container_low";
+      background =
+        if mode == "light" then
+          seededLightBackgroundExpr (colorExpr mode "surface_container_low")
+        else
+          colorExpr mode "surface_container_low";
 
       mk =
         {
@@ -174,7 +185,11 @@ let
       };
     in
     rec {
-      background = color "surface_container_low";
+      background =
+        if mode == "light" then
+          render (seededLightBackgroundExpr (colorExpr mode "surface_container_low"))
+        else
+          color "surface_container_low";
       brightForeground = color "on_surface";
       cursor = color "primary";
       cursorText = color "on_primary";
@@ -247,6 +262,7 @@ in
     render
     renderPipe
     seedExpr
+    seededLightBackgroundExpr
     syntax
     terminal
     toHexStep

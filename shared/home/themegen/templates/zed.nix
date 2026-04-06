@@ -17,6 +17,9 @@ let
 
       color = token: t.render (t.colorExpr mode token);
       colorExpr = token: t.colorExpr mode token;
+      background =
+        token:
+        if mode == "light" then t.render (t.seededLightBackgroundExpr (colorExpr token)) else color token;
       base16 = token: t.render (t.base16Expr mode token);
       base16Expr = token: t.base16Expr mode token;
       alpha = token: amount: t.alpha (colorExpr token) amount;
@@ -60,10 +63,10 @@ let
         "border.selected" = color "primary";
         "border.transparent" = alpha "outline_variant" 40;
         "border.disabled" = alpha "outline_variant" 60;
-        "elevated_surface.background" = color "surface_container_high";
-        "surface.background" = color "surface_container";
-        background = color "background";
-        "element.background" = color "surface_container";
+        "elevated_surface.background" = background "surface_container_high";
+        "surface.background" = background "surface_container";
+        background = background "background";
+        "element.background" = background "surface_container";
         "element.hover" = color "surface_container_high";
         "element.active" = color "surface_container_highest";
         "element.selected" = color "secondary_container";
@@ -84,15 +87,15 @@ let
         "icon.disabled" = alpha "on_surface" 60;
         "icon.placeholder" = alpha "on_surface_variant" 80;
         "icon.accent" = color "primary";
-        "status_bar.background" = color "surface";
-        "title_bar.background" = color "surface";
-        "title_bar.inactive_background" = color "surface_dim";
-        "toolbar.background" = color "surface_container_low";
-        "tab_bar.background" = color "surface_container";
-        "tab.inactive_background" = color "surface_container";
-        "tab.active_background" = color "surface_container_low";
+        "status_bar.background" = background "surface";
+        "title_bar.background" = background "surface";
+        "title_bar.inactive_background" = background "surface_dim";
+        "toolbar.background" = background "surface_container_low";
+        "tab_bar.background" = background "surface_container";
+        "tab.inactive_background" = background "surface_container";
+        "tab.active_background" = background "surface_container_low";
         "search.match_background" = alpha "tertiary_container" 80;
-        "panel.background" = color "surface_container";
+        "panel.background" = background "surface_container";
         "panel.focused_border" = color "primary";
         "panel.indent_guide" = alpha "outline_variant" 60;
         "panel.indent_guide_active" = color "outline";
@@ -102,12 +105,12 @@ let
         "scrollbar.thumb.background" = alpha "on_surface_variant" 80;
         "scrollbar.thumb.hover_background" = alpha "on_surface_variant" "c0";
         "scrollbar.thumb.border" = alpha "outline_variant" 40;
-        "scrollbar.track.background" = color "surface_container";
+        "scrollbar.track.background" = background "surface_container";
         "scrollbar.track.border" = alpha "outline_variant" 20;
         "editor.foreground" = color "on_surface";
-        "editor.background" = color "surface_container_low";
-        "editor.gutter.background" = color "surface_container_low";
-        "editor.subheader.background" = color "surface_container";
+        "editor.background" = background "surface_container_low";
+        "editor.gutter.background" = background "surface_container_low";
+        "editor.subheader.background" = background "surface_container";
         "editor.indent_guide" = alpha "outline_variant" 60;
         "editor.indent_guide_active" = color "outline";
         "editor.active_line.background" = alpha "surface_container_high" 80;
