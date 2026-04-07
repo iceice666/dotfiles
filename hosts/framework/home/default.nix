@@ -44,6 +44,8 @@ in
 
   home.packages = with pkgs; [
     equibop-bin
+    ffmpeg
+    obs-studio
   ];
 
   home.stateVersion = "25.11";

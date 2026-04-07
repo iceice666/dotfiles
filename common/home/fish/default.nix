@@ -82,6 +82,9 @@
       # Dotdot abbreviation (requires function defined above)
       abbr --add dotdot --regex '^\.\.+$' --function __fish_multicd
 
+      # Complete project names from $ProjectDir for pj.
+      complete -c pj -f -a '(for d in $ProjectDir/*; if test -d $d; basename $d; end; end)'
+
       # Disable greeting
       set -g fish_greeting ""
 

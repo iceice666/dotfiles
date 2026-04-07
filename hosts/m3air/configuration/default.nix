@@ -42,6 +42,7 @@
       "karabiner-elements"
       "zen" # zen browser
       "font-sketchybar-app-font"
+      "obs" # OBS Studio (not available in nixpkgs for aarch64-darwin)
     ];
   };
 
