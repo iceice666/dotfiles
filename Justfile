@@ -165,7 +165,41 @@ fmt:
 secret-encrypt secret plaintext='':
     #!/usr/bin/env bash
     set -euo pipefail
-    export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
+
+    resolve_sops_age_key_file() {
+        if [[ -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
+            printf '%s\n' "$SOPS_AGE_KEY_FILE"
+            return 0
+        fi
+
+        local candidate
+        for candidate in \
+            /var/lib/sops-nix/key.txt \
+            "$HOME/.config/sops/age/keys.txt" \
+            "$HOME/Library/Application Support/sops/age/keys.txt"
+        do
+            if [[ -f "$candidate" ]]; then
+                printf '%s\n' "$candidate"
+                return 0
+            fi
+        done
+
+        printf '%s\n' \
+            'No age identity file found for sops.' \
+            '' \
+            'Set SOPS_AGE_KEY_FILE to a valid age identity, or create one in a default location:' \
+            '  - /var/lib/sops-nix/key.txt' \
+            '  - ~/.config/sops/age/keys.txt' \
+            '  - ~/Library/Application Support/sops/age/keys.txt' \
+            '' \
+            'On m3air, convert your SSH key to an age identity first:' \
+            '  mkdir -p "$HOME/Library/Application Support/sops/age"' \
+            '  ssh-to-age -private-key -i "$HOME/.ssh/id_ed25519" -o "$HOME/Library/Application Support/sops/age/keys.txt"' >&2
+        return 1
+    }
+
+    SOPS_AGE_KEY_FILE="$(resolve_sops_age_key_file)"
+    export SOPS_AGE_KEY_FILE
 
     secret='{{ secret }}'
     plaintext='{{ plaintext }}'
@@ -195,7 +229,41 @@ secret-encrypt secret plaintext='':
 secret-decrypt secret output='':
     #!/usr/bin/env bash
     set -euo pipefail
-    export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
+
+    resolve_sops_age_key_file() {
+        if [[ -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
+            printf '%s\n' "$SOPS_AGE_KEY_FILE"
+            return 0
+        fi
+
+        local candidate
+        for candidate in \
+            /var/lib/sops-nix/key.txt \
+            "$HOME/.config/sops/age/keys.txt" \
+            "$HOME/Library/Application Support/sops/age/keys.txt"
+        do
+            if [[ -f "$candidate" ]]; then
+                printf '%s\n' "$candidate"
+                return 0
+            fi
+        done
+
+        printf '%s\n' \
+            'No age identity file found for sops.' \
+            '' \
+            'Set SOPS_AGE_KEY_FILE to a valid age identity, or create one in a default location:' \
+            '  - /var/lib/sops-nix/key.txt' \
+            '  - ~/.config/sops/age/keys.txt' \
+            '  - ~/Library/Application Support/sops/age/keys.txt' \
+            '' \
+            'On m3air, convert your SSH key to an age identity first:' \
+            '  mkdir -p "$HOME/Library/Application Support/sops/age"' \
+            '  ssh-to-age -private-key -i "$HOME/.ssh/id_ed25519" -o "$HOME/Library/Application Support/sops/age/keys.txt"' >&2
+        return 1
+    }
+
+    SOPS_AGE_KEY_FILE="$(resolve_sops_age_key_file)"
+    export SOPS_AGE_KEY_FILE
 
     secret='{{ secret }}'
     output='{{ output }}'
