@@ -17,32 +17,50 @@ let
     error = pair (t.render color.dark.error) (t.render color.light.error);
     warning = pair (t.render base16.dark.base0A) (t.render base16.light.base0A);
     text = pair (t.render color.dark.on_surface) (t.render color.light.on_surface);
-    text_muted = pair (t.render color.dark.on_surface_variant) (
-      t.render color.light.on_surface_variant
+    text_muted = pair (t.blend color.dark.on_surface_variant color.dark.on_surface 0.2) (
+      t.blend color.light.on_surface_variant color.light.on_surface 0.2
     );
-    background = pair (t.render color.dark.background) (
-      t.render (t.seededLightBackground color.light.background)
+    background = pair "none" "none";
+    surface_low = pair (t.blend color.dark.surface_container color.dark.surface_container_low 0.75) (
+      t.blend color.light.surface_container color.light.surface_container_low 0.75
     );
-    surface_low = pair (t.render color.dark.surface_container_low) (
-      t.render color.light.surface_container_low
+    surface_panel = pair (t.blend color.dark.surface_container color.dark.surface_container_low 0.64) (
+      t.blend color.light.surface_container color.light.surface_container_low 0.64
     );
-    surface_panel = pair (t.render color.dark.surface_container) (
-      t.render (t.seededLightBackground color.light.surface_container)
-    );
-    surface_element = pair (t.render color.dark.surface_container_high) (
-      t.render (t.seededLightBackground color.light.surface_container_high)
-    );
-    border = pair (t.render color.dark.outline_variant) (t.render color.light.outline_variant);
+    surface_element = pair (t.blend color.dark.surface_container_high color.dark.surface_container_low
+      0.42
+    ) (t.blend color.light.surface_container_high color.light.surface_container_low 0.42);
+    border = pair (t.render color.dark.outline) (t.render color.light.outline);
     border_active = pair (t.render color.dark.primary) (t.render color.light.primary);
-    border_subtle = pair (t.blend color.dark.outline_variant color.dark.surface_container 0.55) (
-      t.blend color.light.outline_variant color.light.surface_container 0.55
+    border_subtle = pair (t.blend color.dark.outline_variant color.dark.surface_container_low 0.45) (
+      t.blend color.light.outline_variant color.light.surface_container_low 0.45
     );
     created = pair (t.render color.dark.tertiary) (t.render color.light.tertiary);
-    created_bg = pair (t.render color.dark.tertiary_container) (
-      t.render color.light.tertiary_container
+    created_bg = pair (t.blend color.dark.tertiary_container color.dark.surface_container_low 0.58) (
+      t.r
+        (t.raw color.light.tertiary_container [
+          (t.mix color.light.surface_container_low 0.59)
+        ])
+        [
+          t.toOklch
+          (t.chroma 0.055)
+          (t.lightness 0.955)
+          t.toHex
+        ]
     );
     deleted = pair (t.render color.dark.error) (t.render color.light.error);
-    deleted_bg = pair (t.render color.dark.error_container) (t.render color.light.error_container);
+    deleted_bg = pair (t.blend color.dark.error_container color.dark.surface_container_low 0.5) (
+      t.r
+        (t.raw color.light.error_container [
+          (t.mix color.light.surface_container_low 0.5)
+        ])
+        [
+          t.toOklch
+          (t.chroma 0.065)
+          (t.lightness 0.952)
+          t.toHex
+        ]
+    );
     modified = pair (t.render color.dark.secondary) (t.render color.light.secondary);
     syntax_comment = pair syntaxDark.comment syntaxLight.comment;
     syntax_emphasis = pair syntaxDark.emphasis syntaxLight.emphasis;
