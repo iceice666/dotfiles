@@ -97,6 +97,10 @@ in
 
       userSettings = {
         "chat.disableAIFeatures" = false;
+        "editor.fontFamily" = "Cascadia Code NF";
+        "editor.fontSize" = 16;
+        "terminal.integrated.fontFamily" = "Cascadia Code NF";
+        "terminal.integrated.fontSize" = 16;
       };
     };
   };
