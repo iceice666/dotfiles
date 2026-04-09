@@ -19,6 +19,7 @@ in
     (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
     (dotfiles + /shared/home/opencode.nix)
+    ./default-apps.nix
     ./karabiner.nix
     ./wallpaper.nix
   ];

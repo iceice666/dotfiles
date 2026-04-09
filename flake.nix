@@ -42,9 +42,11 @@
     }:
     let
       overlay = final: prev: {
+        default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         mise-bin = final.callPackage ./pkgs/mise-bin { };
         themegen = final.callPackage ./pkgs/themegen { };
+        utiluti = final.callPackage ./pkgs/utiluti { };
         direnv = prev.direnv.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             for makefile in Makefile GNUmakefile; do

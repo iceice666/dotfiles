@@ -45,13 +45,14 @@
   system.defaults.NSGlobalDomain.NSWindowShouldDragOnGesture = true;
   # system.defaults.NSGlobalDomain._HIHideMenuBar = true;
 
-  # Restart SystemUIServer so _HIHideMenuBar takes effect on Tahoe (26+)
-  # Also kick the wallpaper launch agent so the desktop wallpaper refreshes on rebuild.
+  # Restart SystemUIServer so _HIHideMenuBar takes effect on Tahoe (26+).
+  # Also kick the user launch agents that apply wallpaper and default-app preferences.
   system.activationScripts.postActivation.text = ''
     killall -qu ${config.system.primaryUser} SystemUIServer || true
 
     uid="$(id -u ${config.system.primaryUser} 2>/dev/null || true)"
     if [ -n "$uid" ]; then
+      launchctl kickstart -k "gui/$uid/com.iceice666.default-apps" || true
       launchctl kickstart -k "gui/$uid/com.iceice666.wallpaper-refresh" || true
     fi
   '';
