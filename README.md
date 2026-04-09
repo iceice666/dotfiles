@@ -273,5 +273,9 @@ just secret-decrypt sensitive/hosts/server/cloudflared-token.key /tmp/cloudflare
 
 
 ## Acknowledgements
-- [win-chan.jpg](./assets/win-chan.jpg): https://x.com/11359OC/status/2040280223632208281/photo/1
+- [win_chan.jpg](./assets/win_chan.jpg): https://x.com/11359OC/status/2040280223632208281/photo/1
 - [mzen.png](./assets/mzen.png): https://x.com/Drift0827/status/1990350670445306010
+
+
+## Future plan
+- [ ] Use this lib/algorithm to generate more consist color palatte: https://github.com/evilmartians/harmonizer
