@@ -270,3 +270,8 @@ just secret-decrypt sensitive/hosts/server/cloudflared-token.key /tmp/cloudflare
 - `just fmt` runs `nix fmt` via `treefmt-nix`.
 - `framework` intentionally keeps system package installation outside Home Manager.
 - Theme generation renders Ghostty, Zed, starship, opencode, and terminal colors from the host wallpaper.
+
+
+## Acknowledgements
+- [win-chan.jpg](./assets/win-chan.jpg): https://x.com/11359OC/status/2040280223632208281/photo/1
+- [mzen.png](./assets/mzen.png): https://x.com/Drift0827/status/1990350670445306010
