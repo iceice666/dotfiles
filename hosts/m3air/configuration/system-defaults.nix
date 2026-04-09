@@ -2,7 +2,7 @@
 
 {
   # Spaces
-  system.defaults.spaces.spans-displays = true;
+  system.defaults.spaces.spans-displays = false;
 
   # Dock
   system.defaults.dock = {
