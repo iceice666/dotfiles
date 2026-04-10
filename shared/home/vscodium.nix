@@ -101,6 +101,10 @@ in
         "editor.fontSize" = 16;
         "terminal.integrated.fontFamily" = "Cascadia Code NF";
         "terminal.integrated.fontSize" = 16;
+        "window.autoDetectColorScheme" = true;
+        "workbench.colorTheme" = "Themegen Dark";
+        "workbench.preferredDarkColorTheme" = "Themegen Dark";
+        "workbench.preferredLightColorTheme" = "Themegen Light";
       };
     };
   };
