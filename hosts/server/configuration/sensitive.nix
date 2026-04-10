@@ -1,6 +1,7 @@
 {
   config,
   dotfiles,
+  username,
   ...
 }:
 {
@@ -183,6 +184,14 @@
         group = "authelia-main";
         mode = "0400";
         restartUnits = [ "authelia-main.service" ];
+      };
+
+      "daily-audit-resend-api-key" = {
+        sopsFile = dotfiles + /sensitive/hosts/server/resend.yaml;
+        key = "apiKey";
+        owner = username;
+        group = "users";
+        mode = "0400";
       };
 
     };
