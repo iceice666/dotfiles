@@ -12,7 +12,6 @@
   imports = [
     inputs.sops-nix.homeManagerModules.sops
     (dotfiles + /common/home)
-    (dotfiles + /shared/home/opencode.nix)
   ];
 
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";

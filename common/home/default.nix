@@ -9,6 +9,7 @@
 {
   imports = [
     ./fish
+    ./opencode
     ./user.nix
   ];
 

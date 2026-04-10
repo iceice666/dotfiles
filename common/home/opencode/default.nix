@@ -38,4 +38,6 @@
       };
     };
   };
+
+  home.file.".config/opencode/skill".source = ./skill;
 }

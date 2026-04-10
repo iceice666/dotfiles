@@ -20,7 +20,6 @@ in
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
-    (dotfiles + /shared/home/opencode.nix)
   ];
 
   _module.args = {
