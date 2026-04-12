@@ -14,7 +14,7 @@
     (dotfiles + /common/home)
   ];
 
-  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+  sops.age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
 
   home.stateVersion = "25.11";
 
