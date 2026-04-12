@@ -6,7 +6,7 @@
     ./cloudflare-ddns.nix
     ./cloudflare-ips.nix
     ./cloudflared-tunnel.nix
-    ./daily-audit.nix
+    ./daily-audit
     ./dynacat.nix
     ./dnsmasq.nix
     ./docker.nix

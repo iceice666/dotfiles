@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "host": "homolab",
+  "timeZone": "Asia/Taipei",
+  "primaryAdminUser": "iceice666",
+  "ssh": {
+    "port": 2222,
+    "expectedUsers": [
+      "iceice666"
+    ],
+    "trustedSourceCidrs": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16"
+    ],
+    "rootLoginAllowed": false,
+    "passwordAuthenticationAllowed": false
+  },
+  "internetFacingServices": [
+    "sshd.service",
+    "cloudflared-tunnel.service",
+    "traefik.service",
+    "authelia-main.service",
+    "forgejo.service",
+    "woodpecker-server.service"
+  ],
+  "protectedOrInternalServices": [
+    "dynacat.service",
+    "woodpecker-agent-docker.service",
+    "docker.service",
+    "postgresql.service",
+    "rustfs.service",
+    "dnsmasq.service",
+    "cloudflare-ips-refresh.service",
+    "cloudflare-dyndns.service"
+  ],
+  "serviceRoles": {
+    "sshd.service": "edge",
+    "cloudflared-tunnel.service": "edge",
+    "traefik.service": "edge",
+    "authelia-main.service": "auth",
+    "forgejo.service": "application",
+    "woodpecker-server.service": "application",
+    "woodpecker-agent-docker.service": "application",
+    "dynacat.service": "application",
+    "docker.service": "platform",
+    "postgresql.service": "platform",
+    "rustfs.service": "platform",
+    "dnsmasq.service": "platform",
+    "cloudflare-ips-refresh.service": "platform",
+    "cloudflare-dyndns.service": "platform"
+  },
+  "expectedAccessNotes": [
+    "SSH activity should center on the iceice666 account.",
+    "Root SSH logins should never succeed.",
+    "Password-based SSH authentication should never succeed.",
+    "home.justaslime.dev should normally require Authelia two-factor authentication.",
+    "Public ingress noise against Traefik, cloudflared, and SSH is expected until it causes successful access, privilege change, or service degradation."
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "maintenanceMarkers": [
+    {
+      "pattern": "switch-to-configuration switch",
+      "windowBeforeMinutes": 5,
+      "windowAfterMinutes": 30
+    },
+    {
+      "pattern": "nixos-rebuild-switch-to-configuration.service",
+      "windowBeforeMinutes": 5,
+      "windowAfterMinutes": 30
+    }
+  ],
+  "thresholds": {
+    "sshFailureBurst": 10,
+    "forgejoMirrorFailure": 2,
+    "forgejoCrawlerNoise": 20
+  },
+  "sshFailurePatterns": [
+    "Failed password",
+    "Invalid user",
+    "Disconnected from authenticating user",
+    "Connection closed by authenticating user",
+    "Maximum authentication attempts exceeded",
+    "error: PAM"
+  ],
+  "sudoDeniedPatterns": [
+    "authentication failure",
+    "not allowed",
+    "denied"
+  ],
+  "cloudflared": {
+    "recoveryGraceMinutes": 20,
+    "errorPatterns": [
+      "failed to run the datagram handler",
+      "failed to accept incoming stream requests",
+      "failed to serve tunnel connection",
+      "Serve tunnel error",
+      "Connection terminated",
+      "Failed to refresh protocol"
+    ],
+    "recoveryPatterns": [
+      "Registered tunnel connection"
+    ]
+  },
+  "systemStabilityPatterns": [
+    {
+      "id": "oom",
+      "pattern": "Out of memory|oom-killer|Killed process [0-9]+ \\(",
+      "severity": "high",
+      "category": "operations",
+      "title": "Memory pressure or OOM events detected",
+      "followUp": "Inspect memory pressure and service limits before the next audit run."
+    },
+    {
+      "id": "filesystem",
+      "pattern": "EXT4-fs error|BTRFS error|XFS .*corruption|I/O error|Buffer I/O error|blk_update_request",
+      "severity": "high",
+      "category": "operations",
+      "title": "Filesystem or storage errors detected",
+      "followUp": "Inspect storage health and filesystem integrity immediately."
+    },
+    {
+      "id": "kernel-crash",
+      "pattern": "kernel panic|segfault|general protection fault|BUG:",
+      "severity": "high",
+      "category": "operations",
+      "title": "Kernel crash indicators detected",
+      "followUp": "Inspect kernel and coredump logs before the next reboot."
+    }
+  ],
+  "benignKernelPatterns": [
+    {
+      "id": "logitech-hidpp",
+      "pattern": "logitech-hidpp-device .* received protocol error 0x08",
+      "title": "Recurring Logitech HID++ protocol warnings",
+      "followUp": "None"
+    }
+  ]
+}
