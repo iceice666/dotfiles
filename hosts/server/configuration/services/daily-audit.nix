@@ -73,10 +73,10 @@ let
         printf -- '- Until: %s\n' "$until_iso"
         printf -- '- Trigger: systemd timer\n'
         printf '\n## Service Scope\n\n'
-        printf -- '- Public edge: `sshd.service`, `traefik.service`, `cloudflared-tunnel.service`\n'
-        printf -- '- Auth: `authelia-main.service`\n'
-        printf -- '- Apps: `forgejo.service`, `woodpecker-server.service`, `woodpecker-agent-docker.service`, `dynacat.service`\n'
-        printf -- '- Platform: `docker.service`, `postgresql.service`, `rustfs.service`, `dnsmasq.service`, `cloudflare-ips-refresh.service`, `cloudflare-dyndns.service`\n'
+        printf -- "- Public edge: \`sshd.service\`, \`traefik.service\`, \`cloudflared-tunnel.service\`\n"
+        printf -- "- Auth: \`authelia-main.service\`\n"
+        printf -- "- Apps: \`forgejo.service\`, \`woodpecker-server.service\`, \`woodpecker-agent-docker.service\`, \`dynacat.service\`\n"
+        printf -- "- Platform: \`docker.service\`, \`postgresql.service\`, \`rustfs.service\`, \`dnsmasq.service\`, \`cloudflare-ips-refresh.service\`, \`cloudflare-dyndns.service\`\n"
         printf '\n## Failed Units\n\n```text\n'
         systemctl list-units --state=failed --all --no-pager --no-legend 2>&1 || true
         printf '```\n\n'
@@ -190,8 +190,8 @@ let
           printf '## Executive Summary\n\n'
           printf 'The daily audit pipeline failed before a model-authored report was generated.\n\n'
           printf '## Findings\n\n'
-          printf -- '- Audit window: `%s` to `%s`\n' "$since_iso" "$until_iso"
-          printf -- '- Run directory: `%s`\n' "$run_dir"
+          printf -- "- Audit window: \`%s\` to \`%s\`\n" "$since_iso" "$until_iso"
+          printf -- "- Run directory: \`%s\`\n" "$run_dir"
           printf '\n```text\n'
           if [ -s "$stderr_output" ]; then
             cat "$stderr_output"
@@ -202,15 +202,15 @@ let
           printf '## Benign Noise\n\n'
           printf 'Not evaluated because the pipeline failed.\n\n'
           printf '## Follow-Up Actions\n\n'
-          printf -- '- Inspect `%s` on homolab.\n' "$run_dir"
-          printf -- '- Re-run `systemctl start homolab-daily-audit.service` after fixing the failure.\n\n'
+          printf -- "- Inspect \`%s\` on homolab.\n" "$run_dir"
+          printf -- "- Re-run \`systemctl start homolab-daily-audit.service\` after fixing the failure.\n\n"
           printf '## Evidence Reviewed\n\n'
-          printf -- '- `%s`\n' "$bundle_dir/00-overview.md"
-          printf -- '- `%s`\n' "$bundle_dir/10-priority-journal.md"
-          printf -- '- `%s`\n' "$bundle_dir/20-authentication.md"
-          printf -- '- `%s`\n' "$bundle_dir/30-edge-services.md"
-          printf -- '- `%s`\n' "$bundle_dir/40-application-services.md"
-          printf -- '- `%s`\n' "$bundle_dir/50-kernel.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/00-overview.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/10-priority-journal.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/20-authentication.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/30-edge-services.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/40-application-services.md"
+          printf -- "- \`%s\`\n" "$bundle_dir/50-kernel.md"
         } > "$report_file"
       fi
 
