@@ -5,6 +5,7 @@ let
   vscode = import ./vscode.nix { inherit lib pkgs; };
 in
 {
+  equibop = import ./equibop.nix { inherit lib pkgs; };
   ghosttyDark = ghostty.dark;
   ghosttyLight = ghostty.light;
   opencodeColors = import ./opencode.nix { inherit lib pkgs; };

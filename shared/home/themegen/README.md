@@ -24,6 +24,7 @@ Relevant entrypoints:
 - `shared/home/themegen/templates/default.nix`: exports the app-specific generated template sources.
 - `shared/home/themegen/templates/lib.nix`: shared helpers for placeholder rendering, color pipelines, syntax colors, and terminal palettes.
 - `shared/home/themegen/templates/ghostty.nix`: Ghostty dark and light theme sources.
+- `shared/home/themegen/templates/equibop.nix`: Equibop Midnight CSS theme with automatic Discord light and dark mode switching.
 - `shared/home/themegen/templates/terminal-sequences.nix`: fish startup script that applies the terminal palette and follows desktop dark/light mode.
 - `shared/home/themegen/templates/opencode.nix`: Opencode theme JSON.
 - `shared/home/themegen/templates/starship.nix`: starship palette TOML.

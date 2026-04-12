@@ -44,6 +44,7 @@ let
           --scheme tonal-spot \
           --base16-contrast 0.3 \
           --base16-mode follow-palette \
+          --render "${templates.equibop}=$out/equibop/themes/themegen-midnight.theme.css" \
           --render "${templates.ghosttyDark}=$out/ghostty/themes/themegen-dark" \
           --render "${templates.ghosttyLight}=$out/ghostty/themes/themegen-light" \
           --render "${templates.opencodeColors}=$out/opencode/themes/themegen.json" \
@@ -69,6 +70,10 @@ in
     ".vscode-oss/extensions/themegen.themegen".source =
       "${generated}/vscode/extensions/themegen.themegen";
     ".config/zed/themes/themegen.json".source = "${generated}/zed/themes/themegen.json";
+  }
+  // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+    "Library/Application Support/equibop/themes/themegen-midnight.theme.css".source =
+      "${generated}/equibop/themes/themegen-midnight.theme.css";
   };
 
   programs.opencode.settings.theme = "themegen";
