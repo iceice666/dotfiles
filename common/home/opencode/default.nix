@@ -39,5 +39,8 @@
     };
   };
 
-  home.file.".config/opencode/skill/skill-creator".source = ./skill/skill-creator;
+  home.file.".config/opencode/skill" = {
+    source = ./skill;
+    recursive = true;
+  };
 }
