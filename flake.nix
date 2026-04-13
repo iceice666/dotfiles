@@ -27,6 +27,7 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
   };
 
   outputs =
@@ -57,12 +58,6 @@
           '';
         });
 
-        # WAE 2026-04-14: Disable tests due to flaky TestBleveDeleteIssue race condition in 14.0.4.
-        # Upstream fix: https://codeberg.org/forgejo/forgejo/pulls/11686 (merged 2026-03-16)
-        # TODO: Remove override once nixpkgs picks up the backport.
-        forgejo = prev.forgejo.overrideAttrs (oldAttrs: {
-          doCheck = false;
-        });
       };
 
       unstablePkgsFor =
@@ -117,24 +112,6 @@
         modules = [
           ./hosts/framework/home
           sops-nix.homeManagerModules.sops
-        ];
-      };
-
-      # Build with: sudo nixos-rebuild switch --flake .#server
-      nixosConfigurations."homolab" = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs self;
-          username = "iceice666";
-          homeDirectory = "/home/iceice666";
-          dotfiles = ./.;
-          unstablePkgs = unstablePkgsFor "x86_64-linux";
-        };
-        modules = [
-          ./hosts/server/configuration
-          sops-nix.nixosModules.sops
-          home-manager.nixosModules.home-manager
-          { nixpkgs.overlays = [ overlay ]; }
         ];
       };
 

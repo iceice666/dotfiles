@@ -1,6 +1,6 @@
 # AGENTS.md - Repository Guide
 
-This repository is a multi-host Nix dotfiles setup built around `flake.nix`, `nix-darwin`, `home-manager`, `sops-nix`, `treefmt-nix`, `just`, and `hermes-agent`.
+This repository is a multi-host Nix dotfiles setup built around `flake.nix`, `nix-darwin`, `home-manager`, `sops-nix`, `treefmt-nix`, and `just`.
 Use this file as the working agreement for coding agents editing this repo.
 
 `README.md` is the concise operator-facing overview. Keep the detailed implementation and editing guidance here.
@@ -14,10 +14,10 @@ treefmt.nix          # formatter configuration (nixfmt + just)
 assets/              # wallpaper/source images used by theme generation
 
 common/              # baseline shared across all hosts
-  configuration/     # shared system-level modules and packages for darwin/NixOS hosts
+  configuration/     # shared system-level modules and packages for darwin hosts
     default.nix      # imports packages.nix; adds unstable codex, agent-browser, cascadia-code font
     packages.nix     # stable system package list
-  home/              # shared Home Manager baseline (imported by all three hosts)
+  home/              # shared Home Manager baseline (imported by all hosts)
     default.nix
     user.nix
     fish/            # fish config + auto-imported function modules (13 functions)
@@ -38,14 +38,6 @@ hosts/               # per-host entrypoints
   framework/         # standalone Home Manager on Void Linux
     configuration/   # placeholder directory, not wired into the flake today
     home/            # active Home Manager entrypoint
-  server/            # NixOS host named homolab
-    configuration/   # default.nix, hardware-configuration.nix, networking.nix,
-                     # sensitive.nix, system.nix, user.nix
-      services/      # authelia, cloudflare-ddns, cloudflare-ips, cloudflared-tunnel,
-                     # daily-audit, database, dnsmasq, docker, dynacat, forgejo,
-                     # hermes-agent, ollama, openssh, rustfs, traefik, woodpecker
-    home/            # Home Manager modules for the server user
-      opencode-skill/ # homolab-daily-audit skill (server-specific)
 
 pkgs/                # overlay packages
   default-browser/   # macOS default browser helper
@@ -57,9 +49,6 @@ pkgs/                # overlay packages
 
 sensitive/           # encrypted secret and certificate material managed by sops
   shared/            # cross-host secrets: openrouter.yaml
-  hosts/server/      # server-only: authelia.yaml, cloudflare-ddns.key,
-                     # cloudflared-token.key, cloudflare-origin-ca/, forgejo.yaml,
-                     # hermes.env, resend.yaml, rustfs.yaml, woodpecker.yaml
 ```
 
 Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
@@ -76,7 +65,6 @@ Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
 | `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
-| `hermes-agent` | `github:NousResearch/hermes-agent` | yes |
 
 `self.submodules = true` is set so Git submodules are fetched.
 
@@ -86,7 +74,6 @@ Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
 |---|---|
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `homeConfigurations."iceice666@framework"` | standalone Home Manager configuration |
-| `nixosConfigurations."homolab"` | NixOS configuration |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
 There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
@@ -115,8 +102,6 @@ just m3air-build
 just m3air-rebuild
 just framework-build
 just framework-rebuild
-just server-build
-just server-rebuild
 
 just fmt
 just check
@@ -124,7 +109,6 @@ just check
 
 - `just build` auto-detects the current host and runs the matching dry build.
 - `just switch` auto-detects the current host and applies the matching configuration.
-- `just server-build` and `just server-rebuild` refuse to run on non-server hosts.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs `nix flake check --all-systems`.
 - Explicit rebuild commands apply changes; prefer dry builds while iterating.
@@ -136,7 +120,6 @@ There is no unit-test suite. The closest equivalent is the narrowest host build 
 ```sh
 sudo darwin-rebuild build --flake .#iceice666@m3air
 home-manager build --flake .#iceice666@framework
-sudo nixos-rebuild build --flake .#homolab
 ```
 
 Which build to run for a given change:
@@ -146,9 +129,8 @@ Which build to run for a given change:
 | `hosts/m3air/**` | `m3air` |
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | placeholder only; no active flake target |
-| `hosts/server/**` | `homolab` |
-| `common/configuration/**` | `m3air` and `homolab` |
-| `common/home/**` | `m3air`, `framework`, and `homolab` |
+| `common/configuration/**` | `m3air` |
+| `common/home/**` | `m3air` and `framework` |
 | `shared/home/**` | `m3air` and `framework` (current importers) |
 | `pkgs/<name>` | dry-build any host that uses the package |
 
@@ -169,19 +151,17 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
-just server-gen-hardware  # regenerate hardware-configuration.nix (run on server only)
 ```
 
 ### Secrets helpers
 
 ```sh
-just secret-encrypt sensitive/hosts/server/forgejo.yaml ./forgejo.yaml
-just secret-decrypt sensitive/hosts/server/forgejo.yaml
-just secret-decrypt sensitive/hosts/server/cloudflared-token.key /tmp/cloudflared-token
-just secret-edit sensitive/hosts/server/forgejo.yaml
+just secret-encrypt sensitive/hosts/m3air/forgejo.yaml ./forgejo.yaml
+just secret-decrypt sensitive/hosts/m3air/forgejo.yaml
+just secret-edit sensitive/hosts/m3air/forgejo.yaml
 ```
 
-Never commit plaintext secrets. Keep secret material in `sensitive/shared/` or `sensitive/hosts/server/` encrypted with `sops`.
+Never commit plaintext secrets. Keep secret material in `sensitive/shared/` encrypted with `sops`.
 
 ## Editor Rule Files
 
@@ -270,19 +250,16 @@ Canonical module shape:
 ## Repository Conventions
 
 - `common/` is the baseline for all hosts.
-- `common/configuration/` is only imported by `m3air` and `homolab`.
-- `common/home/` is imported by all three hosts.
+- `common/configuration/` is only imported by `m3air`.
+- `common/home/` is imported by all hosts.
 - `common/home/opencode/` uses `sensitive/shared/openrouter.yaml`.
 - `shared/` is opt-in and should stay reusable across hosts.
 - `shared/home/themegen/` supports wallpaper-driven theme generation. Templates include a VSCode theme (`vscode.nix`) that renders `vscodeDark`/`vscodeLight` and installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is standalone Home Manager on Void Linux. It warns about packages from `common/configuration/packages.nix` that cannot come from `environment.systemPackages`.
 - `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
-- `hosts/server/configuration/services/dynacat.nix` is the dashboard service; do not refer to it as Homepage.
-- `hosts/server/configuration/hardware-configuration.nix` is machine-specific and should only be regenerated on the target server.
-- `hosts/server/home/opencode-skill/` contains server-specific opencode skills (currently `homolab-daily-audit`).
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
-- `sensitive/shared/` is for cross-host secrets; `sensitive/hosts/server/` is for server-only material.
+- `sensitive/shared/` is for cross-host secrets.
 - `pkgs/youtube-rss-proxy/` is an empty directory that is not wired into the overlay or any host; do not reference it as an available package.
 
 ## Change Strategy for Agents

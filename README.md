@@ -1,6 +1,6 @@
 # dotfiles
 
-Multi-host Nix configuration for `m3air`, `framework`, and `homolab`.
+Multi-host Nix configuration for `m3air` and `framework`.
 
 One flake drives system configuration, Home Manager, secrets, theme generation, and a small overlay of custom packages.
 
@@ -12,7 +12,6 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | --- | --- | --- | --- |
 | `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#iceice666@framework` | `x86_64-linux` | standalone Home Manager on Void Linux |
-| `homolab` | `.#homolab` | `x86_64-linux` | NixOS server + Home Manager |
 
 ## Layout
 
@@ -32,7 +31,6 @@ shared/              # optional reusable modules
 hosts/               # per-host entrypoints
   m3air/             # macOS
   framework/         # standalone Home Manager
-  server/            # NixOS (homolab)
 
 pkgs/                # custom overlay packages
 sensitive/           # sops-encrypted secrets
@@ -52,7 +50,6 @@ Host-specific:
 ```sh
 just m3air-build / just m3air-rebuild
 just framework-build / just framework-rebuild
-just server-build / just server-rebuild
 ```
 
 Other:
@@ -70,9 +67,9 @@ just store-size
 Encrypted with [`sops-nix`](https://github.com/Mic92/sops-nix). Rules in `.sops.yaml`.
 
 ```sh
-just secret-encrypt sensitive/hosts/server/forgejo.yaml ./forgejo.yaml
-just secret-decrypt sensitive/hosts/server/forgejo.yaml
-just secret-edit sensitive/hosts/server/forgejo.yaml
+just secret-encrypt sensitive/hosts/m3air/forgejo.yaml ./forgejo.yaml
+just secret-decrypt sensitive/hosts/m3air/forgejo.yaml
+just secret-edit sensitive/hosts/m3air/forgejo.yaml
 ```
 
 Never commit plaintext secrets.

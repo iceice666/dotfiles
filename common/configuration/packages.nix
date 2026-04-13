@@ -27,4 +27,5 @@ with pkgs;
   zulu21
   age
   ffmpeg
+  nodejs_24
 ]

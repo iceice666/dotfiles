@@ -5,8 +5,6 @@ keys:
   # Per-device age recipients (public)
   - &m3air age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
   - &framework age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-  - &server age1vy0h0mt92lcp8mg6rgk3fhstej7e6qmls0krrk3ghllwazczgueswzznwm
-  - &server-home age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   # Optional recovery recipient (public)
   # - &recovery age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
@@ -16,14 +14,12 @@ creation_rules:
     age:
       - *m3air
       # - *framework  # TODO: uncomment when framework sops is ready
-      - *server-home
 
   # Shared secrets: decryptable on all three devices (+ recovery)
   - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key)$
     age:
       - *m3air
       # - *framework  # TODO: uncomment when framework sops is ready
-      - *server
       # - *recovery
 
   # Per-device secrets: only the device (+ recovery)
@@ -32,6 +28,3 @@ creation_rules:
 
   - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
     age: [*framework]
-
-  - path_regex: ^sensitive/hosts/server/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age: [*server]
