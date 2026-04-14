@@ -24,6 +24,10 @@
           _launch = true;
           name = "qwen3.5:9b";
         };
+        models."hf.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF:UD-Q4_K_XL" = {
+          _launch = true;
+          name = "Qwen3-Coder-30B-A3B";
+        };
         name = "Ollama";
         npm = "@ai-sdk/openai-compatible";
         options.baseURL = "http://192.168.1.127:11434/v1";
