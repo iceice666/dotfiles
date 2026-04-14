@@ -56,6 +56,13 @@
             done
           '';
         });
+
+        # WAE 2026-04-14: Disable tests due to flaky TestBleveDeleteIssue race condition in 14.0.4.
+        # Upstream fix: https://codeberg.org/forgejo/forgejo/pulls/11686 (merged 2026-03-16)
+        # TODO: Remove override once nixpkgs picks up the backport.
+        forgejo = prev.forgejo.overrideAttrs (oldAttrs: {
+          doCheck = false;
+        });
       };
 
       unstablePkgsFor =
