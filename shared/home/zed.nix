@@ -56,6 +56,7 @@
           [
             "nix"
             "ocaml"
+            "gleam"
             "dockerfile"
             "docker-compose"
             "toml"
