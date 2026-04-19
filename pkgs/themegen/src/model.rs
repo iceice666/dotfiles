@@ -9,6 +9,7 @@ pub(crate) struct PaletteOutput {
     pub(crate) seed: SeedInfo,
     pub(crate) color: ThemeSchemes,
     pub(crate) base16: Base16Schemes,
+    pub(crate) syntax: SyntaxSchemes,
 }
 
 #[derive(Clone, Serialize)]
@@ -35,6 +36,12 @@ pub(crate) struct Base16Schemes {
 }
 
 #[derive(Serialize)]
+pub(crate) struct SyntaxSchemes {
+    pub(crate) light: SyntaxPalette,
+    pub(crate) dark: SyntaxPalette,
+}
+
+#[derive(Serialize)]
 pub(crate) struct Base16Palette {
     pub(crate) base00: String,
     pub(crate) base01: String,
@@ -58,4 +65,28 @@ pub(crate) struct Base16Palette {
     pub(crate) base0_e: String,
     #[serde(rename = "base0F")]
     pub(crate) base0_f: String,
+}
+
+#[derive(Serialize)]
+pub(crate) struct SyntaxPalette {
+    pub(crate) boolean: String,
+    pub(crate) comment: String,
+    pub(crate) emphasis: String,
+    pub(crate) function: String,
+    pub(crate) keyword: String,
+    pub(crate) link: String,
+    pub(crate) literal: String,
+    pub(crate) number: String,
+    pub(crate) operator: String,
+    pub(crate) predictive: String,
+    pub(crate) punctuation: String,
+    pub(crate) string: String,
+    #[serde(rename = "stringRegex")]
+    pub(crate) string_regex: String,
+    #[serde(rename = "stringSpecial")]
+    pub(crate) string_special: String,
+    pub(crate) title: String,
+    #[serde(rename = "type")]
+    pub(crate) type_name: String,
+    pub(crate) variable: String,
 }

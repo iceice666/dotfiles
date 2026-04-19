@@ -88,6 +88,26 @@ let
     "base0E"
   ];
 
+  syntaxTokens = [
+    "boolean"
+    "comment"
+    "emphasis"
+    "function"
+    "keyword"
+    "link"
+    "literal"
+    "number"
+    "operator"
+    "predictive"
+    "punctuation"
+    "string"
+    "stringRegex"
+    "stringSpecial"
+    "title"
+    "type"
+    "variable"
+  ];
+
   mkRefs =
     prefix: names:
     builtins.listToAttrs (
@@ -108,6 +128,7 @@ let
 
   color = mkModeRefs "color" colorTokens;
   base16 = mkModeRefs "base16" base16Tokens;
+  syntax = mkModeRefs "syntax" syntaxTokens;
 
   seed = "seed.color";
   seededLightBackground =
@@ -130,102 +151,6 @@ let
       (withAlpha amount)
       toHex
     ];
-
-  syntax =
-    mode:
-    let
-      colors = color.${mode};
-
-      background =
-        if mode == "light" then
-          seededLightBackground colors.surface_container_low
-        else
-          colors.surface_container_low;
-
-      mk =
-        {
-          rotateBy ? null,
-          chromaAmount,
-          lightnessAmount,
-          ratio,
-        }:
-        let
-          base = run seed [ toOklch ];
-          rotated = if rotateBy == null then base else run base [ (rotate rotateBy) ];
-        in
-        r rotated [
-          (chroma chromaAmount)
-          (lightness lightnessAmount)
-          (readable background ratio)
-          toHex
-        ];
-    in
-    rec {
-      boolean = mk {
-        chromaAmount = 0.18;
-        lightnessAmount = if mode == "dark" then 0.78 else 0.46;
-        ratio = 4.5;
-      };
-      comment = mk {
-        rotateBy = 170;
-        chromaAmount = 0.08;
-        lightnessAmount = if mode == "dark" then 0.66 else 0.56;
-        ratio = 3.2;
-      };
-      emphasis = mk {
-        rotateBy = 170;
-        chromaAmount = 0.1;
-        lightnessAmount = if mode == "dark" then 0.74 else 0.5;
-        ratio = 4.5;
-      };
-      function = mk {
-        rotateBy = -80;
-        chromaAmount = 0.12;
-        lightnessAmount = if mode == "dark" then 0.72 else 0.5;
-        ratio = 3.2;
-      };
-      keyword = mk {
-        rotateBy = -52;
-        chromaAmount = 0.16;
-        lightnessAmount = if mode == "dark" then 0.78 else 0.44;
-        ratio = 4.5;
-      };
-      link = mk {
-        rotateBy = 145;
-        chromaAmount = 0.24;
-        lightnessAmount = if mode == "dark" then 0.84 else 0.38;
-        ratio = 4.5;
-      };
-      number = boolean;
-      operator = render colors.on_surface;
-      predictive = alpha colors.on_surface_variant 80;
-      punctuation = render colors.on_surface_variant;
-      string = mk {
-        rotateBy = 145;
-        chromaAmount = 0.2;
-        lightnessAmount = if mode == "dark" then 0.79 else 0.44;
-        ratio = 4.5;
-      };
-      stringRegex = mk {
-        rotateBy = 145;
-        chromaAmount = 0.26;
-        lightnessAmount = if mode == "dark" then 0.83 else 0.4;
-        ratio = 4.5;
-      };
-      title = emphasis;
-      type = mk {
-        rotateBy = -32;
-        chromaAmount = 0.16;
-        lightnessAmount = if mode == "dark" then 0.8 else 0.42;
-        ratio = 4.5;
-      };
-      variable = mk {
-        rotateBy = 18;
-        chromaAmount = 0.14;
-        lightnessAmount = if mode == "dark" then 0.8 else 0.42;
-        ratio = 4.5;
-      };
-    };
 
   terminal =
     mode:

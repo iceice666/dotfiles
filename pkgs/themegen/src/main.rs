@@ -20,9 +20,10 @@ use crate::cli::{
 };
 use crate::color::{parse_hex_value, rgba_to_argb};
 use crate::model::{
-    Base16Palette, Base16Schemes, InputInfo, PaletteOutput, SeedInfo, ThemeSchemes,
+    Base16Palette, Base16Schemes, InputInfo, PaletteOutput, SeedInfo, SyntaxPalette, SyntaxSchemes,
+    ThemeSchemes,
 };
-use crate::palette::{build_base16, build_material_scheme, scheme_to_map};
+use crate::palette::{build_base16, build_material_scheme, build_syntax, scheme_to_map};
 use crate::source::extract_source_color;
 use crate::template::{render_template, template_values};
 
@@ -98,20 +99,26 @@ fn build_palette_output(common: &CommonOptions) -> Result<PaletteOutput> {
         .context("generated material scheme is missing `primary`")
         .and_then(|color| parse_hex_value(color))
         .map(rgba_to_argb)?;
+    let syntax_light = build_syntax(resolved.seed, &material_light, true, common.base16_contrast)?;
+    let syntax_dark = build_syntax(resolved.seed, &material_dark, false, common.base16_contrast)?;
     let base16_light = build_base16(
         resolved.seed,
         primary,
+        &material_light,
+        &syntax_light,
         true,
         common.base16_contrast,
         common.base16_mode,
-    );
+    )?;
     let base16_dark = build_base16(
         resolved.seed,
         primary,
+        &material_dark,
+        &syntax_dark,
         false,
         common.base16_contrast,
         common.base16_mode,
-    );
+    )?;
 
     Ok(PaletteOutput {
         input: resolved.info,
@@ -126,6 +133,10 @@ fn build_palette_output(common: &CommonOptions) -> Result<PaletteOutput> {
         base16: Base16Schemes {
             light: base16_light,
             dark: base16_dark,
+        },
+        syntax: SyntaxSchemes {
+            light: syntax_light,
+            dark: syntax_dark,
         },
     })
 }
@@ -233,6 +244,14 @@ fn render_palette_text_with_swatches(output: &PaletteOutput, swatches: bool) -> 
         &output.base16.dark,
         swatches,
     )?;
+    rendered.push('\n');
+    write_syntax_section(
+        &mut rendered,
+        "syntax",
+        &output.syntax.light,
+        &output.syntax.dark,
+        swatches,
+    )?;
 
     Ok(rendered)
 }
@@ -269,6 +288,25 @@ fn write_base16_section(
     let dark_entries = base16_entries(dark_palette);
 
     for ((name, light_color), (_, dark_color)) in light_entries.into_iter().zip(dark_entries) {
+        write_paired_color_line(rendered, name, light_color, dark_color, swatches)?;
+    }
+
+    Ok(())
+}
+
+fn write_syntax_section(
+    rendered: &mut String,
+    title: &str,
+    light_palette: &SyntaxPalette,
+    dark_palette: &SyntaxPalette,
+    swatches: bool,
+) -> Result<()> {
+    write_section_header(rendered, title, swatches);
+
+    for ((name, light_color), (_, dark_color)) in syntax_entries(light_palette)
+        .into_iter()
+        .zip(syntax_entries(dark_palette))
+    {
         write_paired_color_line(rendered, name, light_color, dark_color, swatches)?;
     }
 
@@ -363,6 +401,28 @@ fn base16_entries(palette: &Base16Palette) -> [(&'static str, &str); 16] {
         ("base0D", palette.base0_d.as_str()),
         ("base0E", palette.base0_e.as_str()),
         ("base0F", palette.base0_f.as_str()),
+    ]
+}
+
+fn syntax_entries(palette: &SyntaxPalette) -> [(&'static str, &str); 17] {
+    [
+        ("boolean", palette.boolean.as_str()),
+        ("comment", palette.comment.as_str()),
+        ("emphasis", palette.emphasis.as_str()),
+        ("function", palette.function.as_str()),
+        ("keyword", palette.keyword.as_str()),
+        ("link", palette.link.as_str()),
+        ("literal", palette.literal.as_str()),
+        ("number", palette.number.as_str()),
+        ("operator", palette.operator.as_str()),
+        ("predictive", palette.predictive.as_str()),
+        ("punctuation", palette.punctuation.as_str()),
+        ("string", palette.string.as_str()),
+        ("stringRegex", palette.string_regex.as_str()),
+        ("stringSpecial", palette.string_special.as_str()),
+        ("title", palette.title.as_str()),
+        ("type", palette.type_name.as_str()),
+        ("variable", palette.variable.as_str()),
     ]
 }
 
@@ -502,6 +562,46 @@ mod tests {
                     base0_f: "#d98bc0".to_string(),
                 },
             },
+            syntax: SyntaxSchemes {
+                light: SyntaxPalette {
+                    boolean: "#8a6f16".to_string(),
+                    comment: "#5d6f71".to_string(),
+                    emphasis: "#8a4f8b".to_string(),
+                    function: "#336699".to_string(),
+                    keyword: "#8c4aa2".to_string(),
+                    link: "#256c9b".to_string(),
+                    literal: "#9a6c00".to_string(),
+                    number: "#9a6c00".to_string(),
+                    operator: "#3a4456".to_string(),
+                    predictive: "#71809980".to_string(),
+                    punctuation: "#718099".to_string(),
+                    string: "#3f7c4c".to_string(),
+                    string_regex: "#007f8d".to_string(),
+                    string_special: "#00816d".to_string(),
+                    title: "#9a5a2e".to_string(),
+                    type_name: "#7259b3".to_string(),
+                    variable: "#a15555".to_string(),
+                },
+                dark: SyntaxPalette {
+                    boolean: "#ffd166".to_string(),
+                    comment: "#86a2a5".to_string(),
+                    emphasis: "#f0a7f0".to_string(),
+                    function: "#88aadd".to_string(),
+                    keyword: "#f0a3ff".to_string(),
+                    link: "#82d3ff".to_string(),
+                    literal: "#ffd166".to_string(),
+                    number: "#ffd166".to_string(),
+                    operator: "#d8deea".to_string(),
+                    predictive: "#a1adbf80".to_string(),
+                    punctuation: "#a1adbf".to_string(),
+                    string: "#8fd47a".to_string(),
+                    string_regex: "#73d9d9".to_string(),
+                    string_special: "#77dec0".to_string(),
+                    title: "#ffb366".to_string(),
+                    type_name: "#b9a1ff".to_string(),
+                    variable: "#ff9d9d".to_string(),
+                },
+            },
         };
 
         let rendered = render_palette_text_with_swatches(&output, false).unwrap();
@@ -510,9 +610,12 @@ mod tests {
         assert!(rendered.contains("background                 #f7f9fe  #101417"));
         assert!(rendered.contains("primary                    #336699  #88aadd"));
         assert!(rendered.contains("[base16]                   [light]  [dark]"));
+        assert!(rendered.contains("[syntax]                   [light]  [dark]"));
         assert!(!rendered.contains("[color.light]"));
         assert!(!rendered.contains("[color.dark]"));
         assert!(!rendered.contains("[base16.light]"));
         assert!(!rendered.contains("[base16.dark]"));
+        assert!(!rendered.contains("[syntax.light]"));
+        assert!(!rendered.contains("[syntax.dark]"));
     }
 }

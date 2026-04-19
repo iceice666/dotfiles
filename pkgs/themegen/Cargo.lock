@@ -96,6 +96,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
+name = "apcach-rs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e442e1bbcb762d43bdb83c9502b0b3ce9511a1a1464dd11a15b26116d198e51"
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1151,6 +1157,7 @@ name = "themegen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "apcach-rs",
  "clap",
  "image",
  "material-colors",

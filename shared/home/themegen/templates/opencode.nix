@@ -5,8 +5,8 @@ let
   color = t.color;
   base16 = t.base16;
 
-  syntaxDark = t.syntax "dark";
-  syntaxLight = t.syntax "light";
+  syntaxDark = lib.mapAttrs (_: value: t.render value) t.syntax.dark;
+  syntaxLight = lib.mapAttrs (_: value: t.render value) t.syntax.light;
 
   pair = dark: light: { inherit dark light; };
 

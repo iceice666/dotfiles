@@ -21,7 +21,7 @@ let
     let
       colors = t.color.${mode};
       base16Colors = t.base16.${mode};
-      syntax = t.syntax mode;
+      syntax = t.syntax.${mode};
       terminal = t.terminal mode;
 
       background =

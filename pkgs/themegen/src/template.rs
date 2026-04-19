@@ -7,7 +7,7 @@ use crate::color::{
     normalize_hue, oklch_to_rgba, parse_hex_value, rgba_to_argb, rgba_to_hct, rgba_to_hsv,
     rgba_to_oklch, HctColor, HsvColor, OklchColor, RgbaColor,
 };
-use crate::model::{Base16Palette, PaletteOutput};
+use crate::model::{Base16Palette, PaletteOutput, SyntaxPalette};
 
 pub(crate) fn template_values(output: &PaletteOutput) -> BTreeMap<String, String> {
     let mut values = BTreeMap::new();
@@ -21,6 +21,8 @@ pub(crate) fn template_values(output: &PaletteOutput) -> BTreeMap<String, String
     extend_prefixed(&mut values, "color.dark", &output.color.dark);
     extend_base16(&mut values, "base16.light", &output.base16.light);
     extend_base16(&mut values, "base16.dark", &output.base16.dark);
+    extend_syntax(&mut values, "syntax.light", &output.syntax.light);
+    extend_syntax(&mut values, "syntax.dark", &output.syntax.dark);
 
     values
 }
@@ -52,6 +54,32 @@ fn extend_base16(values: &mut BTreeMap<String, String>, prefix: &str, palette: &
     values.insert(format!("{prefix}.base0D"), palette.base0_d.clone());
     values.insert(format!("{prefix}.base0E"), palette.base0_e.clone());
     values.insert(format!("{prefix}.base0F"), palette.base0_f.clone());
+}
+
+fn extend_syntax(values: &mut BTreeMap<String, String>, prefix: &str, palette: &SyntaxPalette) {
+    values.insert(format!("{prefix}.boolean"), palette.boolean.clone());
+    values.insert(format!("{prefix}.comment"), palette.comment.clone());
+    values.insert(format!("{prefix}.emphasis"), palette.emphasis.clone());
+    values.insert(format!("{prefix}.function"), palette.function.clone());
+    values.insert(format!("{prefix}.keyword"), palette.keyword.clone());
+    values.insert(format!("{prefix}.link"), palette.link.clone());
+    values.insert(format!("{prefix}.literal"), palette.literal.clone());
+    values.insert(format!("{prefix}.number"), palette.number.clone());
+    values.insert(format!("{prefix}.operator"), palette.operator.clone());
+    values.insert(format!("{prefix}.predictive"), palette.predictive.clone());
+    values.insert(format!("{prefix}.punctuation"), palette.punctuation.clone());
+    values.insert(format!("{prefix}.string"), palette.string.clone());
+    values.insert(
+        format!("{prefix}.stringRegex"),
+        palette.string_regex.clone(),
+    );
+    values.insert(
+        format!("{prefix}.stringSpecial"),
+        palette.string_special.clone(),
+    );
+    values.insert(format!("{prefix}.title"), palette.title.clone());
+    values.insert(format!("{prefix}.type"), palette.type_name.clone());
+    values.insert(format!("{prefix}.variable"), palette.variable.clone());
 }
 
 pub(crate) fn render_template(template: &str, values: &BTreeMap<String, String>) -> Result<String> {
@@ -740,6 +768,7 @@ mod tests {
                 "color.dark.outline_variant".to_string(),
                 "#444746".to_string(),
             ),
+            ("syntax.dark.keyword".to_string(), "#f0a3ff".to_string()),
         ])
     }
 

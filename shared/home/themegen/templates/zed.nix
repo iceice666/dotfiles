@@ -12,7 +12,7 @@ let
   mkTheme =
     mode:
     let
-      syntax = t.syntax mode;
+      syntaxColors = lib.mapAttrs (_: value: t.render value) t.syntax.${mode};
       terminal = t.terminal mode;
       colors = t.color.${mode};
       base16Colors = t.base16.${mode};
@@ -20,36 +20,6 @@ let
       background =
         value: if mode == "light" then t.render (t.seededLightBackground value) else t.render value;
       alpha = value: amount: t.alpha value amount;
-      syntaxBackground =
-        if mode == "light" then
-          t.seededLightBackground colors.surface_container_low
-        else
-          colors.surface_container_low;
-      zedLiteralSyntax = t.r t.seed [
-        t.toOklch
-        (t.rotate 56)
-        (t.chroma 0.18)
-        (t.lightness (if mode == "dark" then 0.78 else 0.46))
-        (t.readable syntaxBackground 4.5)
-        t.toHex
-      ];
-      zedStringSpecialSyntax = t.r t.seed [
-        t.toOklch
-        (t.rotate 96)
-        (t.chroma 0.24)
-        (t.lightness (if mode == "dark" then 0.84 else 0.38))
-        (t.readable syntaxBackground 4.5)
-        t.toHex
-      ];
-      zedStringRegexSyntax = t.r t.seed [
-        t.toOklch
-        (t.rotate 290)
-        (t.chroma 0.26)
-        (t.lightness (if mode == "dark" then 0.83 else 0.4))
-        (t.readable syntaxBackground 4.5)
-        t.toHex
-      ];
-
       mkState = name: stateColor: background: border: {
         "${name}" = stateColor;
         "${name}.background" = background;
@@ -225,7 +195,7 @@ let
         (mkState "warning" (t.render base16Colors.base0A) warningBackground warningBorder)
       ]
       // {
-        predictive = syntax.predictive;
+        predictive = syntaxColors.predictive;
         "predictive.border" = t.render colors.outline;
         "predictive.background" = alpha colors.surface_container_highest 80;
         players = [
@@ -241,53 +211,53 @@ let
           }
         ];
         syntax = rec {
-          boolean = mkSyntaxEntry zedLiteralSyntax null null;
-          comment = mkSyntaxEntry syntax.comment "italic" null;
-          "comment.doc" = mkSyntaxEntry syntax.comment "italic" null;
-          constant = mkSyntaxEntry zedLiteralSyntax null null;
-          constructor = mkSyntaxEntry syntax.type null null;
-          emphasis = mkSyntaxEntry syntax.emphasis "italic" null;
-          "emphasis.strong" = mkSyntaxEntry syntax.emphasis null 700;
-          function = mkSyntaxEntry syntax.function null null;
-          keyword = mkSyntaxEntry syntax.keyword null null;
-          number = mkSyntaxEntry zedLiteralSyntax null null;
-          operator = mkSyntaxEntry syntax.operator null null;
-          property = mkSyntaxEntry syntax.variable null null;
-          punctuation = mkSyntaxEntry syntax.punctuation null null;
+          boolean = mkSyntaxEntry syntaxColors.literal null null;
+          comment = mkSyntaxEntry syntaxColors.comment "italic" null;
+          "comment.doc" = mkSyntaxEntry syntaxColors.comment "italic" null;
+          constant = mkSyntaxEntry syntaxColors.literal null null;
+          constructor = mkSyntaxEntry syntaxColors.type null null;
+          emphasis = mkSyntaxEntry syntaxColors.emphasis "italic" null;
+          "emphasis.strong" = mkSyntaxEntry syntaxColors.emphasis null 700;
+          function = mkSyntaxEntry syntaxColors.function null null;
+          keyword = mkSyntaxEntry syntaxColors.keyword null null;
+          number = mkSyntaxEntry syntaxColors.literal null null;
+          operator = mkSyntaxEntry syntaxColors.operator null null;
+          property = mkSyntaxEntry syntaxColors.variable null null;
+          punctuation = mkSyntaxEntry syntaxColors.punctuation null null;
           "punctuation.bracket" = mkSyntaxEntry (t.render colors.on_surface) null null;
-          "punctuation.delimiter" = mkSyntaxEntry syntax.punctuation null null;
-          "punctuation.list_marker" = mkSyntaxEntry syntax.punctuation null null;
-          "punctuation.special" = mkSyntaxEntry syntax.number null null;
-          string = mkSyntaxEntry syntax.string null null;
-          "string.escape" = mkSyntaxEntry zedStringSpecialSyntax null null;
-          "string.regex" = mkSyntaxEntry zedStringRegexSyntax null null;
-          "string.special" = mkSyntaxEntry zedStringSpecialSyntax null null;
-          "string.special.symbol" = mkSyntaxEntry zedStringSpecialSyntax null null;
-          tag = mkSyntaxEntry syntax.variable null null;
-          "text.literal" = mkSyntaxEntry syntax.string null null;
-          type = mkSyntaxEntry syntax.type null null;
-          variable = mkSyntaxEntry syntax.variable null null;
-          "variable.special" = mkSyntaxEntry syntax.number null null;
-          attribute = mkSyntaxEntry syntax.title null null;
-          embedded = mkSyntaxEntry syntax.string null null;
-          enum = mkSyntaxEntry syntax.type null null;
+          "punctuation.delimiter" = mkSyntaxEntry syntaxColors.punctuation null null;
+          "punctuation.list_marker" = mkSyntaxEntry syntaxColors.punctuation null null;
+          "punctuation.special" = mkSyntaxEntry syntaxColors.number null null;
+          string = mkSyntaxEntry syntaxColors.string null null;
+          "string.escape" = mkSyntaxEntry syntaxColors.stringSpecial null null;
+          "string.regex" = mkSyntaxEntry syntaxColors.stringRegex null null;
+          "string.special" = mkSyntaxEntry syntaxColors.stringSpecial null null;
+          "string.special.symbol" = mkSyntaxEntry syntaxColors.stringSpecial null null;
+          tag = mkSyntaxEntry syntaxColors.variable null null;
+          "text.literal" = mkSyntaxEntry syntaxColors.string null null;
+          type = mkSyntaxEntry syntaxColors.type null null;
+          variable = mkSyntaxEntry syntaxColors.variable null null;
+          "variable.special" = mkSyntaxEntry syntaxColors.number null null;
+          attribute = mkSyntaxEntry syntaxColors.title null null;
+          embedded = mkSyntaxEntry syntaxColors.string null null;
+          enum = mkSyntaxEntry syntaxColors.type null null;
           hint = mkSyntaxEntry (t.render colors.primary) null null;
-          label = mkSyntaxEntry syntax.variable null null;
+          label = mkSyntaxEntry syntaxColors.variable null null;
           lifetime.color = constant.color;
           link_text = mkSyntaxEntry (t.render colors.primary) null null;
-          link_uri = mkSyntaxEntry syntax.link null null;
-          namespace = mkSyntaxEntry syntax.type null null;
-          predictive = mkSyntaxEntry syntax.predictive null null;
-          preproc = mkSyntaxEntry syntax.number null null;
+          link_uri = mkSyntaxEntry syntaxColors.link null null;
+          namespace = mkSyntaxEntry syntaxColors.type null null;
+          predictive = mkSyntaxEntry syntaxColors.predictive null null;
+          preproc = mkSyntaxEntry syntaxColors.number null null;
           primary = mkSyntaxEntry (t.render colors.on_surface) null null;
-          "punctuation.markup" = mkSyntaxEntry syntax.number null null;
-          selector = mkSyntaxEntry syntax.variable null null;
-          "selector.pseudo" = mkSyntaxEntry syntax.number null null;
-          title = mkSyntaxEntry syntax.title null null;
-          variant = mkSyntaxEntry syntax.type null null;
+          "punctuation.markup" = mkSyntaxEntry syntaxColors.number null null;
+          selector = mkSyntaxEntry syntaxColors.variable null null;
+          "selector.pseudo" = mkSyntaxEntry syntaxColors.number null null;
+          title = mkSyntaxEntry syntaxColors.title null null;
+          variant = mkSyntaxEntry syntaxColors.type null null;
         }
         // lib.optionalAttrs (mode == "light") {
-          "keyword.control" = mkSyntaxEntry syntax.keyword null null;
+          "keyword.control" = mkSyntaxEntry syntaxColors.keyword null null;
         };
       };
     };
