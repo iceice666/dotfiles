@@ -29,7 +29,7 @@
       lg = "lazygit";
       zj = "zellij";
       cat = "bat";
-      ccat = "command cat";
+      ccat = "bat -P --style=plain";
       plz = "sudo";
     };
 
