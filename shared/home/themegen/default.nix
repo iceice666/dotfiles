@@ -7,32 +7,36 @@
 }:
 
 let
-  templates = import (dotfiles + /shared/home/themegen/templates) {
-    inherit lib pkgs;
-  };
-  vscodeExtensionManifest = builtins.toFile "themegen-vscode-package.json" (
-    builtins.toJSON {
-      name = "themegen";
-      publisher = "themegen";
-      displayName = "Themegen";
-      version = "0.0.1";
-      engines.vscode = "^1.74.0";
-      categories = [ "Themes" ];
-      contributes.themes = [
-        {
-          label = "Themegen Dark";
-          uiTheme = "vs-dark";
-          path = "./themes/themegen-dark-color-theme.json";
-        }
-        {
-          label = "Themegen Light";
-          uiTheme = "vs";
-          path = "./themes/themegen-light-color-theme.json";
-        }
-      ];
-    }
-    + "\n"
+  templateDir = dotfiles + /shared/home/themegen/templates;
+  templateModules = map (name: import (templateDir + "/${name}") { inherit lib pkgs; }) (
+    builtins.attrNames (
+      lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name && name != "lib.nix") (
+        builtins.readDir templateDir
+      )
+    )
   );
+
+  generatedEntries = lib.concatMap (module: module.generated or [ ]) templateModules;
+  homeFileEntries = lib.concatMap (module: module.homeFiles or [ ]) templateModules;
+
+  hostPlatform =
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      "darwin"
+    else if pkgs.stdenv.hostPlatform.isLinux then
+      "linux"
+    else
+      pkgs.stdenv.hostPlatform.system;
+
+  supportsPlatform = entry: entry.platforms == [ ] || builtins.elem hostPlatform entry.platforms;
+
+  renderArgs = lib.concatMapStringsSep " " (
+    entry: "--render \"${entry.template}=$out/${entry.output}\""
+  ) (lib.filter (entry: entry.type == "render") generatedEntries);
+
+  copyCommands = lib.concatMapStringsSep "\n" (entry: ''
+    install -Dm644 "${entry.source}" "$out/${entry.output}"
+  '') (lib.filter (entry: entry.type == "copy") generatedEntries);
+
   generated =
     pkgs.runCommandLocal "themegen-themes"
       {
@@ -44,37 +48,22 @@ let
           --scheme tonal-spot \
           --base16-contrast 0.3 \
           --base16-mode follow-palette \
-          --render "${templates.equibop}=$out/equibop/themes/themegen-midnight.theme.css" \
-          --render "${templates.ghosttyDark}=$out/ghostty/themes/themegen-dark" \
-          --render "${templates.ghosttyLight}=$out/ghostty/themes/themegen-light" \
-          --render "${templates.opencodeColors}=$out/opencode/themes/themegen.json" \
-          --render "${templates.vscodeDark}=$out/vscode/extensions/themegen.themegen/themes/themegen-dark-color-theme.json" \
-          --render "${templates.vscodeLight}=$out/vscode/extensions/themegen.themegen/themes/themegen-light-color-theme.json" \
-          --render "${templates.zedThemes}=$out/zed/themes/themegen.json" \
-          --render "${templates.starship}=$out/starship.toml" \
-          --render "${templates.terminalSequences}=$out/fish/conf.d/themegen-terminal-sequences.fish"
+          ${renderArgs}
 
-        install -Dm644 "${vscodeExtensionManifest}" "$out/vscode/extensions/themegen.themegen/package.json"
+        ${copyCommands}
       '';
+
+  homeFiles = builtins.listToAttrs (
+    map (entry: {
+      name = entry.target;
+      value.source = "${generated}/${entry.source}";
+    }) (lib.filter supportsPlatform homeFileEntries)
+  );
 in
 {
   home.packages = [ pkgs.themegen ];
 
-  home.file = {
-    ".config/fish/conf.d/themegen-terminal-sequences.fish".source =
-      "${generated}/fish/conf.d/themegen-terminal-sequences.fish";
-    ".config/ghostty/themes/themegen-dark".source = "${generated}/ghostty/themes/themegen-dark";
-    ".config/ghostty/themes/themegen-light".source = "${generated}/ghostty/themes/themegen-light";
-    ".config/opencode/themes/themegen.json".source = "${generated}/opencode/themes/themegen.json";
-    ".config/starship.toml".source = "${generated}/starship.toml";
-    ".vscode-oss/extensions/themegen.themegen".source =
-      "${generated}/vscode/extensions/themegen.themegen";
-    ".config/zed/themes/themegen.json".source = "${generated}/zed/themes/themegen.json";
-  }
-  // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-    "Library/Application Support/equibop/themes/themegen-midnight.theme.css".source =
-      "${generated}/equibop/themes/themegen-midnight.theme.css";
-  };
+  home.file = homeFiles;
 
   programs.opencode.settings.theme = "themegen";
 }

@@ -2,6 +2,7 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+repo_root := justfile_directory()
 m3air_target := ".#iceice666@m3air"
 framework_target := ".#iceice666@framework"
 
@@ -96,6 +97,39 @@ check:
 # Format all files via treefmt-nix
 fmt:
     nix fmt
+
+# Preview the current or specified wallpaper palette
+themegen-preview image='':
+    #!/usr/bin/env bash
+    image='{{ image }}'
+
+    if [[ -z "$image" ]]; then
+        host=$(hostname | tr '[:upper:]' '[:lower:]')
+
+        case "$host" in
+            m3air)
+                image='{{ repo_root }}/assets/win_chan.jpg'
+                ;;
+            framework)
+                image='{{ repo_root }}/assets/mzen.png'
+                ;;
+            *)
+                echo "Unknown host '$host'. Pass an explicit image: just themegen-preview path/to/image" >&2
+                exit 1
+                ;;
+        esac
+    fi
+
+    if [[ ! -f "$image" ]]; then
+        echo "Wallpaper not found: $image" >&2
+        exit 1
+    fi
+
+    themegen palette \
+        --image "$image" \
+        --scheme tonal-spot \
+        --base16-contrast 0.3 \
+        --base16-mode follow-palette
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 

@@ -43,6 +43,7 @@ just build           # dry-build current host
 just switch          # apply configuration to current host
 just fmt             # format all files
 just check           # nix flake check --all-systems
+just themegen-preview  # preview the current host wallpaper palette
 ```
 
 Host-specific:

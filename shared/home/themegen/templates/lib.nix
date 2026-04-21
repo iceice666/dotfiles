@@ -9,9 +9,37 @@ let
 
   concatLines = lines: concatStringsSep "\n" lines + "\n";
 
-  render = value: "{{${value}}}";
+  placeholder = value: "{{${value}}}";
 
-  renderRaw = value: value;
+  mkCopiedFile =
+    {
+      source,
+      output,
+    }:
+    {
+      inherit output source;
+      type = "copy";
+    };
+
+  mkHomeFile =
+    {
+      target,
+      source,
+      platforms ? [ ],
+    }:
+    {
+      inherit platforms source target;
+    };
+
+  mkRenderedFile =
+    {
+      template,
+      output,
+    }:
+    {
+      inherit output template;
+      type = "render";
+    };
 
   call = name: args: "${name}(${concatStringsSep ", " (map toString args)})";
 
@@ -20,9 +48,9 @@ let
     name: args: value:
     appendStep value (call name args);
 
-  run = value: steps: lib.pipe value steps;
-  r = value: steps: render (run value steps);
-  raw = value: steps: run value steps;
+  applyPipeline = value: steps: lib.pipe value steps;
+  renderPipeline = value: steps: placeholder (applyPipeline value steps);
+  templateExpression = value: steps: applyPipeline value steps;
 
   chroma = amount: appendCall "chroma" [ amount ];
   lightness = amount: appendCall "lightness" [ amount ];
@@ -131,23 +159,23 @@ let
   syntax = mkModeRefs "syntax" syntaxTokens;
 
   seed = "seed.color";
-  seededLightBackground =
+  lightBackgroundExpression =
     value:
-    raw value [
+    templateExpression value [
       toHct
-      (mix (run seed [ toHct ]) 0.08)
+      (mix (applyPipeline seed [ toHct ]) 0.08)
       toHex
     ];
 
-  blend =
+  renderMix =
     left: right: amount:
-    r left [
+    renderPipeline left [
       (mix right amount)
       toHex
     ];
-  alpha =
+  renderAlpha =
     value: amount:
-    r value [
+    renderPipeline value [
       (withAlpha amount)
       toHex
     ];
@@ -158,9 +186,9 @@ let
       colors = color.${mode};
       base16Colors = base16.${mode};
 
-      renderColor = value: render value;
-      renderBase = value: render value;
-      mixBase16 = value: blend value colors.surface_container_low 0.35;
+      renderColor = value: placeholder value;
+      renderBase = value: placeholder value;
+      mixBase16 = value: renderMix value colors.surface_container_low 0.35;
 
       ansi = rec {
         black = renderColor (if mode == "dark" then colors.surface_dim else colors.on_surface);
@@ -188,7 +216,7 @@ let
     rec {
       background =
         if mode == "light" then
-          render (seededLightBackground colors.surface_container_low)
+          placeholder (lightBackgroundExpression colors.surface_container_low)
         else
           renderColor colors.surface_container_low;
       brightForeground = renderColor colors.on_surface;
@@ -251,26 +279,28 @@ let
 in
 {
   inherit
-    alpha
+    applyPipeline
     base16
-    blend
     chroma
     color
     concatLines
     flattenPairs
     lightness
+    lightBackgroundExpression
     mergeAll
     mix
-    r
+    mkCopiedFile
+    mkHomeFile
+    mkRenderedFile
+    placeholder
     readable
-    render
-    renderRaw
-    raw
+    renderAlpha
+    renderMix
+    renderPipeline
     rotate
-    run
     seed
-    seededLightBackground
     syntax
+    templateExpression
     terminal
     toHct
     toHex

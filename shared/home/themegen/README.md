@@ -7,9 +7,9 @@ The current setup keeps the heavy lifting in Rust and uses Nix to generate the t
 ## Pipeline
 
 1. Each host chooses a wallpaper and passes it as `desktopWallpaper` through `_module.args`.
-2. `shared/home/themegen/default.nix` imports the Nix template generators from `shared/home/themegen/templates/default.nix`.
-3. That module runs `themegen render` with the wallpaper, `tonal-spot`, `--base16-contrast 0.3`, and `--base16-mode follow-palette`.
-4. The rendered outputs are installed into Home Manager as config files for Ghostty, fish, Opencode, starship, and Zed.
+2. `shared/home/themegen/default.nix` auto-discovers every module in `shared/home/themegen/templates/` except `lib.nix`.
+3. Each template module declares the files it renders or copies and the `home.file` targets that should receive them.
+4. The shared module runs `themegen render` with the wallpaper, `tonal-spot`, `--base16-contrast 0.3`, and `--base16-mode follow-palette`, then installs the generated outputs into Home Manager.
 
 Relevant entrypoints:
 
@@ -21,8 +21,7 @@ Relevant entrypoints:
 ## File Map
 
 - `shared/home/themegen/default.nix`: build-time entrypoint that renders and installs all generated theme files.
-- `shared/home/themegen/templates/default.nix`: exports the app-specific generated template sources.
-- `shared/home/themegen/templates/lib.nix`: shared helpers for placeholder rendering, color pipelines, syntax colors, and terminal palettes.
+- `shared/home/themegen/templates/lib.nix`: shared helpers for template placeholders, color pipelines, syntax colors, terminal palettes, and module metadata constructors.
 - `shared/home/themegen/templates/ghostty.nix`: Ghostty dark and light theme sources.
 - `shared/home/themegen/templates/equibop.nix`: Equibop Midnight CSS theme with automatic Discord light and dark mode switching.
 - `shared/home/themegen/templates/terminal-sequences.nix`: fish startup script that applies the terminal palette and follows desktop dark/light mode.
@@ -42,6 +41,7 @@ Change shared terminal or syntax semantics:
 - Edit `shared/home/themegen/templates/lib.nix`.
 - Use `terminal` for ANSI and surface mappings shared by Ghostty, fish, and Zed.
 - Use `syntax` for reusable syntax families shared by Zed and Opencode.
+- Prefer the descriptive helper names when authoring templates: `placeholder`, `renderPipeline`, `templateExpression`, `renderMix`, and `renderAlpha`.
 
 Change one app only:
 
@@ -50,10 +50,48 @@ Change one app only:
 
 Add a new themed app:
 
-1. Add a new generator module under `shared/home/themegen/templates/`.
-2. Export it from `shared/home/themegen/templates/default.nix`.
-3. Add a new `--render` target in `shared/home/themegen/default.nix`.
-4. Wire the generated output into `home.file` or the relevant program module.
+1. Add a new module under `shared/home/themegen/templates/`.
+2. Return a `generated` list describing rendered or copied files.
+3. Return a `homeFiles` list describing where those generated files should be installed.
+
+Minimal shape:
+
+```nix
+{ lib, pkgs }:
+
+let
+  theme = import ./lib.nix { inherit lib; };
+  myTheme = pkgs.writeText "themegen-my-app" ''
+    accent = ${theme.placeholder theme.color.dark.primary}
+  '';
+in
+{
+  generated = [
+    (theme.mkRenderedFile {
+      template = myTheme;
+      output = "my-app/theme.conf";
+    })
+  ];
+
+  homeFiles = [
+    (theme.mkHomeFile {
+      target = ".config/my-app/theme.conf";
+      source = "my-app/theme.conf";
+    })
+  ];
+}
+```
+
+Nothing else needs updating. New template modules are discovered automatically.
+
+Preview a wallpaper quickly:
+
+```sh
+just themegen-preview
+just themegen-preview ./assets/another-wallpaper.png
+```
+
+Without an argument, the recipe previews the current host wallpaper.
 
 ## Validation
 
@@ -68,7 +106,7 @@ Useful commands:
 ```sh
 just fmt
 sudo darwin-rebuild build --flake .#iceice666@m3air
-nix build --dry-run '.#homeConfigurations."iceice666@framework".activationPackage'
+home-manager build --flake .#iceice666@framework
 ```
 
 If you change `pkgs/themegen/` or flake wiring too, also run:

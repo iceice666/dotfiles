@@ -254,7 +254,7 @@ Canonical module shape:
 - `common/home/` is imported by all hosts.
 - `common/home/opencode/` uses `sensitive/shared/openrouter.yaml`.
 - `shared/` is opt-in and should stay reusable across hosts.
-- `shared/home/themegen/` supports wallpaper-driven theme generation. Templates include a VSCode theme (`vscode.nix`) that renders `vscodeDark`/`vscodeLight` and installs a generated extension manifest into `.vscode-oss/extensions/`.
+- `shared/home/themegen/` supports wallpaper-driven theme generation. Template modules under `shared/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is standalone Home Manager on Void Linux. It warns about packages from `common/configuration/packages.nix` that cannot come from `environment.systemPackages`.
 - `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
