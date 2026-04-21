@@ -36,10 +36,187 @@
         light = "Themegen Light";
         dark = "Themegen Dark";
       };
+      semantic_tokens = "combined";
       icon_theme = {
         mode = "system";
         light = "Material Icon Theme";
         dark = "Material Icon Theme";
+      };
+
+      global_lsp_settings = {
+        semantic_token_rules = [
+          {
+            token_type = "comment";
+            token_modifiers = [ "documentation" ];
+            style = [
+              "comment.doc"
+              "comment"
+            ];
+          }
+          {
+            token_type = "variable";
+            token_modifiers = [ "constant" ];
+            style = [
+              "constant"
+              "variable"
+            ];
+          }
+          {
+            token_type = "variable";
+            token_modifiers = [ "readonly" ];
+            style = [
+              "constant"
+              "variable"
+            ];
+          }
+          {
+            token_type = "property";
+            token_modifiers = [ "readonly" ];
+            style = [
+              "constant"
+              "property"
+            ];
+          }
+          {
+            token_type = "function";
+            token_modifiers = [ "defaultLibrary" ];
+            style = [ "function" ];
+          }
+          {
+            token_type = "method";
+            token_modifiers = [ "defaultLibrary" ];
+            style = [ "function" ];
+          }
+          {
+            token_type = "type";
+            token_modifiers = [ "defaultLibrary" ];
+            style = [ "type" ];
+          }
+          {
+            token_type = "variable";
+            token_modifiers = [ "defaultLibrary" ];
+            style = [ "variable" ];
+          }
+          {
+            token_type = "class";
+            style = [ "type" ];
+          }
+          {
+            token_type = "comment";
+            style = [ "comment" ];
+          }
+          {
+            token_type = "decorator";
+            style = [
+              "preproc"
+              "attribute"
+            ];
+          }
+          {
+            token_type = "enum";
+            style = [
+              "enum"
+              "type"
+            ];
+          }
+          {
+            token_type = "enumMember";
+            style = [
+              "constant"
+              "enum"
+            ];
+          }
+          {
+            token_type = "event";
+            style = [
+              "label"
+              "variable"
+            ];
+          }
+          {
+            token_type = "function";
+            style = [ "function" ];
+          }
+          {
+            token_type = "interface";
+            style = [ "type" ];
+          }
+          {
+            token_type = "keyword";
+            style = [ "keyword" ];
+          }
+          {
+            token_type = "label";
+            style = [
+              "label"
+              "variable"
+            ];
+          }
+          {
+            token_type = "macro";
+            style = [ "preproc" ];
+          }
+          {
+            token_type = "method";
+            style = [ "function" ];
+          }
+          {
+            token_type = "namespace";
+            style = [
+              "namespace"
+              "type"
+            ];
+          }
+          {
+            token_type = "number";
+            style = [
+              "number"
+              "constant"
+            ];
+          }
+          {
+            token_type = "operator";
+            style = [ "operator" ];
+          }
+          {
+            token_type = "parameter";
+            style = [ "variable" ];
+          }
+          {
+            token_type = "property";
+            style = [
+              "property"
+              "variable"
+            ];
+          }
+          {
+            token_type = "regexp";
+            style = [
+              "string.regex"
+              "string"
+            ];
+          }
+          {
+            token_type = "string";
+            style = [ "string" ];
+          }
+          {
+            token_type = "struct";
+            style = [ "type" ];
+          }
+          {
+            token_type = "type";
+            style = [ "type" ];
+          }
+          {
+            token_type = "typeParameter";
+            style = [ "type" ];
+          }
+          {
+            token_type = "variable";
+            style = [ "variable" ];
+          }
+        ];
       };
 
       agent = {

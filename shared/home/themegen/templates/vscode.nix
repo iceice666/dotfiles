@@ -340,23 +340,36 @@ let
         comment = (mkSemanticColor syntax.comment) // {
           italic = true;
         };
+        "comment.documentation" = (mkSemanticColor syntax.comment) // {
+          italic = true;
+        };
         decorator = mkSemanticColor syntax.number;
         enum = mkSemanticColor syntax.type;
         enumMember = mkSemanticColor syntax.number;
+        event = mkSemanticColor syntax.variable;
         function = mkSemanticColor syntax.function;
+        "function.defaultLibrary" = mkSemanticColor syntax.function;
         interface = mkSemanticColor syntax.type;
         keyword = mkSemanticColor syntax.keyword;
+        label = mkSemanticColor syntax.variable;
         macro = mkSemanticColor syntax.number;
         method = mkSemanticColor syntax.function;
+        "method.defaultLibrary" = mkSemanticColor syntax.function;
         namespace = mkSemanticColor syntax.type;
         number = mkSemanticColor syntax.number;
+        operator = mkSemanticColor syntax.operator;
         parameter = mkSemanticColor syntax.variable;
         property = mkSemanticColor syntax.title;
+        "property.readonly" = mkSemanticColor syntax.number;
         regexp = mkSemanticColor syntax.stringRegex;
         string = mkSemanticColor syntax.string;
+        struct = mkSemanticColor syntax.type;
         type = mkSemanticColor syntax.type;
+        "type.defaultLibrary" = mkSemanticColor syntax.type;
         typeParameter = mkSemanticColor syntax.type;
         variable = mkSemanticColor syntax.variable;
+        "variable.defaultLibrary" = mkSemanticColor syntax.variable;
+        "variable.readonly" = mkSemanticColor syntax.number;
       };
     };
 in
