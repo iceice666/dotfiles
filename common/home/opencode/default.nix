@@ -15,6 +15,7 @@
     enable = true;
     package = unstablePkgs.opencode;
     settings = {
+      autoupdate = false;
       plugin = [
         "@tarquinen/opencode-dcp@latest"
         "opencode-gemini-auth@latest"
