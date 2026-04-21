@@ -243,6 +243,7 @@
             "rainbow-csv"
             "material-icon-theme"
             "fish"
+            "just"
           ]
       );
 
