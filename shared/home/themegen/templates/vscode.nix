@@ -21,7 +21,7 @@ let
     let
       colors = t.color.${mode};
       base16Colors = t.base16.${mode};
-      syntax = t.syntax.${mode};
+      syntax = lib.mapAttrs (_: value: t.render value) t.syntax.${mode};
       terminal = t.terminal mode;
 
       background =
@@ -48,7 +48,7 @@ let
         "textBlockQuote.background" = alpha colors.surface_variant 60;
         "textBlockQuote.border" = alpha colors.outline_variant 80;
         "textCodeBlock.background" = background colors.surface_container_high;
-        "textLink.foreground" = syntax.link;
+        "textLink.foreground" = t.render colors.primary;
         "textLink.activeForeground" = t.render colors.primary;
         "textPreformat.foreground" = syntax.string;
         "textSeparator.foreground" = alpha colors.outline_variant 60;
@@ -173,7 +173,7 @@ let
         "editorInfo.foreground" = t.render colors.primary;
         "editorLineNumber.activeForeground" = t.render colors.primary;
         "editorLineNumber.foreground" = t.render colors.on_surface_variant;
-        "editorLink.activeForeground" = syntax.link;
+        "editorLink.activeForeground" = t.render colors.primary;
         "editorRuler.foreground" = alpha colors.outline_variant 50;
         "editorStickyScroll.background" = background colors.surface_container;
         "editorStickyScroll.border" = alpha colors.outline_variant 40;
