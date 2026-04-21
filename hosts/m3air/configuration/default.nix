@@ -30,6 +30,7 @@
       cleanup = "zap";
     };
     taps = [
+      "pear-devs/pear"
     ];
     brews = [ ];
     casks = [
