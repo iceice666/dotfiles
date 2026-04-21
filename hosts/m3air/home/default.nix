@@ -18,6 +18,7 @@ in
     (dotfiles + /shared/home/zed.nix)
     (dotfiles + /shared/home/themegen)
     (dotfiles + /shared/home/vscodium.nix)
+    ./appearance.nix
     ./default-apps.nix
     ./karabiner.nix
     ./wallpaper.nix
