@@ -23,7 +23,6 @@ with pkgs;
   nil
   nixfmt
   tldr
-  cloudflared
   zulu21
   age
   ffmpeg
