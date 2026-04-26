@@ -39,8 +39,8 @@
       semantic_tokens = "combined";
       icon_theme = {
         mode = "system";
-        light = "Material Icon Theme";
-        dark = "Material Icon Theme";
+        light = "Colored Zed Icons Theme Light";
+        dark = "Colored Zed Icons Theme Dark";
       };
 
       global_lsp_settings = {
@@ -241,7 +241,7 @@
             "make"
             "zig"
             "rainbow-csv"
-            "material-icon-theme"
+            "colored-zed-icons-theme"
             "fish"
             "just"
           ]
