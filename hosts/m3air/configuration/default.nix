@@ -43,6 +43,7 @@
       "obs" # OBS Studio (not available in nixpkgs for aarch64-darwin)
       "pear-devs/pear/pear-desktop"
       "zen"
+      "ungoogled-chromium"
       "pearcleaner"
     ];
   };
