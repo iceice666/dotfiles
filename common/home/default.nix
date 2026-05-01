@@ -48,7 +48,6 @@
     pkgs.python3
     pkgs.uv
     pkgs.yq
-    pkgs.zellij
     unstablePkgs.sops
   ];
 
