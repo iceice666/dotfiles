@@ -21,11 +21,8 @@ common/              # baseline shared across all hosts
     default.nix
     user.nix
     fish/            # fish config + auto-imported function modules (13 functions)
-    opencode/        # opencode config with OpenRouter secret + skill-creator skill
-
-shared/              # optional modules used by some hosts
-  home/              # reusable Home Manager modules
     ghostty.nix      # shared Ghostty config
+    opencode/        # opencode config with OpenRouter secret + skill-creator skill
     themegen/        # wallpaper-driven theme generation and templates
       templates/     # ghostty, equibop, opencode, starship, zed, vscode, terminal-sequences
     vscodium.nix     # VSCodium config + marketplace wiring
@@ -51,7 +48,7 @@ sensitive/           # encrypted secret and certificate material managed by sops
   shared/            # cross-host secrets: openrouter.yaml
 ```
 
-Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
+Composition is structural: `common/ -> hosts/<name>/`.
 
 ## Flake Details
 
@@ -130,7 +127,6 @@ Which build to run for a given change:
 | `hosts/framework/configuration/**` | placeholder only; no active flake target |
 | `common/configuration/**` | `m3air` |
 | `common/home/**` | `m3air` and `framework` |
-| `shared/home/**` | `m3air` and `framework` (current importers) |
 | `pkgs/<name>` | dry-build any host that uses the package |
 
 Overlay packages have no standalone `nix build` target; validate them through their host build.
@@ -175,7 +171,7 @@ None are present. `AGENTS.md` is the canonical instruction file in this repo.
 
 - Keep `README.md` concise and operator-facing.
 - Keep detailed repo guidance in `AGENTS.md`.
-- Put subsystem-specific detail close to the code, such as `shared/home/themegen/README.md`.
+- Put subsystem-specific detail close to the code, such as `common/home/themegen/README.md`.
 
 ## Code Style
 
@@ -252,8 +248,7 @@ Canonical module shape:
 - `common/configuration/` is only imported by `m3air`.
 - `common/home/` is imported by all hosts.
 - `common/home/opencode/` uses `sensitive/shared/openrouter.yaml`.
-- `shared/` is opt-in and should stay reusable across hosts.
-- `shared/home/themegen/` supports wallpaper-driven theme generation. Template modules under `shared/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
+- `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is standalone Home Manager on Void Linux. It warns about packages from `common/configuration/packages.nix` that cannot come from `environment.systemPackages`.
 - `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
@@ -264,10 +259,10 @@ Canonical module shape:
 ## Change Strategy for Agents
 
 - Make the smallest structural change that matches existing patterns.
-- Prefer extending an existing host/shared/common module over adding parallel abstractions.
+- Prefer extending an existing host/common module over adding parallel abstractions.
 - Keep `README.md` concise; put detailed operational guidance in `AGENTS.md` or focused sub-docs.
 - Update docs when repo structure, commands, or host wiring changes.
 - If a change affects runtime behavior, validate the narrowest relevant host or package build.
 - For docs-only changes, a careful reread and consistency pass is usually enough.
 - If you touch formatting-sensitive files, run `just fmt`.
-- If you touch flake wiring or shared modules, run `just check`.
+- If you touch flake wiring or common modules, run `just check`.

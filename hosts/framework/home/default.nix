@@ -16,10 +16,6 @@ in
 {
   imports = [
     (dotfiles + /common/home)
-    (dotfiles + /shared/home/ghostty.nix)
-    (dotfiles + /shared/home/zed.nix)
-    (dotfiles + /shared/home/themegen)
-    (dotfiles + /shared/home/vscodium.nix)
   ];
 
   _module.args = {

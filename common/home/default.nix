@@ -9,8 +9,12 @@
 {
   imports = [
     ./fish
+    ./ghostty.nix
     ./opencode
+    ./themegen
     ./user.nix
+    ./vscodium.nix
+    ./zed.nix
   ];
 
   programs.git = {

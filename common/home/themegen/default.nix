@@ -7,7 +7,7 @@
 }:
 
 let
-  templateDir = dotfiles + /shared/home/themegen/templates;
+  templateDir = dotfiles + /common/home/themegen/templates;
   templateModules = map (name: import (templateDir + "/${name}") { inherit lib pkgs; }) (
     builtins.attrNames (
       lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name && name != "lib.nix") (
