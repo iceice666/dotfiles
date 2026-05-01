@@ -44,7 +44,6 @@
 
     interactiveShellInit = ''
       # Environment variables
-      set -gx ProjectDir ~/Project
       set -gx EDITOR nvim
 
       # # ZVM

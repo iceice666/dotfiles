@@ -20,7 +20,7 @@ common/              # baseline shared across all hosts
   home/              # shared Home Manager baseline (imported by all hosts)
     default.nix
     user.nix
-    fish/            # fish config + auto-imported function modules (13 functions)
+    fish/            # fish config + auto-imported function modules (12 functions)
     ghostty.nix      # shared Ghostty config
     opencode/        # opencode config with OpenRouter secret + skill-creator skill
     themegen/        # wallpaper-driven theme generation and templates
