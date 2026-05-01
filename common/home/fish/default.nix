@@ -64,6 +64,7 @@
       # fish_add_path -p $ZVM_INSTALL/
 
       fish_add_path -p ~/.bun/bin
+      fish_add_path -p ~/.npm-global/bin
 
 
       # Better directory colors for ls/eza

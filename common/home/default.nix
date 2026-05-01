@@ -51,6 +51,12 @@
     unstablePkgs.sops
   ];
 
+  # Keep npm global installs out of the read-only Nix store. Pi's
+  # package installer uses npm for npm: Pi packages.
+  home.file.".npmrc".text = ''
+    prefix=''${HOME}/.npm-global
+  '';
+
   home.file.".config/zellij/config.kdl".text = ''
     default_shell "${pkgs.fish}/bin/fish"
     mouse_mode true
