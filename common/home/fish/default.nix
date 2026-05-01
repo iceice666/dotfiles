@@ -55,7 +55,6 @@
 
       # # PATH
       # fish_add_path -p ~/go/bin
-      # fish_add_path -p $BUN_INSTALL/bin
       # fish_add_path -p ~/.cargo/bin
       # fish_add_path -p $HOME/.local/bin
       # fish_add_path -p ~/bin
@@ -63,6 +62,9 @@
       # fish_add_path -p $HOME/.cabal/bin
       # fish_add_path -p $HOME/.zvm/bin
       # fish_add_path -p $ZVM_INSTALL/
+
+      fish_add_path -p ~/.bun/bin
+
 
       # Better directory colors for ls/eza
       if type -q dircolors
