@@ -47,11 +47,6 @@
       set -gx ProjectDir ~/Project
       set -gx EDITOR nvim
 
-      # Mise activation
-      if type -q mise
-          mise activate fish | source
-      end
-
       # # ZVM
       # set -gx ZVM_INSTALL "$HOME/.zvm/self"
 

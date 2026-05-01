@@ -321,7 +321,6 @@
 
         zls.binary = {
           ignore_system_version = true;
-          path = "${if pkgs.stdenv.hostPlatform.isLinux then pkgs.mise else unstablePkgs.mise-bin}/bin/mise";
           arguments = [
             "x"
             "--"

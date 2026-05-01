@@ -43,7 +43,6 @@
 
   home.packages = [
     unstablePkgs.bun
-    (if pkgs.stdenv.hostPlatform.isLinux then pkgs.mise else unstablePkgs.mise-bin)
     pkgs.gh
     pkgs.git-lfs
     pkgs.python3
