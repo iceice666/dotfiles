@@ -45,6 +45,7 @@ pkgs/                # overlay packages
   mise-bin/          # mise binary
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
+  zed-bin/           # Zed official prebuilt releases
   youtube-rss-proxy/ # EMPTY - not wired into the overlay or any host
 
 sensitive/           # encrypted secret and certificate material managed by sops
@@ -65,7 +66,6 @@ Composition is structural: `common/ -> shared/ -> hosts/<name>/`.
 | `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
-
 `self.submodules = true` is set so Git submodules are fetched.
 
 ### Outputs
@@ -80,7 +80,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `mise-bin`, `themegen`, `utiluti`.
+Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `mise-bin`, `themegen`, `utiluti`, `zed-bin`.
 
 Additionally, `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
 
@@ -233,7 +233,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `default-browser`, `equibop-bin`, `mise-bin`, `themegen`, `utiluti`.
+- Current overlay packages: `default-browser`, `equibop-bin`, `mise-bin`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

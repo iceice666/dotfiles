@@ -48,6 +48,7 @@
         mise-bin = final.callPackage ./pkgs/mise-bin { };
         themegen = final.callPackage ./pkgs/themegen { };
         utiluti = final.callPackage ./pkgs/utiluti { };
+        zed-bin = final.callPackage ./pkgs/zed-bin { };
         direnv = prev.direnv.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             for makefile in Makefile GNUmakefile; do
