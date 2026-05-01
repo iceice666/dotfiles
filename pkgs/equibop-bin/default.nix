@@ -34,29 +34,29 @@
 
 let
   pname = "equibop-bin";
-  version = "3.1.9";
+  version = "3.2.0";
 
   srcs = {
     "aarch64-darwin" = fetchzip {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/Equibop-${version}-universal-mac.zip";
-      hash = "sha256-2DAM5sb4tGn7BlgNF5AtZ1o0uiBqb0h+GPDuXUKr4MY=";
+      hash = "sha256-XqVTNHT3Ot9sOvFIbgMAm4GHdZTd1diX2F5YC/7x5Oc=";
       stripRoot = false;
     };
 
     "x86_64-darwin" = fetchzip {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/Equibop-${version}-universal-mac.zip";
-      hash = "sha256-2DAM5sb4tGn7BlgNF5AtZ1o0uiBqb0h+GPDuXUKr4MY=";
+      hash = "sha256-XqVTNHT3Ot9sOvFIbgMAm4GHdZTd1diX2F5YC/7x5Oc=";
       stripRoot = false;
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/equibop-${version}.tar.gz";
-      hash = "sha256-40SUavhqhcYLxOfMnvv8OsP+58QWNLzhdEu0GmwLRp8=";
+      hash = "sha256-/UyIGRfNjYGpwIjNJhmVisq0RThEdQZ5Dj5aLP+U9ww=";
     };
 
     "aarch64-linux" = fetchurl {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/equibop-${version}-arm64.tar.gz";
-      hash = "sha256-1suu4k9tCeeRfaMaw3Q+WNL17nxaJkIGodac1uhK1nU=";
+      hash = "sha256-cndZGf0TPRLYBbGAqHuuqUFGzJ4NeUqp2RfLmBp/7F8=";
     };
   };
 
