@@ -1,5 +1,14 @@
 { pkgs, unstablePkgs, ... }:
 
+let
+  zlsFromFlake = pkgs.writeShellApplication {
+    name = "zed-zls";
+    runtimeInputs = [ pkgs.nix ];
+    text = ''
+      exec nix develop --command zls "$@"
+    '';
+  };
+in
 {
   programs.zed-editor = {
     enable = true;
@@ -320,12 +329,8 @@
         };
 
         zls.binary = {
+          path = "${zlsFromFlake}/bin/zed-zls";
           ignore_system_version = true;
-          arguments = [
-            "x"
-            "--"
-            "zls"
-          ];
         };
       };
 
