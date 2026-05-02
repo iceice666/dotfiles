@@ -374,6 +374,23 @@ let
         variable = mkSemanticColor syntax.variable;
         "variable.defaultLibrary" = mkSemanticColor syntax.variable;
         "variable.readonly" = mkSemanticColor syntax.number;
+        "*.unsafe" = mkSemanticColor (theme.placeholder colors.error);
+        "*.mutable" = mkSemanticColor syntax.variable // {
+          underline = true;
+        };
+        "method.consuming" = mkSemanticColor syntax.function // {
+          italic = true;
+        };
+        "variable.consuming" = mkSemanticColor syntax.variable // {
+          strikethrough = true;
+        };
+        "parameter.consuming" = mkSemanticColor syntax.variable // {
+          strikethrough = true;
+        };
+        lifetime = mkSemanticColor syntax.number;
+        builtinAttribute = mkSemanticColor syntax.number;
+        attributeBracket = mkSemanticColor syntax.number;
+        deriveHelper = mkSemanticColor syntax.number;
       };
     };
 

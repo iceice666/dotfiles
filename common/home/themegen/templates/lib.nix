@@ -134,6 +134,15 @@ let
     "title"
     "type"
     "variable"
+    "lifetime"
+    "label"
+    "macro"
+  ];
+
+  rustTokens = [
+    "unsafe"
+    "mutable"
+    "consuming"
   ];
 
   mkRefs =
@@ -157,6 +166,7 @@ let
   color = mkModeRefs "color" colorTokens;
   base16 = mkModeRefs "base16" base16Tokens;
   syntax = mkModeRefs "syntax" syntaxTokens;
+  rust = mkRefs "syntax.rust" rustTokens;
 
   seed = "seed.color";
   lightBackgroundExpression =
@@ -291,6 +301,7 @@ in
     mix
     mkCopiedFile
     mkHomeFile
+    mkRefs
     mkRenderedFile
     placeholder
     readable
@@ -298,6 +309,7 @@ in
     renderMix
     renderPipeline
     rotate
+    rust
     seed
     syntax
     templateExpression

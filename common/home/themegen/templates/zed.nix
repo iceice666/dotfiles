@@ -260,8 +260,12 @@ let
           title = mkSyntaxEntry syntaxColors.title null null;
           variant = mkSyntaxEntry syntaxColors.type null null;
         }
-        // lib.optionalAttrs (mode == "light") {
-          "keyword.control" = mkSyntaxEntry syntaxColors.keyword null null;
+        // lib.optionalAttrs (mode == "dark") {
+          "*.unsafe" = mkSyntaxEntry (theme.placeholder colors.error) null null;
+          "*.mutable" = mkSyntaxEntry syntaxColors.variable null "underline";
+          "method.consuming" = mkSyntaxEntry syntaxColors.function "italic" null;
+          "variable.consuming" = mkSyntaxEntry syntaxColors.variable "strikethrough" null;
+          "parameter.consuming" = mkSyntaxEntry syntaxColors.variable "strikethrough" null;
         };
       };
     };
