@@ -248,6 +248,7 @@ in
             "toml"
             "haskell"
             "make"
+            "neocmake"
             "zig"
             "rainbow-csv"
             "colored-zed-icons-theme"
