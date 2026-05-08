@@ -5,7 +5,6 @@
   ];
 
   environment.systemPackages = (import ./packages.nix { inherit pkgs; }) ++ [
-    unstablePkgs.codex
     unstablePkgs.agent-browser
   ];
 

@@ -38,6 +38,7 @@
       "android-commandlinetools" # sdkmanager, avdmanager, etc.
       "android-ndk" # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
       "stats"
+      "codex"
       "snipaste"
       "karabiner-elements"
       "obs" # OBS Studio (not available in nixpkgs for aarch64-darwin)
