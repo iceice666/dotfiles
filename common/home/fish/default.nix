@@ -44,6 +44,7 @@
 
     interactiveShellInit = ''
       # Environment variables
+      set -e NO_COLOR
       set -gx EDITOR nvim
 
       # # ZVM
