@@ -41,7 +41,6 @@ pkgs/                # overlay packages
   equibop-bin/       # Equibop binary
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
-  zed-bin/           # Zed official prebuilt releases
   youtube-rss-proxy/ # EMPTY - not wired into the overlay or any host
 
 sensitive/           # encrypted secret and certificate material managed by sops
@@ -76,7 +75,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `themegen`, `utiluti`.
 
 Additionally, `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
 
@@ -228,7 +227,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `default-browser`, `equibop-bin`, `themegen`, `utiluti`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

@@ -12,7 +12,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    package = pkgs.zed-bin;
+    package = unstablePkgs.zed-editor;
     extraPackages = with pkgs; [
       nil
       nixfmt
