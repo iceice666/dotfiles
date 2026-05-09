@@ -64,6 +64,7 @@ in
 
     # macOS-specific PATH
     fish_add_path -p $ANDROID_HOME/cmdline-tools/latest/bin
+    fish_add_path -p $ANDROID_HOME/emulator
     fish_add_path -p $ANDROID_HOME/platform-tools
     fish_add_path -p /opt/X11/bin
     fish_add_path -p ~/.orbstack/bin
