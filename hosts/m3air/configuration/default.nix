@@ -35,6 +35,7 @@
     brews = [ ];
     casks = [
       "termius" # nixpkgs has Linux-only build
+      "android-studio"
       "android-commandlinetools" # sdkmanager, avdmanager, etc.
       "android-ndk" # NDK (installs to /usr/local/share/android-ndk or Homebrew prefix)
       "stats"
