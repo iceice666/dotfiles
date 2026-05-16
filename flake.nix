@@ -45,6 +45,8 @@
       overlay = final: prev: {
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+        rime-frost = final.callPackage ./pkgs/rime-frost { };
+        rime-octagram-zh-hant-essay-bgw = final.callPackage ./pkgs/rime-octagram-zh-hant-essay-bgw { };
         themegen = final.callPackage ./pkgs/themegen { };
         utiluti = final.callPackage ./pkgs/utiluti { };
         direnv = prev.direnv.overrideAttrs (old: {

@@ -23,7 +23,7 @@ assets/              # wallpapers used by theme generation
 
 common/              # baseline shared across all hosts
   configuration/     # shared system-level modules and packages
-  home/              # shared Home Manager modules (fish, opencode, ghostty, themegen, vscodium, zed)
+  home/              # shared Home Manager modules (fish, opencode, rime, themegen, editors)
 
 hosts/               # per-host entrypoints
   m3air/             # macOS
@@ -75,6 +75,7 @@ Never commit plaintext secrets.
 ## Docs
 
 - `AGENTS.md` — detailed repo structure, flake inputs, build matrix, code style, conventions.
+- `common/home/rime/README.md` — Frost/Rime data wiring and Traditional Chinese model setup.
 - `common/home/themegen/README.md` — wallpaper-driven theme generation pipeline.
 
 ## Acknowledgements

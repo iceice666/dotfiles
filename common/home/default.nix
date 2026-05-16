@@ -11,6 +11,7 @@
     ./fish
     ./ghostty.nix
     ./opencode
+    ./rime
     ./themegen
     ./user.nix
     ./vscodium.nix
