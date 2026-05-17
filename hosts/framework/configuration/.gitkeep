@@ -1,2 +1,2 @@
-This file exist just for visually align with orher hosts.
-We don't/can't manage system with nix on Void Linux.
+This directory exists to visually align with other hosts.
+Framework is Arch Linux with Lix and is managed through standalone Home Manager.

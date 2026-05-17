@@ -43,6 +43,13 @@
     }:
     let
       overlay = final: prev: {
+        inherit (prev.lixPackageSets.stable)
+          colmena
+          nix-eval-jobs
+          nix-fast-build
+          nixpkgs-review
+          ;
+
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         themegen = final.callPackage ./pkgs/themegen { };

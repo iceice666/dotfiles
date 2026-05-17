@@ -10,6 +10,19 @@
   programs.fish = {
     enable = true;
 
+    shellInit = ''
+      # Nix profile paths are normally added by /etc/profile, which fish does
+      # not source when it is launched directly as the login shell.
+      set -l nix_user_profile $HOME/.nix-profile
+      if set -q XDG_STATE_HOME; and test -d $XDG_STATE_HOME/nix/profile/bin
+          set nix_user_profile $XDG_STATE_HOME/nix/profile
+      else if test -d $HOME/.local/state/nix/profile/bin
+          set nix_user_profile $HOME/.local/state/nix/profile
+      end
+
+      fish_add_path --global --prepend $nix_user_profile/bin /nix/var/nix/profiles/default/bin
+    '';
+
     plugins = [
       {
         name = "autopair";

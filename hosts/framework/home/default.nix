@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   username,
   homeDirectory,
   dotfiles,
@@ -9,9 +8,7 @@
 
 let
   desktopWallpaper = dotfiles + /assets/mzen.png;
-  unmanaged = map lib.getName (
-    import (dotfiles + /common/configuration/packages.nix) { inherit pkgs; }
-  );
+  sharedPackages = import (dotfiles + /common/configuration/packages.nix) { inherit pkgs; };
 in
 {
   imports = [
@@ -22,32 +19,20 @@ in
     inherit desktopWallpaper;
   };
 
-  sops.age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
+  sops.age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
 
-  warnings = [
-    ''
-      [framework] The following tools from common/configuration/packages.nix are NOT managed
-      by home-manager because this host uses a standalone home-manager configuration and
-      environment.systemPackages is unavailable here:
-
-        ${lib.concatStringsSep ", " unmanaged}
-
-      Install them via XBPS, e.g.:
-        sudo xbps-install -S ${lib.concatStringsSep " " unmanaged}
-    ''
-  ];
-
-  home.packages = with pkgs; [
-    equibop-bin
-    ffmpeg
-    obs-studio
-  ];
+  home.packages =
+    sharedPackages
+    ++ (with pkgs; [
+      equibop-bin
+      obs-studio
+    ]);
 
   home.stateVersion = "25.11";
 
   programs.fish.interactiveShellInit = ''
     # Linux-specific environment variables
-    set -gx HOSTNAME (hostname)
+    set -gx HOSTNAME (uname -n)
     set -gx PNPM_HOME $HOME/.local/share/pnpm
 
     # Linux-specific PATH

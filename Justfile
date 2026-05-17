@@ -5,11 +5,12 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 repo_root := justfile_directory()
 m3air_target := ".#iceice666@m3air"
 framework_target := ".#iceice666@framework"
+home_manager := "nix run github:nix-community/home-manager/release-25.11 --"
 
 # Apply the current machine configuration
 switch:
     #!/usr/bin/env bash
-    host=$(hostname | tr '[:upper:]' '[:lower:]')
+    host=$(uname -n | tr '[:upper:]' '[:lower:]')
     os=$(uname -s)
 
     case "$host" in
@@ -17,7 +18,10 @@ switch:
             sudo darwin-rebuild switch --flake {{ m3air_target }}
             ;;
         framework)
-            home-manager switch --flake {{ framework_target }}
+            sudo -v
+            sudo systemctl daemon-reload
+            sudo systemctl enable --now nix-daemon.socket
+            {{ home_manager }} switch --flake {{ framework_target }}
             ;;
         *)
             if [[ "$os" == "Darwin" ]]; then
@@ -32,7 +36,7 @@ switch:
 # Dry-build the current machine configuration
 build:
     #!/usr/bin/env bash
-    host=$(hostname | tr '[:upper:]' '[:lower:]')
+    host=$(uname -n | tr '[:upper:]' '[:lower:]')
     os=$(uname -s)
 
     case "$host" in
@@ -40,7 +44,7 @@ build:
             sudo darwin-rebuild build --flake {{ m3air_target }}
             ;;
         framework)
-            home-manager build --flake {{ framework_target }}
+            {{ home_manager }} build --flake {{ framework_target }}
             ;;
         *)
             if [[ "$os" == "Darwin" ]]; then
@@ -70,15 +74,20 @@ m3air-homebrew:
 m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# ── Framework (Void Linux, home-manager) ─────────────────────────────────────
+# ── Framework (Arch Linux, Lix, home-manager) ────────────────────────────────
 
 # Rebuild Framework home environment
 framework-rebuild:
-    home-manager switch --flake {{ framework_target }}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sudo -v
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now nix-daemon.socket
+    {{ home_manager }} switch --flake {{ framework_target }}
 
 # Dry-build Framework home environment
 framework-build:
-    home-manager build --flake {{ framework_target }}
+    {{ home_manager }} build --flake {{ framework_target }}
 
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 
@@ -104,7 +113,7 @@ themegen-preview image='':
     image='{{ image }}'
 
     if [[ -z "$image" ]]; then
-        host=$(hostname | tr '[:upper:]' '[:lower:]')
+        host=$(uname -n | tr '[:upper:]' '[:lower:]')
 
         case "$host" in
             m3air)

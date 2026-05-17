@@ -36,7 +36,7 @@ in
 
   programs.fish.interactiveShellInit = ''
     # macOS-specific environment variables
-    set -gx HOSTNAME (hostname)
+    set -gx HOSTNAME (uname -n)
     set -gx DOTNET_ROOT /usr/local/share/dotnet/
 
     # JAVA_HOME: pick latest JVM if any are installed
