@@ -1,0 +1,8 @@
+(deflisten niri_state :initial "{\"focused_title\":\"Desktop\",\"groups\":[]}" "@niriState@")
+(defpoll media :interval "2s" :initial "No media" "@mediaStatus@")
+(defpoll perf :interval "2s" :initial "NET --  RAM --  CPU --  GPU --" "@perfStatus@")
+(defpoll battery :interval "30s" :initial "{\"text\":\"BAT --\",\"class\":\"module battery\"}" "@batteryStatus@")
+(defpoll bluetooth :interval "5s" :initial "BT --" "@bluetoothStatus@")
+(defpoll audio :interval "1s" :initial "{\"speaker\":\"--\",\"mic\":\"--\"}" "@audioStatus@")
+(defpoll datetime :interval "30s" :initial "" "@datetimeStatus@")
+(defpoll notifications :interval "5s" :initial "通知" "@notificationsStatus@")

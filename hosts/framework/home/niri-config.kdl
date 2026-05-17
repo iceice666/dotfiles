@@ -38,7 +38,7 @@ layout {
 }
 
 spawn-at-startup "swaybg" "-i" "@wallpaper@" "-m" "fill"
-spawn-at-startup "waybar"
+spawn-at-startup "@launchEww@"
 spawn-at-startup "mako"
 spawn-at-startup "swayidle"
 spawn-at-startup "nm-applet" "--indicator"

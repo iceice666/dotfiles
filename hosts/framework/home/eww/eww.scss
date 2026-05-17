@@ -1,0 +1,111 @@
+* {
+  all: unset;
+  font-family: "CaskaydiaCove Nerd Font", "Noto Sans CJK SC", "Noto Sans", sans-serif;
+  font-size: 13px;
+}
+
+.bar {
+  background: rgba(23, 23, 23, 0.94);
+  color: #e5e5e5;
+  padding: 0 8px;
+}
+
+.left,
+.center,
+.right,
+.app-strip,
+.monitor-group,
+.workspace,
+.tray {
+  min-height: 34px;
+}
+
+.left,
+.right,
+.monitor-group,
+.workspace {
+  margin-right: 8px;
+}
+
+.monitor-name,
+.workspace-label {
+  color: #a3a3a3;
+  padding: 0 4px;
+}
+
+.workspace.visible .workspace-label {
+  color: #bfdbfe;
+}
+
+.app {
+  border-radius: 6px;
+  margin: 4px 2px;
+  padding: 0 7px;
+}
+
+.app.visible {
+  color: #d4d4d4;
+  background: rgba(64, 64, 64, 0.72);
+}
+
+.app.focused {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.app.dim {
+  color: #737373;
+  background: rgba(38, 38, 38, 0.64);
+}
+
+.title {
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0 10px;
+}
+
+.media {
+  color: #dbeafe;
+}
+
+.module {
+  padding: 0 8px;
+}
+
+.perf {
+  color: #bbf7d0;
+}
+
+.bluetooth {
+  color: #bfdbfe;
+}
+
+.battery {
+  color: #e5e5e5;
+}
+
+.battery.charging,
+.battery.full {
+  color: #bbf7d0;
+}
+
+.battery.warning {
+  color: #facc15;
+}
+
+.battery.critical {
+  color: #fecaca;
+}
+
+.audio {
+  color: #fef3c7;
+}
+
+.datetime {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.notifications {
+  color: #fecaca;
+}

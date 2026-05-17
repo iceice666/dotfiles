@@ -1,30 +1,47 @@
 {
   pkgs,
   desktopWallpaper,
+  ewwLaunch,
   ...
 }:
 
 let
-  niriConfig = builtins.replaceStrings [ "@wallpaper@" ] [ (toString desktopWallpaper) ] (
-    builtins.readFile ./niri-config.kdl
-  );
+  niriConfig =
+    builtins.replaceStrings
+      [
+        "@wallpaper@"
+        "@launchEww@"
+      ]
+      [
+        (toString desktopWallpaper)
+        (toString ewwLaunch)
+      ]
+      (builtins.readFile ./niri-config.kdl);
 in
 {
+  imports = [ ./eww ];
+
   home.packages = with pkgs; [
     adwaita-icon-theme
     brightnessctl
+    bc
     ghostty
     grim
     imv
+    jq
     libnotify
+    lm_sensors
     mpv
     nautilus
     noto-fonts
     noto-fonts-color-emoji
     overskride
     papirus-icon-theme
+    pciutils
     pavucontrol
     playerctl
+    procps
+    socat
     slurp
     swappy
     swaybg
@@ -130,98 +147,6 @@ in
       inside-color = "171717cc";
       separator-color = "00000000";
     };
-  };
-
-  programs.waybar = {
-    enable = true;
-    systemd.enable = false;
-    settings.mainBar = {
-      layer = "top";
-      position = "top";
-      height = 32;
-      spacing = 8;
-      modules-left = [
-        "niri/workspaces"
-        "niri/window"
-      ];
-      modules-center = [ "clock" ];
-      modules-right = [
-        "tray"
-        "network"
-        "pulseaudio"
-        "battery"
-      ];
-
-      "niri/workspaces" = {
-        format = "{index}";
-        disable-scroll = false;
-      };
-      "niri/window".format = "{}";
-      clock = {
-        format = "{:%a %b %d  %H:%M}";
-        tooltip-format = "{:%Y-%m-%d}";
-      };
-      network = {
-        format-wifi = "{essid}";
-        format-ethernet = "wired";
-        format-disconnected = "offline";
-        tooltip-format = "{ifname}";
-      };
-      pulseaudio = {
-        format = "{volume}%";
-        format-muted = "muted";
-        on-click = "pavucontrol";
-      };
-      battery = {
-        format = "{capacity}%";
-        states = {
-          warning = 30;
-          critical = 15;
-        };
-      };
-      tray.spacing = 8;
-    };
-    style = ''
-      * {
-        border: 0;
-        border-radius: 0;
-        font-family: "CaskaydiaCove Nerd Font", "Noto Sans", sans-serif;
-        font-size: 13px;
-        min-height: 0;
-      }
-
-      window#waybar {
-        background: rgba(23, 23, 23, 0.92);
-        color: #e5e5e5;
-      }
-
-      #workspaces button {
-        color: #a3a3a3;
-        padding: 0 8px;
-      }
-
-      #workspaces button.active {
-        color: #ffffff;
-        background: #2563eb;
-      }
-
-      #window,
-      #clock,
-      #tray,
-      #network,
-      #pulseaudio,
-      #battery {
-        padding: 0 10px;
-      }
-
-      #battery.warning {
-        color: #facc15;
-      }
-
-      #battery.critical {
-        color: #ef4444;
-      }
-    '';
   };
 
   services = {

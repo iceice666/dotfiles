@@ -1,0 +1,31 @@
+(defwindow bar [monitor]
+  :monitor monitor
+  :geometry (geometry :x "0%" :y "0%" :width "100%" :height "34px" :anchor "top center")
+  :stacking "fg"
+  :exclusive true
+  (bar-content))
+
+(defwidget bar-content []
+  (centerbox :class "bar"
+    (box :class "left" :space-evenly false
+      (app-strip)
+      (label :class "title" :limit-width 48 :text {niri_state.focused_title}))
+    (box :class "center" :space-evenly false
+      (label :class "media" :limit-width 52 :text {media}))
+    (box :class "right" :space-evenly false
+      (label :class "module perf" :text {perf})
+      (label :class {battery.class} :text {battery.text})
+      (label :class "module bluetooth" :text {bluetooth})
+      (button :class "module audio" :onclick "@pavucontrol@"
+        (box :space-evenly false
+          (label :text "SPK ")
+          (label :text {audio.speaker})))
+      (button :class "module audio" :onclick "@toggleMic@"
+        (box :space-evenly false
+          (label :text "MIC ")
+          (label :text {audio.mic})))
+      (box :class "module tray" :space-evenly false
+        (systray :spacing 8 :icon-size 16))
+      (label :class "module datetime" :text {datetime})
+      (button :class "module notifications" :onclick "@notificationAction@"
+        (label :text {notifications})))))

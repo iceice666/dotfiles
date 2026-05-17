@@ -1,0 +1,12 @@
+(defwidget app-strip []
+  (box :class "app-strip" :space-evenly false
+    (for group in {niri_state.groups}
+      (box :class "monitor-group" :space-evenly false
+        (label :class "monitor-name" :text {group.monitor})
+        (box :class "workspace-list" :orientation "v" :space-evenly false
+          (for workspace in {group.workspaces}
+            (box :class {workspace.class} :space-evenly false
+              (label :class "workspace-label" :text {workspace.label})
+              (for window in {workspace.windows}
+                (button :class {window.class} :tooltip {window.title} :onclick "@focusWindow@ {window.id}"
+                  (label :limit-width 14 :text {window.text}))))))))))
