@@ -6,6 +6,7 @@
 
 let
   desktopWallpaper = dotfiles + /assets/mzen.png;
+  frameworkAvatar = dotfiles + /assets/framework-avatar.png;
 in
 {
   imports = [
@@ -15,6 +16,7 @@ in
 
   _module.args = {
     inherit desktopWallpaper;
+    avatarImage = frameworkAvatar;
   };
 
   home.packages = with pkgs; [

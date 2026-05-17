@@ -46,9 +46,9 @@ just themegen-preview  # preview the current host wallpaper palette
 Host-specific:
 
 ```sh
-just m3air-build / just m3air-rebuild
-just framework-build / just framework-rebuild
-just framework-gui-prereqs
+just m3air-build
+just framework-build
+just post-switch
 ```
 
 Framework bootstrap on fresh Arch:
@@ -64,14 +64,13 @@ cd ~/dotfiles
 nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
 ```
 
-After the first switch, use `just framework-rebuild` or, when the hostname is
-`framework`, `just switch`.
+After the first switch, use `just switch`.
 
 The Framework GUI setup is Home Manager-only. Arch still owns system services
 such as login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth,
-polkit, and the display manager or manual `niri-session` startup. Use
-`just framework-gui-prereqs` to install and enable the essential Arch packages
-for those services.
+polkit, and the greetd/ReGreet display manager. `just switch` runs the
+post-switch lifecycle step that installs and enables the essential Arch packages
+for those services. Use `just post-switch` to rerun that lifecycle step directly.
 
 Other:
 

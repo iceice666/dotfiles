@@ -292,11 +292,11 @@ let
   '';
 
   launchEww = pkgs.writeShellScript "launch-eww-bars" ''
-    for _ in $(seq 1 50); do
+    for _ in $(${pkgs.coreutils}/bin/seq 1 50); do
       if ${pkgs.niri}/bin/niri msg -j outputs >/dev/null 2>&1; then
         break
       fi
-      sleep 0.1
+      ${pkgs.coreutils}/bin/sleep 0.1
     done
 
     ${pkgs.eww}/bin/eww --config ${ewwConfigDir} daemon
@@ -309,7 +309,7 @@ let
 
     args=()
     for output in $outputs; do
-      id="$(printf '%s' "$output" | tr -c '[:alnum:]_' '_')"
+      id="$(printf '%s' "$output" | ${pkgs.coreutils}/bin/tr -c '[:alnum:]_' '_')"
       args+=(--arg "bar_$id:monitor=$output" "bar:bar_$id")
     done
 

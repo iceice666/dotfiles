@@ -37,12 +37,12 @@ layout {
     }
 }
 
-spawn-at-startup "swaybg" "-i" "@wallpaper@" "-m" "fill"
+spawn-at-startup "@swaybg@" "-i" "@wallpaper@" "-m" "fill"
 spawn-at-startup "@launchEww@"
-spawn-at-startup "mako"
-spawn-at-startup "swayidle"
-spawn-at-startup "nm-applet" "--indicator"
-spawn-at-startup "blueman-applet"
+spawn-at-startup "@mako@"
+spawn-at-startup "@swayidle@"
+spawn-at-startup "@nmApplet@" "--indicator"
+spawn-at-startup "@bluemanApplet@"
 
 hotkey-overlay {
     skip-at-startup
@@ -64,24 +64,25 @@ window-rule {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+Return hotkey-overlay-title="Open Ghostty" { spawn "ghostty"; }
-    Mod+T hotkey-overlay-title="Open Ghostty" { spawn "ghostty"; }
-    Mod+D hotkey-overlay-title="Open launcher" { spawn "fuzzel"; }
-    Mod+E hotkey-overlay-title="Open files" { spawn "nautilus"; }
-    Mod+Z hotkey-overlay-title="Open Zed" { spawn "zed"; }
-    Mod+Shift+Z hotkey-overlay-title="Open VSCodium" { spawn "codium"; }
-    Super+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "swaylock" "-f"; }
+    Mod+Return hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
+    Mod+T hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
+    Mod+D hotkey-overlay-title="Open launcher" { spawn "@fuzzel@"; }
+    Mod+Space hotkey-overlay-title="Open launcher" { spawn "@fuzzel@"; }
+    Mod+E hotkey-overlay-title="Open files" { spawn "@nautilus@"; }
+    Mod+Z hotkey-overlay-title="Open Zed" { spawn "@zed@"; }
+    Mod+Shift+Z hotkey-overlay-title="Open VSCodium" { spawn "@codium@"; }
+    Super+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05-"; }
-    XF86AudioMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
-    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
-    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
-    XF86AudioStop allow-when-locked=true { spawn "playerctl" "stop"; }
-    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
-    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "@wpctl@" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05+" "-l" "1.0"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "@wpctl@" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05-"; }
+    XF86AudioMute allow-when-locked=true { spawn "@wpctl@" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "@wpctl@" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    XF86AudioPlay allow-when-locked=true { spawn "@playerctl@" "play-pause"; }
+    XF86AudioStop allow-when-locked=true { spawn "@playerctl@" "stop"; }
+    XF86AudioPrev allow-when-locked=true { spawn "@playerctl@" "previous"; }
+    XF86AudioNext allow-when-locked=true { spawn "@playerctl@" "next"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "@brightnessctl@" "--class=backlight" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "@brightnessctl@" "--class=backlight" "set" "10%-"; }
 
     Mod+O repeat=false { toggle-overview; }
     Mod+Q repeat=false { close-window; }
@@ -166,7 +167,7 @@ binds {
     Print { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
-    Shift+Print { spawn-sh "grim -g \"$(slurp)\" - | swappy -f -"; }
+    Shift+Print { spawn-sh "@grim@ -g \"$(@slurp@)\" - | @swappy@ -f -"; }
 
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
     Mod+Shift+E { quit; }

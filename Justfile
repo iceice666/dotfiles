@@ -8,37 +8,43 @@ framework_target := ".#iceice666@framework"
 home_manager := "nix run github:nix-community/home-manager/release-25.11 --"
 
 # Apply the current machine configuration
-switch:
+switch: && post-switch
     #!/usr/bin/env bash
     host=$(uname -n | tr '[:upper:]' '[:lower:]')
-    os=$(uname -s)
+    just _switch "$host"
+
+# Run host-specific lifecycle tasks after switching
+post-switch:
+    #!/usr/bin/env bash
+    host=$(uname -n | tr '[:upper:]' '[:lower:]')
+    just _post-switch "$host"
+
+# Dry-build the current machine configuration
+build:
+    #!/usr/bin/env bash
+    host=$(uname -n | tr '[:upper:]' '[:lower:]')
+    just _build "$host"
+
+_switch host:
+    #!/usr/bin/env bash
+    host='{{ host }}'
 
     case "$host" in
         m3air)
             sudo darwin-rebuild switch --flake {{ m3air_target }}
             ;;
         framework)
-            sudo -v
-            sudo systemctl daemon-reload
-            sudo systemctl enable --now nix-daemon.socket
+            just _framework-prepare
             {{ home_manager }} switch --flake {{ framework_target }}
-            "$HOME/.nix-profile/bin/framework-post-switch"
             ;;
         *)
-            if [[ "$os" == "Darwin" ]]; then
-                echo "Unknown Darwin host '$host'. Use 'just m3air-rebuild' or add a host mapping." >&2
-            else
-                echo "Unknown host '$host'. Use an explicit host recipe or add a host mapping." >&2
-            fi
-            exit 1
+            just _unknown-host "$host" rebuild
             ;;
     esac
 
-# Dry-build the current machine configuration
-build:
+_build host:
     #!/usr/bin/env bash
-    host=$(uname -n | tr '[:upper:]' '[:lower:]')
-    os=$(uname -s)
+    host='{{ host }}'
 
     case "$host" in
         m3air)
@@ -48,24 +54,67 @@ build:
             {{ home_manager }} build --flake {{ framework_target }}
             ;;
         *)
-            if [[ "$os" == "Darwin" ]]; then
-                echo "Unknown Darwin host '$host'. Use 'just m3air-rebuild' or add a host mapping." >&2
-            else
-                echo "Unknown host '$host'. Use an explicit host recipe or add a host mapping." >&2
-            fi
-            exit 1
+            just _unknown-host "$host" build
             ;;
     esac
+
+_post-switch host:
+    #!/usr/bin/env bash
+    host='{{ host }}'
+
+    case "$host" in
+        m3air)
+            ;;
+        framework)
+            "$HOME/.nix-profile/bin/framework-post-switch"
+            ;;
+        *)
+            just _unknown-host "$host" post-switch
+            ;;
+    esac
+
+_framework-prepare:
+    sudo -v
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now nix-daemon.socket
+
+_unknown-host host action:
+    #!/usr/bin/env bash
+    host='{{ host }}'
+    action='{{ action }}'
+    os=$(uname -s)
+
+    case "$action" in
+        build)
+            hint="Use an explicit host build recipe or add a host mapping."
+            ;;
+        rebuild)
+            hint="Use an explicit host rebuild recipe or add a host mapping."
+            ;;
+        post-switch)
+            hint="Add a post-switch mapping if needed."
+            ;;
+        *)
+            hint="Use an explicit host recipe or add a host mapping."
+            ;;
+    esac
+
+    if [[ "$os" == "Darwin" ]]; then
+        echo "Unknown Darwin host '$host'. $hint" >&2
+    else
+        echo "Unknown host '$host'. $hint" >&2
+    fi
+    exit 1
 
 # ── M3 Air (macOS, nix-darwin) ───────────────────────────────────────────────
 
 # Rebuild M3Air system
 m3air-rebuild:
-    sudo darwin-rebuild switch --flake {{ m3air_target }}
+    just _switch m3air
 
 # Dry-build M3Air system
 m3air-build:
-    sudo darwin-rebuild build --flake {{ m3air_target }}
+    just _build m3air
 
 # Install Homebrew (first-time setup)
 m3air-homebrew:
@@ -78,26 +127,16 @@ m3air-activate:
 # ── Framework (Arch Linux, Lix, home-manager) ────────────────────────────────
 
 # Rebuild Framework home environment
-framework-rebuild:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    sudo -v
-    sudo systemctl daemon-reload
-    sudo systemctl enable --now nix-daemon.socket
-    {{ home_manager }} switch --flake {{ framework_target }}
-    "$HOME/.nix-profile/bin/framework-post-switch"
+framework-rebuild: && framework-post-switch
+    just _switch framework
 
 # Dry-build Framework home environment
 framework-build:
-    {{ home_manager }} build --flake {{ framework_target }}
-
-# Run the generated Framework post-switch helper
-framework-gui-prereqs:
-    ./scripts/framework-ensure-gui-prereqs.sh
+    just _build framework
 
 # Re-apply Arch-owned GUI integration after a Framework Home Manager switch
 framework-post-switch:
-    "$HOME/.nix-profile/bin/framework-post-switch"
+    just _post-switch framework
 
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 

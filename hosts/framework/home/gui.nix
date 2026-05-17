@@ -1,16 +1,139 @@
 {
   pkgs,
+  avatarImage ? null,
   desktopWallpaper,
   ewwLaunch,
   ...
 }:
 
 let
+  frameworkGraphicsEnv = ''
+    if [ -d /usr/lib/dri ]; then
+      export LIBGL_DRIVERS_PATH="/usr/lib/dri''${LIBGL_DRIVERS_PATH:+:''${LIBGL_DRIVERS_PATH}}"
+    fi
+
+    if [ -d /usr/lib/gbm ]; then
+      export GBM_BACKENDS_PATH="/usr/lib/gbm''${GBM_BACKENDS_PATH:+:''${GBM_BACKENDS_PATH}}"
+    fi
+
+    if [ -d /usr/share/glvnd/egl_vendor.d ]; then
+      export __EGL_VENDOR_LIBRARY_DIRS="/usr/share/glvnd/egl_vendor.d''${__EGL_VENDOR_LIBRARY_DIRS:+:''${__EGL_VENDOR_LIBRARY_DIRS}}"
+    fi
+  '';
+
+  frameworkNiri = pkgs.writeShellScript "framework-niri" ''
+    ${frameworkGraphicsEnv}
+    exec ${pkgs.niri}/bin/niri "$@"
+  '';
+
+  frameworkNiriSession = pkgs.writeShellScript "framework-niri-session" ''
+    ${frameworkGraphicsEnv}
+    exec ${pkgs.niri}/bin/niri-session "$@"
+  '';
+
+  frameworkNiriDesktop = pkgs.writeText "framework-niri.desktop" ''
+    [Desktop Entry]
+    Name=Niri
+    Comment=A scrollable-tiling Wayland compositor
+    Exec=${frameworkNiriSession}
+    Type=Application
+    DesktopNames=niri
+  '';
+
+  frameworkNiriService = pkgs.writeText "framework-niri.service" ''
+    [Unit]
+    Description=A scrollable-tiling Wayland compositor
+    BindsTo=graphical-session.target
+    Before=graphical-session.target
+    Wants=graphical-session-pre.target
+    After=graphical-session-pre.target
+
+    Wants=xdg-desktop-autostart.target
+    Before=xdg-desktop-autostart.target
+
+    [Service]
+    Slice=session.slice
+    Type=notify
+    ExecStart=${frameworkNiri} --session
+  '';
+
+  frameworkLoginUser = "iceice666";
+  frameworkGreeterBackground = toString desktopWallpaper;
+  frameworkGreeterAvatarSetup =
+    if avatarImage == null then
+      ""
+    else
+      ''
+        sudo install -Dm0644 "${avatarImage}" "/var/lib/AccountsService/icons/${frameworkLoginUser}"
+        printf '%s\n' \
+          '[User]' \
+          'Icon=/var/lib/AccountsService/icons/${frameworkLoginUser}' \
+          'SystemAccount=false' \
+          > "$accounts_user_temp"
+        sudo install -Dm0600 "$accounts_user_temp" "/var/lib/AccountsService/users/${frameworkLoginUser}"
+      '';
+
+  frameworkRegreetConfig = pkgs.writeText "framework-regreet.toml" ''
+    [background]
+    path = "${frameworkGreeterBackground}"
+    fit = "Cover"
+
+    [GTK]
+    application_prefer_dark_theme = true
+    cursor_theme_name = "Adwaita"
+    cursor_blink = true
+    font_name = "Sans 13"
+    icon_theme_name = "Adwaita"
+    theme_name = "Adwaita"
+
+    [commands]
+    reboot = ["systemctl", "reboot"]
+    poweroff = ["systemctl", "poweroff"]
+
+    [appearance]
+    greeting_msg = "${frameworkLoginUser}"
+
+    [widget.clock]
+    format = "%a %H:%M"
+    resolution = "500ms"
+    label_width = 150
+  '';
+
+  frameworkRegreetStyle = pkgs.writeText "framework-regreet.css" ''
+    window {
+      background: transparent;
+    }
+
+    box,
+    grid {
+      border-radius: 16px;
+    }
+
+    entry,
+    button,
+    combobox,
+    menubutton {
+      border-radius: 10px;
+    }
+
+    entry {
+      background-color: rgba(23, 23, 23, 0.54);
+      border-color: rgba(255, 214, 224, 0.32);
+      color: #f8fafc;
+    }
+
+    entry:focus {
+      background-color: rgba(23, 23, 23, 0.74);
+      border-color: rgba(255, 214, 224, 0.86);
+      box-shadow: 0 0 28px rgba(255, 214, 224, 0.34);
+    }
+  '';
+
   frameworkPostSwitch = pkgs.writeShellApplication {
     name = "framework-post-switch";
     runtimeInputs = with pkgs; [
       coreutils
-      gnused
+      gnugrep
     ];
     text = ''
       if [[ "$(uname -s)" != "Linux" ]]; then
@@ -24,11 +147,15 @@ let
       fi
 
       packages=(
+        accountsservice
         bluez
         bluez-utils
+        cage
         dbus
         fprintd
-        gdm
+        greetd
+        greetd-regreet
+        mesa
         networkmanager
         pipewire
         pipewire-pulse
@@ -40,16 +167,49 @@ let
       sudo pacman -S --needed "''${packages[@]}"
 
       sudo systemctl daemon-reload
-      sudo systemctl enable --now NetworkManager.service bluetooth.service gdm.service
+      sudo systemctl enable --now NetworkManager.service bluetooth.service
       sudo systemctl start fprintd.service
 
       niri_desktop_temp="$(mktemp)"
-      trap 'rm -f "$niri_desktop_temp"' EXIT
+      greetd_config_temp="$(mktemp)"
+      greetd_pam_temp="$(mktemp)"
+      regreet_config_temp="$(mktemp)"
+      regreet_style_temp="$(mktemp)"
+      accounts_user_temp="$(mktemp)"
+      trap 'rm -f "$niri_desktop_temp" "$greetd_config_temp" "$greetd_pam_temp" "$regreet_config_temp" "$regreet_style_temp" "$accounts_user_temp"' EXIT
 
-      sed "s|^Exec=niri-session$|Exec=${pkgs.niri}/bin/niri-session|" \
-        "${pkgs.niri}/share/wayland-sessions/niri.desktop" > "$niri_desktop_temp"
+      cp ${frameworkNiriDesktop} "$niri_desktop_temp"
+      cp ${frameworkRegreetConfig} "$regreet_config_temp"
+      cp ${frameworkRegreetStyle} "$regreet_style_temp"
 
       sudo install -Dm0644 "$niri_desktop_temp" /usr/share/wayland-sessions/niri.desktop
+      sudo install -d -m0755 /etc/greetd/sessions
+      sudo rm -f /etc/greetd/sessions/*.desktop
+      sudo install -Dm0644 "$niri_desktop_temp" /etc/greetd/sessions/niri.desktop
+      sudo install -Dm0644 "$regreet_config_temp" /etc/greetd/regreet.toml
+      sudo install -Dm0644 "$regreet_style_temp" /etc/greetd/regreet.css
+
+      ${frameworkGreeterAvatarSetup}
+
+      printf '%s\n' \
+        '[terminal]' \
+        'vt = 1' \
+        "" \
+        '[default_session]' \
+        'command = "env GTK_USE_PORTAL=0 GDK_DEBUG=no-portals dbus-run-session cage -s -mlast -- regreet --config /etc/greetd/regreet.toml --style /etc/greetd/regreet.css"' \
+        'user = "greeter"' \
+        > "$greetd_config_temp"
+      sudo install -Dm0644 "$greetd_config_temp" /etc/greetd/config.toml
+
+      if [ -f /etc/pam.d/greetd ] && ! grep -q '^auth[[:space:]].*pam_fprintd\.so' /etc/pam.d/greetd; then
+        {
+          printf '%s\n' 'auth sufficient pam_fprintd.so'
+          cat /etc/pam.d/greetd
+        } > "$greetd_pam_temp"
+        sudo install -m0644 "$greetd_pam_temp" /etc/pam.d/greetd
+      fi
+
+      sudo systemctl enable --now greetd.service
 
       if systemctl --user show-environment >/dev/null 2>&1; then
         systemctl --user daemon-reload
@@ -67,12 +227,48 @@ let
   niriConfig =
     builtins.replaceStrings
       [
+        "@bluemanApplet@"
+        "@brightnessctl@"
+        "@codium@"
+        "@fuzzel@"
+        "@ghostty@"
+        "@grim@"
         "@wallpaper@"
         "@launchEww@"
+        "@mako@"
+        "@nautilus@"
+        "@nmApplet@"
+        "@niri@"
+        "@playerctl@"
+        "@slurp@"
+        "@swaybg@"
+        "@swayidle@"
+        "@swaylock@"
+        "@swappy@"
+        "@wpctl@"
+        "@zed@"
       ]
       [
+        "${pkgs.blueman}/bin/blueman-applet"
+        "${pkgs.brightnessctl}/bin/brightnessctl"
+        "${pkgs.vscodium}/bin/codium"
+        "${pkgs.fuzzel}/bin/fuzzel"
+        "${pkgs.ghostty}/bin/ghostty"
+        "${pkgs.grim}/bin/grim"
         (toString desktopWallpaper)
         (toString ewwLaunch)
+        "${pkgs.mako}/bin/mako"
+        "${pkgs.nautilus}/bin/nautilus"
+        "${pkgs.networkmanagerapplet}/bin/nm-applet"
+        "${frameworkNiri}"
+        "${pkgs.playerctl}/bin/playerctl"
+        "${pkgs.slurp}/bin/slurp"
+        "${pkgs.swaybg}/bin/swaybg"
+        "${pkgs.swayidle}/bin/swayidle"
+        "${pkgs.swaylock}/bin/swaylock"
+        "${pkgs.swappy}/bin/swappy"
+        "${pkgs.wireplumber}/bin/wpctl"
+        "${pkgs.zed-bin}/bin/zed"
       ]
       (builtins.readFile ./niri-config.kdl);
 in
@@ -144,8 +340,8 @@ in
     enable = true;
 
     dataFile = {
-      "wayland-sessions/niri.desktop".source = "${pkgs.niri}/share/wayland-sessions/niri.desktop";
-      "systemd/user/niri.service".source = "${pkgs.niri}/share/systemd/user/niri.service";
+      "wayland-sessions/niri.desktop".source = frameworkNiriDesktop;
+      "systemd/user/niri.service".source = frameworkNiriService;
       "systemd/user/niri-shutdown.target".source = "${pkgs.niri}/share/systemd/user/niri-shutdown.target";
     };
 
