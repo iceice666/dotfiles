@@ -22,8 +22,8 @@ treefmt.nix          # formatting (nixfmt + just)
 assets/              # wallpapers used by theme generation
 
 common/              # baseline shared across all hosts
-  configuration/     # shared system-level modules and packages
-  home/              # shared Home Manager modules (fish, ghostty, themegen, vscodium, zed)
+  configuration/     # shared Darwin system-level modules
+  home/              # shared Home Manager modules and user packages
 
 hosts/               # per-host entrypoints
   m3air/             # macOS

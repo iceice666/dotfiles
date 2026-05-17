@@ -1,0 +1,42 @@
+{ pkgs, unstablePkgs, ... }:
+
+{
+  home.packages = with pkgs; [
+    fzf
+    neovim
+    ripgrep
+    fd
+    bat
+    eza
+    btop
+    jq
+    ijq
+    lazygit
+    lazydocker
+    fish
+    just
+    xz
+    zstd
+    unrar
+    p7zip
+    gnutar
+    ncompress
+    nil
+    nixfmt
+    tldr
+    zulu21
+    age
+    ffmpeg
+    nodejs_24
+    equibop-bin
+    unstablePkgs.agent-browser
+    unstablePkgs.bun
+    unstablePkgs.codex
+    unstablePkgs.sops
+    gh
+    git-lfs
+    python3
+    uv
+    yq
+  ];
+}

@@ -14,11 +14,11 @@ treefmt.nix          # formatter configuration (nixfmt + just)
 assets/              # wallpaper/source images used by theme generation
 
 common/              # baseline shared across all hosts
-  configuration/     # shared system-level modules and packages for darwin hosts
-    default.nix      # imports packages.nix; adds unstable codex, agent-browser, cascadia-code font
-    packages.nix     # stable system package list
+  configuration/     # shared system-level modules for darwin hosts
+    default.nix      # sets Lix and shared Darwin system settings
   home/              # shared Home Manager baseline (imported by all hosts)
-    default.nix
+    default.nix      # shared programs, sops age key path, state version
+    packages.nix     # shared user package list
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
     ghostty.nix      # shared Ghostty config
@@ -85,7 +85,7 @@ Additionally, `direnv` is overridden to strip `-linkmode=external` from its Make
 
 ### `unstablePkgsFor`
 
-A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used to pull in `codex`, `agent-browser`, and `sops` from unstable.
+A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used by shared Home Manager modules to pull in `codex`, `agent-browser`, `bun`, and `sops` from unstable.
 
 ## Build, Format, and Validation Commands
 
@@ -301,11 +301,11 @@ Canonical module shape:
 ## Repository Conventions
 
 - `common/` is the baseline for all hosts.
-- `common/configuration/` is only imported by `m3air`.
-- `common/home/` is imported by all hosts.
+- `common/configuration/` is only imported by `m3air` and is for Darwin system-level settings.
+- `common/home/` is imported by all hosts and owns shared user packages.
 - `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
-- `framework` is Arch Linux with Lix and standalone Home Manager. It imports the shared package list from `common/configuration/packages.nix` into `home.packages`.
+- `framework` is Arch Linux with Lix and standalone Home Manager.
 - `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.

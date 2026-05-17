@@ -1,8 +1,6 @@
 {
   inputs,
   pkgs,
-  username,
-  homeDirectory,
   dotfiles,
   ...
 }:
@@ -24,19 +22,13 @@ in
     inherit desktopWallpaper;
   };
 
-  sops.age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
-
   home.packages = with pkgs; [
     obsidian
-    equibop-bin
     ssh-to-age
   ];
 
-  home.stateVersion = "25.11";
-
   programs.fish.interactiveShellInit = ''
     # macOS-specific environment variables
-    set -gx HOSTNAME (uname -n)
     set -gx DOTNET_ROOT /usr/local/share/dotnet/
 
     # JAVA_HOME: pick latest JVM if any are installed

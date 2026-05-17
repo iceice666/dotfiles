@@ -1,8 +1,6 @@
 {
   pkgs,
   homeDirectory,
-  lib,
-  unstablePkgs,
   ...
 }:
 
@@ -10,6 +8,7 @@
   imports = [
     ./fish
     ./ghostty.nix
+    ./packages.nix
     ./themegen
     ./user.nix
     ./vscodium.nix
@@ -44,15 +43,13 @@
 
   programs.home-manager.enable = true;
 
-  home.packages = [
-    unstablePkgs.bun
-    pkgs.gh
-    pkgs.git-lfs
-    pkgs.python3
-    pkgs.uv
-    pkgs.yq
-    unstablePkgs.sops
-  ];
+  sops.age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
+
+  home.stateVersion = "25.11";
+
+  programs.fish.interactiveShellInit = ''
+    set -gx HOSTNAME (uname -n)
+  '';
 
   # Keep npm global installs out of the read-only Nix store. Pi's
   # package installer uses npm for npm: Pi packages.
