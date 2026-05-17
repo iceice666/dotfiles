@@ -34,7 +34,6 @@ _switch host:
             sudo darwin-rebuild switch --flake {{ m3air_target }}
             ;;
         framework)
-            just _framework-prepare
             {{ home_manager }} switch --flake {{ framework_target }}
             ;;
         *)
@@ -72,11 +71,6 @@ _post-switch host:
             just _unknown-host "$host" post-switch
             ;;
     esac
-
-_framework-prepare:
-    sudo -v
-    sudo systemctl daemon-reload
-    sudo systemctl enable --now nix-daemon.socket
 
 _unknown-host host action:
     #!/usr/bin/env bash
@@ -125,6 +119,62 @@ m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
 # ── Framework (Arch Linux, Lix, home-manager) ────────────────────────────────
+
+# Install Arch-owned dependencies and services for the Framework host
+framework-bootstrap:
+    #!/usr/bin/env bash
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        echo "This bootstrap is only for the Framework Arch Linux host." >&2
+        exit 1
+    fi
+
+    if ! command -v pacman >/dev/null 2>&1; then
+        echo "pacman not found; this bootstrap expects Arch Linux." >&2
+        exit 1
+    fi
+
+    if ! systemctl cat nix-daemon.socket >/dev/null 2>&1; then
+        echo "nix-daemon.socket not found; install Lix before running this bootstrap." >&2
+        exit 1
+    fi
+
+    packages=(
+        accountsservice
+        bluez
+        bluez-utils
+        cage
+        dbus
+        fprintd
+        greetd
+        greetd-regreet
+        mesa
+        networkmanager
+        pipewire
+        pipewire-pulse
+        polkit
+        wireplumber
+        xdg-desktop-portal
+        xdg-desktop-portal-gnome
+        xdg-desktop-portal-gtk
+    )
+
+    sudo -v
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now nix-daemon.socket
+    sudo pacman -S --needed "${packages[@]}"
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now NetworkManager.service bluetooth.service
+    sudo systemctl start fprintd.service
+    sudo systemctl enable greetd.service
+
+    if systemctl --user show-environment >/dev/null 2>&1; then
+        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+    else
+        printf '%s\n' \
+            "User systemd is not available in this shell." \
+            "After logging into a normal user session, run:" \
+            "  systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service" >&2
+    fi
 
 # Rebuild Framework home environment
 framework-rebuild: && framework-post-switch

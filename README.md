@@ -47,8 +47,9 @@ Host-specific:
 
 ```sh
 just m3air-build
+just framework-bootstrap
 just framework-build
-just post-switch
+just framework-post-switch
 ```
 
 Framework bootstrap on fresh Arch:
@@ -61,16 +62,18 @@ nix --version
 
 git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
 cd ~/dotfiles
+just framework-bootstrap
 nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
+just framework-post-switch
 ```
 
 After the first switch, use `just switch`.
 
-The Framework GUI setup is Home Manager-only. Arch still owns system services
-such as login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth,
-polkit, and the greetd/ReGreet display manager. `just switch` runs the
-post-switch lifecycle step that installs and enables the essential Arch packages
-for those services. Use `just post-switch` to rerun that lifecycle step directly.
+Home Manager owns the Framework user profile. Arch still owns system packages,
+login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth, polkit, and
+greetd/ReGreet. `just framework-bootstrap` installs and enables the Arch-owned
+pieces; `just switch` applies Home Manager and then re-applies the generated
+root-owned GUI files through `just framework-post-switch`.
 
 Other:
 

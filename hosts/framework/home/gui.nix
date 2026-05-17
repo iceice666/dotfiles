@@ -1,4 +1,6 @@
 {
+  config,
+  lib,
   pkgs,
   avatarImage ? null,
   desktopWallpaper,
@@ -56,6 +58,23 @@ let
     Type=notify
     ExecStart=${frameworkNiri} --session
   '';
+
+  frameworkPortalEnv = {
+    XDG_DATA_DIRS = "${config.home.profileDirectory}/share:/nix/var/nix/profiles/default/share:/usr/local/share:/usr/share";
+    NIX_XDG_DESKTOP_PORTAL_DIR = "${config.home.profileDirectory}/share/xdg-desktop-portal/portals";
+    XDG_CURRENT_DESKTOP = "niri";
+    XDG_SESSION_DESKTOP = "niri";
+    XDG_SESSION_TYPE = "wayland";
+  };
+
+  frameworkDbusServices = [
+    "ca.desrt.dconf.service"
+    "org.freedesktop.impl.portal.PermissionStore.service"
+    "org.freedesktop.impl.portal.desktop.gnome.service"
+    "org.freedesktop.impl.portal.desktop.gtk.service"
+    "org.freedesktop.portal.Desktop.service"
+    "org.freedesktop.portal.Documents.service"
+  ];
 
   frameworkLoginUser = "iceice666";
   frameworkGreeterBackground = toString desktopWallpaper;
@@ -146,32 +165,28 @@ let
         exit 1
       fi
 
-      packages=(
+      required_packages=(
         accountsservice
-        bluez
-        bluez-utils
         cage
-        dbus
         fprintd
         greetd
         greetd-regreet
-        mesa
-        networkmanager
-        pipewire
-        pipewire-pulse
-        polkit
-        wireplumber
-        xdg-desktop-portal
-        xdg-desktop-portal-gnome
-        xdg-desktop-portal-gtk
       )
 
-      sudo -v
-      sudo pacman -S --needed "''${packages[@]}"
+      missing_packages=()
+      for package in "''${required_packages[@]}"; do
+        if ! pacman -Q "$package" >/dev/null 2>&1; then
+          missing_packages+=("$package")
+        fi
+      done
 
-      sudo systemctl daemon-reload
-      sudo systemctl enable --now NetworkManager.service bluetooth.service
-      sudo systemctl start fprintd.service
+      if ((''${#missing_packages[@]} > 0)); then
+        echo "Missing Arch GUI packages: ''${missing_packages[*]}" >&2
+        echo "Run 'just framework-bootstrap' before re-running this helper." >&2
+        exit 1
+      fi
+
+      sudo -v
 
       niri_desktop_temp="$(mktemp)"
       greetd_config_temp="$(mktemp)"
@@ -212,18 +227,39 @@ let
         sudo install -m0644 "$greetd_pam_temp" /etc/pam.d/greetd
       fi
 
-      sudo systemctl enable --now greetd.service
+      if systemctl is-enabled greetd.service >/dev/null 2>&1; then
+        sudo systemctl start greetd.service
+      else
+        echo "greetd.service is not enabled; run 'just framework-bootstrap' to finish Arch system setup." >&2
+      fi
+
+      hm_session_vars="$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+      if [ -r "$hm_session_vars" ]; then
+        unset __HM_SESS_VARS_SOURCED
+        set +u
+        # shellcheck source=/dev/null
+        . "$hm_session_vars"
+        set -u
+      fi
+
+      case ":''${XDG_DATA_DIRS:-}:" in
+        *:/usr/share:*) ;;
+        *)
+          export XDG_DATA_DIRS="''${XDG_DATA_DIRS:+''${XDG_DATA_DIRS}:}/usr/local/share:/usr/share"
+          ;;
+      esac
 
       if systemctl --user show-environment >/dev/null 2>&1; then
         systemctl --user daemon-reload
-        systemctl --user import-environment XDG_DATA_DIRS XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
-        systemctl --user start xdg-permission-store.service
+        systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+        dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+        systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
       else
         cat >&2 <<'EOF'
       User systemd is not available in this shell.
       After logging into a normal user session, run:
-        systemctl --user start xdg-permission-store.service
+        systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
       EOF
       fi
@@ -341,6 +377,31 @@ in
     XDG_SESSION_DESKTOP = "niri";
     XDG_SESSION_TYPE = "wayland";
   };
+
+  home.activation.frameworkPortalEnvironment =
+    lib.hm.dag.entryBetween [ "dconfSettings" ] [ "installPackages" ]
+      ''
+        dbus_service_dir="$HOME/.local/share/dbus-1/services"
+        mkdir -p "$dbus_service_dir"
+        ${lib.concatMapStringsSep "\n" (service: ''
+          if [ -e /usr/share/dbus-1/services/${service} ]; then
+            ln -sfn /usr/share/dbus-1/services/${service} "$dbus_service_dir/${service}"
+          fi
+        '') frameworkDbusServices}
+
+        if ${pkgs.systemd}/bin/systemctl --user show-environment >/dev/null 2>&1; then
+          export XDG_DATA_DIRS=${lib.escapeShellArg frameworkPortalEnv.XDG_DATA_DIRS}
+          export NIX_XDG_DESKTOP_PORTAL_DIR=${lib.escapeShellArg frameworkPortalEnv.NIX_XDG_DESKTOP_PORTAL_DIR}
+          export XDG_CURRENT_DESKTOP=${lib.escapeShellArg frameworkPortalEnv.XDG_CURRENT_DESKTOP}
+          export XDG_SESSION_DESKTOP=${lib.escapeShellArg frameworkPortalEnv.XDG_SESSION_DESKTOP}
+          export XDG_SESSION_TYPE=${lib.escapeShellArg frameworkPortalEnv.XDG_SESSION_TYPE}
+
+          ${pkgs.systemd}/bin/systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+          ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+          ${pkgs.systemd}/bin/systemctl --user reset-failed xdg-desktop-portal.service xdg-document-portal.service || true
+          ${pkgs.systemd}/bin/systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service || true
+        fi
+      '';
 
   xdg = {
     enable = true;

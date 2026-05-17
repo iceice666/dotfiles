@@ -131,7 +131,9 @@ configuration:
 ```sh
 git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
 cd ~/dotfiles
+just framework-bootstrap
 nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
+just framework-post-switch
 ```
 
 After the first activation, prefer the repo recipes:
@@ -152,6 +154,7 @@ just switch
 
 just m3air-build
 just m3air-rebuild
+just framework-bootstrap
 just framework-build
 just framework-rebuild
 
@@ -161,6 +164,7 @@ just check
 
 - `just build` auto-detects the current host and runs the matching dry build.
 - `just switch` auto-detects the current host and applies the matching configuration.
+- `just framework-bootstrap` installs and enables Arch-owned Framework system dependencies; run it for fresh Arch setup or when those dependencies drift.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs `nix flake check --all-systems`.
 - Explicit rebuild commands apply changes; prefer dry builds while iterating.
@@ -202,6 +206,8 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
+just framework-bootstrap    # install Arch-owned Framework system dependencies
+just framework-post-switch  # reapply generated root-owned Framework GUI files
 ```
 
 ### Secrets helpers
