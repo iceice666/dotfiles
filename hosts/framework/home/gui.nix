@@ -161,6 +161,9 @@ let
         pipewire-pulse
         polkit
         wireplumber
+        xdg-desktop-portal
+        xdg-desktop-portal-gnome
+        xdg-desktop-portal-gtk
       )
 
       sudo -v
@@ -213,11 +216,14 @@ let
 
       if systemctl --user show-environment >/dev/null 2>&1; then
         systemctl --user daemon-reload
+        systemctl --user import-environment XDG_DATA_DIRS XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+        systemctl --user start xdg-permission-store.service
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
       else
         cat >&2 <<'EOF'
       User systemd is not available in this shell.
       After logging into a normal user session, run:
+        systemctl --user start xdg-permission-store.service
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
       EOF
       fi

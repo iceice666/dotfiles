@@ -19,6 +19,8 @@ in
     avatarImage = frameworkAvatar;
   };
 
+  targets.genericLinux.enable = true;
+
   home.packages = with pkgs; [
     obs-studio
   ];
