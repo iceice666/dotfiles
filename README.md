@@ -48,6 +48,7 @@ Host-specific:
 ```sh
 just m3air-build / just m3air-rebuild
 just framework-build / just framework-rebuild
+just framework-gui-prereqs
 ```
 
 Framework bootstrap on fresh Arch:
@@ -65,6 +66,12 @@ nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#icei
 
 After the first switch, use `just framework-rebuild` or, when the hostname is
 `framework`, `just switch`.
+
+The Framework GUI setup is Home Manager-only. Arch still owns system services
+such as login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth,
+polkit, and the display manager or manual `niri-session` startup. Use
+`just framework-gui-prereqs` to install and enable the essential Arch packages
+for those services.
 
 Other:
 

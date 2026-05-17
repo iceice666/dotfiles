@@ -89,6 +89,10 @@ framework-rebuild:
 framework-build:
     {{ home_manager }} build --flake {{ framework_target }}
 
+# Install/enable Arch system prerequisites for the Framework GUI session
+framework-gui-prereqs:
+    ./scripts/framework-ensure-gui-prereqs.sh
+
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 
 # Update all flake inputs

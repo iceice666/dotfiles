@@ -10,6 +10,7 @@ in
 {
   imports = [
     (dotfiles + /common/home)
+    ./gui.nix
   ];
 
   _module.args = {
