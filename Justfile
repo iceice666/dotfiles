@@ -22,6 +22,7 @@ switch:
             sudo systemctl daemon-reload
             sudo systemctl enable --now nix-daemon.socket
             {{ home_manager }} switch --flake {{ framework_target }}
+            "$HOME/.nix-profile/bin/framework-post-switch"
             ;;
         *)
             if [[ "$os" == "Darwin" ]]; then
@@ -84,14 +85,19 @@ framework-rebuild:
     sudo systemctl daemon-reload
     sudo systemctl enable --now nix-daemon.socket
     {{ home_manager }} switch --flake {{ framework_target }}
+    "$HOME/.nix-profile/bin/framework-post-switch"
 
 # Dry-build Framework home environment
 framework-build:
     {{ home_manager }} build --flake {{ framework_target }}
 
-# Install/enable Arch system prerequisites for the Framework GUI session
+# Run the generated Framework post-switch helper
 framework-gui-prereqs:
     ./scripts/framework-ensure-gui-prereqs.sh
+
+# Re-apply Arch-owned GUI integration after a Framework Home Manager switch
+framework-post-switch:
+    "$HOME/.nix-profile/bin/framework-post-switch"
 
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 

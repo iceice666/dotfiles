@@ -11,33 +11,17 @@ if ! command -v pacman >/dev/null 2>&1; then
   exit 1
 fi
 
-packages=(
-  bluez
-  bluez-utils
-  dbus
-  fprintd
-  gdm
-  networkmanager
-  pipewire
-  pipewire-pulse
-  polkit
-  wireplumber
-)
+post_switch="$HOME/.nix-profile/bin/framework-post-switch"
 
-sudo -v
-sudo pacman -S --needed "${packages[@]}"
+if [[ ! -x "$post_switch" ]]; then
+  cat >&2 <<EOF
+Generated post-switch helper is not installed yet:
+  $post_switch
 
-sudo systemctl daemon-reload
-sudo systemctl enable --now NetworkManager.service bluetooth.service gdm.service
-sudo systemctl start fprintd.service
-
-if systemctl --user show-environment >/dev/null 2>&1; then
-  systemctl --user daemon-reload
-  systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
-else
-  cat >&2 <<'EOF'
-User systemd is not available in this shell.
-After logging into a normal user session, run:
-  systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+Run the Framework Home Manager switch first:
+  just framework-rebuild
 EOF
+  exit 1
 fi
+
+exec "$post_switch"
