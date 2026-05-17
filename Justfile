@@ -34,6 +34,7 @@ _switch host:
             sudo darwin-rebuild switch --flake {{ m3air_target }}
             ;;
         framework)
+            just ensure-nix-daemon
             {{ home_manager }} switch --flake {{ framework_target }}
             ;;
         *)
@@ -50,6 +51,7 @@ _build host:
             sudo darwin-rebuild build --flake {{ m3air_target }}
             ;;
         framework)
+            just ensure-nix-daemon
             {{ home_manager }} build --flake {{ framework_target }}
             ;;
         *)
@@ -119,6 +121,30 @@ m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
 # ── Framework (Arch Linux, Lix, home-manager) ────────────────────────────────
+
+# Ensure the Lix daemon socket is loaded and active on Linux
+ensure-nix-daemon:
+    #!/usr/bin/env bash
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        exit 0
+    fi
+
+    if systemctl is-active --quiet nix-daemon.socket; then
+        exit 0
+    fi
+
+    sudo -v
+
+    if ! systemctl cat nix-daemon.socket >/dev/null 2>&1; then
+        if [[ ! -e /etc/systemd/system/nix-daemon.socket ]]; then
+            echo "nix-daemon.socket not found; install Lix before running Nix recipes." >&2
+            exit 1
+        fi
+
+        sudo systemctl daemon-reload
+    fi
+
+    sudo systemctl enable --now nix-daemon.socket
 
 # Install Arch-owned dependencies and services for the Framework host
 framework-bootstrap:
@@ -191,19 +217,19 @@ framework-post-switch:
 # ── Flake maintenance ─────────────────────────────────────────────────────────
 
 # Update all flake inputs
-update:
+update: ensure-nix-daemon
     nix flake update
 
 # Update a single flake input (e.g. just update-input nixpkgs)
-update-input input:
+update-input input: ensure-nix-daemon
     nix flake update {{ input }}
 
 # Check flake outputs for errors
-check:
+check: ensure-nix-daemon
     nix flake check --all-systems
 
 # Format all files via treefmt-nix
-fmt:
+fmt: ensure-nix-daemon
     nix fmt
 
 # Preview the current or specified wallpaper palette
@@ -478,7 +504,7 @@ secret-edit secret:
 # ── Nixpkgs search ───────────────────────────────────────────────────────────
 
 # Search nixpkgs for a package across platforms (filters by actual platform support)
-search query:
+search query: ensure-nix-daemon
     #!/usr/bin/env bash
     NIX="nix --extra-experimental-features 'nix-command flakes'"
 
@@ -516,7 +542,7 @@ search query:
 # ── Garbage collection ────────────────────────────────────────────────────────
 
 # Remove old generations and collect garbage
-gc:
+gc: ensure-nix-daemon
     sudo nix-collect-garbage -d
 
 # Show disk usage of the Nix store

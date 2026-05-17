@@ -9,17 +9,39 @@
 }:
 
 let
+  frameworkGpuSetup = lib.getExe config.targets.genericLinux.gpu.setupPackage;
+
   frameworkGraphicsEnv = ''
+    if [ -d /run/opengl-driver/lib/dri ]; then
+      export LIBGL_DRIVERS_PATH="/run/opengl-driver/lib/dri''${LIBGL_DRIVERS_PATH:+:''${LIBGL_DRIVERS_PATH}}"
+    fi
+
     if [ -d /usr/lib/dri ]; then
-      export LIBGL_DRIVERS_PATH="/usr/lib/dri''${LIBGL_DRIVERS_PATH:+:''${LIBGL_DRIVERS_PATH}}"
+      export LIBGL_DRIVERS_PATH="''${LIBGL_DRIVERS_PATH:+''${LIBGL_DRIVERS_PATH}:}/usr/lib/dri"
+    fi
+
+    if [ -d /run/opengl-driver/lib/gbm ]; then
+      export GBM_BACKENDS_PATH="/run/opengl-driver/lib/gbm''${GBM_BACKENDS_PATH:+:''${GBM_BACKENDS_PATH}}"
     fi
 
     if [ -d /usr/lib/gbm ]; then
-      export GBM_BACKENDS_PATH="/usr/lib/gbm''${GBM_BACKENDS_PATH:+:''${GBM_BACKENDS_PATH}}"
+      export GBM_BACKENDS_PATH="''${GBM_BACKENDS_PATH:+''${GBM_BACKENDS_PATH}:}/usr/lib/gbm"
+    fi
+
+    if [ -d /run/opengl-driver/share/glvnd/egl_vendor.d ]; then
+      export __EGL_VENDOR_LIBRARY_DIRS="/run/opengl-driver/share/glvnd/egl_vendor.d''${__EGL_VENDOR_LIBRARY_DIRS:+:''${__EGL_VENDOR_LIBRARY_DIRS}}"
     fi
 
     if [ -d /usr/share/glvnd/egl_vendor.d ]; then
-      export __EGL_VENDOR_LIBRARY_DIRS="/usr/share/glvnd/egl_vendor.d''${__EGL_VENDOR_LIBRARY_DIRS:+:''${__EGL_VENDOR_LIBRARY_DIRS}}"
+      export __EGL_VENDOR_LIBRARY_DIRS="''${__EGL_VENDOR_LIBRARY_DIRS:+''${__EGL_VENDOR_LIBRARY_DIRS}:}/usr/share/glvnd/egl_vendor.d"
+    fi
+
+    if [ -d /run/opengl-driver/lib ]; then
+      export LD_LIBRARY_PATH="/run/opengl-driver/lib''${LD_LIBRARY_PATH:+:''${LD_LIBRARY_PATH}}"
+    fi
+
+    if [ -d /usr/lib ]; then
+      export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH:+''${LD_LIBRARY_PATH}:}/usr/lib"
     fi
   '';
 
@@ -187,6 +209,7 @@ let
       fi
 
       sudo -v
+      sudo ${frameworkGpuSetup}
 
       niri_desktop_temp="$(mktemp)"
       greetd_config_temp="$(mktemp)"
@@ -346,6 +369,7 @@ in
     wf-recorder
     wl-clipboard
     wlr-randr
+    xwayland-satellite
     xdg-desktop-portal-gnome
     xdg-desktop-portal-gtk
     nerd-fonts.caskaydia-cove

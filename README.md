@@ -47,6 +47,7 @@ Host-specific:
 
 ```sh
 just m3air-build
+just ensure-nix-daemon
 just framework-bootstrap
 just framework-build
 just framework-post-switch
@@ -72,7 +73,8 @@ After the first switch, use `just switch`.
 Home Manager owns the Framework user profile. Arch still owns system packages,
 login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth, polkit, and
 greetd/ReGreet. `just framework-bootstrap` installs and enables the Arch-owned
-pieces; `just switch` applies Home Manager and then re-applies the generated
+pieces; `just ensure-nix-daemon` reloads and starts the Lix daemon socket when
+needed; `just switch` applies Home Manager and then re-applies the generated
 root-owned GUI files through `just framework-post-switch`.
 
 Other:

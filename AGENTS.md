@@ -154,6 +154,7 @@ just switch
 
 just m3air-build
 just m3air-rebuild
+just ensure-nix-daemon
 just framework-bootstrap
 just framework-build
 just framework-rebuild
@@ -164,6 +165,7 @@ just check
 
 - `just build` auto-detects the current host and runs the matching dry build.
 - `just switch` auto-detects the current host and applies the matching configuration.
+- `just ensure-nix-daemon` reloads systemd if needed and starts `nix-daemon.socket` on Linux before Nix-dependent recipes.
 - `just framework-bootstrap` installs and enables Arch-owned Framework system dependencies; run it for fresh Arch setup or when those dependencies drift.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs `nix flake check --all-systems`.
@@ -206,6 +208,7 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
+just ensure-nix-daemon     # ensure Lix daemon socket is active on Linux
 just framework-bootstrap    # install Arch-owned Framework system dependencies
 just framework-post-switch  # reapply generated root-owned Framework GUI files
 ```
