@@ -11,7 +11,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | Host | Flake output | Platform | Role |
 | --- | --- | --- | --- |
 | `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
-| `framework` | `.#iceice666@framework` | `x86_64-linux` | standalone Home Manager on Void Linux |
+| `framework` | `.#iceice666@framework` | `x86_64-linux` | Arch Linux with Lix and standalone Home Manager |
 
 ## Layout
 
@@ -23,7 +23,7 @@ assets/              # wallpapers used by theme generation
 
 common/              # baseline shared across all hosts
   configuration/     # shared system-level modules and packages
-  home/              # shared Home Manager modules (fish, opencode, ghostty, themegen, vscodium, zed)
+  home/              # shared Home Manager modules (fish, ghostty, themegen, vscodium, zed)
 
 hosts/               # per-host entrypoints
   m3air/             # macOS
@@ -49,6 +49,22 @@ Host-specific:
 just m3air-build / just m3air-rebuild
 just framework-build / just framework-rebuild
 ```
+
+Framework bootstrap on fresh Arch:
+
+```sh
+sudo pacman -S --needed curl git just
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.lix.systems/lix | sh -s -- install
+. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+nix --version
+
+git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
+cd ~/dotfiles
+nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
+```
+
+After the first switch, use `just framework-rebuild` or, when the hostname is
+`framework`, `just switch`.
 
 Other:
 

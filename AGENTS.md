@@ -22,9 +22,8 @@ common/              # baseline shared across all hosts
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
     ghostty.nix      # shared Ghostty config
-    opencode/        # opencode config with OpenRouter secret + skill-creator skill
     themegen/        # wallpaper-driven theme generation and templates
-      templates/     # ghostty, equibop, opencode, starship, zed, vscode, terminal-sequences
+      templates/     # ghostty, equibop, starship, zed, vscode, terminal-sequences
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
 
@@ -32,7 +31,7 @@ hosts/               # per-host entrypoints
   m3air/             # macOS via nix-darwin
     configuration/   # default.nix, system-defaults.nix
     home/            # default.nix, default-apps.nix, karabiner.nix, wallpaper.nix
-  framework/         # standalone Home Manager on Void Linux
+  framework/         # Arch Linux with Lix and standalone Home Manager
     configuration/   # placeholder directory, not wired into the flake today
     home/            # active Home Manager entrypoint
 
@@ -45,7 +44,7 @@ pkgs/                # overlay packages
   youtube-rss-proxy/ # EMPTY - not wired into the overlay or any host
 
 sensitive/           # encrypted secret and certificate material managed by sops
-  shared/            # cross-host secrets: openrouter.yaml
+  shared/            # cross-host secrets
 ```
 
 Composition is structural: `common/ -> hosts/<name>/`.
@@ -78,6 +77,10 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
 
+The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
+`colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
+from `pkgs.lixPackageSets.stable`.
+
 Additionally, `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
 
 ### `unstablePkgsFor`
@@ -87,6 +90,59 @@ A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` an
 ## Build, Format, and Validation Commands
 
 Run commands from the repository root.
+
+## Framework Arch + Lix Setup
+
+`framework` is an Arch Linux machine managed by standalone Home Manager. There
+is no NixOS or system-level flake target for it; Arch owns the base system and
+Lix provides `nix`.
+
+Fresh Arch prerequisites:
+
+```sh
+sudo pacman -S --needed curl git just
+```
+
+Install Lix with the official Lix installer:
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.lix.systems/lix | sh -s -- install
+```
+
+After installation, open a new shell or load the daemon profile manually:
+
+```sh
+. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+nix --version
+```
+
+The version output should identify `Lix`. The installer enables flakes by
+default and installs a systemd-backed multi-user daemon on Linux. If the daemon
+is not active after installation or after boot, use:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now nix-daemon.socket
+```
+
+Clone this repository with submodules and activate the Framework Home Manager
+configuration:
+
+```sh
+git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
+cd ~/dotfiles
+nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
+```
+
+After the first activation, prefer the repo recipes:
+
+```sh
+just framework-build
+just framework-rebuild
+```
+
+`just switch` also works when `uname -n` reports `framework`; otherwise use the
+explicit `framework-*` recipes.
 
 ### Primary workflows
 
@@ -115,7 +171,7 @@ There is no unit-test suite. The closest equivalent is the narrowest host build 
 
 ```sh
 sudo darwin-rebuild build --flake .#iceice666@m3air
-home-manager build --flake .#iceice666@framework
+nix run github:nix-community/home-manager/release-25.11 -- build --flake .#iceice666@framework
 ```
 
 Which build to run for a given change:
@@ -247,10 +303,9 @@ Canonical module shape:
 - `common/` is the baseline for all hosts.
 - `common/configuration/` is only imported by `m3air`.
 - `common/home/` is imported by all hosts.
-- `common/home/opencode/` uses `sensitive/shared/openrouter.yaml`.
 - `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
-- `framework` is standalone Home Manager on Void Linux. It warns about packages from `common/configuration/packages.nix` that cannot come from `environment.systemPackages`.
+- `framework` is Arch Linux with Lix and standalone Home Manager. It imports the shared package list from `common/configuration/packages.nix` into `home.packages`.
 - `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
