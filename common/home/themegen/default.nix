@@ -64,6 +64,4 @@ in
   home.packages = [ pkgs.themegen ];
 
   home.file = homeFiles;
-
-  programs.opencode.settings.theme = "themegen";
 }

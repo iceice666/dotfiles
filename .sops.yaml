@@ -4,22 +4,16 @@
 keys:
   # Per-device age recipients (public)
   - &m3air age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
-  - &framework age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  - &framework age1c27ha4s5d890vmztrw2fyd6qzhg9x9m0mscmfj7yqqj4u3ur730s9p36lp
   # Optional recovery recipient (public)
   # - &recovery age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
 creation_rules:
-  # Shared Home Manager secrets: decryptable on user-level identities only
-  - path_regex: ^sensitive/shared/openrouter\.yaml$
-    age:
-      - *m3air
-      # - *framework  # TODO: uncomment when framework sops is ready
-
   # Shared secrets: decryptable on all three devices (+ recovery)
   - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key)$
     age:
       - *m3air
-      # - *framework  # TODO: uncomment when framework sops is ready
+      - *framework
       # - *recovery
 
   # Per-device secrets: only the device (+ recovery)

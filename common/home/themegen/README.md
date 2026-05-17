@@ -25,7 +25,6 @@ Relevant entrypoints:
 - `common/home/themegen/templates/ghostty.nix`: Ghostty dark and light theme sources.
 - `common/home/themegen/templates/equibop.nix`: Equibop Midnight CSS theme with automatic Discord light and dark mode switching.
 - `common/home/themegen/templates/terminal-sequences.nix`: fish startup script that applies the terminal palette and follows desktop dark/light mode.
-- `common/home/themegen/templates/opencode.nix`: Opencode theme JSON.
 - `common/home/themegen/templates/starship.nix`: starship palette TOML.
 - `common/home/themegen/templates/zed.nix`: Zed theme JSON for both appearances.
 - `pkgs/themegen/`: Rust CLI that extracts the seed color from an image, generates Material/Base16 palettes, and renders template placeholders.
