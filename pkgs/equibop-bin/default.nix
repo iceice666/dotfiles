@@ -4,6 +4,8 @@
   fetchurl,
   fetchzip,
   makeWrapper,
+  makeDesktopItem,
+  copyDesktopItems,
   autoPatchelfHook,
   alsa-lib,
   at-spi2-atk,
@@ -20,6 +22,7 @@
   gtk3,
   libdrm,
   libnotify,
+  libpulseaudio,
   libuuid,
   libxcb,
   libxkbcommon,
@@ -27,6 +30,7 @@
   nspr,
   nss,
   pango,
+  pipewire,
   systemd,
   wayland,
   xorg,
@@ -64,6 +68,11 @@ let
     srcs.${stdenvNoCC.hostPlatform.system}
       or (throw "equibop-bin: unsupported platform ${stdenvNoCC.hostPlatform.system}");
 
+  sourceAssets = fetchzip {
+    url = "https://github.com/Equicord/Equibop/archive/refs/tags/v${version}.tar.gz";
+    hash = "sha256-CPRn1F15N4Rjry91Gu+ZXWpKVTOEnHI3TmZn8502QB4=";
+  };
+
 in
 stdenvNoCC.mkDerivation {
   inherit pname version src;
@@ -74,7 +83,10 @@ stdenvNoCC.mkDerivation {
   nativeBuildInputs = [
     makeWrapper
   ]
-  ++ lib.optionals stdenvNoCC.hostPlatform.isLinux [ autoPatchelfHook ];
+  ++ lib.optionals stdenvNoCC.hostPlatform.isLinux [
+    autoPatchelfHook
+    copyDesktopItems
+  ];
 
   buildInputs = lib.optionals stdenvNoCC.hostPlatform.isLinux [
     alsa-lib
@@ -92,6 +104,7 @@ stdenvNoCC.mkDerivation {
     gtk3
     libdrm
     libnotify
+    libpulseaudio
     libuuid
     libxcb
     libxkbcommon
@@ -99,6 +112,7 @@ stdenvNoCC.mkDerivation {
     nspr
     nss
     pango
+    pipewire
     systemd
     wayland
     xorg.libX11
@@ -131,10 +145,41 @@ stdenvNoCC.mkDerivation {
         mkdir -p "$out/opt/equibop" "$out/bin"
         cp -r . "$out/opt/equibop/"
         chmod +x "$out/opt/equibop/equibop"
+        install -Dm0644 "${sourceAssets}/build/icon.svg" "$out/share/icons/hicolor/scalable/apps/org.equicord.equibop.svg"
         makeWrapper "$out/opt/equibop/equibop" "$out/bin/equibop" \
-          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}"
+          --prefix LD_LIBRARY_PATH : "${
+            lib.makeLibraryPath [
+              libpulseaudio
+              pipewire
+            ]
+          }:$out/opt/equibop" \
+          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations,WebRTCPipeWireCapturer --enable-wayland-ime=true}}"
         runHook postInstall
       '';
+
+  desktopItems = lib.optionals stdenvNoCC.hostPlatform.isLinux [
+    (makeDesktopItem {
+      name = "org.equicord.equibop";
+      desktopName = "Equibop";
+      exec = "equibop %U";
+      icon = "org.equicord.equibop";
+      startupWMClass = "equibop";
+      genericName = "Internet Messenger";
+      mimeTypes = [ "x-scheme-handler/discord" ];
+      keywords = [
+        "discord"
+        "vencord"
+        "electron"
+        "chat"
+        "equibop"
+      ];
+      categories = [
+        "Network"
+        "InstantMessaging"
+        "Chat"
+      ];
+    })
+  ];
 
   meta = {
     description = "Custom Discord app with Equicord built-in (pre-built binary)";

@@ -1,7 +1,7 @@
 { pkgs, unstablePkgs, ... }:
 
-{
-  home.packages = with pkgs; [
+let
+  stablePackages = with pkgs; [
     fzf
     neovim
     ripgrep
@@ -28,15 +28,21 @@
     age
     ffmpeg
     nodejs_24
+    codex-cli-bin
     equibop-bin
-    unstablePkgs.agent-browser
-    unstablePkgs.bun
-    unstablePkgs.codex
-    unstablePkgs.sops
     gh
     git-lfs
     python3
     uv
     yq
+    zen-bin
   ];
+
+  unstablePackages = with unstablePkgs; [
+    bun
+    sops
+  ];
+in
+{
+  home.packages = stablePackages ++ unstablePackages;
 }

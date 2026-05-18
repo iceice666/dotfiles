@@ -81,7 +81,9 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
-        "treefmt-nix": "treefmt-nix"
+        "themegen-cache": "themegen-cache",
+        "treefmt-nix": "treefmt-nix",
+        "zen-browser": "zen-browser"
       }
     },
     "sops-nix": {
@@ -104,6 +106,18 @@
         "type": "github"
       }
     },
+    "themegen-cache": {
+      "flake": false,
+      "locked": {
+        "path": "./common/home/themegen/empty-cache",
+        "type": "path"
+      },
+      "original": {
+        "path": "./common/home/themegen/empty-cache",
+        "type": "path"
+      },
+      "parent": []
+    },
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
@@ -121,6 +135,26 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "zen-browser": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778822459,
+        "narHash": "sha256-hJlFMK7Es783KU/mhLEGC+xim/EqBMVdbsWgthquo6Y=",
+        "owner": "youwen5",
+        "repo": "zen-browser-flake",
+        "rev": "90d4d395e2be09b2d314816dadd34660528c4ee4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "youwen5",
+        "repo": "zen-browser-flake",
         "type": "github"
       }
     }

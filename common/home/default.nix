@@ -6,6 +6,8 @@
 
 {
   imports = [
+    ./app-defaults.nix
+    ./dev-env.nix
     ./fish
     ./ghostty.nix
     ./packages.nix
@@ -34,6 +36,10 @@
   programs.zoxide = {
     enable = true;
     enableFishIntegration = true;
+    options = [
+      "--cmd"
+      "cd"
+    ];
   };
 
   programs.starship = {
