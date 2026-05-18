@@ -1,111 +1,191 @@
+@import "theme.scss";
+
 * {
-  all: unset;
-  font-family: "CaskaydiaCove Nerd Font", "Noto Sans CJK SC", "Noto Sans", sans-serif;
-  font-size: 13px;
+    all: unset;
+    font-family: "Sarasa Mono TC", "Noto Sans", sans-serif;
+    font-size: 13px;
 }
 
-.bar {
-  background: rgba(23, 23, 23, 0.94);
-  color: #e5e5e5;
-  padding: 0 8px;
+window,
+window.background,
+.background,
+.bar-root,
+.bar,
+button {
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
 }
 
 .left,
 .center,
 .right,
 .app-strip,
-.monitor-group,
 .workspace,
 .tray {
-  min-height: 34px;
+    min-height: 32px;
 }
 
-.left,
-.right,
-.monitor-group,
-.workspace {
-  margin-right: 8px;
+.left {
+    margin-right: 4px;
 }
 
-.monitor-name,
+.right {
+    margin-right: 2px;
+}
+
+.bar {
+    color: $foreground;
+    padding: 0 2px;
+}
+
+.island {
+    background: $surface;
+    border: 1px solid $outline;
+    border-radius: 14px;
+    color: $foreground;
+    margin-right: 4px;
+    padding: 4px 6px;
+}
+
+.compact {
+    padding: 3px 8px 3px 2px;
+}
+
+button {
+    border: 0 solid transparent;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+button:hover {
+    background: $surfaceHover;
+}
+
+button:active {
+    background: $surfaceActive;
+}
+
+.audio-control:hover {
+    background: $surfaceHover;
+}
+
+.audio-control:active {
+    background: $surfaceActive;
+}
+
 .workspace-label {
-  color: #a3a3a3;
-  padding: 0 4px;
+    color: $foreground;
+    font-size: 14px;
+    padding: 0 4px;
 }
 
-.workspace.visible .workspace-label {
-  color: #bfdbfe;
+.workspace-island {
+    padding: 4px 8px;
 }
 
-.app {
-  border-radius: 6px;
-  margin: 4px 2px;
-  padding: 0 7px;
+.app-island {
+    padding: 4px 8px;
 }
 
-.app.visible {
-  color: #d4d4d4;
-  background: rgba(64, 64, 64, 0.72);
+.app-island.focused {
+    background: $surfaceHover;
+    border-color: $primary;
 }
 
-.app.focused {
-  color: #ffffff;
-  background: #2563eb;
+.app-island-content {
+    min-width: 0;
 }
 
-.app.dim {
-  color: #737373;
-  background: rgba(38, 38, 38, 0.64);
+.app-title {
+    color: $foreground;
+    padding-left: 6px;
 }
 
-.title {
-  color: #ffffff;
-  font-weight: 700;
-  padding: 0 10px;
+.app-island.focused .app-title {
+    color: $primary;
 }
 
 .media {
-  color: #dbeafe;
-}
-
-.module {
-  padding: 0 8px;
-}
-
-.perf {
-  color: #bbf7d0;
-}
-
-.bluetooth {
-  color: #bfdbfe;
-}
-
-.battery {
-  color: #e5e5e5;
-}
-
-.battery.charging,
-.battery.full {
-  color: #bbf7d0;
-}
-
-.battery.warning {
-  color: #facc15;
-}
-
-.battery.critical {
-  color: #fecaca;
+    color: $foreground;
 }
 
 .audio {
-  color: #fef3c7;
+    padding: 1px 4px;
+}
+
+.audio-control {
+    border-radius: 999px;
+    padding: 0;
+}
+
+.audio-ring {
+    background: $surfaceActive;
+    color: $primary;
+}
+
+.audio-control.muted .audio-ring {
+    background: $surface;
+    color: $foregroundDim;
+}
+
+.perf-label {
+    color: $foregroundDim;
+    font-size: 10px;
+}
+
+.perf-value,
+.net-value {
+    color: $primary;
+}
+
+.net-row {
+    min-height: 14px;
+}
+
+.battery.warning {
+    color: $warning;
+}
+
+.battery.critical {
+    color: $critical;
+}
+
+.battery.charging {
+    color: $success;
 }
 
 .datetime {
-  color: #ffffff;
-  font-weight: 700;
+    color: $foreground;
 }
 
 .notifications {
-  color: #fecaca;
+    color: $foreground;
+    margin-right: 0;
+    padding: 2px 5px;
+}
+
+.notifications.active {
+    color: $critical;
+}
+
+.notification-stack {
+    min-height: 26px;
+    min-width: 30px;
+}
+
+.notification-icon-wrap {
+    margin: 1px 4px 0 0;
+}
+
+.notification-badge {
+    background: $critical;
+    border-radius: 999px;
+    color: $onCritical;
+    font-size: 10px;
+    font-weight: 700;
+    margin: 0 0 0 14px;
+    min-height: 14px;
+    min-width: 14px;
+    padding: 0 3px;
 }

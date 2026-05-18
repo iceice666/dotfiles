@@ -8,6 +8,8 @@ input {
 
     touchpad {
         tap
+        drag true
+        drag-lock
         natural-scroll
     }
 
@@ -37,13 +39,6 @@ layout {
     }
 }
 
-spawn-at-startup "@swaybg@" "-i" "@wallpaper@" "-m" "fill"
-spawn-at-startup "@launchEww@"
-spawn-at-startup "@mako@"
-spawn-at-startup "@swayidle@"
-spawn-at-startup "@nmApplet@" "--indicator"
-spawn-at-startup "@bluemanApplet@"
-
 hotkey-overlay {
     skip-at-startup
 }
@@ -61,6 +56,11 @@ window-rule {
     default-column-width { proportion 0.33333; }
 }
 
+layer-rule {
+    match namespace="framework-eww-bar"
+    opacity 1.0
+}
+
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
@@ -73,14 +73,14 @@ binds {
     Mod+Shift+Z hotkey-overlay-title="Open VSCodium" { spawn "@codium@"; }
     Super+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "@wpctl@" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05+" "-l" "1.0"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "@wpctl@" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05-"; }
-    XF86AudioMute allow-when-locked=true { spawn "@wpctl@" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "@wpctl@" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
-    XF86AudioPlay allow-when-locked=true { spawn "@playerctl@" "play-pause"; }
-    XF86AudioStop allow-when-locked=true { spawn "@playerctl@" "stop"; }
-    XF86AudioPrev allow-when-locked=true { spawn "@playerctl@" "previous"; }
-    XF86AudioNext allow-when-locked=true { spawn "@playerctl@" "next"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05+ -l 1.0; '@ewwPoll@' audio"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05-; '@ewwPoll@' audio"; }
+    XF86AudioMute allow-when-locked=true { spawn "@bash@" "-c" "'@wpctl@' set-mute '@DEFAULT_AUDIO_SINK@' toggle; '@ewwPoll@' audio"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "@bash@" "-c" "'@wpctl@' set-mute '@DEFAULT_AUDIO_SOURCE@' toggle; '@ewwPoll@' audio"; }
+    XF86AudioPlay allow-when-locked=true { spawn "@bash@" "-c" "'@playerctl@' play-pause; '@ewwPoll@' media"; }
+    XF86AudioStop allow-when-locked=true { spawn "@bash@" "-c" "'@playerctl@' stop; '@ewwPoll@' media"; }
+    XF86AudioPrev allow-when-locked=true { spawn "@bash@" "-c" "'@playerctl@' previous; '@ewwPoll@' media"; }
+    XF86AudioNext allow-when-locked=true { spawn "@bash@" "-c" "'@playerctl@' next; '@ewwPoll@' media"; }
     XF86MonBrightnessUp allow-when-locked=true { spawn "@brightnessctl@" "--class=backlight" "set" "+10%"; }
     XF86MonBrightnessDown allow-when-locked=true { spawn "@brightnessctl@" "--class=backlight" "set" "10%-"; }
 
@@ -127,6 +127,8 @@ binds {
     Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
     Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
     Mod+Ctrl+WheelScrollUp cooldown-ms=150 { move-column-to-workspace-up; }
+
+    Mod+Shift+N hotkey-overlay-title="Rename workspace" { spawn "@renameWorkspace@"; }
 
     Mod+1 { focus-workspace 1; }
     Mod+2 { focus-workspace 2; }

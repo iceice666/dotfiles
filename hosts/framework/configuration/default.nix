@@ -92,7 +92,7 @@ in
       wireplumber.enable = true;
     };
 
-    displayManager.sessionPackages = [ pkgs.niri ];
+    displayManager.sessionPackages = [ unstablePkgs.niri ];
     greetd = {
       enable = true;
       settings.default_session.user = "greeter";

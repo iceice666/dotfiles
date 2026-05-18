@@ -1,0 +1,14 @@
+$background: {{color.dark.surface_container_low | with_alpha(0%) | to_rgba()}};
+$critical: {{color.dark.error}};
+$foreground: {{color.dark.on_surface}};
+$foregroundDim: {{color.dark.on_surface_variant}};
+$onCritical: {{color.dark.on_error}};
+$onPrimary: {{color.dark.on_primary}};
+$outline: {{color.dark.outline | with_alpha(34%) | to_rgba()}};
+$primary: {{color.dark.primary}};
+$success: {{base16.dark.base0B}};
+$surface: {{color.dark.surface_container_low | with_alpha(90%) | to_rgba()}};
+$surfaceActive: {{color.dark.surface_container_high | with_alpha(96%) | to_rgba()}};
+$surfaceContainer: {{color.dark.surface_container | with_alpha(94%) | to_rgba()}};
+$surfaceHover: {{color.dark.surface_container | with_alpha(94%) | to_rgba()}};
+$warning: {{base16.dark.base0A}};

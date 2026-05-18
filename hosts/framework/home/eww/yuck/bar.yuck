@@ -1,31 +1,63 @@
 (defwindow bar [monitor]
   :monitor monitor
-  :geometry (geometry :x "0%" :y "0%" :width "100%" :height "34px" :anchor "top center")
+  :geometry (geometry :x "0%" :y "4px" :width "100%" :height "32px" :anchor "top center")
   :stacking "fg"
   :exclusive true
-  (bar-content))
+  :focusable "none"
+  :namespace "framework-eww-bar"
+  (bar-content :monitor monitor))
 
-(defwidget bar-content []
-  (centerbox :class "bar"
-    (box :class "left" :space-evenly false
-      (app-strip)
-      (label :class "title" :limit-width 48 :text {niri_state.focused_title}))
-    (box :class "center" :space-evenly false
-      (label :class "media" :limit-width 52 :text {media}))
-    (box :class "right" :space-evenly false
-      (label :class "module perf" :text {perf})
-      (label :class {battery.class} :text {battery.text})
-      (label :class "module bluetooth" :text {bluetooth})
-      (button :class "module audio" :onclick "@pavucontrol@"
-        (box :space-evenly false
-          (label :text "SPK ")
-          (label :text {audio.speaker})))
-      (button :class "module audio" :onclick "@toggleMic@"
-        (box :space-evenly false
-          (label :text "MIC ")
-          (label :text {audio.mic})))
-      (box :class "module tray" :space-evenly false
-        (systray :spacing 8 :icon-size 16))
-      (label :class "module datetime" :text {datetime})
-      (button :class "module notifications" :onclick "@notificationAction@"
-        (label :text {notifications})))))
+(defwidget bar-content [monitor]
+  (box :class "bar-root" :hexpand true :vexpand true
+    (centerbox :class "bar"
+      (box :class "left" :space-evenly false
+        (app-strip :monitor monitor))
+      (box :class "center" :space-evenly false :visible {media != ""}
+        (box :class "island media"
+          (label :limit-width 52 :text {media})))
+      (box :class "right" :space-evenly false :halign "end" :valign "center"
+        (perf-module)
+        (battery-module)
+        (audio-module)
+        (box :class "island tray" :space-evenly false
+          (systray :spacing 1 :icon-size 24 :prepend-new false))
+        (box :class "island datetime"
+          (label :limit-width 32 :text {datetime}))
+        (button :class {notifications.class} :onclick "@notificationAction@"
+          (overlay :class "notification-stack"
+            (box :class "notification-icon-wrap" :space-evenly false
+              (image :path "@notificationIcon@" :image-width 24 :image-height 24 :fill-svg {notifications.color}))
+            (label :class "notification-badge" :visible {notifications.count > 0} :halign "end" :valign "start" :limit-width 4 :text {notifications.label})))))))
+
+(defwidget perf-module []
+  (box :class "island compact perf" :space-evenly false :valign "center"
+    (box :orientation "v" :space-evenly false :valign "center"
+      (label :class "perf-label" :width 28 :xalign 1 :text "CPU")
+      (label :class "perf-value" :width 28 :xalign 1 :text {perf.cpu}))
+    (box :orientation "v" :space-evenly false :valign "center"
+      (label :class "perf-label" :width 28 :xalign 1 :text "RAM")
+      (label :class "perf-value" :width 28 :xalign 1 :text {perf.ram}))
+    (box :orientation "v" :space-evenly false :valign "center"
+      (label :class "perf-label" :width 28 :xalign 1 :text "GPU")
+      (label :class "perf-value" :width 28 :xalign 1 :text {perf.gpu}))
+    (box :orientation "v" :space-evenly false :valign "center"
+      (box :class "net-row" :space-evenly false
+        (label :class "perf-label" :width 18 :xalign 1 :text "UP")
+        (label :class "net-value" :width 44 :xalign 1 :text "${perf.up}/s"))
+      (box :class "net-row" :space-evenly false
+        (label :class "perf-label" :width 18 :xalign 1 :text "DN")
+        (label :class "net-value" :width 44 :xalign 1 :text "${perf.down}/s")))))
+
+(defwidget battery-module []
+  (box :class {battery.class} :space-evenly false
+    (image :path {battery.icon} :image-width 24 :image-height 24 :fill-svg {battery.color})
+    (label :text {battery.text})))
+
+(defwidget audio-module []
+  (box :class "island audio" :space-evenly false :spacing 4
+    (eventbox :class {audio.speaker_class} :tooltip {audio.speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@" :onscroll "@changeSpeakerVolume@ {}"
+      (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.speaker_value} :start-at 75 :thickness 3
+        (image :path {audio.speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio.speaker_color})))
+    (eventbox :class {audio.mic_class} :tooltip {audio.mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@" :onscroll "@changeMicVolume@ {}"
+      (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.mic_value} :start-at 75 :thickness 3
+        (image :path {audio.mic_icon} :image-width 20 :image-height 20 :fill-svg {audio.mic_color})))))

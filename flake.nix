@@ -63,7 +63,6 @@
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
-        framework-bar = final.callPackage ./pkgs/framework-bar { };
         zen-bin =
           if final.stdenv.hostPlatform.isLinux then
             final.wrapFirefox
@@ -96,6 +95,19 @@
           };
         };
         linuxPackages_zen_7_0 = final.linuxPackagesFor final.linux_zen_7_0;
+        eww =
+          if final.stdenv.hostPlatform.isLinux then
+            prev.eww.overrideAttrs (old: {
+              postPatch = (old.postPatch or "") + ''
+                substituteInPlace crates/eww/src/app.rs \
+                  --replace-fail \
+                    "    window.set_visual(visual.as_ref());" \
+                    "    window.set_visual(visual.as_ref());
+                    window.set_app_paintable(true);"
+              '';
+            })
+          else
+            prev.eww;
         direnv = prev.direnv.overrideAttrs (old: {
           postPatch = (old.postPatch or "") + ''
             for makefile in Makefile GNUmakefile; do

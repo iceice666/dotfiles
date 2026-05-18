@@ -1,0 +1,14 @@
+$background: {{color.light.surface_container_low | with_alpha(0%) | to_rgba()}};
+$critical: {{color.light.error}};
+$foreground: {{color.light.on_surface}};
+$foregroundDim: {{color.light.on_surface_variant}};
+$onCritical: {{color.light.on_error}};
+$onPrimary: {{color.light.on_primary}};
+$outline: {{color.light.outline | with_alpha(34%) | to_rgba()}};
+$primary: {{color.light.primary}};
+$success: {{base16.light.base0B}};
+$surface: {{color.light.surface_container_low | with_alpha(90%) | to_rgba()}};
+$surfaceActive: {{color.light.surface_container_high | with_alpha(96%) | to_rgba()}};
+$surfaceContainer: {{color.light.surface_container | with_alpha(94%) | to_rgba()}};
+$surfaceHover: {{color.light.surface_container | with_alpha(94%) | to_rgba()}};
+$warning: {{base16.light.base0A}};

@@ -14,7 +14,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 ## File Map
 
 - `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
-- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, and framework-bar templates.
+- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, and Eww bar templates.
 - `themegen/m3air/`: macOS-only Equibop template.
 - `common/home/themegen/default.nix`: Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.

@@ -43,7 +43,6 @@ pkgs/                # overlay packages
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
-  framework-bar/     # Framework Wayland status bar
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
   zed-bin/           # Zed official prebuilt releases
@@ -82,7 +81,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `themegen`, `utiluti`, `zed-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -276,7 +275,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -299,7 +298,7 @@ Canonical module shape:
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is NixOS with Home Manager imported into the system configuration.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.
-- `hosts/framework/home/framework-bar/` runs the custom Rust status bar; theme files come from `themegen/framework/.config/framework-bar/`.
+- `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
 - `pkgs/youtube-rss-proxy/` is an empty directory that is not wired into the overlay or any host; do not reference it as an available package.

@@ -2,15 +2,17 @@
   config,
   lib,
   pkgs,
+  unstablePkgs,
   avatarImage ? null,
   desktopWallpaper,
-  ewwLaunch,
+  ewwNotificationMarkRead,
+  ewwNotificationMarkUnread,
+  ewwPoll,
+  ewwReload,
   ...
 }:
 
 let
-  frameworkGpuSetup = lib.getExe config.targets.genericLinux.gpu.setupPackage;
-
   frameworkGraphicsEnv = ''
     if [ -d /run/opengl-driver/lib/dri ]; then
       export LIBGL_DRIVERS_PATH="/run/opengl-driver/lib/dri''${LIBGL_DRIVERS_PATH:+:''${LIBGL_DRIVERS_PATH}}"
@@ -45,14 +47,16 @@ let
     fi
   '';
 
+  niriPkg = unstablePkgs.niri;
+
   frameworkNiri = pkgs.writeShellScript "framework-niri" ''
     ${frameworkGraphicsEnv}
-    exec ${pkgs.niri}/bin/niri "$@"
+    exec ${niriPkg}/bin/niri "$@"
   '';
 
   frameworkNiriSession = pkgs.writeShellScript "framework-niri-session" ''
     ${frameworkGraphicsEnv}
-    exec ${pkgs.niri}/bin/niri-session "$@"
+    exec ${niriPkg}/bin/niri-session "$@"
   '';
 
   frameworkNiriDesktop = pkgs.writeText "framework-niri.desktop" ''
@@ -81,6 +85,24 @@ let
     ExecStart=${frameworkNiri} --session
   '';
 
+  renameWorkspace = pkgs.writeShellScript "rename-niri-workspace" ''
+    current_name="$(
+        ${niriPkg}/bin/niri msg -j workspaces 2>/dev/null \
+        | ${pkgs.jq}/bin/jq -r 'first(.[]? | select(.is_focused // .focused // false) | .name // empty) // empty'
+    )"
+
+    name="$(
+      printf '%s\n' "$current_name" \
+        | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt "Workspace name: "
+    )" || exit 0
+
+    if [ -n "$name" ]; then
+      ${niriPkg}/bin/niri msg action set-workspace-name "$name"
+    else
+      ${niriPkg}/bin/niri msg action unset-workspace-name
+    fi
+  '';
+
   frameworkPortalEnv = {
     XDG_DATA_DIRS = "${config.home.profileDirectory}/share:/nix/var/nix/profiles/default/share:/usr/local/share:/usr/share";
     NIX_XDG_DESKTOP_PORTAL_DIR = "${config.home.profileDirectory}/share/xdg-desktop-portal/portals";
@@ -89,171 +111,70 @@ let
     XDG_SESSION_TYPE = "wayland";
   };
 
-  frameworkDbusServices = [
-    "ca.desrt.dconf.service"
-    "org.freedesktop.impl.portal.PermissionStore.service"
-    "org.freedesktop.impl.portal.desktop.gnome.service"
-    "org.freedesktop.impl.portal.desktop.gtk.service"
-    "org.freedesktop.portal.Desktop.service"
-    "org.freedesktop.portal.Documents.service"
-  ];
+  gsettingsSchemaDataDir = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}";
 
-  frameworkLoginUser = "iceice666";
-  frameworkGreeterBackground = toString desktopWallpaper;
-  frameworkGreeterAvatarSetup =
-    if avatarImage == null then
-      ""
-    else
-      ''
-        sudo install -Dm0644 "${avatarImage}" "/var/lib/AccountsService/icons/${frameworkLoginUser}"
-        printf '%s\n' \
-          '[User]' \
-          'Icon=/var/lib/AccountsService/icons/${frameworkLoginUser}' \
-          'SystemAccount=false' \
-          > "$accounts_user_temp"
-        sudo install -Dm0600 "$accounts_user_temp" "/var/lib/AccountsService/users/${frameworkLoginUser}"
-      '';
+  cursorThemeName = "Bibata-Modern-Classic";
+  cursorThemeSize = 24;
 
-  frameworkRegreetConfig = pkgs.writeText "framework-regreet.toml" ''
-    [background]
-    path = "${frameworkGreeterBackground}"
-    fit = "Cover"
+  mkQtctConfig =
+    {
+      iconTheme,
+      mode,
+      version,
+    }:
+    pkgs.writeText "themegen-qt${version}ct-${mode}.conf" ''
+      [Appearance]
+      color_scheme_path=${config.xdg.configHome}/qt${version}ct/colors/themegen.conf
+      custom_palette=true
+      icon_theme=${iconTheme}
+      standard_dialogs=xdgdesktopportal
+      style=Fusion
+    '';
 
-    [GTK]
-    application_prefer_dark_theme = true
-    cursor_theme_name = "Adwaita"
-    cursor_blink = true
-    font_name = "Sans 13"
-    icon_theme_name = "Adwaita"
-    theme_name = "Adwaita"
-
-    [commands]
-    reboot = ["systemctl", "reboot"]
-    poweroff = ["systemctl", "poweroff"]
-
-    [appearance]
-    greeting_msg = "${frameworkLoginUser}"
-
-    [widget.clock]
-    format = "%a %H:%M"
-    resolution = "500ms"
-    label_width = 150
+  installThemegenAppearance = mode: ''
+    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    ln -sfn "theme-${mode}.scss" "$HOME/.config/eww/theme.scss"
+    ln -sfn "themegen-${mode}.ini" "$HOME/.config/fuzzel/fuzzel.ini"
+    ln -sfn "themegen-${mode}.css" "$HOME/.config/gtk-3.0/themegen.css"
+    ln -sfn "themegen-${mode}.css" "$HOME/.config/gtk-4.0/themegen.css"
+    ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt5ct/colors/themegen.conf"
+    ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt6ct/colors/themegen.conf"
+    ln -sfn "qt5ct-${mode}.conf" "$HOME/.config/qt5ct/qt5ct.conf"
+    ln -sfn "qt6ct-${mode}.conf" "$HOME/.config/qt6ct/qt6ct.conf"
   '';
 
-  frameworkRegreetStyle = pkgs.writeText "framework-regreet.css" ''
-    window {
-      background: transparent;
-    }
+  setAppearance =
+    {
+      colorScheme,
+      gtkTheme,
+      iconTheme,
+      mode,
+    }:
+    ''
+      ${installThemegenAppearance mode}
 
-    box,
-    grid {
-      border-radius: 16px;
-    }
+      export XDG_DATA_DIRS=${lib.escapeShellArg gsettingsSchemaDataDir}''${XDG_DATA_DIRS:+:''${XDG_DATA_DIRS}}
 
-    entry,
-    button,
-    combobox,
-    menubutton {
-      border-radius: 10px;
-    }
+      ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface color-scheme ${lib.escapeShellArg colorScheme}
+      ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme ${lib.escapeShellArg gtkTheme}
+      ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme ${lib.escapeShellArg iconTheme}
+      ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-theme ${lib.escapeShellArg cursorThemeName}
+      ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-size ${toString cursorThemeSize}
 
-    entry {
-      background-color: rgba(23, 23, 23, 0.54);
-      border-color: rgba(255, 214, 224, 0.32);
-      color: #f8fafc;
-    }
-
-    entry:focus {
-      background-color: rgba(23, 23, 23, 0.74);
-      border-color: rgba(255, 214, 224, 0.86);
-      box-shadow: 0 0 28px rgba(255, 214, 224, 0.34);
-    }
-  '';
+      ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service network-manager-applet.service >/dev/null 2>&1 || true
+      ${ewwReload}
+    '';
 
   frameworkPostSwitch = pkgs.writeShellApplication {
     name = "framework-post-switch";
     runtimeInputs = with pkgs; [
-      coreutils
-      gnugrep
+      dbus
+      systemd
     ];
     text = ''
       if [[ "$(uname -s)" != "Linux" ]]; then
         echo "This helper is only for the Framework Arch Linux host." >&2
         exit 1
-      fi
-
-      if ! command -v pacman >/dev/null 2>&1; then
-        echo "pacman not found; this helper expects Arch Linux." >&2
-        exit 1
-      fi
-
-      required_packages=(
-        accountsservice
-        cage
-        fprintd
-        greetd
-        greetd-regreet
-      )
-
-      missing_packages=()
-      for package in "''${required_packages[@]}"; do
-        if ! pacman -Q "$package" >/dev/null 2>&1; then
-          missing_packages+=("$package")
-        fi
-      done
-
-      if ((''${#missing_packages[@]} > 0)); then
-        echo "Missing Arch GUI packages: ''${missing_packages[*]}" >&2
-        echo "Run 'just framework-bootstrap' before re-running this helper." >&2
-        exit 1
-      fi
-
-      sudo -v
-      sudo ${frameworkGpuSetup}
-
-      niri_desktop_temp="$(mktemp)"
-      greetd_config_temp="$(mktemp)"
-      greetd_pam_temp="$(mktemp)"
-      regreet_config_temp="$(mktemp)"
-      regreet_style_temp="$(mktemp)"
-      accounts_user_temp="$(mktemp)"
-      trap 'rm -f "$niri_desktop_temp" "$greetd_config_temp" "$greetd_pam_temp" "$regreet_config_temp" "$regreet_style_temp" "$accounts_user_temp"' EXIT
-
-      cp ${frameworkNiriDesktop} "$niri_desktop_temp"
-      cp ${frameworkRegreetConfig} "$regreet_config_temp"
-      cp ${frameworkRegreetStyle} "$regreet_style_temp"
-
-      sudo install -Dm0644 "$niri_desktop_temp" /usr/share/wayland-sessions/niri.desktop
-      sudo install -d -m0755 /etc/greetd/sessions
-      sudo rm -f /etc/greetd/sessions/*.desktop
-      sudo install -Dm0644 "$niri_desktop_temp" /etc/greetd/sessions/niri.desktop
-      sudo install -Dm0644 "$regreet_config_temp" /etc/greetd/regreet.toml
-      sudo install -Dm0644 "$regreet_style_temp" /etc/greetd/regreet.css
-
-      ${frameworkGreeterAvatarSetup}
-
-      printf '%s\n' \
-        '[terminal]' \
-        'vt = 1' \
-        "" \
-        '[default_session]' \
-        'command = "env GTK_USE_PORTAL=0 GDK_DEBUG=no-portals dbus-run-session cage -s -mlast -- regreet --config /etc/greetd/regreet.toml --style /etc/greetd/regreet.css"' \
-        'user = "greeter"' \
-        > "$greetd_config_temp"
-      sudo install -Dm0644 "$greetd_config_temp" /etc/greetd/config.toml
-
-      if [ -f /etc/pam.d/greetd ] && ! grep -q '^auth[[:space:]].*pam_fprintd\.so' /etc/pam.d/greetd; then
-        {
-          printf '%s\n' 'auth sufficient pam_fprintd.so'
-          cat /etc/pam.d/greetd
-        } > "$greetd_pam_temp"
-        sudo install -m0644 "$greetd_pam_temp" /etc/pam.d/greetd
-      fi
-
-      if systemctl is-enabled greetd.service >/dev/null 2>&1; then
-        sudo systemctl start greetd.service
-      else
-        echo "greetd.service is not enabled; run 'just framework-bootstrap' to finish Arch system setup." >&2
       fi
 
       hm_session_vars="$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
@@ -276,69 +197,85 @@ let
         systemctl --user daemon-reload
         systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
         dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
-        systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service
-        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+        systemctl --user start xdg-document-portal.service xdg-permission-store.service || true
+        systemctl --user restart xdg-desktop-portal.service || true
+        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service || true
       else
         cat >&2 <<'EOF'
       User systemd is not available in this shell.
       After logging into a normal user session, run:
-        systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service
+        systemctl --user start xdg-document-portal.service xdg-permission-store.service
+        systemctl --user restart xdg-desktop-portal.service
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
       EOF
       fi
+
     '';
   };
 
   niriConfig =
     builtins.replaceStrings
       [
-        "@bluemanApplet@"
         "@brightnessctl@"
+        "@bash@"
         "@codium@"
+        "@ewwPoll@"
         "@fuzzel@"
         "@ghostty@"
         "@grim@"
-        "@wallpaper@"
-        "@launchEww@"
-        "@mako@"
         "@nautilus@"
-        "@nmApplet@"
-        "@niri@"
         "@playerctl@"
+        "@renameWorkspace@"
         "@slurp@"
-        "@swaybg@"
-        "@swayidle@"
         "@swaylock@"
         "@swappy@"
         "@wpctl@"
         "@zed@"
       ]
       [
-        "${pkgs.blueman}/bin/blueman-applet"
         "${pkgs.brightnessctl}/bin/brightnessctl"
+        "${pkgs.bash}/bin/bash"
         "${pkgs.vscodium}/bin/codium"
+        (toString ewwPoll)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${pkgs.ghostty}/bin/ghostty"
         "${pkgs.grim}/bin/grim"
-        (toString desktopWallpaper)
-        (toString ewwLaunch)
-        "${pkgs.mako}/bin/mako"
         "${pkgs.nautilus}/bin/nautilus"
-        "${pkgs.networkmanagerapplet}/bin/nm-applet"
-        "${frameworkNiri}"
         "${pkgs.playerctl}/bin/playerctl"
+        (toString renameWorkspace)
         "${pkgs.slurp}/bin/slurp"
-        "${pkgs.swaybg}/bin/swaybg"
-        "${pkgs.swayidle}/bin/swayidle"
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
         "${pkgs.wireplumber}/bin/wpctl"
-        "${pkgs.zed-bin}/bin/zed"
+        (lib.getExe unstablePkgs.zed-editor)
       ]
       (builtins.readFile ./niri-config.kdl);
 in
 {
   imports = [ ./eww ];
+
+  systemd.user.services.swaybg = {
+    Unit = {
+      Description = "Swaybg wallpaper daemon";
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "niri.service"
+        "graphical-session.target"
+      ];
+      Wants = [ "graphical-session.target" ];
+    };
+
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.swaybg}/bin/swaybg -i ${lib.escapeShellArg (toString desktopWallpaper)} -m fill";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
 
   home.packages = with pkgs; [
     frameworkPostSwitch
@@ -353,10 +290,12 @@ in
     lm_sensors
     mpv
     nautilus
+    cascadia-code
     noto-fonts
     noto-fonts-color-emoji
     overskride
     papirus-icon-theme
+    bibata-cursors
     pciutils
     pavucontrol
     playerctl
@@ -372,13 +311,26 @@ in
     xwayland-satellite
     xdg-desktop-portal-gnome
     xdg-desktop-portal-gtk
-    nerd-fonts.caskaydia-cove
   ];
 
   fonts.fontconfig.enable = true;
 
+  home.pointerCursor = {
+    enable = true;
+    name = cursorThemeName;
+    package = pkgs.bibata-cursors;
+    size = cursorThemeSize;
+    gtk.enable = true;
+    x11.enable = true;
+  };
+
   gtk = {
     enable = true;
+    cursorTheme = {
+      name = cursorThemeName;
+      package = pkgs.bibata-cursors;
+      size = cursorThemeSize;
+    };
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
@@ -387,32 +339,39 @@ in
       name = "Adwaita-dark";
       package = pkgs.gnome-themes-extra;
     };
+    gtk3.extraCss = ''
+      @import url("themegen.css");
+    '';
+    gtk4.extraCss = ''
+      @import url("themegen.css");
+    '';
   };
 
   qt = {
     enable = true;
-    platformTheme.name = "gtk";
-    style.name = "adwaita-dark";
+    platformTheme.name = "qtct";
+    style.name = "Fusion";
   };
 
   home.sessionVariables = {
     NIXOS_OZONE_WL = "1";
+    QT_QPA_PLATFORM = "wayland;xcb";
     XDG_CURRENT_DESKTOP = "niri";
     XDG_SESSION_DESKTOP = "niri";
     XDG_SESSION_TYPE = "wayland";
   };
 
+  dconf.settings."org/gnome/desktop/interface" = {
+    color-scheme = "prefer-dark";
+    cursor-size = cursorThemeSize;
+    cursor-theme = cursorThemeName;
+    gtk-theme = "Adwaita-dark";
+    icon-theme = "Papirus-Dark";
+  };
+
   home.activation.frameworkPortalEnvironment =
     lib.hm.dag.entryBetween [ "dconfSettings" ] [ "installPackages" ]
       ''
-        dbus_service_dir="$HOME/.local/share/dbus-1/services"
-        mkdir -p "$dbus_service_dir"
-        ${lib.concatMapStringsSep "\n" (service: ''
-          if [ -e /usr/share/dbus-1/services/${service} ]; then
-            ln -sfn /usr/share/dbus-1/services/${service} "$dbus_service_dir/${service}"
-          fi
-        '') frameworkDbusServices}
-
         if ${pkgs.systemd}/bin/systemctl --user show-environment >/dev/null 2>&1; then
           export XDG_DATA_DIRS=${lib.escapeShellArg frameworkPortalEnv.XDG_DATA_DIRS}
           export NIX_XDG_DESKTOP_PORTAL_DIR=${lib.escapeShellArg frameworkPortalEnv.NIX_XDG_DESKTOP_PORTAL_DIR}
@@ -423,9 +382,39 @@ in
           ${pkgs.systemd}/bin/systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
           ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
           ${pkgs.systemd}/bin/systemctl --user reset-failed xdg-desktop-portal.service xdg-document-portal.service || true
-          ${pkgs.systemd}/bin/systemctl --user start xdg-document-portal.service xdg-permission-store.service xdg-desktop-portal.service || true
+          ${pkgs.systemd}/bin/systemctl --user start xdg-document-portal.service xdg-permission-store.service || true
+          ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service || true
         fi
       '';
+
+  home.activation.frameworkThemegenAppearance = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    mode="$(${pkgs.darkman}/bin/darkman get 2>/dev/null || true)"
+    case "$mode" in
+      light|dark) ;;
+      *) mode="dark" ;;
+    esac
+
+    case "$mode" in
+      light)
+        ${setAppearance {
+          colorScheme = "default";
+          gtkTheme = "Adwaita";
+          iconTheme = "Papirus-Light";
+          mode = "light";
+        }}
+        ;;
+      dark)
+        ${setAppearance {
+          colorScheme = "prefer-dark";
+          gtkTheme = "Adwaita-dark";
+          iconTheme = "Papirus-Dark";
+          mode = "dark";
+        }}
+        ;;
+    esac
+
+    ${ewwReload}
+  '';
 
   xdg = {
     enable = true;
@@ -433,12 +422,31 @@ in
     dataFile = {
       "wayland-sessions/niri.desktop".source = frameworkNiriDesktop;
       "systemd/user/niri.service".source = frameworkNiriService;
-      "systemd/user/niri-shutdown.target".source = "${pkgs.niri}/share/systemd/user/niri-shutdown.target";
+      "systemd/user/niri-shutdown.target".source = "${niriPkg}/share/systemd/user/niri-shutdown.target";
     };
 
     portal = {
       enable = true;
-      configPackages = [ pkgs.niri ];
+      configPackages = [ niriPkg ];
+      config.common = {
+        default = [
+          "gnome"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.Settings" = "gnome";
+      };
+      config.niri = {
+        default = [
+          "gnome"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.Access" = "gtk";
+        "org.freedesktop.impl.portal.Notification" = "gtk";
+        "org.freedesktop.impl.portal.ScreenCast" = "gnome";
+        "org.freedesktop.impl.portal.Screenshot" = "gnome";
+        "org.freedesktop.impl.portal.Secret" = "gnome-keyring";
+        "org.freedesktop.impl.portal.Settings" = "gnome";
+      };
       extraPortals = [
         pkgs.xdg-desktop-portal-gnome
         pkgs.xdg-desktop-portal-gtk
@@ -453,38 +461,38 @@ in
 
   home.file.".config/niri/config.kdl".text = niriConfig;
 
+  xdg.configFile = {
+    "qt5ct/qt5ct-dark.conf".source = mkQtctConfig {
+      iconTheme = "Papirus-Dark";
+      mode = "dark";
+      version = "5";
+    };
+    "qt5ct/qt5ct-light.conf".source = mkQtctConfig {
+      iconTheme = "Papirus-Light";
+      mode = "light";
+      version = "5";
+    };
+    "qt6ct/qt6ct-dark.conf".source = mkQtctConfig {
+      iconTheme = "Papirus-Dark";
+      mode = "dark";
+      version = "6";
+    };
+    "qt6ct/qt6ct-light.conf".source = mkQtctConfig {
+      iconTheme = "Papirus-Light";
+      mode = "light";
+      version = "6";
+    };
+  };
+
   programs.fuzzel = {
     enable = true;
-    settings = {
-      main = {
-        terminal = "ghostty";
-        layer = "overlay";
-        width = 48;
-        lines = 12;
-        tabs = 4;
-        font = "CaskaydiaCove Nerd Font:size=14";
-        icon-theme = "Papirus-Dark";
-      };
-      colors = {
-        background = "171717f2";
-        text = "e5e5e5ff";
-        match = "93c5fdff";
-        selection = "334155ff";
-        selection-text = "ffffffff";
-        border = "60a5faff";
-      };
-      border = {
-        width = 2;
-        radius = 8;
-      };
-    };
   };
 
   programs.swaylock = {
     enable = true;
     settings = {
       color = "171717";
-      font = "CaskaydiaCove Nerd Font";
+      font = "Cascadia Code NF";
       indicator-radius = 120;
       indicator-thickness = 8;
       ring-color = "3b82f6";
@@ -497,6 +505,27 @@ in
 
   services = {
     blueman-applet.enable = true;
+    darkman = {
+      enable = true;
+      settings = {
+        lat = 25.0;
+        lng = 121.5;
+        usegeoclue = false;
+        dbusserver = true;
+      };
+      darkModeScripts.gtk = setAppearance {
+        colorScheme = "prefer-dark";
+        gtkTheme = "Adwaita-dark";
+        iconTheme = "Papirus-Dark";
+        mode = "dark";
+      };
+      lightModeScripts.gtk = setAppearance {
+        colorScheme = "default";
+        gtkTheme = "Adwaita";
+        iconTheme = "Papirus-Light";
+        mode = "light";
+      };
+    };
     gnome-keyring.enable = true;
     network-manager-applet.enable = true;
 
@@ -515,8 +544,13 @@ in
         border-color = "#60a5faff";
         default-timeout = 7000;
         font = "Noto Sans 12";
+        max-history = 50;
         icons = true;
-        max-icon-size = 48;
+        max-icon-size = 24;
+        on-button-left = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl invoke -n \"$id\"";
+        on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-notify = "exec ${ewwNotificationMarkUnread} \"$id\"";
+        on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl dismiss --no-history -n \"$id\"";
       };
     };
 
@@ -529,8 +563,8 @@ in
         }
         {
           timeout = 600;
-          command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
-          resumeCommand = "${pkgs.niri}/bin/niri msg action power-on-monitors";
+          command = "${niriPkg}/bin/niri msg action power-off-monitors";
+          resumeCommand = "${niriPkg}/bin/niri msg action power-on-monitors";
         }
       ];
       events = [
