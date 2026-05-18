@@ -44,12 +44,14 @@ nix build .#nixosConfigurations.framework.config.system.build.toplevel \
   --override-input themegen-cache path:$PWD/.cache/themegen/framework
 ```
 
-Preview a wallpaper palette:
+Render and open an HTML preview for a wallpaper palette:
 
 ```sh
 just themegen-preview
 just themegen-preview ./assets/another-wallpaper.png
 ```
+
+The generated file is written to `.cache/themegen/preview/index.html`.
 
 ## Editing
 

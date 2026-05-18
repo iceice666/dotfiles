@@ -400,9 +400,11 @@ themegen-generate host:
     printf '%s\n' "$input_fingerprint" > "$fingerprint_file"
     echo "themegen cache regenerated for $host"
 
-# Preview the current or specified wallpaper palette
+# Render an HTML preview for the current or specified wallpaper palette
 themegen-preview image='':
     #!/usr/bin/env bash
+    set -euo pipefail
+
     image='{{ image }}'
 
     if [[ -z "$image" ]]; then
@@ -427,11 +429,31 @@ themegen-preview image='':
         exit 1
     fi
 
-    themegen palette \
+    if [[ -n "${THEMEGEN_BIN:-}" ]]; then
+        themegen_cmd=("$THEMEGEN_BIN")
+    elif command -v themegen >/dev/null 2>&1; then
+        themegen_cmd=(themegen)
+    else
+        themegen_cmd=(cargo run --manifest-path '{{ repo_root }}/pkgs/themegen/Cargo.toml' --)
+    fi
+
+    output='{{ repo_root }}/.cache/themegen/preview/index.html'
+    mkdir -p "$(dirname "$output")"
+
+    "${themegen_cmd[@]}" render \
         --image "$image" \
         --scheme tonal-spot \
         --base16-contrast 0.3 \
-        --base16-mode follow-palette
+        --base16-mode follow-palette \
+        --render '{{ repo_root }}/themegen/preview.html='"$output"
+
+    echo "themegen preview rendered to $output"
+
+    if command -v open >/dev/null 2>&1; then
+        open "$output"
+    elif command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$output"
+    fi
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 

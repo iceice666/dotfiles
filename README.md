@@ -41,7 +41,7 @@ just switch          # apply configuration to current host
 just fmt             # format all files
 just check           # nix flake check --all-systems
 just themegen-generate framework # generate concrete theme cache
-just themegen-preview  # preview the current host wallpaper palette
+just themegen-preview  # render and open the current host wallpaper palette preview
 ```
 
 Host-specific:

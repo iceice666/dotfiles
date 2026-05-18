@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>themegen preview</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --seed: {{ seed.color }};
+
+      --light-background: {{ color.light.background }};
+      --light-on-background: {{ color.light.on_background }};
+      --light-surface: {{ color.light.surface }};
+      --light-surface-container: {{ color.light.surface_container }};
+      --light-surface-container-high: {{ color.light.surface_container_high }};
+      --light-surface-variant: {{ color.light.surface_variant }};
+      --light-on-surface: {{ color.light.on_surface }};
+      --light-on-surface-variant: {{ color.light.on_surface_variant }};
+      --light-outline: {{ color.light.outline }};
+      --light-primary: {{ color.light.primary }};
+      --light-on-primary: {{ color.light.on_primary }};
+      --light-primary-container: {{ color.light.primary_container }};
+      --light-on-primary-container: {{ color.light.on_primary_container }};
+      --light-secondary: {{ color.light.secondary }};
+      --light-on-secondary: {{ color.light.on_secondary }};
+      --light-secondary-container: {{ color.light.secondary_container }};
+      --light-on-secondary-container: {{ color.light.on_secondary_container }};
+      --light-tertiary: {{ color.light.tertiary }};
+      --light-on-tertiary: {{ color.light.on_tertiary }};
+      --light-tertiary-container: {{ color.light.tertiary_container }};
+      --light-on-tertiary-container: {{ color.light.on_tertiary_container }};
+      --light-error: {{ color.light.error }};
+      --light-on-error: {{ color.light.on_error }};
+
+      --dark-background: {{ color.dark.background }};
+      --dark-on-background: {{ color.dark.on_background }};
+      --dark-surface: {{ color.dark.surface }};
+      --dark-surface-container: {{ color.dark.surface_container }};
+      --dark-surface-container-high: {{ color.dark.surface_container_high }};
+      --dark-surface-variant: {{ color.dark.surface_variant }};
+      --dark-on-surface: {{ color.dark.on_surface }};
+      --dark-on-surface-variant: {{ color.dark.on_surface_variant }};
+      --dark-outline: {{ color.dark.outline }};
+      --dark-primary: {{ color.dark.primary }};
+      --dark-on-primary: {{ color.dark.on_primary }};
+      --dark-primary-container: {{ color.dark.primary_container }};
+      --dark-on-primary-container: {{ color.dark.on_primary_container }};
+      --dark-secondary: {{ color.dark.secondary }};
+      --dark-on-secondary: {{ color.dark.on_secondary }};
+      --dark-secondary-container: {{ color.dark.secondary_container }};
+      --dark-on-secondary-container: {{ color.dark.on_secondary_container }};
+      --dark-tertiary: {{ color.dark.tertiary }};
+      --dark-on-tertiary: {{ color.dark.on_tertiary }};
+      --dark-tertiary-container: {{ color.dark.tertiary_container }};
+      --dark-on-tertiary-container: {{ color.dark.on_tertiary_container }};
+      --dark-error: {{ color.dark.error }};
+      --dark-on-error: {{ color.dark.on_error }};
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: light-dark(var(--light-background), var(--dark-background));
+      color: light-dark(var(--light-on-background), var(--dark-on-background));
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 28px;
+      border-bottom: 1px solid light-dark(var(--light-outline), var(--dark-outline));
+      padding-bottom: 24px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 4.4rem);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 0.82rem;
+      color: light-dark(var(--light-on-surface-variant), var(--dark-on-surface-variant));
+      font-weight: 650;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      color: light-dark(var(--light-on-surface-variant), var(--dark-on-surface-variant));
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+    }
+
+    .pill {
+      border: 1px solid light-dark(var(--light-outline), var(--dark-outline));
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: light-dark(var(--light-surface-container), var(--dark-surface-container));
+    }
+
+    .seed {
+      display: grid;
+      gap: 8px;
+      min-width: 180px;
+      color: light-dark(var(--light-on-surface-variant), var(--dark-on-surface-variant));
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+    }
+
+    .seed-swatch {
+      height: 72px;
+      border-radius: 8px;
+      background: var(--seed);
+      border: 1px solid light-dark(var(--light-outline), var(--dark-outline));
+    }
+
+    .scheme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .scheme {
+      background: var(--background);
+      color: var(--on-background);
+      border: 1px solid var(--outline);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .scheme.light {
+      --background: var(--light-background);
+      --on-background: var(--light-on-background);
+      --surface: var(--light-surface);
+      --surface-container: var(--light-surface-container);
+      --surface-container-high: var(--light-surface-container-high);
+      --surface-variant: var(--light-surface-variant);
+      --on-surface: var(--light-on-surface);
+      --on-surface-variant: var(--light-on-surface-variant);
+      --outline: var(--light-outline);
+      --primary: var(--light-primary);
+      --on-primary: var(--light-on-primary);
+      --primary-container: var(--light-primary-container);
+      --on-primary-container: var(--light-on-primary-container);
+      --secondary: var(--light-secondary);
+      --on-secondary: var(--light-on-secondary);
+      --secondary-container: var(--light-secondary-container);
+      --on-secondary-container: var(--light-on-secondary-container);
+      --tertiary: var(--light-tertiary);
+      --on-tertiary: var(--light-on-tertiary);
+      --tertiary-container: var(--light-tertiary-container);
+      --on-tertiary-container: var(--light-on-tertiary-container);
+      --error: var(--light-error);
+      --on-error: var(--light-on-error);
+    }
+
+    .scheme.dark {
+      --background: var(--dark-background);
+      --on-background: var(--dark-on-background);
+      --surface: var(--dark-surface);
+      --surface-container: var(--dark-surface-container);
+      --surface-container-high: var(--dark-surface-container-high);
+      --surface-variant: var(--dark-surface-variant);
+      --on-surface: var(--dark-on-surface);
+      --on-surface-variant: var(--dark-on-surface-variant);
+      --outline: var(--dark-outline);
+      --primary: var(--dark-primary);
+      --on-primary: var(--dark-on-primary);
+      --primary-container: var(--dark-primary-container);
+      --on-primary-container: var(--dark-on-primary-container);
+      --secondary: var(--dark-secondary);
+      --on-secondary: var(--dark-on-secondary);
+      --secondary-container: var(--dark-secondary-container);
+      --on-secondary-container: var(--dark-on-secondary-container);
+      --tertiary: var(--dark-tertiary);
+      --on-tertiary: var(--dark-on-tertiary);
+      --tertiary-container: var(--dark-tertiary-container);
+      --on-tertiary-container: var(--dark-on-tertiary-container);
+      --error: var(--dark-error);
+      --on-error: var(--dark-on-error);
+    }
+
+    .scheme-head,
+    .scheme-body {
+      padding: 18px;
+    }
+
+    .scheme-head {
+      background: var(--surface-container);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .scheme-label {
+      color: var(--on-surface-variant);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+    }
+
+    .actions,
+    .tonal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .button.primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    .button.secondary {
+      background: var(--secondary);
+      color: var(--on-secondary);
+    }
+
+    .button.tertiary {
+      background: var(--tertiary);
+      color: var(--on-tertiary);
+    }
+
+    .button.error {
+      background: var(--error);
+      color: var(--on-error);
+    }
+
+    .panel {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      border: 1px solid var(--outline);
+    }
+
+    .panel p {
+      color: var(--on-surface-variant);
+      margin-top: 6px;
+    }
+
+    .tonal-row {
+      margin-top: 16px;
+    }
+
+    .tonal-chip {
+      min-width: 120px;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+    }
+
+    .primary-container {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+    }
+
+    .secondary-container {
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+    }
+
+    .tertiary-container {
+      background: var(--tertiary-container);
+      color: var(--on-tertiary-container);
+    }
+
+    .palette-section {
+      margin-top: 28px;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .swatch {
+      min-height: 86px;
+      border-radius: 8px;
+      border: 1px solid light-dark(var(--light-outline), var(--dark-outline));
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--text);
+      background: var(--fill);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+    }
+
+    .swatch strong {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.84rem;
+    }
+
+    .code-preview {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    pre {
+      margin: 0;
+      min-height: 220px;
+      overflow: auto;
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--base00);
+      color: var(--base05);
+      border: 1px solid var(--base03);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    .code-light {
+      --base00: {{ base16.light.base00 }};
+      --base03: {{ base16.light.base03 }};
+      --base05: {{ base16.light.base05 }};
+      --comment: {{ syntax.light.comment }};
+      --keyword: {{ syntax.light.keyword }};
+      --function: {{ syntax.light.function }};
+      --string: {{ syntax.light.string }};
+      --literal: {{ syntax.light.literal }};
+      --variable: {{ syntax.light.variable }};
+      --type: {{ syntax.light.type }};
+      --punctuation: {{ syntax.light.punctuation }};
+    }
+
+    .code-dark {
+      --base00: {{ base16.dark.base00 }};
+      --base03: {{ base16.dark.base03 }};
+      --base05: {{ base16.dark.base05 }};
+      --comment: {{ syntax.dark.comment }};
+      --keyword: {{ syntax.dark.keyword }};
+      --function: {{ syntax.dark.function }};
+      --string: {{ syntax.dark.string }};
+      --literal: {{ syntax.dark.literal }};
+      --variable: {{ syntax.dark.variable }};
+      --type: {{ syntax.dark.type }};
+      --punctuation: {{ syntax.dark.punctuation }};
+    }
+
+    .comment { color: var(--comment); }
+    .keyword { color: var(--keyword); }
+    .function { color: var(--function); }
+    .string { color: var(--string); }
+    .literal { color: var(--literal); }
+    .variable { color: var(--variable); }
+    .type { color: var(--type); }
+    .punctuation { color: var(--punctuation); }
+
+    @media (max-width: 820px) {
+      header,
+      .scheme-grid,
+      .code-preview {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        width: min(100% - 20px, 1180px);
+        padding-top: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>themegen preview</h1>
+        <div class="meta">
+          <span class="pill">{{ input.kind }}: {{ input.value }}</span>
+          <span class="pill">scheme: {{ scheme }}</span>
+          <span class="pill">seed: {{ seed.color }}</span>
+        </div>
+      </div>
+      <div class="seed">
+        <div class="seed-swatch"></div>
+        <span>{{ seed.color }}</span>
+      </div>
+    </header>
+
+    <section class="scheme-grid" aria-label="Material color schemes">
+      <article class="scheme light">
+        <div class="scheme-head">
+          <h2>Light scheme</h2>
+          <span class="scheme-label">Material You</span>
+        </div>
+        <div class="scheme-body">
+          <div class="actions">
+            <div class="button primary">Primary</div>
+            <div class="button secondary">Secondary</div>
+            <div class="button tertiary">Tertiary</div>
+            <div class="button error">Error</div>
+          </div>
+          <div class="panel">
+            <h3>Surface container</h3>
+            <p>Readable surface, outline, and variant roles in context.</p>
+            <div class="tonal-row">
+              <div class="tonal-chip primary-container">primary_container<br>{{ color.light.primary_container }}</div>
+              <div class="tonal-chip secondary-container">secondary_container<br>{{ color.light.secondary_container }}</div>
+              <div class="tonal-chip tertiary-container">tertiary_container<br>{{ color.light.tertiary_container }}</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="scheme dark">
+        <div class="scheme-head">
+          <h2>Dark scheme</h2>
+          <span class="scheme-label">Material You</span>
+        </div>
+        <div class="scheme-body">
+          <div class="actions">
+            <div class="button primary">Primary</div>
+            <div class="button secondary">Secondary</div>
+            <div class="button tertiary">Tertiary</div>
+            <div class="button error">Error</div>
+          </div>
+          <div class="panel">
+            <h3>Surface container</h3>
+            <p>Readable surface, outline, and variant roles in context.</p>
+            <div class="tonal-row">
+              <div class="tonal-chip primary-container">primary_container<br>{{ color.dark.primary_container }}</div>
+              <div class="tonal-chip secondary-container">secondary_container<br>{{ color.dark.secondary_container }}</div>
+              <div class="tonal-chip tertiary-container">tertiary_container<br>{{ color.dark.tertiary_container }}</div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="palette-section" aria-label="Base16 palettes">
+      <h2>Base16 light</h2>
+      <div class="palette-grid">
+        <div class="swatch" style="--fill: {{ base16.light.base00 }}; --text: {{ base16.light.base07 }};"><strong>base00</strong><span>{{ base16.light.base00 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base01 }}; --text: {{ base16.light.base07 }};"><strong>base01</strong><span>{{ base16.light.base01 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base02 }}; --text: {{ base16.light.base07 }};"><strong>base02</strong><span>{{ base16.light.base02 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base03 }}; --text: {{ base16.light.base00 }};"><strong>base03</strong><span>{{ base16.light.base03 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base04 }}; --text: {{ base16.light.base00 }};"><strong>base04</strong><span>{{ base16.light.base04 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base05 }}; --text: {{ base16.light.base00 }};"><strong>base05</strong><span>{{ base16.light.base05 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base06 }}; --text: {{ base16.light.base00 }};"><strong>base06</strong><span>{{ base16.light.base06 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base07 }}; --text: {{ base16.light.base00 }};"><strong>base07</strong><span>{{ base16.light.base07 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base08 }}; --text: {{ base16.light.base00 }};"><strong>base08</strong><span>{{ base16.light.base08 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base09 }}; --text: {{ base16.light.base00 }};"><strong>base09</strong><span>{{ base16.light.base09 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0A }}; --text: {{ base16.light.base00 }};"><strong>base0A</strong><span>{{ base16.light.base0A }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0B }}; --text: {{ base16.light.base00 }};"><strong>base0B</strong><span>{{ base16.light.base0B }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0C }}; --text: {{ base16.light.base00 }};"><strong>base0C</strong><span>{{ base16.light.base0C }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0D }}; --text: {{ base16.light.base00 }};"><strong>base0D</strong><span>{{ base16.light.base0D }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0E }}; --text: {{ base16.light.base00 }};"><strong>base0E</strong><span>{{ base16.light.base0E }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.light.base0F }}; --text: {{ base16.light.base00 }};"><strong>base0F</strong><span>{{ base16.light.base0F }}</span></div>
+      </div>
+    </section>
+
+    <section class="palette-section" aria-label="Base16 dark palette">
+      <h2>Base16 dark</h2>
+      <div class="palette-grid">
+        <div class="swatch" style="--fill: {{ base16.dark.base00 }}; --text: {{ base16.dark.base07 }};"><strong>base00</strong><span>{{ base16.dark.base00 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base01 }}; --text: {{ base16.dark.base07 }};"><strong>base01</strong><span>{{ base16.dark.base01 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base02 }}; --text: {{ base16.dark.base07 }};"><strong>base02</strong><span>{{ base16.dark.base02 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base03 }}; --text: {{ base16.dark.base07 }};"><strong>base03</strong><span>{{ base16.dark.base03 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base04 }}; --text: {{ base16.dark.base00 }};"><strong>base04</strong><span>{{ base16.dark.base04 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base05 }}; --text: {{ base16.dark.base00 }};"><strong>base05</strong><span>{{ base16.dark.base05 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base06 }}; --text: {{ base16.dark.base00 }};"><strong>base06</strong><span>{{ base16.dark.base06 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base07 }}; --text: {{ base16.dark.base00 }};"><strong>base07</strong><span>{{ base16.dark.base07 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base08 }}; --text: {{ base16.dark.base00 }};"><strong>base08</strong><span>{{ base16.dark.base08 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base09 }}; --text: {{ base16.dark.base00 }};"><strong>base09</strong><span>{{ base16.dark.base09 }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0A }}; --text: {{ base16.dark.base00 }};"><strong>base0A</strong><span>{{ base16.dark.base0A }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0B }}; --text: {{ base16.dark.base00 }};"><strong>base0B</strong><span>{{ base16.dark.base0B }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0C }}; --text: {{ base16.dark.base00 }};"><strong>base0C</strong><span>{{ base16.dark.base0C }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0D }}; --text: {{ base16.dark.base00 }};"><strong>base0D</strong><span>{{ base16.dark.base0D }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0E }}; --text: {{ base16.dark.base00 }};"><strong>base0E</strong><span>{{ base16.dark.base0E }}</span></div>
+        <div class="swatch" style="--fill: {{ base16.dark.base0F }}; --text: {{ base16.dark.base00 }};"><strong>base0F</strong><span>{{ base16.dark.base0F }}</span></div>
+      </div>
+    </section>
+
+    <section class="palette-section" aria-label="Syntax preview">
+      <h2>Syntax preview</h2>
+      <div class="code-preview">
+        <pre class="code-light"><span class="comment"># Light syntax</span>
+<span class="keyword">let</span> <span class="variable">palette</span> = <span class="function">themegen</span> <span class="punctuation">{</span>
+  <span class="type">scheme</span> = <span class="string">"{{ scheme }}"</span><span class="punctuation">;</span>
+  <span class="type">seed</span> = <span class="literal">"{{ seed.color }}"</span><span class="punctuation">;</span>
+<span class="punctuation">}</span></pre>
+        <pre class="code-dark"><span class="comment"># Dark syntax</span>
+<span class="keyword">let</span> <span class="variable">palette</span> = <span class="function">themegen</span> <span class="punctuation">{</span>
+  <span class="type">scheme</span> = <span class="string">"{{ scheme }}"</span><span class="punctuation">;</span>
+  <span class="type">seed</span> = <span class="literal">"{{ seed.color }}"</span><span class="punctuation">;</span>
+<span class="punctuation">}</span></pre>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
