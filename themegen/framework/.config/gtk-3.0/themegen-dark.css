@@ -1,0 +1,120 @@
+@define-color accent_color {{color.dark.primary}};
+@define-color accent_bg_color {{color.dark.primary}};
+@define-color accent_fg_color {{color.dark.on_primary}};
+@define-color destructive_color {{color.dark.error}};
+@define-color destructive_bg_color {{color.dark.error}};
+@define-color destructive_fg_color {{color.dark.on_primary}};
+@define-color success_color {{base16.dark.base0B}};
+@define-color warning_color {{base16.dark.base0A}};
+@define-color error_color {{color.dark.error}};
+@define-color window_bg_color {{color.dark.background}};
+@define-color window_fg_color {{color.dark.on_surface}};
+@define-color view_bg_color {{color.dark.surface}};
+@define-color view_fg_color {{color.dark.on_surface}};
+@define-color headerbar_bg_color {{color.dark.surface_container}};
+@define-color headerbar_fg_color {{color.dark.on_surface}};
+@define-color sidebar_bg_color {{color.dark.surface_container_low}};
+@define-color sidebar_fg_color {{color.dark.on_surface}};
+@define-color card_bg_color {{color.dark.surface_container}};
+@define-color card_fg_color {{color.dark.on_surface}};
+@define-color dialog_bg_color {{color.dark.surface_container}};
+@define-color dialog_fg_color {{color.dark.on_surface}};
+@define-color popover_bg_color {{color.dark.surface_container_high}};
+@define-color popover_fg_color {{color.dark.on_surface}};
+@define-color shade_color {{color.dark.on_surface | with_alpha(12%) | to_rgba()}};
+@define-color scrollbar_outline_color {{color.dark.outline | with_alpha(42%) | to_rgba()}};
+
+* {
+  caret-color: {{color.dark.primary}};
+}
+
+window,
+dialog,
+popover,
+.background {
+  background-color: {{color.dark.background}};
+  color: {{color.dark.on_surface}};
+}
+
+headerbar,
+.titlebar {
+  background-color: {{color.dark.surface_container}};
+  color: {{color.dark.on_surface}};
+  border-color: {{color.dark.outline_variant | with_alpha(45%) | to_rgba()}};
+}
+menu,
+.menu,
+.context-menu {
+  background-color: {{color.dark.surface_container_high}};
+  color: {{color.dark.on_surface}};
+  border: 1px solid {{color.dark.outline | with_alpha(42%) | to_rgba()}};
+}
+menuitem,
+.menuitem {
+  padding: 6px 10px;
+  color: {{color.dark.on_surface}};
+}
+menuitem:hover,
+.menuitem:hover {
+  background-color: {{color.dark.primary}};
+  color: {{color.dark.on_primary}};
+}
+popover,
+.popover {
+  background-color: {{color.dark.surface_container_high}};
+  color: {{color.dark.on_surface}};
+  border: 1px solid {{color.dark.outline_variant | with_alpha(45%) | to_rgba()}};
+  border-radius: 8px;
+}
+popover > box {
+  padding: 4px;
+}
+
+button,
+entry,
+spinbutton,
+combobox,
+menubutton,
+dropdown {
+  background-color: {{color.dark.surface_container_high}};
+  color: {{color.dark.on_surface}};
+  border-color: {{color.dark.outline | with_alpha(54%) | to_rgba()}};
+}
+
+button:hover,
+row:hover {
+  background-color: {{color.dark.surface_container_highest}};
+}
+
+button:checked,
+button.suggested-action,
+switch:checked {
+  background-color: {{color.dark.primary}};
+  color: {{color.dark.on_primary}};
+}
+
+entry selection,
+textview text selection,
+flowboxchild:selected,
+iconview:selected,
+row:selected {
+  background-color: {{color.dark.secondary_container}};
+  color: {{color.dark.on_secondary_container}};
+}
+
+notebook > header,
+list,
+treeview,
+textview text,
+.view {
+  background-color: {{color.dark.surface}};
+  color: {{color.dark.on_surface}};
+}
+
+scrollbar slider {
+  background-color: {{color.dark.on_surface_variant | with_alpha(62%) | to_rgba()}};
+}
+
+scrollbar slider:hover {
+  background-color: {{color.dark.primary}};
+}

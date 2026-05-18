@@ -288,6 +288,23 @@ fn render_hex(color: RgbaColor) -> String {
     }
 }
 
+fn render_raw_hex(color: RgbaColor) -> String {
+    format!(
+        "{:02x}{:02x}{:02x}{:02x}",
+        color.red, color.green, color.blue, color.alpha
+    )
+}
+
+fn render_rgba_function(color: RgbaColor) -> String {
+    format!(
+        "rgba({}, {}, {}, {})",
+        color.red,
+        color.green,
+        color.blue,
+        format_number(f64::from(color.alpha) / 255.0)
+    )
+}
+
 fn apply_function(
     receiver: Value,
     operation: &str,
@@ -309,6 +326,12 @@ fn apply_function(
 
     match name {
         "to_hex" => Ok(Value::Color(ColorValue::Hex(
+            expect_color(receiver)?.to_hex(),
+        ))),
+        "to_raw_hex" => Ok(Value::String(render_raw_hex(
+            expect_color(receiver)?.to_hex(),
+        ))),
+        "to_rgba" => Ok(Value::String(render_rgba_function(
             expect_color(receiver)?.to_hex(),
         ))),
         "to_hct" => Ok(Value::Color(ColorValue::Hct(
@@ -891,6 +914,28 @@ mod tests {
         .unwrap();
 
         assert_eq!(rendered, "#44474640");
+    }
+
+    #[test]
+    fn to_raw_hex_renders_rgba_without_pound() {
+        let rendered = render_template(
+            "{{ color.dark.primary | to_raw_hex() }} {{ color.dark.outline_variant | with_alpha(25%) | to_raw_hex() }}",
+            &test_values(),
+        )
+        .unwrap();
+
+        assert_eq!(rendered, "aac7ffff 44474640");
+    }
+
+    #[test]
+    fn to_rgba_renders_css_function() {
+        let rendered = render_template(
+            "{{ color.dark.outline_variant | with_alpha(25%) | to_rgba() }}",
+            &test_values(),
+        )
+        .unwrap();
+
+        assert_eq!(rendered, "rgba(68, 71, 70, 0.251)");
     }
 
     #[test]

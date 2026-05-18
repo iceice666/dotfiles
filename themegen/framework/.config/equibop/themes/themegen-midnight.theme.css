@@ -1,0 +1,122 @@
+/**
+ * @name Themegen Midnight
+ * @description Wallpaper-derived Midnight Discord theme for Equibop with automatic light and dark mode support.
+ * @author iceice666
+ */
+
+@import url("https://refact0r.github.io/midnight-discord/build/midnight.css");
+
+:root {
+  --colors: on;
+}
+
+.theme-dark:not(.custom-user-profile-theme) {
+  --text-0: {{color.dark.background}};
+  --text-1: {{color.dark.on_background}};
+  --text-2: {{color.dark.on_surface}};
+  --text-3: {{color.dark.on_surface_variant}};
+  --text-4: {{color.dark.outline}};
+  --text-5: {{color.dark.outline}};
+
+  --bg-1: {{color.dark.surface_container_lowest}};
+  --bg-2: {{color.dark.surface_container_low}};
+  --bg-3: {{color.dark.surface_container}};
+  --bg-4: {{color.dark.surface}};
+  --hover: {{color.dark.surface_container_high}};
+  --active: {{color.dark.surface_container_highest}};
+  --active-2: {{color.dark.surface}};
+  --message-hover: {{color.dark.surface_container}};
+
+  --accent-1: {{color.dark.primary}};
+  --accent-2: {{color.dark.surface_tint}};
+  --accent-3: {{color.dark.secondary}};
+  --accent-4: {{color.dark.secondary_container}};
+  --accent-5: {{color.dark.tertiary}};
+  --accent-new: {{color.dark.error}};
+  --mention: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.dark.primary_container}}, transparent 70%) 60%,
+    transparent
+  );
+  --mention-hover: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.dark.primary_container}}, transparent 75%) 60%,
+    transparent
+  );
+  --reply: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.dark.tertiary_container}}, transparent 70%) 60%,
+    transparent
+  );
+  --reply-hover: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.dark.tertiary_container}}, transparent 75%) 60%,
+    transparent
+  );
+
+  --online: {{color.dark.primary}};
+  --dnd: {{color.dark.error}};
+  --idle: {{color.dark.tertiary}};
+  --streaming: {{color.dark.secondary}};
+  --offline: {{color.dark.outline}};
+
+  --border-light: {{color.dark.surface_container_high}};
+  --border: {{color.dark.surface_container_highest}};
+  --button-border: {{color.dark.surface_container_high}};
+}
+
+
+.theme-light:not(.custom-user-profile-theme) {
+  --text-0: {{color.light.background}};
+  --text-1: {{color.light.on_background}};
+  --text-2: {{color.light.on_surface}};
+  --text-3: {{color.light.on_surface_variant}};
+  --text-4: {{color.light.outline}};
+  --text-5: {{color.light.outline}};
+
+  --bg-1: {{color.light.surface_container_lowest}};
+  --bg-2: {{color.light.surface_container_low}};
+  --bg-3: {{color.light.surface_container}};
+  --bg-4: {{color.light.surface}};
+  --hover: {{color.light.surface_container_high}};
+  --active: {{color.light.surface_container_highest}};
+  --active-2: {{color.light.surface}};
+  --message-hover: {{color.light.surface_container}};
+
+  --accent-1: {{color.light.primary}};
+  --accent-2: {{color.light.surface_tint}};
+  --accent-3: {{color.light.secondary}};
+  --accent-4: {{color.light.secondary_container}};
+  --accent-5: {{color.light.tertiary}};
+  --accent-new: {{color.light.error}};
+  --mention: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.light.primary_container}}, transparent 70%) 60%,
+    transparent
+  );
+  --mention-hover: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.light.primary_container}}, transparent 75%) 60%,
+    transparent
+  );
+  --reply: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.light.tertiary_container}}, transparent 70%) 60%,
+    transparent
+  );
+  --reply-hover: linear-gradient(
+    to right,
+    color-mix(in hsl, {{color.light.tertiary_container}}, transparent 75%) 60%,
+    transparent
+  );
+
+  --online: {{color.light.primary}};
+  --dnd: {{color.light.error}};
+  --idle: {{color.light.tertiary}};
+  --streaming: {{color.light.secondary}};
+  --offline: {{color.light.outline}};
+
+  --border-light: {{color.light.surface_container_high}};
+  --border: {{color.light.surface_container_highest}};
+  --button-border: {{color.light.surface_container_high}};
+}

@@ -1,0 +1,1 @@
+{"categories":["Themes"],"contributes":{"themes":[{"label":"Themegen Dark","path":"./themes/themegen-dark-color-theme.json","uiTheme":"vs-dark"},{"label":"Themegen Light","path":"./themes/themegen-light-color-theme.json","uiTheme":"vs"}]},"displayName":"Themegen","engines":{"vscode":"^1.74.0"},"name":"themegen","publisher":"themegen","version":"0.0.1"}

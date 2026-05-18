@@ -1,0 +1,16 @@
+{
+  "colors": {
+    "background": "{{color.dark.surface_container_low | with_alpha(0%) | to_hex()}}",
+    "critical": "{{color.dark.error}}",
+    "foreground": "{{color.dark.on_surface}}",
+    "foregroundDim": "{{color.dark.on_surface_variant}}",
+    "onPrimary": "{{color.dark.on_primary}}",
+    "outline": "{{color.dark.outline | with_alpha(34%) | to_hex()}}",
+    "primary": "{{color.dark.primary}}",
+    "success": "{{base16.dark.base0B}}",
+    "surface": "{{color.dark.surface_container_low | with_alpha(90%) | to_hex()}}",
+    "surfaceContainer": "{{color.dark.surface_container | with_alpha(94%) | to_hex()}}",
+    "warning": "{{base16.dark.base0A}}"
+  },
+  "mode": "dark"
+}
