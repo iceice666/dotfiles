@@ -11,6 +11,7 @@ home_manager := "nix run github:nix-community/home-manager/release-25.11 --"
 switch: && post-switch
     #!/usr/bin/env bash
     host=$(uname -n | tr '[:upper:]' '[:lower:]')
+    just themegen-generate "$host"
     just _switch "$host"
 
 # Run host-specific lifecycle tasks after switching
@@ -23,20 +24,31 @@ post-switch:
 build:
     #!/usr/bin/env bash
     host=$(uname -n | tr '[:upper:]' '[:lower:]')
+    just themegen-generate "$host"
     just _build "$host"
+
+boot:
+    #!/usr/bin/env bash
+    host=$(uname -n | tr '[:upper:]' '[:lower:]')
+    just themegen-generate "$host"
+    just _boot "$host"
 
 _switch host:
     #!/usr/bin/env bash
     host='{{ host }}'
 
     case "$host" in
-        m3air)
-            sudo darwin-rebuild switch --flake {{ m3air_target }}
-            ;;
-        framework)
+    m3air)
+        sudo darwin-rebuild switch --flake {{ m3air_target }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/m3air
+        ;;
+    framework)
+        if [[ -e /etc/NIXOS ]]; then
+            sudo nixos-rebuild switch --flake .#framework --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+        else
             just ensure-nix-daemon
-            {{ home_manager }} switch --flake {{ framework_target }}
-            ;;
+            {{ home_manager }} switch --flake {{ framework_target }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+        fi
+        ;;
         *)
             just _unknown-host "$host" rebuild
             ;;
@@ -47,16 +59,40 @@ _build host:
     host='{{ host }}'
 
     case "$host" in
-        m3air)
-            sudo darwin-rebuild build --flake {{ m3air_target }}
-            ;;
-        framework)
+    m3air)
+        sudo darwin-rebuild build --flake {{ m3air_target }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/m3air
+        ;;
+    framework)
+        if [[ -e /etc/NIXOS ]]; then
+            nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+        else
             just ensure-nix-daemon
-            {{ home_manager }} build --flake {{ framework_target }}
-            ;;
+            {{ home_manager }} build --flake {{ framework_target }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+        fi
+        ;;
         *)
             just _unknown-host "$host" build
             ;;
+    esac
+
+_boot host:
+    #!/usr/bin/env bash
+    host='{{ host }}'
+
+    case "$host" in
+    m3air)
+        just _unknown-host "$host" boot
+        ;;
+    framework)
+        if [[ -e /etc/NIXOS ]]; then
+            sudo nixos-rebuild boot --flake .#framework --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+        else
+            just _unknown-host "$host" boot
+        fi
+        ;;
+    *)
+        just _unknown-host "$host" boot
+        ;;
     esac
 
 _post-switch host:
@@ -64,11 +100,13 @@ _post-switch host:
     host='{{ host }}'
 
     case "$host" in
-        m3air)
-            ;;
-        framework)
+    m3air)
+        ;;
+    framework)
+        if [[ ! -e /etc/NIXOS && -x "$HOME/.nix-profile/bin/framework-post-switch" ]]; then
             "$HOME/.nix-profile/bin/framework-post-switch"
-            ;;
+        fi
+        ;;
         *)
             just _unknown-host "$host" post-switch
             ;;
@@ -105,11 +143,11 @@ _unknown-host host action:
 # ── M3 Air (macOS, nix-darwin) ───────────────────────────────────────────────
 
 # Rebuild M3Air system
-m3air-rebuild:
+m3air-rebuild: (themegen-generate "m3air")
     just _switch m3air
 
 # Dry-build M3Air system
-m3air-build:
+m3air-build: (themegen-generate "m3air")
     just _build m3air
 
 # Install Homebrew (first-time setup)
@@ -120,9 +158,9 @@ m3air-homebrew:
 m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# ── Framework (Arch Linux, Lix, home-manager) ────────────────────────────────
+# ── Framework (NixOS, with legacy Arch/Home Manager fallback) ────────────────
 
-# Ensure the Lix daemon socket is loaded and active on Linux
+# Ensure the Lix daemon socket is loaded and active for legacy non-NixOS use
 ensure-nix-daemon:
     #!/usr/bin/env bash
     if [[ "$(uname -s)" != "Linux" ]]; then
@@ -146,7 +184,7 @@ ensure-nix-daemon:
 
     sudo systemctl enable --now nix-daemon.socket
 
-# Install Arch-owned dependencies and services for the Framework host
+# Install legacy Arch-owned dependencies and services for the Framework host
 framework-bootstrap:
     #!/usr/bin/env bash
     if [[ "$(uname -s)" != "Linux" ]]; then
@@ -202,15 +240,19 @@ framework-bootstrap:
             "  systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service" >&2
     fi
 
-# Rebuild Framework home environment
-framework-rebuild: && framework-post-switch
+# Rebuild Framework system
+framework-rebuild: (themegen-generate "framework") && framework-post-switch
     just _switch framework
 
-# Dry-build Framework home environment
-framework-build:
+# Dry-build Framework system
+framework-build: (themegen-generate "framework")
     just _build framework
 
-# Re-apply Arch-owned GUI integration after a Framework Home Manager switch
+# Boot Framework system for next reboot
+framework-boot: (themegen-generate "framework")
+    just _boot framework
+
+# Re-apply legacy Arch-owned GUI integration after a Framework Home Manager switch
 framework-post-switch:
     just _post-switch framework
 
@@ -231,6 +273,132 @@ check: ensure-nix-daemon
 # Format all files via treefmt-nix
 fmt: ensure-nix-daemon
     nix fmt
+
+# Generate concrete theme files for a host before building
+themegen-generate host:
+    #!/usr/bin/env bash
+    host='{{ host }}'
+
+    case "$host" in
+        m3air)
+            image='{{ repo_root }}/assets/win_chan.jpg'
+            ;;
+        framework)
+            image='{{ repo_root }}/assets/mzen.png'
+            ;;
+        *)
+            just _unknown-host "$host" themegen-generate
+            ;;
+    esac
+
+    if [[ ! -f "$image" ]]; then
+        echo "Wallpaper not found: $image" >&2
+        exit 1
+    fi
+
+    cache_dir='{{ repo_root }}/.cache/themegen/'"$host"
+    state_dir='{{ repo_root }}/.cache/themegen/.state'
+    fingerprint_file="$state_dir/$host.sha256"
+
+    hash_file() {
+        local file=$1
+
+        if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "$file" | awk '{print $1}'
+        else
+            shasum -a 256 "$file" | awk '{print $1}'
+        fi
+    }
+
+    hash_stdin() {
+        if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum | awk '{print $1}'
+        else
+            shasum -a 256 | awk '{print $1}'
+        fi
+    }
+
+    fingerprint_inputs() {
+        {
+            printf 'themegen-cache-v1\n'
+            printf 'host %s\n' "$host"
+            printf 'render-options scheme=tonal-spot base16-contrast=0.3 base16-mode=follow-palette\n'
+            printf 'image %s %s\n' "$image" "$(hash_file "$image")"
+
+            for scope in common "$host"; do
+                local template_dir='{{ repo_root }}/themegen/'"$scope"
+                [[ -d "$template_dir" ]] || continue
+
+                while IFS= read -r template; do
+                    local relative=''${template#"$template_dir"/}
+                    printf 'template %s %s %s\n' "$scope" "$relative" "$(hash_file "$template")"
+                done < <(find "$template_dir" -type f | sort)
+            done
+        } | hash_stdin
+    }
+
+    input_fingerprint=$(fingerprint_inputs)
+
+    cache_has_files() {
+        [[ -d "$cache_dir" ]] || return 1
+        [[ -n "$(find "$cache_dir" -type f -print -quit)" ]]
+    }
+
+    if [[ -f "$fingerprint_file" && "$(cat "$fingerprint_file")" == "$input_fingerprint" ]] && cache_has_files; then
+        echo "themegen cache up to date for $host"
+        exit 0
+    fi
+
+    if [[ -n "${THEMEGEN_BIN:-}" ]]; then
+        themegen_cmd=("$THEMEGEN_BIN")
+    elif command -v themegen >/dev/null 2>&1; then
+        themegen_cmd=(themegen)
+    else
+        themegen_cmd=(cargo run --manifest-path '{{ repo_root }}/pkgs/themegen/Cargo.toml' --)
+    fi
+
+    mkdir -p '{{ repo_root }}/.cache/themegen' "$state_dir"
+    tmp_dir=$(mktemp -d '{{ repo_root }}/.cache/themegen/.tmp-'"$host"'.XXXXXXXXXX')
+
+    cleanup_tmp() {
+        if [[ -d "$tmp_dir" ]]; then
+            chmod -R u+w "$tmp_dir"
+            rm -rf "$tmp_dir"
+        fi
+    }
+
+    trap cleanup_tmp EXIT
+
+    render_scope() {
+        local scope=$1
+        local template_dir='{{ repo_root }}/themegen/'"$scope"
+
+        [[ -d "$template_dir" ]] || return 0
+
+        while IFS= read -r template; do
+            local relative=''${template#"$template_dir"/}
+            "${themegen_cmd[@]}" render \
+                --image "$image" \
+                --scheme tonal-spot \
+                --base16-contrast 0.3 \
+                --base16-mode follow-palette \
+                --render "$template=$tmp_dir/$relative"
+        done < <(find "$template_dir" -type f | sort)
+    }
+
+    render_scope common
+    render_scope "$host"
+
+    if [[ -d "$cache_dir" ]]; then
+        chmod -R u+w "$cache_dir"
+    fi
+    rm -rf "$cache_dir"
+    mv "$tmp_dir" "$cache_dir"
+    tmp_dir=''
+
+    chmod -R u+w "$cache_dir"
+    printf '%s\n' "$input_fingerprint" > "$fingerprint_file"
+    echo "themegen cache regenerated for $host"
 
 # Preview the current or specified wallpaper palette
 themegen-preview image='':

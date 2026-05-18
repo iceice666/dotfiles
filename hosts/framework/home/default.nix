@@ -17,19 +17,10 @@ in
   _module.args = {
     inherit desktopWallpaper;
     avatarImage = frameworkAvatar;
+    ghosttyFontSize = 14;
   };
-
-  targets.genericLinux.enable = true;
 
   home.packages = with pkgs; [
     obs-studio
   ];
-
-  programs.fish.interactiveShellInit = ''
-    # Linux-specific environment variables
-    set -gx PNPM_HOME $HOME/.local/share/pnpm
-
-    # Linux-specific PATH
-    fish_add_path -p $PNPM_HOME
-  '';
 }

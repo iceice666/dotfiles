@@ -28,6 +28,14 @@ let
       exec nix develop --command zls "$@"
     '';
   };
+
+  rustAnalyzerFromFlake = pkgs.writeShellApplication {
+    name = "zed-rust-analyzer";
+    runtimeInputs = [ pkgs.nix ];
+    text = ''
+      exec nix develop --command rust-analyzer "$@"
+    '';
+  };
 in
 {
   programs.zed-editor = {
@@ -336,6 +344,10 @@ in
       };
 
       lsp = {
+        rust-analyzer.binary = {
+          path = "${rustAnalyzerFromFlake}/bin/zed-rust-analyzer";
+        };
+
         rust-analyzer.initialization_options = {
           checkOnSave = true;
           inlayHints = {
@@ -351,7 +363,6 @@ in
 
         zls.binary = {
           path = "${zlsFromFlake}/bin/zed-zls";
-          ignore_system_version = true;
         };
       };
 
