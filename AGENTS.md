@@ -22,22 +22,28 @@ common/              # baseline shared across all hosts
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
     ghostty.nix      # shared Ghostty config
-    themegen/        # wallpaper-driven theme generation and templates
-      templates/     # ghostty, equibop, starship, zed, vscode, terminal-sequences
+    themegen/        # Home Manager installer for generated theme files
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
+
+themegen/            # root-level plain theme templates, split by common/host
+  common/            # shared $HOME-relative templates
+  m3air/             # macOS-only $HOME-relative templates
+  framework/         # Linux-only $HOME-relative templates
 
 hosts/               # per-host entrypoints
   m3air/             # macOS via nix-darwin
     configuration/   # default.nix, system-defaults.nix
     home/            # default.nix, default-apps.nix, karabiner.nix, wallpaper.nix
-  framework/         # Arch Linux with Lix and standalone Home Manager
-    configuration/   # placeholder directory, not wired into the flake today
-    home/            # active Home Manager entrypoint
+  framework/         # NixOS system with Home Manager
+    configuration/   # active NixOS system entrypoint
+    home/            # Home Manager modules imported by the NixOS system
 
 pkgs/                # overlay packages
+  codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
+  framework-bar/     # Framework Wayland status bar
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
   zed-bin/           # Zed official prebuilt releases
@@ -68,14 +74,15 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | Output | Type |
 |---|---|
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
-| `homeConfigurations."iceice666@framework"` | standalone Home Manager configuration |
+| `nixosConfigurations.framework` | NixOS configuration |
+| `homeConfigurations."iceice666@framework"` | legacy standalone Home Manager configuration |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
 There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
 
 ### Overlay
 
-Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `themegen`, `utiluti`, `zed-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -85,66 +92,47 @@ Additionally, `direnv` is overridden to strip `-linkmode=external` from its Make
 
 ### `unstablePkgsFor`
 
-A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used by shared Home Manager modules to pull in `codex`, `agent-browser`, `bun`, and `sops` from unstable.
+A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used by shared Home Manager modules to pull in `bun` and `sops` from unstable.
 
 ## Build, Format, and Validation Commands
 
 Run commands from the repository root.
 
-## Framework Arch + Lix Setup
+## Framework NixOS Setup
 
-`framework` is an Arch Linux machine managed by standalone Home Manager. There
-is no NixOS or system-level flake target for it; Arch owns the base system and
-Lix provides `nix`.
+`framework` is a NixOS machine managed by the `nixosConfigurations.framework`
+flake output. The system imports `home-manager.nixosModules.home-manager`, so
+Framework user configuration still lives under `hosts/framework/home/`, but the
+active switch path is the NixOS system target.
 
-Fresh Arch prerequisites:
-
-```sh
-sudo pacman -S --needed curl git just
-```
-
-Install Lix with the official Lix installer:
-
-```sh
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.lix.systems/lix | sh -s -- install
-```
-
-After installation, open a new shell or load the daemon profile manually:
-
-```sh
-. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-nix --version
-```
-
-The version output should identify `Lix`. The installer enables flakes by
-default and installs a systemd-backed multi-user daemon on Linux. If the daemon
-is not active after installation or after boot, use:
-
-```sh
-sudo systemctl daemon-reload
-sudo systemctl enable --now nix-daemon.socket
-```
-
-Clone this repository with submodules and activate the Framework Home Manager
-configuration:
-
-```sh
-git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
-cd ~/dotfiles
-just framework-bootstrap
-nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
-just framework-post-switch
-```
-
-After the first activation, prefer the repo recipes:
+Build and activate the Framework system:
 
 ```sh
 just framework-build
 just framework-rebuild
 ```
 
-`just switch` also works when `uname -n` reports `framework`; otherwise use the
-explicit `framework-*` recipes.
+Direct NixOS commands:
+
+```sh
+nix build .#nixosConfigurations.framework.config.system.build.toplevel
+sudo nixos-rebuild switch --flake .#framework
+```
+
+The standalone Home Manager output `.#iceice666@framework` is kept only as a
+legacy fallback while migration cleanup is pending. Do not use it for normal
+Framework changes.
+
+Fingerprint authentication is configured in
+`hosts/framework/configuration/default.nix` through `services.fprintd.enable`
+and `security.pam.services.{greetd,sudo}.fprintAuth`. Keep `fprintd` in the
+Framework system packages so `fprintd-enroll` and related tools are available
+for enrollment and troubleshooting.
+
+Framework appearance scheduling is configured in `hosts/framework/home/gui.nix`
+with Home Manager's `services.darkman`. It uses coarse Taipei coordinates from
+the Framework timezone, exposes darkman through the XDG Settings portal, and
+runs GTK/GNOME color-scheme scripts on sunrise/sunset transitions.
 
 ### Primary workflows
 
@@ -154,8 +142,6 @@ just switch
 
 just m3air-build
 just m3air-rebuild
-just ensure-nix-daemon
-just framework-bootstrap
 just framework-build
 just framework-rebuild
 
@@ -165,8 +151,6 @@ just check
 
 - `just build` auto-detects the current host and runs the matching dry build.
 - `just switch` auto-detects the current host and applies the matching configuration.
-- `just ensure-nix-daemon` reloads systemd if needed and starts `nix-daemon.socket` on Linux before Nix-dependent recipes.
-- `just framework-bootstrap` installs and enables Arch-owned Framework system dependencies; run it for fresh Arch setup or when those dependencies drift.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs `nix flake check --all-systems`.
 - Explicit rebuild commands apply changes; prefer dry builds while iterating.
@@ -177,7 +161,7 @@ There is no unit-test suite. The closest equivalent is the narrowest host build 
 
 ```sh
 sudo darwin-rebuild build --flake .#iceice666@m3air
-nix run github:nix-community/home-manager/release-25.11 -- build --flake .#iceice666@framework
+nix build .#nixosConfigurations.framework.config.system.build.toplevel
 ```
 
 Which build to run for a given change:
@@ -186,7 +170,7 @@ Which build to run for a given change:
 |---|---|
 | `hosts/m3air/**` | `m3air` |
 | `hosts/framework/home/**` | `framework` |
-| `hosts/framework/configuration/**` | placeholder only; no active flake target |
+| `hosts/framework/configuration/**` | `framework` |
 | `common/configuration/**` | `m3air` |
 | `common/home/**` | `m3air` and `framework` |
 | `pkgs/<name>` | dry-build any host that uses the package |
@@ -208,9 +192,8 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
-just ensure-nix-daemon     # ensure Lix daemon socket is active on Linux
-just framework-bootstrap    # install Arch-owned Framework system dependencies
-just framework-post-switch  # reapply generated root-owned Framework GUI files
+just framework-build    # dry-build the Framework NixOS system
+just framework-rebuild  # switch the Framework NixOS system
 ```
 
 ### Secrets helpers
@@ -293,7 +276,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -312,10 +295,11 @@ Canonical module shape:
 - `common/` is the baseline for all hosts.
 - `common/configuration/` is only imported by `m3air` and is for Darwin system-level settings.
 - `common/home/` is imported by all hosts and owns shared user packages.
-- `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
+- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `just themegen-generate <host>` renders concrete files into `.cache/themegen/<host>/` before builds, and Home Manager installs them through the `themegen-cache` flake input override.
 - `hosts/<name>/` contains machine-specific choices only.
-- `framework` is Arch Linux with Lix and standalone Home Manager.
-- `hosts/framework/home/` is the active flake entrypoint; `hosts/framework/configuration/` is a placeholder directory with no active flake target.
+- `framework` is NixOS with Home Manager imported into the system configuration.
+- `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.
+- `hosts/framework/home/framework-bar/` runs the custom Rust status bar; theme files come from `themegen/framework/.config/framework-bar/`.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
 - `pkgs/youtube-rss-proxy/` is an empty directory that is not wired into the overlay or any host; do not reference it as an available package.

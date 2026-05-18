@@ -11,7 +11,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | Host | Flake output | Platform | Role |
 | --- | --- | --- | --- |
 | `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
-| `framework` | `.#iceice666@framework` | `x86_64-linux` | Arch Linux with Lix and standalone Home Manager |
+| `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
 
 ## Layout
 
@@ -27,7 +27,7 @@ common/              # baseline shared across all hosts
 
 hosts/               # per-host entrypoints
   m3air/             # macOS
-  framework/         # standalone Home Manager
+  framework/         # NixOS system + Home Manager modules
 
 pkgs/                # custom overlay packages
 sensitive/           # sops-encrypted secrets
@@ -40,6 +40,7 @@ just build           # dry-build current host
 just switch          # apply configuration to current host
 just fmt             # format all files
 just check           # nix flake check --all-systems
+just themegen-generate framework # generate concrete theme cache
 just themegen-preview  # preview the current host wallpaper palette
 ```
 
@@ -47,35 +48,31 @@ Host-specific:
 
 ```sh
 just m3air-build
-just ensure-nix-daemon
-just framework-bootstrap
 just framework-build
-just framework-post-switch
+just framework-rebuild
 ```
 
-Framework bootstrap on fresh Arch:
+Framework activation:
 
 ```sh
-sudo pacman -S --needed curl git just
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.lix.systems/lix | sh -s -- install
-. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-nix --version
-
 git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
 cd ~/dotfiles
-just framework-bootstrap
-nix run github:nix-community/home-manager/release-25.11 -- switch --flake .#iceice666@framework
-just framework-post-switch
+just framework-build
+just framework-rebuild
 ```
 
 After the first switch, use `just switch`.
 
-Home Manager owns the Framework user profile. Arch still owns system packages,
-login/session launch, D-Bus, PipeWire, NetworkManager, Bluetooth, polkit, and
-greetd/ReGreet. `just framework-bootstrap` installs and enables the Arch-owned
-pieces; `just ensure-nix-daemon` reloads and starts the Lix daemon socket when
-needed; `just switch` applies Home Manager and then re-applies the generated
-root-owned GUI files through `just framework-post-switch`.
+NixOS owns the Framework system, including login/session launch, D-Bus,
+PipeWire, NetworkManager, Bluetooth, polkit, greetd/ReGreet, and fingerprint
+authentication for greetd and sudo. Home Manager is wired into the NixOS system
+configuration for user-level programs and dotfiles.
+
+Enroll fingerprints with:
+
+```sh
+fprintd-enroll
+```
 
 Other:
 
