@@ -1,6 +1,26 @@
-{ pkgs, unstablePkgs, ... }:
+{
+  lib,
+  pkgs,
+  unstablePkgs,
+  ...
+}:
 
 let
+  zedPackage =
+    if pkgs.stdenv.hostPlatform.isLinux then
+      pkgs.symlinkJoin {
+        name = "zed-editor-${unstablePkgs.zed-editor.version}";
+        paths = [ unstablePkgs.zed-editor ];
+        postBuild = ''
+          ln -s ${lib.getExe unstablePkgs.zed-editor} "$out/bin/zed"
+        '';
+        meta = unstablePkgs.zed-editor.meta // {
+          mainProgram = "zed";
+        };
+      }
+    else
+      pkgs.zed-bin;
+
   zlsFromFlake = pkgs.writeShellApplication {
     name = "zed-zls";
     runtimeInputs = [ pkgs.nix ];
@@ -12,7 +32,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    package = pkgs.zed-bin;
+    package = zedPackage;
     extraPackages = with pkgs; [
       nil
       nixfmt

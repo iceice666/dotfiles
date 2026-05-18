@@ -40,6 +40,7 @@
       lt = "eza -almhgF --time-style iso -s type --git-ignore --tree -L 2 -I .git";
       llt = "eza -almhgF --time-style iso -s type --tree -L 2";
       lg = "lazygit";
+      j = "just";
       zj = "zellij";
       cat = "bat";
       ccat = "bat -P --style=plain";
@@ -74,10 +75,6 @@
       # fish_add_path -p $HOME/.cabal/bin
       # fish_add_path -p $HOME/.zvm/bin
       # fish_add_path -p $ZVM_INSTALL/
-
-      fish_add_path -p ~/.bun/bin
-      fish_add_path -p ~/.npm-global/bin
-
 
       # Better directory colors for ls/eza
       if type -q dircolors
