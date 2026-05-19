@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  themegenCache,
   unstablePkgs,
   avatarImage ? null,
   desktopWallpaper,
@@ -116,6 +117,52 @@ let
   cursorThemeName = "Bibata-Modern-Classic";
   cursorThemeSize = 24;
 
+  themegenGtkTheme = pkgs.runCommand "themegen-gtk-theme" { } ''
+    install_theme() {
+      local name=$1
+      local mode=$2
+      local gtk3_base=$3
+      local gtk4_base=$4
+      local theme_dir="$out/share/themes/$name"
+
+      mkdir -p "$theme_dir/gtk-3.0" "$theme_dir/gtk-4.0"
+
+      {
+        printf '[X-GNOME-Metatheme]\n'
+        printf 'Name=%s\n' "$name"
+        printf 'Type=X-GNOME-Metatheme\n'
+        printf 'Comment=Wallpaper-derived Themegen GTK theme\n'
+        printf 'Encoding=UTF-8\n'
+        printf 'GtkTheme=%s\n' "$name"
+        printf 'IconTheme=Papirus\n'
+        printf 'CursorTheme=${cursorThemeName}\n'
+        printf 'CursorSize=${toString cursorThemeSize}\n'
+      } > "$theme_dir/index.theme"
+
+      {
+        printf '@import url("%s");\n\n' "$gtk3_base"
+        cat "${themegenCache}/.config/gtk-3.0/themegen-$mode.css"
+      } > "$theme_dir/gtk-3.0/gtk.css"
+
+      {
+        printf '@import url("%s");\n\n' "$gtk4_base"
+        cat "${themegenCache}/.config/gtk-4.0/themegen-$mode.css"
+      } > "$theme_dir/gtk-4.0/gtk.css"
+    }
+
+    install_theme \
+      Themegen \
+      light \
+      resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css \
+      resource:///org/gtk/libgtk/theme/Default/Default-light.css
+
+    install_theme \
+      Themegen-dark \
+      dark \
+      resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css \
+      resource:///org/gtk/libgtk/theme/Default/Default-dark.css
+  '';
+
   mkQtctConfig =
     {
       iconTheme,
@@ -132,11 +179,9 @@ let
     '';
 
   installThemegenAppearance = mode: ''
-    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
     ln -sfn "theme-${mode}.scss" "$HOME/.config/eww/theme.scss"
     ln -sfn "themegen-${mode}.ini" "$HOME/.config/fuzzel/fuzzel.ini"
-    ln -sfn "themegen-${mode}.css" "$HOME/.config/gtk-3.0/themegen.css"
-    ln -sfn "themegen-${mode}.css" "$HOME/.config/gtk-4.0/themegen.css"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt5ct/colors/themegen.conf"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt6ct/colors/themegen.conf"
     ln -sfn "qt5ct-${mode}.conf" "$HOME/.config/qt5ct/qt5ct.conf"
@@ -336,15 +381,9 @@ in
       package = pkgs.papirus-icon-theme;
     };
     theme = {
-      name = "Adwaita-dark";
-      package = pkgs.gnome-themes-extra;
+      name = "Themegen-dark";
+      package = themegenGtkTheme;
     };
-    gtk3.extraCss = ''
-      @import url("themegen.css");
-    '';
-    gtk4.extraCss = ''
-      @import url("themegen.css");
-    '';
   };
 
   qt = {
@@ -365,7 +404,7 @@ in
     color-scheme = "prefer-dark";
     cursor-size = cursorThemeSize;
     cursor-theme = cursorThemeName;
-    gtk-theme = "Adwaita-dark";
+    gtk-theme = "Themegen-dark";
     icon-theme = "Papirus-Dark";
   };
 
@@ -398,7 +437,7 @@ in
       light)
         ${setAppearance {
           colorScheme = "default";
-          gtkTheme = "Adwaita";
+          gtkTheme = "Themegen";
           iconTheme = "Papirus-Light";
           mode = "light";
         }}
@@ -406,7 +445,7 @@ in
       dark)
         ${setAppearance {
           colorScheme = "prefer-dark";
-          gtkTheme = "Adwaita-dark";
+          gtkTheme = "Themegen-dark";
           iconTheme = "Papirus-Dark";
           mode = "dark";
         }}
@@ -515,13 +554,13 @@ in
       };
       darkModeScripts.gtk = setAppearance {
         colorScheme = "prefer-dark";
-        gtkTheme = "Adwaita-dark";
+        gtkTheme = "Themegen-dark";
         iconTheme = "Papirus-Dark";
         mode = "dark";
       };
       lightModeScripts.gtk = setAppearance {
         colorScheme = "default";
-        gtkTheme = "Adwaita";
+        gtkTheme = "Themegen";
         iconTheme = "Papirus-Light";
         mode = "light";
       };

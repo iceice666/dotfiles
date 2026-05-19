@@ -10,11 +10,12 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 2. `just themegen-generate <host>` renders `themegen/common/` and then `themegen/<host>/` into `.cache/themegen/<host>/` when the wallpaper or templates changed.
 3. Host-specific templates overwrite common templates when their relative paths match.
 4. `common/home/themegen/default.nix` recursively installs the generated cache into Home Manager.
+5. On Framework, Home Manager wraps the generated GTK CSS into a named Nix GTK theme package under `share/themes` and switches between `Themegen` and `Themegen-dark`.
 
 ## File Map
 
 - `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
-- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, and Eww bar templates.
+- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, and Eww bar templates. GTK templates become a standalone package on Framework.
 - `themegen/m3air/`: macOS-only Equibop template.
 - `common/home/themegen/default.nix`: Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
@@ -59,6 +60,7 @@ The generated file is written to `.cache/themegen/preview/index.html`.
 - Change host-only templates in `themegen/m3air/` or `themegen/framework/`.
 - Add a new themed file by placing it at the final `$HOME`-relative target path under the right scope.
 - Use `{{...}}` placeholders supported by `themegen render` for wallpaper-derived colors.
+- Framework GTK templates should define the full Adwaita/libadwaita color token surface; `hosts/framework/home/gui.nix` adds the Adwaita base imports and packages the rendered CSS as `Themegen` / `Themegen-dark`.
 
 ## Validation
 

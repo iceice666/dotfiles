@@ -1,28 +1,64 @@
+@define-color theme_bg_color {{color.dark.background}};
+@define-color theme_fg_color {{color.dark.on_surface}};
+@define-color theme_base_color {{color.dark.surface}};
+@define-color theme_text_color {{color.dark.on_surface}};
+@define-color theme_selected_bg_color {{color.dark.primary}};
+@define-color theme_selected_fg_color {{color.dark.on_primary}};
+@define-color theme_unfocused_bg_color {{color.dark.surface_container_low}};
+@define-color theme_unfocused_fg_color {{color.dark.on_surface_variant}};
+@define-color theme_unfocused_base_color {{color.dark.surface_container_lowest}};
+@define-color theme_unfocused_text_color {{color.dark.on_surface_variant}};
+@define-color theme_unfocused_selected_bg_color {{color.dark.secondary_container}};
+@define-color theme_unfocused_selected_fg_color {{color.dark.on_secondary_container}};
+@define-color insensitive_bg_color {{color.dark.surface_container}};
+@define-color insensitive_fg_color {{color.dark.on_surface | with_alpha(38%) | to_rgba()}};
+@define-color insensitive_base_color {{color.dark.surface_container_low}};
+@define-color unfocused_insensitive_color {{color.dark.on_surface_variant | with_alpha(38%) | to_rgba()}};
+@define-color borders {{color.dark.outline | with_alpha(46%) | to_rgba()}};
+@define-color unfocused_borders {{color.dark.outline_variant | with_alpha(38%) | to_rgba()}};
+@define-color content_view_bg {{color.dark.surface}};
+@define-color text_view_bg {{color.dark.surface}};
+@define-color bg_color {{color.dark.background}};
+@define-color text_color {{color.dark.on_surface}};
+@define-color selected_bg_color {{color.dark.primary}};
+@define-color selected_fg_color {{color.dark.on_primary}};
 @define-color accent_color {{color.dark.primary}};
 @define-color accent_bg_color {{color.dark.primary}};
 @define-color accent_fg_color {{color.dark.on_primary}};
 @define-color destructive_color {{color.dark.error}};
 @define-color destructive_bg_color {{color.dark.error}};
-@define-color destructive_fg_color {{color.dark.on_primary}};
+@define-color destructive_fg_color {{color.dark.on_error}};
 @define-color success_color {{base16.dark.base0B}};
+@define-color success_bg_color {{base16.dark.base0B}};
+@define-color success_fg_color {{color.dark.background}};
 @define-color warning_color {{base16.dark.base0A}};
+@define-color warning_bg_color {{base16.dark.base0A}};
+@define-color warning_fg_color {{color.dark.background}};
 @define-color error_color {{color.dark.error}};
-@define-color window_bg_color {{color.dark.background}};
-@define-color window_fg_color {{color.dark.on_surface}};
-@define-color view_bg_color {{color.dark.surface}};
-@define-color view_fg_color {{color.dark.on_surface}};
-@define-color headerbar_bg_color {{color.dark.surface_container}};
-@define-color headerbar_fg_color {{color.dark.on_surface}};
-@define-color sidebar_bg_color {{color.dark.surface_container_low}};
-@define-color sidebar_fg_color {{color.dark.on_surface}};
-@define-color card_bg_color {{color.dark.surface_container}};
-@define-color card_fg_color {{color.dark.on_surface}};
-@define-color dialog_bg_color {{color.dark.surface_container}};
-@define-color dialog_fg_color {{color.dark.on_surface}};
-@define-color popover_bg_color {{color.dark.surface_container_high}};
-@define-color popover_fg_color {{color.dark.on_surface}};
-@define-color shade_color {{color.dark.on_surface | with_alpha(12%) | to_rgba()}};
-@define-color scrollbar_outline_color {{color.dark.outline | with_alpha(42%) | to_rgba()}};
+@define-color error_bg_color {{color.dark.error}};
+@define-color error_fg_color {{color.dark.on_error}};
+@define-color info_bg_color {{color.dark.secondary}};
+@define-color info_fg_color {{color.dark.on_secondary}};
+@define-color question_bg_color {{color.dark.tertiary}};
+@define-color question_fg_color {{color.dark.on_tertiary}};
+@define-color app_notification_a {{color.dark.surface_container_high}};
+@define-color app_notification_b {{color.dark.surface_container_highest}};
+@define-color app_notification_c {{color.dark.surface_container}};
+@define-color app_notification_border {{color.dark.outline_variant | with_alpha(55%) | to_rgba()}};
+@define-color primary_toolbarbutton_text_shadow {{color.dark.shadow | with_alpha(40%) | to_rgba()}};
+@define-color wm_title {{color.dark.on_surface}};
+@define-color wm_unfocused_title {{color.dark.on_surface_variant}};
+@define-color wm_bg_a {{color.dark.surface_container_high}};
+@define-color wm_bg_b {{color.dark.surface_container}};
+@define-color wm_shadow {{color.dark.shadow | with_alpha(45%) | to_rgba()}};
+@define-color wm_border {{color.dark.outline_variant | with_alpha(50%) | to_rgba()}};
+@define-color wm_borders_edge {{color.dark.outline | with_alpha(42%) | to_rgba()}};
+@define-color wm_highlight {{color.dark.primary | with_alpha(28%) | to_rgba()}};
+@define-color wm_button_hover_color_a {{color.dark.surface_container_highest}};
+@define-color wm_button_hover_color_b {{color.dark.surface_container_high}};
+@define-color wm_button_active_color_a {{color.dark.primary}};
+@define-color wm_button_active_color_b {{color.dark.primary_container}};
+@define-color wm_button_active_color_c {{color.dark.on_primary}};
 
 * {
   caret-color: {{color.dark.primary}};
@@ -42,32 +78,15 @@ headerbar,
   color: {{color.dark.on_surface}};
   border-color: {{color.dark.outline_variant | with_alpha(45%) | to_rgba()}};
 }
+
 menu,
 .menu,
-.context-menu {
-  background-color: {{color.dark.surface_container_high}};
-  color: {{color.dark.on_surface}};
-  border: 1px solid {{color.dark.outline | with_alpha(42%) | to_rgba()}};
-}
-menuitem,
-.menuitem {
-  padding: 6px 10px;
-  color: {{color.dark.on_surface}};
-}
-menuitem:hover,
-.menuitem:hover {
-  background-color: {{color.dark.primary}};
-  color: {{color.dark.on_primary}};
-}
+.context-menu,
 popover,
 .popover {
   background-color: {{color.dark.surface_container_high}};
   color: {{color.dark.on_surface}};
-  border: 1px solid {{color.dark.outline_variant | with_alpha(45%) | to_rgba()}};
-  border-radius: 8px;
-}
-popover > box {
-  padding: 4px;
+  border-color: {{color.dark.outline | with_alpha(42%) | to_rgba()}};
 }
 
 button,

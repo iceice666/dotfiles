@@ -1,28 +1,64 @@
+@define-color theme_bg_color {{color.light.background}};
+@define-color theme_fg_color {{color.light.on_surface}};
+@define-color theme_base_color {{color.light.surface}};
+@define-color theme_text_color {{color.light.on_surface}};
+@define-color theme_selected_bg_color {{color.light.primary}};
+@define-color theme_selected_fg_color {{color.light.on_primary}};
+@define-color theme_unfocused_bg_color {{color.light.surface_container_low}};
+@define-color theme_unfocused_fg_color {{color.light.on_surface_variant}};
+@define-color theme_unfocused_base_color {{color.light.surface_container_lowest}};
+@define-color theme_unfocused_text_color {{color.light.on_surface_variant}};
+@define-color theme_unfocused_selected_bg_color {{color.light.secondary_container}};
+@define-color theme_unfocused_selected_fg_color {{color.light.on_secondary_container}};
+@define-color insensitive_bg_color {{color.light.surface_container}};
+@define-color insensitive_fg_color {{color.light.on_surface | with_alpha(38%) | to_rgba()}};
+@define-color insensitive_base_color {{color.light.surface_container_low}};
+@define-color unfocused_insensitive_color {{color.light.on_surface_variant | with_alpha(38%) | to_rgba()}};
+@define-color borders {{color.light.outline | with_alpha(46%) | to_rgba()}};
+@define-color unfocused_borders {{color.light.outline_variant | with_alpha(38%) | to_rgba()}};
+@define-color content_view_bg {{color.light.surface}};
+@define-color text_view_bg {{color.light.surface}};
+@define-color bg_color {{color.light.background}};
+@define-color text_color {{color.light.on_surface}};
+@define-color selected_bg_color {{color.light.primary}};
+@define-color selected_fg_color {{color.light.on_primary}};
 @define-color accent_color {{color.light.primary}};
 @define-color accent_bg_color {{color.light.primary}};
 @define-color accent_fg_color {{color.light.on_primary}};
 @define-color destructive_color {{color.light.error}};
 @define-color destructive_bg_color {{color.light.error}};
-@define-color destructive_fg_color {{color.light.on_primary}};
+@define-color destructive_fg_color {{color.light.on_error}};
 @define-color success_color {{base16.light.base0B}};
+@define-color success_bg_color {{base16.light.base0B}};
+@define-color success_fg_color {{color.light.background}};
 @define-color warning_color {{base16.light.base0A}};
+@define-color warning_bg_color {{base16.light.base0A}};
+@define-color warning_fg_color {{color.light.background}};
 @define-color error_color {{color.light.error}};
-@define-color window_bg_color {{color.light.background}};
-@define-color window_fg_color {{color.light.on_surface}};
-@define-color view_bg_color {{color.light.surface}};
-@define-color view_fg_color {{color.light.on_surface}};
-@define-color headerbar_bg_color {{color.light.surface_container}};
-@define-color headerbar_fg_color {{color.light.on_surface}};
-@define-color sidebar_bg_color {{color.light.surface_container_low}};
-@define-color sidebar_fg_color {{color.light.on_surface}};
-@define-color card_bg_color {{color.light.surface_container}};
-@define-color card_fg_color {{color.light.on_surface}};
-@define-color dialog_bg_color {{color.light.surface_container}};
-@define-color dialog_fg_color {{color.light.on_surface}};
-@define-color popover_bg_color {{color.light.surface_container_high}};
-@define-color popover_fg_color {{color.light.on_surface}};
-@define-color shade_color {{color.light.on_surface | with_alpha(12%) | to_rgba()}};
-@define-color scrollbar_outline_color {{color.light.outline | with_alpha(42%) | to_rgba()}};
+@define-color error_bg_color {{color.light.error}};
+@define-color error_fg_color {{color.light.on_error}};
+@define-color info_bg_color {{color.light.secondary}};
+@define-color info_fg_color {{color.light.on_secondary}};
+@define-color question_bg_color {{color.light.tertiary}};
+@define-color question_fg_color {{color.light.on_tertiary}};
+@define-color app_notification_a {{color.light.surface_container_high}};
+@define-color app_notification_b {{color.light.surface_container_highest}};
+@define-color app_notification_c {{color.light.surface_container}};
+@define-color app_notification_border {{color.light.outline_variant | with_alpha(55%) | to_rgba()}};
+@define-color primary_toolbarbutton_text_shadow {{color.light.shadow | with_alpha(25%) | to_rgba()}};
+@define-color wm_title {{color.light.on_surface}};
+@define-color wm_unfocused_title {{color.light.on_surface_variant}};
+@define-color wm_bg_a {{color.light.surface_container_high}};
+@define-color wm_bg_b {{color.light.surface_container}};
+@define-color wm_shadow {{color.light.shadow | with_alpha(24%) | to_rgba()}};
+@define-color wm_border {{color.light.outline_variant | with_alpha(50%) | to_rgba()}};
+@define-color wm_borders_edge {{color.light.outline | with_alpha(42%) | to_rgba()}};
+@define-color wm_highlight {{color.light.primary | with_alpha(20%) | to_rgba()}};
+@define-color wm_button_hover_color_a {{color.light.surface_container_highest}};
+@define-color wm_button_hover_color_b {{color.light.surface_container_high}};
+@define-color wm_button_active_color_a {{color.light.primary}};
+@define-color wm_button_active_color_b {{color.light.primary_container}};
+@define-color wm_button_active_color_c {{color.light.on_primary}};
 
 * {
   caret-color: {{color.light.primary}};
@@ -42,32 +78,15 @@ headerbar,
   color: {{color.light.on_surface}};
   border-color: {{color.light.outline_variant | with_alpha(45%) | to_rgba()}};
 }
+
 menu,
 .menu,
-.context-menu {
-  background-color: {{color.light.surface_container_high}};
-  color: {{color.light.on_surface}};
-  border: 1px solid {{color.light.outline | with_alpha(42%) | to_rgba()}};
-}
-menuitem,
-.menuitem {
-  padding: 6px 10px;
-  color: {{color.light.on_surface}};
-}
-menuitem:hover,
-.menuitem:hover {
-  background-color: {{color.light.primary}};
-  color: {{color.light.on_primary}};
-}
+.context-menu,
 popover,
 .popover {
   background-color: {{color.light.surface_container_high}};
   color: {{color.light.on_surface}};
-  border: 1px solid {{color.light.outline_variant | with_alpha(45%) | to_rgba()}};
-  border-radius: 8px;
-}
-popover > box {
-  padding: 4px;
+  border-color: {{color.light.outline | with_alpha(42%) | to_rgba()}};
 }
 
 button,
