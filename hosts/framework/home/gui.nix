@@ -50,6 +50,25 @@ let
 
   niriPkg = unstablePkgs.niri;
 
+  frameworkDarkman = pkgs.darkman.overrideAttrs (oldAttrs: {
+    patches = (oldAttrs.patches or [ ]) ++ [
+      (pkgs.writeText "darkman-framework-transition-offset.patch" ''
+        diff --git a/scheduler.go b/scheduler.go
+        index 631f6e1..8e7f0dc 100644
+        --- a/scheduler.go
+        +++ b/scheduler.go
+        @@ -23,6 +23,9 @@ func SunriseAndSundown(loc geoclue.Location, now time.Time) (sunrise time.Time,
+         
+         	sundown, err = astral.Sunset(obs, now)
+        +	sunrise = sunrise.Add(30 * time.Minute)
+        +	sundown = sundown.Add(-30 * time.Minute)
+        +
+         	return
+         }
+      '')
+    ];
+  });
+
   frameworkNiri = pkgs.writeShellScript "framework-niri" ''
     ${frameworkGraphicsEnv}
     exec ${niriPkg}/bin/niri "$@"
@@ -581,6 +600,7 @@ in
     blueman-applet.enable = true;
     darkman = {
       enable = true;
+      package = frameworkDarkman;
       settings = {
         lat = 25.0;
         lng = 121.5;
