@@ -153,10 +153,7 @@ in
     };
 
     Install = {
-      WantedBy = [
-        "default.target"
-        "graphical-session.target"
-      ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 
@@ -187,10 +184,7 @@ in
     };
 
     Install = {
-      WantedBy = [
-        "default.target"
-        "graphical-session.target"
-      ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 }
