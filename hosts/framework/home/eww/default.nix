@@ -12,6 +12,12 @@ let
     appPlaceholder = pkgs.writeText "eww-app-placeholder.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="15" rx="3.5"/><path d="M8.5 12h7"/><path d="M12 8.5v7"/></svg>
     '';
+    batteryAc = pkgs.writeText "eww-battery-ac.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M7 2h3v5h4V2h3v5h2v4a7 7 0 0 1-6 6.92V22h-2v-4.08A7 7 0 0 1 5 11V7h2z"/></svg>
+    '';
+    batteryBat = pkgs.writeText "eww-battery-bat.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M20 4c-6.6.15-11.4 2.4-14.05 6.25C3.6 13.65 3.4 18 3.4 18H2v2h9v-2H5.45c.08-.92.5-3.95 2.2-6.4C9.6 8.8 13 7 18 6.35c-.35 2.95-1.18 5.05-2.52 6.4-1.25 1.25-2.85 1.85-4.98 1.85h-.7l-1.2 2H10.5c2.65 0 4.78-.82 6.4-2.45C18.98 12.08 20 8.75 20 4z"/></svg>
+    '';
     batteryCharging = pkgs.writeText "eww-battery-charging.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M10 2h4v2h-4z"/><path d="M8 5h8a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm4 3-3 7h3l-1 5 5-8h-3l2-4z"/></svg>
     '';

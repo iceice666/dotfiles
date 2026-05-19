@@ -23,7 +23,7 @@ let
     upower_field() {
       device="$1"
       field="$2"
-      upower --show-info "$device" 2>/dev/null | awk -F: -v field="$field" '
+      { upower --show-info "$device" 2>/dev/null || true; } | awk -F: -v field="$field" '
         $1 ~ "^[[:space:]]*" field "$" {
           value = $2
           sub(/^[[:space:]]*/, "", value)
@@ -34,15 +34,15 @@ let
     }
 
     display_device() {
-      upower --enumerate 2>/dev/null | awk '/DisplayDevice$/ { print; exit }'
+      { upower --enumerate 2>/dev/null || true; } | awk '/DisplayDevice$/ { print; exit }'
     }
 
     battery_device() {
-      upower --enumerate 2>/dev/null | awk '/\/battery_/ { print; exit }'
+      { upower --enumerate 2>/dev/null || true; } | awk '/\/battery_/ { print; exit }'
     }
 
     daemon_on_battery() {
-      upower --dump 2>/dev/null | awk -F: '
+      { upower --dump 2>/dev/null || true; } | awk -F: '
         $1 ~ /^[[:space:]]*on-battery$/ {
           value = $2
           sub(/^[[:space:]]*/, "", value)
@@ -52,11 +52,20 @@ let
       '
     }
 
+    tlp_mode() {
+      { tlp-stat -s 2>/dev/null || true; } | awk -F= '
+        $1 ~ /^[[:space:]]*Mode[[:space:]]*$/ {
+          value = $2
+          sub(/^[[:space:]]*/, "", value)
+          sub(/[[:space:]]*$/, "", value)
+          print value
+          exit
+        }
+      '
+    }
+
     emit_battery_status() {
       foreground="$(theme_color foreground '#e5e5e5')"
-      critical="$(theme_color critical '#ef4444')"
-      warning="$(theme_color warning '#f59e0b')"
-      success="$(theme_color success '#22c55e')"
 
       device="$(display_device)"
       if [ -z "$device" ]; then
@@ -68,39 +77,95 @@ let
       capacity="''${capacity%.*}"
       state="$(upower_field "$device" state)"
       on_battery="$(daemon_on_battery)"
+      mode="$(tlp_mode)"
 
       if [ -z "$device" ] || [ -z "$percentage" ]; then
         jq -cn \
+          --argjson value 0 \
           --arg text "--" \
-          --arg class "island battery" \
+          --arg tooltip "Battery --" \
+          --arg class "island battery unknown" \
           --arg icon "${icons.batteryUnknown}" \
           --arg color "$foreground" \
-          '{ text: $text, class: $class, icon: $icon, color: $color }'
+          '{
+            value: $value,
+            text: $text,
+            tooltip: $tooltip,
+            class: $class,
+            icon: $icon,
+            color: $color
+          }'
         return 0
       fi
 
       class="island battery"
-      icon="${icons.batteryNormal}"
+      icon="${icons.batteryUnknown}"
       color="$foreground"
+      profile="Unknown"
 
-      if [ "$state" = "charging" ] || [ "$state" = "fully-charged" ] || [ "$on_battery" = "no" ]; then
-        class="$class charging"
-        icon="${icons.batteryCharging}"
-        color="$success"
-      elif is_integer "$capacity" && [ "$capacity" -le 15 ]; then
-        class="$class critical"
-        color="$critical"
-      elif is_integer "$capacity" && [ "$capacity" -le 30 ]; then
-        class="$class warning"
-        color="$warning"
+      case "$mode" in
+        AC)
+          icon="${icons.batteryAc}"
+          profile="AC"
+          ;;
+        BAT)
+          icon="${icons.batteryBat}"
+          profile="Battery"
+          ;;
+      esac
+
+      if [ "$mode" = "unknown" ] || [ -z "$mode" ]; then
+        if [ "$state" = "charging" ] || [ "$state" = "fully-charged" ] || [ "$on_battery" = "no" ]; then
+          icon="${icons.batteryAc}"
+          profile="AC"
+        elif [ "$on_battery" = "yes" ]; then
+          icon="${icons.batteryBat}"
+          profile="Battery"
+        fi
       fi
 
+      if is_integer "$capacity"; then
+        value="$capacity"
+        if [ "$value" -lt 0 ]; then
+          value=0
+        elif [ "$value" -gt 100 ]; then
+          value=100
+        fi
+      else
+        value=0
+      fi
+
+      if [ "$state" = "charging" ] || [ "$state" = "fully-charged" ] || [ "$mode" = "AC" ] || [ "$on_battery" = "no" ]; then
+        class="$class charging"
+      elif [ "$value" -lt 10 ]; then
+        class="$class critical"
+      elif [ "$value" -lt 30 ]; then
+        class="$class low"
+      elif [ "$value" -lt 50 ]; then
+        class="$class medium"
+      elif [ "$value" -lt 80 ]; then
+        class="$class good"
+      else
+        class="$class full"
+      fi
+
+      tooltip="$percentage - $profile profile"
+
       jq -cn \
+        --argjson value "$value" \
         --arg text "$percentage" \
+        --arg tooltip "$tooltip" \
         --arg class "$class" \
         --arg icon "$icon" \
         --arg color "$color" \
-        '{ text: $text, class: $class, icon: $icon, color: $color }'
+        '{
+          value: $value,
+          text: $text,
+          tooltip: $tooltip,
+          class: $class,
+          icon: $icon,
+          color: $color
+        }'
     }
   '';
 in
@@ -111,6 +176,7 @@ in
         coreutils
         gawk
         jq
+        tlp
         upower
       ])
       ''
@@ -124,6 +190,7 @@ in
         coreutils
         gawk
         jq
+        tlp
         upower
       ])
       ''
