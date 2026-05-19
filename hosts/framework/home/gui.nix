@@ -104,6 +104,19 @@ let
     fi
   '';
 
+  clipboardManager = pkgs.writeShellScript "framework-clipboard-manager" ''
+    selection="$(
+      ${pkgs.cliphist}/bin/cliphist list \
+        | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt "Clipboard: "
+    )" || exit 0
+
+    [ -n "$selection" ] || exit 0
+
+    printf '%s' "$selection" \
+      | ${pkgs.cliphist}/bin/cliphist decode \
+      | ${pkgs.wl-clipboard}/bin/wl-copy
+  '';
+
   frameworkPortalEnv = {
     XDG_DATA_DIRS = "${config.home.profileDirectory}/share:/nix/var/nix/profiles/default/share:/usr/local/share:/usr/share";
     NIX_XDG_DESKTOP_PORTAL_DIR = "${config.home.profileDirectory}/share/xdg-desktop-portal/portals";
@@ -263,7 +276,7 @@ let
       [
         "@brightnessctl@"
         "@bash@"
-        "@codium@"
+        "@clipboardManager@"
         "@ewwPoll@"
         "@fuzzel@"
         "@ghostty@"
@@ -275,12 +288,11 @@ let
         "@swaylock@"
         "@swappy@"
         "@wpctl@"
-        "@zed@"
       ]
       [
         "${pkgs.brightnessctl}/bin/brightnessctl"
         "${pkgs.bash}/bin/bash"
-        "${pkgs.vscodium}/bin/codium"
+        (toString clipboardManager)
         (toString ewwPoll)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${pkgs.ghostty}/bin/ghostty"
@@ -292,7 +304,6 @@ let
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
         "${pkgs.wireplumber}/bin/wpctl"
-        (lib.getExe unstablePkgs.zed-editor)
       ]
       (builtins.readFile ./niri-config.kdl);
 in
@@ -322,11 +333,35 @@ in
     };
   };
 
+  systemd.user.services.cliphist = {
+    Unit = {
+      Description = "Clipboard history daemon";
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "niri.service"
+        "graphical-session.target"
+      ];
+      Wants = [ "graphical-session.target" ];
+    };
+
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
   home.packages = with pkgs; [
     frameworkPostSwitch
     adwaita-icon-theme
     brightnessctl
     bc
+    cliphist
     ghostty
     grim
     imv
