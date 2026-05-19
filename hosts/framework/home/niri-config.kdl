@@ -11,6 +11,7 @@ input {
         drag true
         drag-lock
         natural-scroll
+        scroll-factor 0.4
     }
 
     focus-follows-mouse max-scroll-amount="0%"
@@ -41,6 +42,7 @@ layout {
 
 hotkey-overlay {
     skip-at-startup
+    hide-not-bound
 }
 
 prefer-no-csd
@@ -98,40 +100,40 @@ binds {
     Mod+Shift+K hotkey-overlay-title="Focus monitor up" { focus-monitor-up; }
     Mod+Shift+L hotkey-overlay-title="Focus monitor right" { focus-monitor-right; }
 
-    Mod+Page_Down hotkey-overlay-title="Focus workspace down" { focus-workspace-down; }
-    Mod+Page_Up hotkey-overlay-title="Focus workspace up" { focus-workspace-up; }
+    Mod+Alt+J { focus-workspace-down; }
+    Mod+Alt+K { focus-workspace-up; }
     Mod+U hotkey-overlay-title="Focus workspace down" { focus-workspace-down; }
     Mod+I hotkey-overlay-title="Focus workspace up" { focus-workspace-up; }
-    Mod+Ctrl+Page_Down hotkey-overlay-title="Move column to workspace down" { move-column-to-workspace-down; }
-    Mod+Ctrl+Page_Up hotkey-overlay-title="Move column to workspace up" { move-column-to-workspace-up; }
+    Mod+Ctrl+Alt+J { move-column-to-workspace-down; }
+    Mod+Ctrl+Alt+K { move-column-to-workspace-up; }
     Mod+Ctrl+U hotkey-overlay-title="Move column to workspace down" { move-column-to-workspace-down; }
     Mod+Ctrl+I hotkey-overlay-title="Move column to workspace up" { move-column-to-workspace-up; }
 
-    Mod+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="Focus workspace down" { focus-workspace-down; }
-    Mod+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="Focus workspace up" { focus-workspace-up; }
-    Mod+Ctrl+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="Move column to workspace down" { move-column-to-workspace-down; }
-    Mod+Ctrl+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="Move column to workspace up" { move-column-to-workspace-up; }
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp cooldown-ms=150 { move-column-to-workspace-up; }
 
     Mod+Shift+N hotkey-overlay-title="Rename workspace" { spawn "@renameWorkspace@"; }
 
-    Mod+1 hotkey-overlay-title="Focus workspace 1" { focus-workspace 1; }
-    Mod+2 hotkey-overlay-title="Focus workspace 2" { focus-workspace 2; }
-    Mod+3 hotkey-overlay-title="Focus workspace 3" { focus-workspace 3; }
-    Mod+4 hotkey-overlay-title="Focus workspace 4" { focus-workspace 4; }
-    Mod+5 hotkey-overlay-title="Focus workspace 5" { focus-workspace 5; }
-    Mod+6 hotkey-overlay-title="Focus workspace 6" { focus-workspace 6; }
-    Mod+7 hotkey-overlay-title="Focus workspace 7" { focus-workspace 7; }
-    Mod+8 hotkey-overlay-title="Focus workspace 8" { focus-workspace 8; }
-    Mod+9 hotkey-overlay-title="Focus workspace 9" { focus-workspace 9; }
-    Mod+Ctrl+1 hotkey-overlay-title="Move column to workspace 1" { move-column-to-workspace 1; }
-    Mod+Ctrl+2 hotkey-overlay-title="Move column to workspace 2" { move-column-to-workspace 2; }
-    Mod+Ctrl+3 hotkey-overlay-title="Move column to workspace 3" { move-column-to-workspace 3; }
-    Mod+Ctrl+4 hotkey-overlay-title="Move column to workspace 4" { move-column-to-workspace 4; }
-    Mod+Ctrl+5 hotkey-overlay-title="Move column to workspace 5" { move-column-to-workspace 5; }
-    Mod+Ctrl+6 hotkey-overlay-title="Move column to workspace 6" { move-column-to-workspace 6; }
-    Mod+Ctrl+7 hotkey-overlay-title="Move column to workspace 7" { move-column-to-workspace 7; }
-    Mod+Ctrl+8 hotkey-overlay-title="Move column to workspace 8" { move-column-to-workspace 8; }
-    Mod+Ctrl+9 hotkey-overlay-title="Move column to workspace 9" { move-column-to-workspace 9; }
+    Mod+1 hotkey-overlay-title=null { focus-workspace 1; }
+    Mod+2 hotkey-overlay-title=null { focus-workspace 2; }
+    Mod+3 hotkey-overlay-title=null { focus-workspace 3; }
+    Mod+4 hotkey-overlay-title=null { focus-workspace 4; }
+    Mod+5 hotkey-overlay-title=null { focus-workspace 5; }
+    Mod+6 hotkey-overlay-title=null { focus-workspace 6; }
+    Mod+7 hotkey-overlay-title=null { focus-workspace 7; }
+    Mod+8 hotkey-overlay-title=null { focus-workspace 8; }
+    Mod+9 hotkey-overlay-title=null { focus-workspace 9; }
+    Mod+Ctrl+1 hotkey-overlay-title=null { move-column-to-workspace 1; }
+    Mod+Ctrl+2 hotkey-overlay-title=null { move-column-to-workspace 2; }
+    Mod+Ctrl+3 hotkey-overlay-title=null { move-column-to-workspace 3; }
+    Mod+Ctrl+4 hotkey-overlay-title=null { move-column-to-workspace 4; }
+    Mod+Ctrl+5 hotkey-overlay-title=null { move-column-to-workspace 5; }
+    Mod+Ctrl+6 hotkey-overlay-title=null { move-column-to-workspace 6; }
+    Mod+Ctrl+7 hotkey-overlay-title=null { move-column-to-workspace 7; }
+    Mod+Ctrl+8 hotkey-overlay-title=null { move-column-to-workspace 8; }
+    Mod+Ctrl+9 hotkey-overlay-title=null { move-column-to-workspace 9; }
 
     Mod+BracketLeft hotkey-overlay-title="Consume or expel window left" { consume-or-expel-window-left; }
     Mod+BracketRight hotkey-overlay-title="Consume or expel window right" { consume-or-expel-window-right; }
