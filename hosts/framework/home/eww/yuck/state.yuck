@@ -1,7 +1,7 @@
 (deflisten niri_state :initial "{\"groups\":[],\"outputs\":{}}" "@niriState@")
 (defpoll media :interval "2s" :initial "" "@mediaStatus@")
 (defpoll perf :interval "1s" :initial "{\"cpu\":\"--\",\"ram\":\"--\",\"gpu\":\"--\",\"up\":\"--\",\"down\":\"--\"}" "@perfStatus@")
-(defpoll battery :interval "60s" :initial "{\"text\":\"--\",\"class\":\"island battery\",\"icon\":\"@batteryUnknown@\",\"color\":\"#e5e5e5\"}" "@batteryStatus@")
+(deflisten battery :initial "{\"text\":\"--\",\"class\":\"island battery\",\"icon\":\"@batteryUnknown@\",\"color\":\"#e5e5e5\"}" "@batteryStatusListen@")
 (deflisten audio :initial "{\"speaker_value\":0,\"speaker_muted\":false,\"speaker_class\":\"audio-control speaker\",\"speaker_icon\":\"@speakerHigh@\",\"speaker_text\":\"Output --\",\"speaker_color\":\"#e5e5e5\",\"speaker_device\":\"Output\",\"mic_value\":0,\"mic_muted\":false,\"mic_class\":\"audio-control mic\",\"mic_icon\":\"@micActive@\",\"mic_text\":\"Input --\",\"mic_color\":\"#e5e5e5\",\"mic_device\":\"Input\"}" "@audioStatusListen@")
 (defpoll datetime :interval "30s" :initial "" "@datetimeStatus@")
 (defpoll notifications :interval "5s" :initial "{\"count\":0,\"label\":\"0\",\"class\":\"island notifications\",\"color\":\"#e5e5e5\"}" "@notificationsStatus@")

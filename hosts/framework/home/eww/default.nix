@@ -66,6 +66,7 @@ let
         "@audioStatus@"
         "@audioStatusListen@"
         "@batteryStatus@"
+        "@batteryStatusListen@"
         "@batteryUnknown@"
         "@changeMicVolume@"
         "@changeSpeakerVolume@"
@@ -88,6 +89,7 @@ let
         (toString scripts.audioStatus)
         (toString scripts.audioStatusListen)
         (toString scripts.batteryStatus)
+        (toString scripts.batteryStatusListen)
         (toString icons.batteryUnknown)
         (toString scripts.changeMicVolume)
         (toString scripts.changeSpeakerVolume)

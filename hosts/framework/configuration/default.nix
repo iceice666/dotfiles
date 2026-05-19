@@ -83,6 +83,7 @@ in
     };
     libinput.enable = true;
     gvfs.enable = true;
+    upower.enable = true;
 
     pipewire = {
       enable = true;
