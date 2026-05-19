@@ -152,6 +152,7 @@
             [
               cargo
               clippy
+              fastfetch
               pkg-config
               rust-analyzer
               rustc
