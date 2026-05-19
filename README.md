@@ -101,6 +101,7 @@ Never commit plaintext secrets.
 ## Docs
 
 - `AGENTS.md` — detailed repo structure, flake inputs, build matrix, code style, conventions.
+- `common/home/rime/README.md` — Frost/Rime data wiring and Traditional Chinese model setup.
 - `common/home/themegen/README.md` — wallpaper-driven theme generation pipeline.
 
 ## Acknowledgements

@@ -11,6 +11,7 @@
     ./fish
     ./ghostty.nix
     ./packages.nix
+    ./rime
     ./themegen
     ./user.nix
     ./vscodium.nix

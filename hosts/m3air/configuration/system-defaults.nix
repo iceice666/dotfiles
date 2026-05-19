@@ -1,5 +1,14 @@
 { config, ... }:
 
+let
+  squirrelTraditionalInputSources = [
+    {
+      "Bundle ID" = "im.rime.inputmethod.Squirrel";
+      "Input Mode" = "im.rime.inputmethod.Squirrel.Hant";
+      InputSourceKind = "Input Mode";
+    }
+  ];
+in
 {
   # Spaces
   system.defaults.spaces.spans-displays = false;
@@ -59,6 +68,12 @@
 
   # Bluetooth trackpad (It only costs you NT$3,790! Why don't you get one?)
   system.defaults.CustomUserPreferences = {
+    "com.apple.HIToolbox" = {
+      AppleEnabledInputSources = squirrelTraditionalInputSources;
+      AppleInputSourceHistory = squirrelTraditionalInputSources;
+      AppleSelectedInputSources = squirrelTraditionalInputSources;
+    };
+
     "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
       Clicking = true;
       Dragging = true;

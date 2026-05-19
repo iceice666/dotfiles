@@ -24,7 +24,9 @@ common/              # baseline shared across all hosts
     app-defaults.nix # shared app preference files
     dev-env.nix      # shared development environment config
     ghostty.nix      # shared Ghostty config
-    themegen/        # Home Manager installer for generated theme files
+    rime/            # Rime Frost setup with Traditional Chinese octagram model
+    themegen/        # wallpaper-driven theme generation and templates
+      templates/     # ghostty, equibop, starship, zed, vscode, terminal-sequences
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
 
@@ -46,6 +48,8 @@ pkgs/                # overlay packages
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
+  rime-frost/        # Rime Frost schema data
+  rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
   zed-bin/           # Zed official prebuilt releases
@@ -91,7 +95,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -301,7 +305,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -321,6 +325,8 @@ Canonical module shape:
 - `common/configuration/` is only imported by `m3air` and is for Darwin system-level settings.
 - `common/home/` is imported by all hosts and owns shared user packages.
 - `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `just themegen-generate <host>` renders concrete files into `.cache/themegen/<host>/` before builds, and Home Manager installs them through the `themegen-cache` flake input override.
+- `common/home/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses Squirrel from Homebrew; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
+- `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is NixOS with Home Manager imported into the system configuration.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.

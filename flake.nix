@@ -63,6 +63,8 @@
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+        rime-frost = final.callPackage ./pkgs/rime-frost { };
+        rime-octagram-zh-hant-essay-bgw = final.callPackage ./pkgs/rime-octagram-zh-hant-essay-bgw { };
         zen-bin =
           if final.stdenv.hostPlatform.isLinux then
             final.wrapFirefox

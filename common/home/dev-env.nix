@@ -39,6 +39,7 @@
     if set -q ANDROID_HOME
         set -gx ANDROID_SDK_ROOT $ANDROID_HOME
         fish_add_path -p $ANDROID_HOME/cmdline-tools/latest/bin
+        fish_add_path -p $ANDROID_HOME/emulator
         fish_add_path -p $ANDROID_HOME/platform-tools
 
         set -l _ndk_home (find $ANDROID_SDK_ROOT/ndk -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -n 1)
