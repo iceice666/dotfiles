@@ -277,6 +277,8 @@ fmt: ensure-nix-daemon
 # Generate concrete theme files for a host before building
 themegen-generate host:
     #!/usr/bin/env bash
+    set -euo pipefail
+
     host='{{ host }}'
 
     case "$host" in
@@ -320,7 +322,7 @@ themegen-generate host:
 
     fingerprint_inputs() {
         {
-            printf 'themegen-cache-v1\n'
+            printf 'themegen-cache-v2\n'
             printf 'host %s\n' "$host"
             printf 'render-options scheme=tonal-spot base16-contrast=0.3 base16-mode=follow-palette\n'
             printf 'image %s %s\n' "$image" "$(hash_file "$image")"
@@ -351,10 +353,10 @@ themegen-generate host:
 
     if [[ -n "${THEMEGEN_BIN:-}" ]]; then
         themegen_cmd=("$THEMEGEN_BIN")
-    elif command -v themegen >/dev/null 2>&1; then
-        themegen_cmd=(themegen)
-    else
+    elif command -v cargo >/dev/null 2>&1; then
         themegen_cmd=(cargo run --manifest-path '{{ repo_root }}/pkgs/themegen/Cargo.toml' --)
+    else
+        themegen_cmd=(themegen)
     fi
 
     mkdir -p '{{ repo_root }}/.cache/themegen' "$state_dir"
@@ -369,7 +371,10 @@ themegen-generate host:
 
     trap cleanup_tmp EXIT
 
-    render_scope() {
+    render_templates=()
+    render_outputs=()
+
+    add_render_scope() {
         local scope=$1
         local template_dir='{{ repo_root }}/themegen/'"$scope"
 
@@ -377,17 +382,38 @@ themegen-generate host:
 
         while IFS= read -r template; do
             local relative=''${template#"$template_dir"/}
-            "${themegen_cmd[@]}" render \
-                --image "$image" \
-                --scheme tonal-spot \
-                --base16-contrast 0.3 \
-                --base16-mode follow-palette \
-                --render "$template=$tmp_dir/$relative"
+            local output="$tmp_dir/$relative"
+            local replaced=0
+
+            for index in "${!render_outputs[@]}"; do
+                if [[ "${render_outputs[$index]}" == "$output" ]]; then
+                    render_templates[$index]="$template"
+                    replaced=1
+                    break
+                fi
+            done
+
+            if [[ "$replaced" == 0 ]]; then
+                render_templates+=("$template")
+                render_outputs+=("$output")
+            fi
         done < <(find "$template_dir" -type f | sort)
     }
 
-    render_scope common
-    render_scope "$host"
+    add_render_scope common
+    add_render_scope "$host"
+
+    render_args=()
+    for index in "${!render_templates[@]}"; do
+        render_args+=(--render "${render_templates[$index]}=${render_outputs[$index]}")
+    done
+
+    "${themegen_cmd[@]}" render \
+        --image "$image" \
+        --scheme tonal-spot \
+        --base16-contrast 0.3 \
+        --base16-mode follow-palette \
+        "${render_args[@]}"
 
     if [[ -d "$cache_dir" ]]; then
         chmod -R u+w "$cache_dir"
@@ -431,10 +457,10 @@ themegen-preview image='':
 
     if [[ -n "${THEMEGEN_BIN:-}" ]]; then
         themegen_cmd=("$THEMEGEN_BIN")
-    elif command -v themegen >/dev/null 2>&1; then
-        themegen_cmd=(themegen)
-    else
+    elif command -v cargo >/dev/null 2>&1; then
         themegen_cmd=(cargo run --manifest-path '{{ repo_root }}/pkgs/themegen/Cargo.toml' --)
+    else
+        themegen_cmd=(themegen)
     fi
 
     output='{{ repo_root }}/.cache/themegen/preview/index.html'

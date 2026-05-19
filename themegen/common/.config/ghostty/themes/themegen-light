@@ -1,4 +1,7 @@
-background = {{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}
+{{#themegen
+let local.tg_001 = mix(color.light.surface_container_low, seed.color, 0.080000, hct, hex)
+}}
+background = {{local.tg_001}}
 foreground = {{color.light.on_surface}}
 cursor-color = {{color.light.primary}}
 cursor-text = {{color.light.on_primary}}

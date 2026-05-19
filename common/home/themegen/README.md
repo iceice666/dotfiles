@@ -59,7 +59,8 @@ The generated file is written to `.cache/themegen/preview/index.html`.
 - Change shared templates in `themegen/common/`.
 - Change host-only templates in `themegen/m3air/` or `themegen/framework/`.
 - Add a new themed file by placing it at the final `$HOME`-relative target path under the right scope.
-- Use `{{...}}` placeholders supported by `themegen render` for wallpaper-derived colors.
+- Use direct `{{color.dark.primary}}`-style lookups in template bodies. Put derived colors in an optional leading `{{#themegen ... }}` header with `let local.name = ...` declarations, then reference them as `{{local.name}}`.
+- Header helpers cover the current derived-color operations: `alpha`, `mix`, `lightness_add`, `tone`, `readable`, `readable_alpha`, `tone_alpha`, and `tone_readable`.
 - Framework GTK templates should define the full Adwaita/libadwaita color token surface; `hosts/framework/home/gui.nix` adds the Adwaita base imports and packages the rendered CSS as `Themegen` / `Themegen-dark`.
 
 ## Validation

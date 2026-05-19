@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Result};
 use material_colors::color::{Argb, Lab};
 use material_colors::hct::Hct;
-use palette::{FromColor, Hsv, LinSrgb, Oklch, Srgb};
+use palette::{FromColor, LinSrgb, Oklch, Srgb};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct RgbaColor {
@@ -16,14 +16,6 @@ pub(crate) struct HctColor {
     pub(crate) hue: f64,
     pub(crate) chroma: f64,
     pub(crate) tone: f64,
-    pub(crate) alpha: f64,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct HsvColor {
-    pub(crate) hue: f64,
-    pub(crate) saturation: f64,
-    pub(crate) value: f64,
     pub(crate) alpha: f64,
 }
 
@@ -169,29 +161,6 @@ pub(crate) fn hct_to_rgba(color: HctColor) -> RgbaColor {
         blue: argb.blue,
         alpha: float_to_alpha(color.alpha),
     }
-}
-
-pub(crate) fn rgba_to_hsv(color: RgbaColor) -> HsvColor {
-    let rgb = rgba_to_srgb(color).into_linear();
-    let hsv = Hsv::from_color(rgb);
-
-    HsvColor {
-        hue: f64::from(hsv.hue.into_positive_degrees()),
-        saturation: f64::from(hsv.saturation),
-        value: f64::from(hsv.value),
-        alpha: alpha_to_float(color.alpha),
-    }
-}
-
-pub(crate) fn hsv_to_rgba(color: HsvColor) -> RgbaColor {
-    let hsv = Hsv::new(
-        normalize_hue(color.hue) as f32,
-        color.saturation.clamp(0.0, 1.0) as f32,
-        color.value.clamp(0.0, 1.0) as f32,
-    );
-    let rgb = Srgb::from_linear(LinSrgb::from_color(hsv));
-
-    srgb_to_rgba(rgb, color.alpha)
 }
 
 pub(crate) fn rgba_to_oklch(color: RgbaColor) -> OklchColor {

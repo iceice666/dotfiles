@@ -1,38 +1,78 @@
-@define-color blue_1 {{base16.dark.base0D | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color blue_2 {{base16.dark.base0D | to_oklch() | lightness_add(0.09) | to_hex()}};
+{{#themegen
+let local.tg_001 = lightness_add(base16.dark.base0D, 0.18, oklch, hex)
+let local.tg_002 = lightness_add(base16.dark.base0D, 0.09, oklch, hex)
+let local.tg_003 = lightness_add(base16.dark.base0D, -0.09, oklch, hex)
+let local.tg_004 = lightness_add(base16.dark.base0D, -0.18, oklch, hex)
+let local.tg_005 = lightness_add(base16.dark.base0B, 0.18, oklch, hex)
+let local.tg_006 = lightness_add(base16.dark.base0B, 0.09, oklch, hex)
+let local.tg_007 = lightness_add(base16.dark.base0B, -0.09, oklch, hex)
+let local.tg_008 = lightness_add(base16.dark.base0B, -0.18, oklch, hex)
+let local.tg_009 = lightness_add(base16.dark.base0A, 0.18, oklch, hex)
+let local.tg_010 = lightness_add(base16.dark.base0A, 0.09, oklch, hex)
+let local.tg_011 = lightness_add(base16.dark.base0A, -0.09, oklch, hex)
+let local.tg_012 = lightness_add(base16.dark.base0A, -0.18, oklch, hex)
+let local.tg_013 = lightness_add(base16.dark.base09, 0.18, oklch, hex)
+let local.tg_014 = lightness_add(base16.dark.base09, 0.09, oklch, hex)
+let local.tg_015 = lightness_add(base16.dark.base09, -0.09, oklch, hex)
+let local.tg_016 = lightness_add(base16.dark.base09, -0.18, oklch, hex)
+let local.tg_017 = lightness_add(base16.dark.base08, 0.18, oklch, hex)
+let local.tg_018 = lightness_add(base16.dark.base08, 0.09, oklch, hex)
+let local.tg_019 = lightness_add(base16.dark.base08, -0.09, oklch, hex)
+let local.tg_020 = lightness_add(base16.dark.base08, -0.18, oklch, hex)
+let local.tg_021 = lightness_add(base16.dark.base0E, 0.18, oklch, hex)
+let local.tg_022 = lightness_add(base16.dark.base0E, 0.09, oklch, hex)
+let local.tg_023 = lightness_add(base16.dark.base0E, -0.09, oklch, hex)
+let local.tg_024 = lightness_add(base16.dark.base0E, -0.18, oklch, hex)
+let local.tg_025 = lightness_add(color.dark.tertiary, 0.18, oklch, hex)
+let local.tg_026 = lightness_add(color.dark.tertiary, 0.09, oklch, hex)
+let local.tg_027 = lightness_add(color.dark.tertiary, -0.09, oklch, hex)
+let local.tg_028 = lightness_add(color.dark.tertiary, -0.18, oklch, hex)
+let local.tg_029 = alpha(color.dark.outline_variant, 50%, rgba)
+let local.tg_030 = alpha(color.dark.shadow, 36%, rgba)
+let local.tg_031 = alpha(color.dark.shadow, 90%, rgba)
+let local.tg_032 = alpha(color.dark.shadow, 25%, rgba)
+let local.tg_033 = alpha(color.dark.outline_variant, 42%, rgba)
+let local.tg_034 = alpha(color.dark.shadow, 95%, rgba)
+let local.tg_035 = alpha(color.dark.on_surface, 38%, rgba)
+let local.tg_036 = alpha(color.dark.on_surface_variant, 38%, rgba)
+let local.tg_037 = alpha(color.dark.outline, 46%, rgba)
+let local.tg_038 = alpha(color.dark.outline_variant, 38%, rgba)
+}}
+@define-color blue_1 {{local.tg_001}};
+@define-color blue_2 {{local.tg_002}};
 @define-color blue_3 {{base16.dark.base0D}};
-@define-color blue_4 {{base16.dark.base0D | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color blue_5 {{base16.dark.base0D | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color green_1 {{base16.dark.base0B | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color green_2 {{base16.dark.base0B | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color blue_4 {{local.tg_003}};
+@define-color blue_5 {{local.tg_004}};
+@define-color green_1 {{local.tg_005}};
+@define-color green_2 {{local.tg_006}};
 @define-color green_3 {{base16.dark.base0B}};
-@define-color green_4 {{base16.dark.base0B | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color green_5 {{base16.dark.base0B | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color yellow_1 {{base16.dark.base0A | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color yellow_2 {{base16.dark.base0A | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color green_4 {{local.tg_007}};
+@define-color green_5 {{local.tg_008}};
+@define-color yellow_1 {{local.tg_009}};
+@define-color yellow_2 {{local.tg_010}};
 @define-color yellow_3 {{base16.dark.base0A}};
-@define-color yellow_4 {{base16.dark.base0A | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color yellow_5 {{base16.dark.base0A | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color orange_1 {{base16.dark.base09 | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color orange_2 {{base16.dark.base09 | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color yellow_4 {{local.tg_011}};
+@define-color yellow_5 {{local.tg_012}};
+@define-color orange_1 {{local.tg_013}};
+@define-color orange_2 {{local.tg_014}};
 @define-color orange_3 {{base16.dark.base09}};
-@define-color orange_4 {{base16.dark.base09 | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color orange_5 {{base16.dark.base09 | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color red_1 {{base16.dark.base08 | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color red_2 {{base16.dark.base08 | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color orange_4 {{local.tg_015}};
+@define-color orange_5 {{local.tg_016}};
+@define-color red_1 {{local.tg_017}};
+@define-color red_2 {{local.tg_018}};
 @define-color red_3 {{base16.dark.base08}};
-@define-color red_4 {{base16.dark.base08 | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color red_5 {{base16.dark.base08 | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color purple_1 {{base16.dark.base0E | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color purple_2 {{base16.dark.base0E | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color red_4 {{local.tg_019}};
+@define-color red_5 {{local.tg_020}};
+@define-color purple_1 {{local.tg_021}};
+@define-color purple_2 {{local.tg_022}};
 @define-color purple_3 {{base16.dark.base0E}};
-@define-color purple_4 {{base16.dark.base0E | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color purple_5 {{base16.dark.base0E | to_oklch() | lightness_add(-0.18) | to_hex()}};
-@define-color brown_1 {{color.dark.tertiary | to_oklch() | lightness_add(0.18) | to_hex()}};
-@define-color brown_2 {{color.dark.tertiary | to_oklch() | lightness_add(0.09) | to_hex()}};
+@define-color purple_4 {{local.tg_023}};
+@define-color purple_5 {{local.tg_024}};
+@define-color brown_1 {{local.tg_025}};
+@define-color brown_2 {{local.tg_026}};
 @define-color brown_3 {{color.dark.tertiary}};
-@define-color brown_4 {{color.dark.tertiary | to_oklch() | lightness_add(-0.09) | to_hex()}};
-@define-color brown_5 {{color.dark.tertiary | to_oklch() | lightness_add(-0.18) | to_hex()}};
+@define-color brown_4 {{local.tg_027}};
+@define-color brown_5 {{local.tg_028}};
 @define-color light_1 {{color.light.surface_bright}};
 @define-color light_2 {{color.light.surface}};
 @define-color light_3 {{color.light.surface_container}};
@@ -64,32 +104,32 @@
 @define-color view_fg_color {{color.dark.on_surface}};
 @define-color headerbar_bg_color {{color.dark.surface_container}};
 @define-color headerbar_fg_color {{color.dark.on_surface}};
-@define-color headerbar_border_color {{color.dark.outline_variant | with_alpha(50%) | to_rgba()}};
+@define-color headerbar_border_color {{local.tg_029}};
 @define-color headerbar_backdrop_color {{color.dark.surface}};
-@define-color headerbar_shade_color {{color.dark.shadow | with_alpha(36%) | to_rgba()}};
-@define-color headerbar_darker_shade_color {{color.dark.shadow | with_alpha(90%) | to_rgba()}};
+@define-color headerbar_shade_color {{local.tg_030}};
+@define-color headerbar_darker_shade_color {{local.tg_031}};
 @define-color sidebar_bg_color {{color.dark.surface_container_low}};
 @define-color sidebar_fg_color {{color.dark.on_surface}};
 @define-color sidebar_backdrop_color {{color.dark.surface}};
-@define-color sidebar_shade_color {{color.dark.shadow | with_alpha(25%) | to_rgba()}};
-@define-color sidebar_border_color {{color.dark.outline_variant | with_alpha(42%) | to_rgba()}};
+@define-color sidebar_shade_color {{local.tg_032}};
+@define-color sidebar_border_color {{local.tg_033}};
 @define-color secondary_sidebar_bg_color {{color.dark.surface_container}};
 @define-color secondary_sidebar_fg_color {{color.dark.on_surface}};
 @define-color secondary_sidebar_backdrop_color {{color.dark.surface_container_low}};
-@define-color secondary_sidebar_shade_color {{color.dark.shadow | with_alpha(25%) | to_rgba()}};
-@define-color secondary_sidebar_border_color {{color.dark.outline_variant | with_alpha(42%) | to_rgba()}};
+@define-color secondary_sidebar_shade_color {{local.tg_032}};
+@define-color secondary_sidebar_border_color {{local.tg_033}};
 @define-color card_bg_color {{color.dark.surface_container}};
 @define-color card_fg_color {{color.dark.on_surface}};
-@define-color card_shade_color {{color.dark.shadow | with_alpha(36%) | to_rgba()}};
+@define-color card_shade_color {{local.tg_030}};
 @define-color dialog_bg_color {{color.dark.surface_container}};
 @define-color dialog_fg_color {{color.dark.on_surface}};
 @define-color popover_bg_color {{color.dark.surface_container_high}};
 @define-color popover_fg_color {{color.dark.on_surface}};
-@define-color popover_shade_color {{color.dark.shadow | with_alpha(25%) | to_rgba()}};
+@define-color popover_shade_color {{local.tg_032}};
 @define-color thumbnail_bg_color {{color.dark.surface_container_highest}};
 @define-color thumbnail_fg_color {{color.dark.on_surface}};
-@define-color shade_color {{color.dark.shadow | with_alpha(25%) | to_rgba()}};
-@define-color scrollbar_outline_color {{color.dark.shadow | with_alpha(95%) | to_rgba()}};
+@define-color shade_color {{local.tg_032}};
+@define-color scrollbar_outline_color {{local.tg_034}};
 @define-color theme_bg_color @window_bg_color;
 @define-color theme_fg_color @window_fg_color;
 @define-color theme_base_color @view_bg_color;
@@ -103,11 +143,11 @@
 @define-color theme_unfocused_selected_bg_color {{color.dark.secondary_container}};
 @define-color theme_unfocused_selected_fg_color {{color.dark.on_secondary_container}};
 @define-color insensitive_bg_color {{color.dark.surface_container}};
-@define-color insensitive_fg_color {{color.dark.on_surface | with_alpha(38%) | to_rgba()}};
+@define-color insensitive_fg_color {{local.tg_035}};
 @define-color insensitive_base_color {{color.dark.surface_container_low}};
-@define-color unfocused_insensitive_color {{color.dark.on_surface_variant | with_alpha(38%) | to_rgba()}};
-@define-color borders {{color.dark.outline | with_alpha(46%) | to_rgba()}};
-@define-color unfocused_borders {{color.dark.outline_variant | with_alpha(38%) | to_rgba()}};
+@define-color unfocused_insensitive_color {{local.tg_036}};
+@define-color borders {{local.tg_037}};
+@define-color unfocused_borders {{local.tg_038}};
 @define-color content_view_bg @view_bg_color;
 @define-color text_view_bg @view_bg_color;
 

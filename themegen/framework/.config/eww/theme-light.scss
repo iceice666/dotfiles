@@ -1,14 +1,21 @@
-$background: {{color.light.surface_container_low | with_alpha(0%) | to_rgba()}};
+{{#themegen
+let local.tg_001 = alpha(color.light.surface_container_low, 0%, rgba)
+let local.tg_002 = alpha(color.light.outline, 34%, rgba)
+let local.tg_003 = alpha(color.light.surface_container_low, 90%, rgba)
+let local.tg_004 = alpha(color.light.surface_container_high, 96%, rgba)
+let local.tg_005 = alpha(color.light.surface_container, 94%, rgba)
+}}
+$background: {{local.tg_001}};
 $critical: {{color.light.error}};
 $foreground: {{color.light.on_surface}};
 $foregroundDim: {{color.light.on_surface_variant}};
 $onCritical: {{color.light.on_error}};
 $onPrimary: {{color.light.on_primary}};
-$outline: {{color.light.outline | with_alpha(34%) | to_rgba()}};
+$outline: {{local.tg_002}};
 $primary: {{color.light.primary}};
 $success: {{base16.light.base0B}};
-$surface: {{color.light.surface_container_low | with_alpha(90%) | to_rgba()}};
-$surfaceActive: {{color.light.surface_container_high | with_alpha(96%) | to_rgba()}};
-$surfaceContainer: {{color.light.surface_container | with_alpha(94%) | to_rgba()}};
-$surfaceHover: {{color.light.surface_container | with_alpha(94%) | to_rgba()}};
+$surface: {{local.tg_003}};
+$surfaceActive: {{local.tg_004}};
+$surfaceContainer: {{local.tg_005}};
+$surfaceHover: {{local.tg_005}};
 $warning: {{base16.light.base0A}};

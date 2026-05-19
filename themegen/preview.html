@@ -7,55 +7,55 @@
   <style>
     :root {
       color-scheme: light dark;
-      --seed: {{ seed.color }};
+      --seed: {{seed.color}};
 
-      --light-background: {{ color.light.background }};
-      --light-on-background: {{ color.light.on_background }};
-      --light-surface: {{ color.light.surface }};
-      --light-surface-container: {{ color.light.surface_container }};
-      --light-surface-container-high: {{ color.light.surface_container_high }};
-      --light-surface-variant: {{ color.light.surface_variant }};
-      --light-on-surface: {{ color.light.on_surface }};
-      --light-on-surface-variant: {{ color.light.on_surface_variant }};
-      --light-outline: {{ color.light.outline }};
-      --light-primary: {{ color.light.primary }};
-      --light-on-primary: {{ color.light.on_primary }};
-      --light-primary-container: {{ color.light.primary_container }};
-      --light-on-primary-container: {{ color.light.on_primary_container }};
-      --light-secondary: {{ color.light.secondary }};
-      --light-on-secondary: {{ color.light.on_secondary }};
-      --light-secondary-container: {{ color.light.secondary_container }};
-      --light-on-secondary-container: {{ color.light.on_secondary_container }};
-      --light-tertiary: {{ color.light.tertiary }};
-      --light-on-tertiary: {{ color.light.on_tertiary }};
-      --light-tertiary-container: {{ color.light.tertiary_container }};
-      --light-on-tertiary-container: {{ color.light.on_tertiary_container }};
-      --light-error: {{ color.light.error }};
-      --light-on-error: {{ color.light.on_error }};
+      --light-background: {{color.light.background}};
+      --light-on-background: {{color.light.on_background}};
+      --light-surface: {{color.light.surface}};
+      --light-surface-container: {{color.light.surface_container}};
+      --light-surface-container-high: {{color.light.surface_container_high}};
+      --light-surface-variant: {{color.light.surface_variant}};
+      --light-on-surface: {{color.light.on_surface}};
+      --light-on-surface-variant: {{color.light.on_surface_variant}};
+      --light-outline: {{color.light.outline}};
+      --light-primary: {{color.light.primary}};
+      --light-on-primary: {{color.light.on_primary}};
+      --light-primary-container: {{color.light.primary_container}};
+      --light-on-primary-container: {{color.light.on_primary_container}};
+      --light-secondary: {{color.light.secondary}};
+      --light-on-secondary: {{color.light.on_secondary}};
+      --light-secondary-container: {{color.light.secondary_container}};
+      --light-on-secondary-container: {{color.light.on_secondary_container}};
+      --light-tertiary: {{color.light.tertiary}};
+      --light-on-tertiary: {{color.light.on_tertiary}};
+      --light-tertiary-container: {{color.light.tertiary_container}};
+      --light-on-tertiary-container: {{color.light.on_tertiary_container}};
+      --light-error: {{color.light.error}};
+      --light-on-error: {{color.light.on_error}};
 
-      --dark-background: {{ color.dark.background }};
-      --dark-on-background: {{ color.dark.on_background }};
-      --dark-surface: {{ color.dark.surface }};
-      --dark-surface-container: {{ color.dark.surface_container }};
-      --dark-surface-container-high: {{ color.dark.surface_container_high }};
-      --dark-surface-variant: {{ color.dark.surface_variant }};
-      --dark-on-surface: {{ color.dark.on_surface }};
-      --dark-on-surface-variant: {{ color.dark.on_surface_variant }};
-      --dark-outline: {{ color.dark.outline }};
-      --dark-primary: {{ color.dark.primary }};
-      --dark-on-primary: {{ color.dark.on_primary }};
-      --dark-primary-container: {{ color.dark.primary_container }};
-      --dark-on-primary-container: {{ color.dark.on_primary_container }};
-      --dark-secondary: {{ color.dark.secondary }};
-      --dark-on-secondary: {{ color.dark.on_secondary }};
-      --dark-secondary-container: {{ color.dark.secondary_container }};
-      --dark-on-secondary-container: {{ color.dark.on_secondary_container }};
-      --dark-tertiary: {{ color.dark.tertiary }};
-      --dark-on-tertiary: {{ color.dark.on_tertiary }};
-      --dark-tertiary-container: {{ color.dark.tertiary_container }};
-      --dark-on-tertiary-container: {{ color.dark.on_tertiary_container }};
-      --dark-error: {{ color.dark.error }};
-      --dark-on-error: {{ color.dark.on_error }};
+      --dark-background: {{color.dark.background}};
+      --dark-on-background: {{color.dark.on_background}};
+      --dark-surface: {{color.dark.surface}};
+      --dark-surface-container: {{color.dark.surface_container}};
+      --dark-surface-container-high: {{color.dark.surface_container_high}};
+      --dark-surface-variant: {{color.dark.surface_variant}};
+      --dark-on-surface: {{color.dark.on_surface}};
+      --dark-on-surface-variant: {{color.dark.on_surface_variant}};
+      --dark-outline: {{color.dark.outline}};
+      --dark-primary: {{color.dark.primary}};
+      --dark-on-primary: {{color.dark.on_primary}};
+      --dark-primary-container: {{color.dark.primary_container}};
+      --dark-on-primary-container: {{color.dark.on_primary_container}};
+      --dark-secondary: {{color.dark.secondary}};
+      --dark-on-secondary: {{color.dark.on_secondary}};
+      --dark-secondary-container: {{color.dark.secondary_container}};
+      --dark-on-secondary-container: {{color.dark.on_secondary_container}};
+      --dark-tertiary: {{color.dark.tertiary}};
+      --dark-on-tertiary: {{color.dark.on_tertiary}};
+      --dark-tertiary-container: {{color.dark.tertiary_container}};
+      --dark-on-tertiary-container: {{color.dark.on_tertiary_container}};
+      --dark-error: {{color.dark.error}};
+      --dark-on-error: {{color.dark.on_error}};
     }
 
     * {
@@ -355,31 +355,31 @@
     }
 
     .code-light {
-      --base00: {{ base16.light.base00 }};
-      --base03: {{ base16.light.base03 }};
-      --base05: {{ base16.light.base05 }};
-      --comment: {{ syntax.light.comment }};
-      --keyword: {{ syntax.light.keyword }};
-      --function: {{ syntax.light.function }};
-      --string: {{ syntax.light.string }};
-      --literal: {{ syntax.light.literal }};
-      --variable: {{ syntax.light.variable }};
-      --type: {{ syntax.light.type }};
-      --punctuation: {{ syntax.light.punctuation }};
+      --base00: {{base16.light.base00}};
+      --base03: {{base16.light.base03}};
+      --base05: {{base16.light.base05}};
+      --comment: {{syntax.light.comment}};
+      --keyword: {{syntax.light.keyword}};
+      --function: {{syntax.light.function}};
+      --string: {{syntax.light.string}};
+      --literal: {{syntax.light.literal}};
+      --variable: {{syntax.light.variable}};
+      --type: {{syntax.light.type}};
+      --punctuation: {{syntax.light.punctuation}};
     }
 
     .code-dark {
-      --base00: {{ base16.dark.base00 }};
-      --base03: {{ base16.dark.base03 }};
-      --base05: {{ base16.dark.base05 }};
-      --comment: {{ syntax.dark.comment }};
-      --keyword: {{ syntax.dark.keyword }};
-      --function: {{ syntax.dark.function }};
-      --string: {{ syntax.dark.string }};
-      --literal: {{ syntax.dark.literal }};
-      --variable: {{ syntax.dark.variable }};
-      --type: {{ syntax.dark.type }};
-      --punctuation: {{ syntax.dark.punctuation }};
+      --base00: {{base16.dark.base00}};
+      --base03: {{base16.dark.base03}};
+      --base05: {{base16.dark.base05}};
+      --comment: {{syntax.dark.comment}};
+      --keyword: {{syntax.dark.keyword}};
+      --function: {{syntax.dark.function}};
+      --string: {{syntax.dark.string}};
+      --literal: {{syntax.dark.literal}};
+      --variable: {{syntax.dark.variable}};
+      --type: {{syntax.dark.type}};
+      --punctuation: {{syntax.dark.punctuation}};
     }
 
     .comment { color: var(--comment); }
@@ -411,14 +411,14 @@
       <div>
         <h1>themegen preview</h1>
         <div class="meta">
-          <span class="pill">{{ input.kind }}: {{ input.value }}</span>
-          <span class="pill">scheme: {{ scheme }}</span>
-          <span class="pill">seed: {{ seed.color }}</span>
+          <span class="pill">{{input.kind}}: {{input.value}}</span>
+          <span class="pill">scheme: {{scheme}}</span>
+          <span class="pill">seed: {{seed.color}}</span>
         </div>
       </div>
       <div class="seed">
         <div class="seed-swatch"></div>
-        <span>{{ seed.color }}</span>
+        <span>{{seed.color}}</span>
       </div>
     </header>
 
@@ -439,9 +439,9 @@
             <h3>Surface container</h3>
             <p>Readable surface, outline, and variant roles in context.</p>
             <div class="tonal-row">
-              <div class="tonal-chip primary-container">primary_container<br>{{ color.light.primary_container }}</div>
-              <div class="tonal-chip secondary-container">secondary_container<br>{{ color.light.secondary_container }}</div>
-              <div class="tonal-chip tertiary-container">tertiary_container<br>{{ color.light.tertiary_container }}</div>
+              <div class="tonal-chip primary-container">primary_container<br>{{color.light.primary_container}}</div>
+              <div class="tonal-chip secondary-container">secondary_container<br>{{color.light.secondary_container}}</div>
+              <div class="tonal-chip tertiary-container">tertiary_container<br>{{color.light.tertiary_container}}</div>
             </div>
           </div>
         </div>
@@ -463,9 +463,9 @@
             <h3>Surface container</h3>
             <p>Readable surface, outline, and variant roles in context.</p>
             <div class="tonal-row">
-              <div class="tonal-chip primary-container">primary_container<br>{{ color.dark.primary_container }}</div>
-              <div class="tonal-chip secondary-container">secondary_container<br>{{ color.dark.secondary_container }}</div>
-              <div class="tonal-chip tertiary-container">tertiary_container<br>{{ color.dark.tertiary_container }}</div>
+              <div class="tonal-chip primary-container">primary_container<br>{{color.dark.primary_container}}</div>
+              <div class="tonal-chip secondary-container">secondary_container<br>{{color.dark.secondary_container}}</div>
+              <div class="tonal-chip tertiary-container">tertiary_container<br>{{color.dark.tertiary_container}}</div>
             </div>
           </div>
         </div>
@@ -475,44 +475,44 @@
     <section class="palette-section" aria-label="Base16 palettes">
       <h2>Base16 light</h2>
       <div class="palette-grid">
-        <div class="swatch" style="--fill: {{ base16.light.base00 }}; --text: {{ base16.light.base07 }};"><strong>base00</strong><span>{{ base16.light.base00 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base01 }}; --text: {{ base16.light.base07 }};"><strong>base01</strong><span>{{ base16.light.base01 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base02 }}; --text: {{ base16.light.base07 }};"><strong>base02</strong><span>{{ base16.light.base02 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base03 }}; --text: {{ base16.light.base00 }};"><strong>base03</strong><span>{{ base16.light.base03 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base04 }}; --text: {{ base16.light.base00 }};"><strong>base04</strong><span>{{ base16.light.base04 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base05 }}; --text: {{ base16.light.base00 }};"><strong>base05</strong><span>{{ base16.light.base05 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base06 }}; --text: {{ base16.light.base00 }};"><strong>base06</strong><span>{{ base16.light.base06 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base07 }}; --text: {{ base16.light.base00 }};"><strong>base07</strong><span>{{ base16.light.base07 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base08 }}; --text: {{ base16.light.base00 }};"><strong>base08</strong><span>{{ base16.light.base08 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base09 }}; --text: {{ base16.light.base00 }};"><strong>base09</strong><span>{{ base16.light.base09 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0A }}; --text: {{ base16.light.base00 }};"><strong>base0A</strong><span>{{ base16.light.base0A }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0B }}; --text: {{ base16.light.base00 }};"><strong>base0B</strong><span>{{ base16.light.base0B }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0C }}; --text: {{ base16.light.base00 }};"><strong>base0C</strong><span>{{ base16.light.base0C }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0D }}; --text: {{ base16.light.base00 }};"><strong>base0D</strong><span>{{ base16.light.base0D }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0E }}; --text: {{ base16.light.base00 }};"><strong>base0E</strong><span>{{ base16.light.base0E }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.light.base0F }}; --text: {{ base16.light.base00 }};"><strong>base0F</strong><span>{{ base16.light.base0F }}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base00}}; --text: {{base16.light.base07}};"><strong>base00</strong><span>{{base16.light.base00}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base01}}; --text: {{base16.light.base07}};"><strong>base01</strong><span>{{base16.light.base01}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base02}}; --text: {{base16.light.base07}};"><strong>base02</strong><span>{{base16.light.base02}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base03}}; --text: {{base16.light.base00}};"><strong>base03</strong><span>{{base16.light.base03}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base04}}; --text: {{base16.light.base00}};"><strong>base04</strong><span>{{base16.light.base04}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base05}}; --text: {{base16.light.base00}};"><strong>base05</strong><span>{{base16.light.base05}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base06}}; --text: {{base16.light.base00}};"><strong>base06</strong><span>{{base16.light.base06}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base07}}; --text: {{base16.light.base00}};"><strong>base07</strong><span>{{base16.light.base07}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base08}}; --text: {{base16.light.base00}};"><strong>base08</strong><span>{{base16.light.base08}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base09}}; --text: {{base16.light.base00}};"><strong>base09</strong><span>{{base16.light.base09}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0A}}; --text: {{base16.light.base00}};"><strong>base0A</strong><span>{{base16.light.base0A}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0B}}; --text: {{base16.light.base00}};"><strong>base0B</strong><span>{{base16.light.base0B}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0C}}; --text: {{base16.light.base00}};"><strong>base0C</strong><span>{{base16.light.base0C}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0D}}; --text: {{base16.light.base00}};"><strong>base0D</strong><span>{{base16.light.base0D}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0E}}; --text: {{base16.light.base00}};"><strong>base0E</strong><span>{{base16.light.base0E}}</span></div>
+        <div class="swatch" style="--fill: {{base16.light.base0F}}; --text: {{base16.light.base00}};"><strong>base0F</strong><span>{{base16.light.base0F}}</span></div>
       </div>
     </section>
 
     <section class="palette-section" aria-label="Base16 dark palette">
       <h2>Base16 dark</h2>
       <div class="palette-grid">
-        <div class="swatch" style="--fill: {{ base16.dark.base00 }}; --text: {{ base16.dark.base07 }};"><strong>base00</strong><span>{{ base16.dark.base00 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base01 }}; --text: {{ base16.dark.base07 }};"><strong>base01</strong><span>{{ base16.dark.base01 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base02 }}; --text: {{ base16.dark.base07 }};"><strong>base02</strong><span>{{ base16.dark.base02 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base03 }}; --text: {{ base16.dark.base07 }};"><strong>base03</strong><span>{{ base16.dark.base03 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base04 }}; --text: {{ base16.dark.base00 }};"><strong>base04</strong><span>{{ base16.dark.base04 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base05 }}; --text: {{ base16.dark.base00 }};"><strong>base05</strong><span>{{ base16.dark.base05 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base06 }}; --text: {{ base16.dark.base00 }};"><strong>base06</strong><span>{{ base16.dark.base06 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base07 }}; --text: {{ base16.dark.base00 }};"><strong>base07</strong><span>{{ base16.dark.base07 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base08 }}; --text: {{ base16.dark.base00 }};"><strong>base08</strong><span>{{ base16.dark.base08 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base09 }}; --text: {{ base16.dark.base00 }};"><strong>base09</strong><span>{{ base16.dark.base09 }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0A }}; --text: {{ base16.dark.base00 }};"><strong>base0A</strong><span>{{ base16.dark.base0A }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0B }}; --text: {{ base16.dark.base00 }};"><strong>base0B</strong><span>{{ base16.dark.base0B }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0C }}; --text: {{ base16.dark.base00 }};"><strong>base0C</strong><span>{{ base16.dark.base0C }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0D }}; --text: {{ base16.dark.base00 }};"><strong>base0D</strong><span>{{ base16.dark.base0D }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0E }}; --text: {{ base16.dark.base00 }};"><strong>base0E</strong><span>{{ base16.dark.base0E }}</span></div>
-        <div class="swatch" style="--fill: {{ base16.dark.base0F }}; --text: {{ base16.dark.base00 }};"><strong>base0F</strong><span>{{ base16.dark.base0F }}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base00}}; --text: {{base16.dark.base07}};"><strong>base00</strong><span>{{base16.dark.base00}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base01}}; --text: {{base16.dark.base07}};"><strong>base01</strong><span>{{base16.dark.base01}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base02}}; --text: {{base16.dark.base07}};"><strong>base02</strong><span>{{base16.dark.base02}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base03}}; --text: {{base16.dark.base07}};"><strong>base03</strong><span>{{base16.dark.base03}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base04}}; --text: {{base16.dark.base00}};"><strong>base04</strong><span>{{base16.dark.base04}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base05}}; --text: {{base16.dark.base00}};"><strong>base05</strong><span>{{base16.dark.base05}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base06}}; --text: {{base16.dark.base00}};"><strong>base06</strong><span>{{base16.dark.base06}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base07}}; --text: {{base16.dark.base00}};"><strong>base07</strong><span>{{base16.dark.base07}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base08}}; --text: {{base16.dark.base00}};"><strong>base08</strong><span>{{base16.dark.base08}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base09}}; --text: {{base16.dark.base00}};"><strong>base09</strong><span>{{base16.dark.base09}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0A}}; --text: {{base16.dark.base00}};"><strong>base0A</strong><span>{{base16.dark.base0A}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0B}}; --text: {{base16.dark.base00}};"><strong>base0B</strong><span>{{base16.dark.base0B}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0C}}; --text: {{base16.dark.base00}};"><strong>base0C</strong><span>{{base16.dark.base0C}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0D}}; --text: {{base16.dark.base00}};"><strong>base0D</strong><span>{{base16.dark.base0D}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0E}}; --text: {{base16.dark.base00}};"><strong>base0E</strong><span>{{base16.dark.base0E}}</span></div>
+        <div class="swatch" style="--fill: {{base16.dark.base0F}}; --text: {{base16.dark.base00}};"><strong>base0F</strong><span>{{base16.dark.base0F}}</span></div>
       </div>
     </section>
 
@@ -521,13 +521,13 @@
       <div class="code-preview">
         <pre class="code-light"><span class="comment"># Light syntax</span>
 <span class="keyword">let</span> <span class="variable">palette</span> = <span class="function">themegen</span> <span class="punctuation">{</span>
-  <span class="type">scheme</span> = <span class="string">"{{ scheme }}"</span><span class="punctuation">;</span>
-  <span class="type">seed</span> = <span class="literal">"{{ seed.color }}"</span><span class="punctuation">;</span>
+  <span class="type">scheme</span> = <span class="string">"{{scheme}}"</span><span class="punctuation">;</span>
+  <span class="type">seed</span> = <span class="literal">"{{seed.color}}"</span><span class="punctuation">;</span>
 <span class="punctuation">}</span></pre>
         <pre class="code-dark"><span class="comment"># Dark syntax</span>
 <span class="keyword">let</span> <span class="variable">palette</span> = <span class="function">themegen</span> <span class="punctuation">{</span>
-  <span class="type">scheme</span> = <span class="string">"{{ scheme }}"</span><span class="punctuation">;</span>
-  <span class="type">seed</span> = <span class="literal">"{{ seed.color }}"</span><span class="punctuation">;</span>
+  <span class="type">scheme</span> = <span class="string">"{{scheme}}"</span><span class="punctuation">;</span>
+  <span class="type">seed</span> = <span class="literal">"{{seed.color}}"</span><span class="punctuation">;</span>
 <span class="punctuation">}</span></pre>
       </div>
     </section>

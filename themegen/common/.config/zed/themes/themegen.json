@@ -1,3 +1,71 @@
+{{#themegen
+let local.tg_001 = alpha(color.dark.outline_variant, 0x60, hex)
+let local.tg_002 = alpha(color.dark.outline_variant, 0x40, hex)
+let local.tg_003 = alpha(color.dark.error_container, 0x80, hex)
+let local.tg_004 = alpha(color.dark.tertiary_container, 0x80, hex)
+let local.tg_005 = alpha(color.dark.primary_container, 0x80, hex)
+let local.tg_006 = alpha(color.dark.surface_container_high, 0x80, hex)
+let local.tg_007 = alpha(color.dark.outline, 0x80, hex)
+let local.tg_008 = alpha(color.dark.primary_container, 0x60, hex)
+let local.tg_009 = alpha(color.dark.secondary_container, 0x80, hex)
+let local.tg_010 = alpha(color.dark.surface_container_high, 0x60, hex)
+let local.tg_011 = alpha(color.dark.outline_variant, 0x80, hex)
+let local.tg_012 = alpha(color.dark.surface_variant, 0x60, hex)
+let local.tg_013 = alpha(color.dark.surface_container, 0x80, hex)
+let local.tg_014 = alpha(color.dark.surface_variant, 0x40, hex)
+let local.tg_015 = alpha(color.dark.on_surface, 0x60, hex)
+let local.tg_016 = alpha(color.dark.on_surface_variant, 0x80, hex)
+let local.tg_017 = alpha(color.dark.on_surface_variant, 0x60, hex)
+let local.tg_018 = alpha(color.dark.secondary_container, 0x60, hex)
+let local.tg_019 = alpha(color.dark.surface_container_highest, 0x80, hex)
+let local.tg_020 = alpha(color.dark.on_surface_variant, 0xc0, hex)
+let local.tg_021 = alpha(color.dark.outline_variant, 0x20, hex)
+let local.tg_022 = mix(base16.dark.base0D, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_023 = mix(base16.dark.base0C, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_024 = mix(base16.dark.base0B, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_025 = mix(base16.dark.base0E, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_026 = mix(base16.dark.base08, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_027 = mix(base16.dark.base0A, color.dark.surface_container_low, 0.350000, hex, hex)
+let local.tg_028 = alpha(color.dark.on_surface_variant, 0x99, hex)
+let local.tg_029 = tone_alpha(base16.dark.base0A, 28, 0x80, hct, hex)
+let local.tg_030 = tone_readable(base16.dark.base0A, 74, color.dark.surface_container_low, 3.200000, hct, hex)
+let local.tg_031 = mix(color.light.background, seed.color, 0.080000, hct, hex)
+let local.tg_032 = alpha(color.light.outline_variant, 0x60, hex)
+let local.tg_033 = alpha(color.light.outline_variant, 0x40, hex)
+let local.tg_034 = alpha(color.light.error_container, 0x80, hex)
+let local.tg_035 = alpha(color.light.tertiary_container, 0x80, hex)
+let local.tg_036 = alpha(color.light.primary_container, 0x80, hex)
+let local.tg_037 = alpha(color.light.surface_container_high, 0x80, hex)
+let local.tg_038 = alpha(color.light.outline, 0x80, hex)
+let local.tg_039 = mix(color.light.surface_container_low, seed.color, 0.080000, hct, hex)
+let local.tg_040 = alpha(color.light.primary_container, 0x60, hex)
+let local.tg_041 = alpha(color.light.secondary_container, 0x80, hex)
+let local.tg_042 = alpha(color.light.surface_container_high, 0x60, hex)
+let local.tg_043 = alpha(color.light.outline_variant, 0x80, hex)
+let local.tg_044 = mix(color.light.surface_container, seed.color, 0.080000, hct, hex)
+let local.tg_045 = mix(color.light.surface_container_high, seed.color, 0.080000, hct, hex)
+let local.tg_046 = alpha(color.light.surface_variant, 0x60, hex)
+let local.tg_047 = alpha(color.light.surface_container, 0x80, hex)
+let local.tg_048 = alpha(color.light.surface_variant, 0x40, hex)
+let local.tg_049 = alpha(color.light.on_surface, 0x60, hex)
+let local.tg_050 = alpha(color.light.on_surface_variant, 0x80, hex)
+let local.tg_051 = alpha(color.light.on_surface_variant, 0x60, hex)
+let local.tg_052 = alpha(color.light.secondary_container, 0x60, hex)
+let local.tg_053 = alpha(color.light.surface_container_highest, 0x80, hex)
+let local.tg_054 = alpha(color.light.on_surface_variant, 0xc0, hex)
+let local.tg_055 = alpha(color.light.outline_variant, 0x20, hex)
+let local.tg_056 = mix(color.light.surface, seed.color, 0.080000, hct, hex)
+let local.tg_057 = mix(base16.light.base0D, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_058 = mix(base16.light.base0C, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_059 = mix(base16.light.base0B, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_060 = mix(base16.light.base0E, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_061 = mix(base16.light.base08, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_062 = mix(base16.light.base0A, color.light.surface_container_low, 0.350000, hex, hex)
+let local.tg_063 = alpha(color.light.on_surface_variant, 0x99, hex)
+let local.tg_064 = mix(color.light.surface_dim, seed.color, 0.080000, hct, hex)
+let local.tg_065 = tone_alpha(base16.light.base0A, 90, 0x80, hct, hex)
+let local.tg_066 = tone_readable(base16.light.base0A, 36, color.light.surface_container_low, 3.200000, hct, hex)
+}}
 {
   "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
   "author": "themegen",
@@ -15,37 +83,37 @@
         "background": "{{color.dark.background}}",
         "background.appearance": "opaque",
         "border": "{{color.dark.outline_variant}}",
-        "border.disabled": "{{color.dark.outline_variant | with_alpha(60) | to_hex()}}",
+        "border.disabled": "{{local.tg_001}}",
         "border.focused": "{{color.dark.primary}}",
         "border.selected": "{{color.dark.primary}}",
-        "border.transparent": "{{color.dark.outline_variant | with_alpha(40) | to_hex()}}",
+        "border.transparent": "{{local.tg_002}}",
         "border.variant": "{{color.dark.outline}}",
         "conflict": "{{color.dark.error}}",
-        "conflict.background": "{{color.dark.error_container | with_alpha(80) | to_hex()}}",
+        "conflict.background": "{{local.tg_003}}",
         "conflict.border": "{{color.dark.on_error_container}}",
         "created": "{{color.dark.tertiary}}",
-        "created.background": "{{color.dark.tertiary_container | with_alpha(80) | to_hex()}}",
+        "created.background": "{{local.tg_004}}",
         "created.border": "{{color.dark.on_tertiary_container}}",
         "deleted": "{{color.dark.error}}",
-        "deleted.background": "{{color.dark.error_container | with_alpha(80) | to_hex()}}",
+        "deleted.background": "{{local.tg_003}}",
         "deleted.border": "{{color.dark.on_error_container}}",
-        "drop_target.background": "{{color.dark.primary_container | with_alpha(80) | to_hex()}}",
-        "editor.active_line.background": "{{color.dark.surface_container_high | with_alpha(80) | to_hex()}}",
+        "drop_target.background": "{{local.tg_005}}",
+        "editor.active_line.background": "{{local.tg_006}}",
         "editor.active_line_number": "{{color.dark.primary}}",
-        "editor.active_wrap_guide": "{{color.dark.outline | with_alpha(80) | to_hex()}}",
+        "editor.active_wrap_guide": "{{local.tg_007}}",
         "editor.background": "{{color.dark.surface_container_low}}",
-        "editor.document_highlight.bracket_background": "{{color.dark.primary_container | with_alpha(60) | to_hex()}}",
-        "editor.document_highlight.read_background": "{{color.dark.primary_container | with_alpha(60) | to_hex()}}",
-        "editor.document_highlight.write_background": "{{color.dark.secondary_container | with_alpha(80) | to_hex()}}",
+        "editor.document_highlight.bracket_background": "{{local.tg_008}}",
+        "editor.document_highlight.read_background": "{{local.tg_008}}",
+        "editor.document_highlight.write_background": "{{local.tg_009}}",
         "editor.foreground": "{{color.dark.on_surface}}",
         "editor.gutter.background": "{{color.dark.surface_container_low}}",
-        "editor.highlighted_line.background": "{{color.dark.surface_container_high | with_alpha(60) | to_hex()}}",
-        "editor.indent_guide": "{{color.dark.outline_variant | with_alpha(60) | to_hex()}}",
+        "editor.highlighted_line.background": "{{local.tg_010}}",
+        "editor.indent_guide": "{{local.tg_001}}",
         "editor.indent_guide_active": "{{color.dark.outline}}",
-        "editor.invisible": "{{color.dark.outline_variant | with_alpha(80) | to_hex()}}",
+        "editor.invisible": "{{local.tg_011}}",
         "editor.line_number": "{{color.dark.on_surface_variant}}",
         "editor.subheader.background": "{{color.dark.surface_container}}",
-        "editor.wrap_guide": "{{color.dark.outline_variant | with_alpha(40) | to_hex()}}",
+        "editor.wrap_guide": "{{local.tg_002}}",
         "element.active": "{{color.dark.surface_container_highest}}",
         "element.background": "{{color.dark.surface_container}}",
         "element.disabled": "{{color.dark.surface_variant}}",
@@ -53,68 +121,68 @@
         "element.selected": "{{color.dark.secondary_container}}",
         "elevated_surface.background": "{{color.dark.surface_container_high}}",
         "error": "{{color.dark.error}}",
-        "error.background": "{{color.dark.error_container | with_alpha(80) | to_hex()}}",
+        "error.background": "{{local.tg_003}}",
         "error.border": "{{color.dark.on_error_container}}",
         "ghost_element.active": "{{color.dark.surface_container_high}}",
         "ghost_element.background": null,
-        "ghost_element.disabled": "{{color.dark.surface_variant | with_alpha(60) | to_hex()}}",
-        "ghost_element.hover": "{{color.dark.surface_container | with_alpha(80) | to_hex()}}",
-        "ghost_element.selected": "{{color.dark.secondary_container | with_alpha(80) | to_hex()}}",
+        "ghost_element.disabled": "{{local.tg_012}}",
+        "ghost_element.hover": "{{local.tg_013}}",
+        "ghost_element.selected": "{{local.tg_009}}",
         "hidden": "{{color.dark.outline_variant}}",
-        "hidden.background": "{{color.dark.surface_variant | with_alpha(40) | to_hex()}}",
-        "hidden.border": "{{color.dark.outline_variant | with_alpha(60) | to_hex()}}",
+        "hidden.background": "{{local.tg_014}}",
+        "hidden.border": "{{local.tg_001}}",
         "hint": "{{color.dark.primary}}",
-        "hint.background": "{{color.dark.primary_container | with_alpha(80) | to_hex()}}",
+        "hint.background": "{{local.tg_005}}",
         "hint.border": "{{color.dark.on_primary_container}}",
         "icon": "{{color.dark.on_surface}}",
         "icon.accent": "{{color.dark.primary}}",
-        "icon.disabled": "{{color.dark.on_surface | with_alpha(60) | to_hex()}}",
+        "icon.disabled": "{{local.tg_015}}",
         "icon.muted": "{{color.dark.on_surface_variant}}",
-        "icon.placeholder": "{{color.dark.on_surface_variant | with_alpha(80) | to_hex()}}",
-        "ignored": "{{color.dark.on_surface_variant | with_alpha(60) | to_hex()}}",
-        "ignored.background": "{{color.dark.surface_variant | with_alpha(40) | to_hex()}}",
-        "ignored.border": "{{color.dark.outline_variant | with_alpha(40) | to_hex()}}",
+        "icon.placeholder": "{{local.tg_016}}",
+        "ignored": "{{local.tg_017}}",
+        "ignored.background": "{{local.tg_014}}",
+        "ignored.border": "{{local.tg_002}}",
         "info": "{{color.dark.primary}}",
-        "info.background": "{{color.dark.primary_container | with_alpha(80) | to_hex()}}",
+        "info.background": "{{local.tg_005}}",
         "info.border": "{{color.dark.on_primary_container}}",
         "link_text.hover": "{{color.dark.primary}}",
         "modified": "{{color.dark.secondary}}",
-        "modified.background": "{{color.dark.secondary_container | with_alpha(80) | to_hex()}}",
+        "modified.background": "{{local.tg_009}}",
         "modified.border": "{{color.dark.on_secondary_container}}",
         "pane.focused_border": "{{color.dark.primary}}",
         "pane_group.border": "{{color.dark.outline}}",
         "panel.background": "{{color.dark.surface_container}}",
         "panel.focused_border": "{{color.dark.primary}}",
-        "panel.indent_guide": "{{color.dark.outline_variant | with_alpha(60) | to_hex()}}",
+        "panel.indent_guide": "{{local.tg_001}}",
         "panel.indent_guide_active": "{{color.dark.outline}}",
-        "panel.indent_guide_hover": "{{color.dark.outline | with_alpha(80) | to_hex()}}",
+        "panel.indent_guide_hover": "{{local.tg_007}}",
         "players": [
           {
-            "background": "{{color.dark.primary_container | with_alpha(80) | to_hex()}}",
+            "background": "{{local.tg_005}}",
             "cursor": "{{color.dark.primary}}",
-            "selection": "{{color.dark.primary_container | with_alpha(60) | to_hex()}}"
+            "selection": "{{local.tg_008}}"
           },
           {
-            "background": "{{color.dark.secondary_container | with_alpha(80) | to_hex()}}",
+            "background": "{{local.tg_009}}",
             "cursor": "{{color.dark.secondary}}",
-            "selection": "{{color.dark.secondary_container | with_alpha(60) | to_hex()}}"
+            "selection": "{{local.tg_018}}"
           }
         ],
         "predictive": "{{syntax.dark.predictive}}",
-        "predictive.background": "{{color.dark.surface_container_highest | with_alpha(80) | to_hex()}}",
+        "predictive.background": "{{local.tg_019}}",
         "predictive.border": "{{color.dark.outline}}",
         "renamed": "{{color.dark.secondary}}",
-        "renamed.background": "{{color.dark.secondary_container | with_alpha(80) | to_hex()}}",
+        "renamed.background": "{{local.tg_009}}",
         "renamed.border": "{{color.dark.on_secondary_container}}",
-        "scrollbar.thumb.background": "{{color.dark.on_surface_variant | with_alpha(80) | to_hex()}}",
-        "scrollbar.thumb.border": "{{color.dark.outline_variant | with_alpha(40) | to_hex()}}",
-        "scrollbar.thumb.hover_background": "{{color.dark.on_surface_variant | with_alpha(c0) | to_hex()}}",
+        "scrollbar.thumb.background": "{{local.tg_016}}",
+        "scrollbar.thumb.border": "{{local.tg_002}}",
+        "scrollbar.thumb.hover_background": "{{local.tg_020}}",
         "scrollbar.track.background": "{{color.dark.surface_container}}",
-        "scrollbar.track.border": "{{color.dark.outline_variant | with_alpha(20) | to_hex()}}",
-        "search.match_background": "{{color.dark.tertiary_container | with_alpha(80) | to_hex()}}",
+        "scrollbar.track.border": "{{local.tg_021}}",
+        "search.match_background": "{{local.tg_004}}",
         "status_bar.background": "{{color.dark.surface}}",
         "success": "{{color.dark.tertiary}}",
-        "success.background": "{{color.dark.tertiary_container | with_alpha(80) | to_hex()}}",
+        "success.background": "{{local.tg_004}}",
         "success.border": "{{color.dark.on_tertiary_container}}",
         "surface.background": "{{color.dark.surface_container}}",
         "syntax": {
@@ -376,13 +444,13 @@
         "terminal.ansi.bright_yellow": "{{base16.dark.base0A}}",
         "terminal.ansi.cyan": "{{base16.dark.base0C}}",
         "terminal.ansi.dim_black": "{{color.dark.surface}}",
-        "terminal.ansi.dim_blue": "{{base16.dark.base0D | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_cyan": "{{base16.dark.base0C | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_green": "{{base16.dark.base0B | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_magenta": "{{base16.dark.base0E | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_red": "{{base16.dark.base08 | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
+        "terminal.ansi.dim_blue": "{{local.tg_022}}",
+        "terminal.ansi.dim_cyan": "{{local.tg_023}}",
+        "terminal.ansi.dim_green": "{{local.tg_024}}",
+        "terminal.ansi.dim_magenta": "{{local.tg_025}}",
+        "terminal.ansi.dim_red": "{{local.tg_026}}",
         "terminal.ansi.dim_white": "{{color.dark.on_surface_variant}}",
-        "terminal.ansi.dim_yellow": "{{base16.dark.base0A | mix(color.dark.surface_container_low, 0.350000) | to_hex()}}",
+        "terminal.ansi.dim_yellow": "{{local.tg_027}}",
         "terminal.ansi.green": "{{base16.dark.base0B}}",
         "terminal.ansi.magenta": "{{base16.dark.base0E}}",
         "terminal.ansi.red": "{{base16.dark.base08}}",
@@ -394,18 +462,18 @@
         "terminal.foreground": "{{color.dark.on_surface}}",
         "text": "{{color.dark.on_surface}}",
         "text.accent": "{{color.dark.primary}}",
-        "text.disabled": "{{color.dark.on_surface | with_alpha(60) | to_hex()}}",
+        "text.disabled": "{{local.tg_015}}",
         "text.muted": "{{color.dark.on_surface_variant}}",
-        "text.placeholder": "{{color.dark.on_surface_variant | with_alpha(99) | to_hex()}}",
+        "text.placeholder": "{{local.tg_028}}",
         "title_bar.background": "{{color.dark.surface}}",
         "title_bar.inactive_background": "{{color.dark.surface_dim}}",
         "toolbar.background": "{{color.dark.surface_container_low}}",
-        "unreachable": "{{color.dark.on_surface_variant | with_alpha(60) | to_hex()}}",
-        "unreachable.background": "{{color.dark.surface_variant | with_alpha(40) | to_hex()}}",
-        "unreachable.border": "{{color.dark.outline_variant | with_alpha(60) | to_hex()}}",
+        "unreachable": "{{local.tg_017}}",
+        "unreachable.background": "{{local.tg_014}}",
+        "unreachable.border": "{{local.tg_001}}",
         "warning": "{{base16.dark.base0A}}",
-        "warning.background": "{{base16.dark.base0A | to_hct() | tone(28) | with_alpha(80) | to_hex()}}",
-        "warning.border": "{{base16.dark.base0A | to_hct() | tone(74) | readable(color.dark.surface_container_low, 3.200000) | to_hex()}}"
+        "warning.background": "{{local.tg_029}}",
+        "warning.border": "{{local.tg_030}}"
       }
     },
     {
@@ -417,113 +485,113 @@
           "{{color.light.secondary}}",
           "{{color.light.tertiary}}"
         ],
-        "background": "{{color.light.background | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "background": "{{local.tg_031}}",
         "background.appearance": "opaque",
         "border": "{{color.light.outline_variant}}",
-        "border.disabled": "{{color.light.outline_variant | with_alpha(60) | to_hex()}}",
+        "border.disabled": "{{local.tg_032}}",
         "border.focused": "{{color.light.primary}}",
         "border.selected": "{{color.light.primary}}",
-        "border.transparent": "{{color.light.outline_variant | with_alpha(40) | to_hex()}}",
+        "border.transparent": "{{local.tg_033}}",
         "border.variant": "{{color.light.outline}}",
         "conflict": "{{color.light.error}}",
-        "conflict.background": "{{color.light.error_container | with_alpha(80) | to_hex()}}",
+        "conflict.background": "{{local.tg_034}}",
         "conflict.border": "{{color.light.on_error_container}}",
         "created": "{{color.light.tertiary}}",
-        "created.background": "{{color.light.tertiary_container | with_alpha(80) | to_hex()}}",
+        "created.background": "{{local.tg_035}}",
         "created.border": "{{color.light.on_tertiary_container}}",
         "deleted": "{{color.light.error}}",
-        "deleted.background": "{{color.light.error_container | with_alpha(80) | to_hex()}}",
+        "deleted.background": "{{local.tg_034}}",
         "deleted.border": "{{color.light.on_error_container}}",
-        "drop_target.background": "{{color.light.primary_container | with_alpha(80) | to_hex()}}",
-        "editor.active_line.background": "{{color.light.surface_container_high | with_alpha(80) | to_hex()}}",
+        "drop_target.background": "{{local.tg_036}}",
+        "editor.active_line.background": "{{local.tg_037}}",
         "editor.active_line_number": "{{color.light.primary}}",
-        "editor.active_wrap_guide": "{{color.light.outline | with_alpha(80) | to_hex()}}",
-        "editor.background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "editor.document_highlight.bracket_background": "{{color.light.primary_container | with_alpha(60) | to_hex()}}",
-        "editor.document_highlight.read_background": "{{color.light.primary_container | with_alpha(60) | to_hex()}}",
-        "editor.document_highlight.write_background": "{{color.light.secondary_container | with_alpha(80) | to_hex()}}",
+        "editor.active_wrap_guide": "{{local.tg_038}}",
+        "editor.background": "{{local.tg_039}}",
+        "editor.document_highlight.bracket_background": "{{local.tg_040}}",
+        "editor.document_highlight.read_background": "{{local.tg_040}}",
+        "editor.document_highlight.write_background": "{{local.tg_041}}",
         "editor.foreground": "{{color.light.on_surface}}",
-        "editor.gutter.background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "editor.highlighted_line.background": "{{color.light.surface_container_high | with_alpha(60) | to_hex()}}",
-        "editor.indent_guide": "{{color.light.outline_variant | with_alpha(60) | to_hex()}}",
+        "editor.gutter.background": "{{local.tg_039}}",
+        "editor.highlighted_line.background": "{{local.tg_042}}",
+        "editor.indent_guide": "{{local.tg_032}}",
         "editor.indent_guide_active": "{{color.light.outline}}",
-        "editor.invisible": "{{color.light.outline_variant | with_alpha(80) | to_hex()}}",
+        "editor.invisible": "{{local.tg_043}}",
         "editor.line_number": "{{color.light.on_surface_variant}}",
-        "editor.subheader.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "editor.wrap_guide": "{{color.light.outline_variant | with_alpha(40) | to_hex()}}",
+        "editor.subheader.background": "{{local.tg_044}}",
+        "editor.wrap_guide": "{{local.tg_033}}",
         "element.active": "{{color.light.surface_container_highest}}",
-        "element.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "element.background": "{{local.tg_044}}",
         "element.disabled": "{{color.light.surface_variant}}",
         "element.hover": "{{color.light.surface_container_high}}",
         "element.selected": "{{color.light.secondary_container}}",
-        "elevated_surface.background": "{{color.light.surface_container_high | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "elevated_surface.background": "{{local.tg_045}}",
         "error": "{{color.light.error}}",
-        "error.background": "{{color.light.error_container | with_alpha(80) | to_hex()}}",
+        "error.background": "{{local.tg_034}}",
         "error.border": "{{color.light.on_error_container}}",
         "ghost_element.active": "{{color.light.surface_container_high}}",
         "ghost_element.background": null,
-        "ghost_element.disabled": "{{color.light.surface_variant | with_alpha(60) | to_hex()}}",
-        "ghost_element.hover": "{{color.light.surface_container | with_alpha(80) | to_hex()}}",
-        "ghost_element.selected": "{{color.light.secondary_container | with_alpha(80) | to_hex()}}",
+        "ghost_element.disabled": "{{local.tg_046}}",
+        "ghost_element.hover": "{{local.tg_047}}",
+        "ghost_element.selected": "{{local.tg_041}}",
         "hidden": "{{color.light.outline_variant}}",
-        "hidden.background": "{{color.light.surface_variant | with_alpha(40) | to_hex()}}",
-        "hidden.border": "{{color.light.outline_variant | with_alpha(60) | to_hex()}}",
+        "hidden.background": "{{local.tg_048}}",
+        "hidden.border": "{{local.tg_032}}",
         "hint": "{{color.light.primary}}",
-        "hint.background": "{{color.light.primary_container | with_alpha(80) | to_hex()}}",
+        "hint.background": "{{local.tg_036}}",
         "hint.border": "{{color.light.on_primary_container}}",
         "icon": "{{color.light.on_surface}}",
         "icon.accent": "{{color.light.primary}}",
-        "icon.disabled": "{{color.light.on_surface | with_alpha(60) | to_hex()}}",
+        "icon.disabled": "{{local.tg_049}}",
         "icon.muted": "{{color.light.on_surface_variant}}",
-        "icon.placeholder": "{{color.light.on_surface_variant | with_alpha(80) | to_hex()}}",
-        "ignored": "{{color.light.on_surface_variant | with_alpha(60) | to_hex()}}",
-        "ignored.background": "{{color.light.surface_variant | with_alpha(40) | to_hex()}}",
-        "ignored.border": "{{color.light.outline_variant | with_alpha(40) | to_hex()}}",
+        "icon.placeholder": "{{local.tg_050}}",
+        "ignored": "{{local.tg_051}}",
+        "ignored.background": "{{local.tg_048}}",
+        "ignored.border": "{{local.tg_033}}",
         "info": "{{color.light.primary}}",
-        "info.background": "{{color.light.primary_container | with_alpha(80) | to_hex()}}",
+        "info.background": "{{local.tg_036}}",
         "info.border": "{{color.light.on_primary_container}}",
         "link_text.hover": "{{color.light.primary}}",
         "modified": "{{color.light.secondary}}",
-        "modified.background": "{{color.light.secondary_container | with_alpha(80) | to_hex()}}",
+        "modified.background": "{{local.tg_041}}",
         "modified.border": "{{color.light.on_secondary_container}}",
         "pane.focused_border": "{{color.light.primary}}",
         "pane_group.border": "{{color.light.outline}}",
-        "panel.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "panel.background": "{{local.tg_044}}",
         "panel.focused_border": "{{color.light.primary}}",
         "panel.foreground": "{{color.light.on_surface}}",
-        "panel.indent_guide": "{{color.light.outline_variant | with_alpha(60) | to_hex()}}",
+        "panel.indent_guide": "{{local.tg_032}}",
         "panel.indent_guide_active": "{{color.light.outline}}",
-        "panel.indent_guide_hover": "{{color.light.outline | with_alpha(80) | to_hex()}}",
+        "panel.indent_guide_hover": "{{local.tg_038}}",
         "players": [
           {
-            "background": "{{color.light.primary_container | with_alpha(80) | to_hex()}}",
+            "background": "{{local.tg_036}}",
             "cursor": "{{color.light.primary}}",
-            "selection": "{{color.light.primary_container | with_alpha(60) | to_hex()}}"
+            "selection": "{{local.tg_040}}"
           },
           {
-            "background": "{{color.light.secondary_container | with_alpha(80) | to_hex()}}",
+            "background": "{{local.tg_041}}",
             "cursor": "{{color.light.secondary}}",
-            "selection": "{{color.light.secondary_container | with_alpha(60) | to_hex()}}"
+            "selection": "{{local.tg_052}}"
           }
         ],
         "predictive": "{{syntax.light.predictive}}",
-        "predictive.background": "{{color.light.surface_container_highest | with_alpha(80) | to_hex()}}",
+        "predictive.background": "{{local.tg_053}}",
         "predictive.border": "{{color.light.outline}}",
         "renamed": "{{color.light.secondary}}",
-        "renamed.background": "{{color.light.secondary_container | with_alpha(80) | to_hex()}}",
+        "renamed.background": "{{local.tg_041}}",
         "renamed.border": "{{color.light.on_secondary_container}}",
-        "scrollbar.thumb.background": "{{color.light.on_surface_variant | with_alpha(80) | to_hex()}}",
-        "scrollbar.thumb.border": "{{color.light.outline_variant | with_alpha(40) | to_hex()}}",
-        "scrollbar.thumb.hover_background": "{{color.light.on_surface_variant | with_alpha(c0) | to_hex()}}",
-        "scrollbar.track.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "scrollbar.track.border": "{{color.light.outline_variant | with_alpha(20) | to_hex()}}",
-        "search.match_background": "{{color.light.tertiary_container | with_alpha(80) | to_hex()}}",
-        "status_bar.background": "{{color.light.surface | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "scrollbar.thumb.background": "{{local.tg_050}}",
+        "scrollbar.thumb.border": "{{local.tg_033}}",
+        "scrollbar.thumb.hover_background": "{{local.tg_054}}",
+        "scrollbar.track.background": "{{local.tg_044}}",
+        "scrollbar.track.border": "{{local.tg_055}}",
+        "search.match_background": "{{local.tg_035}}",
+        "status_bar.background": "{{local.tg_056}}",
         "status_bar.foreground": "{{color.light.on_surface}}",
         "success": "{{color.light.tertiary}}",
-        "success.background": "{{color.light.tertiary_container | with_alpha(80) | to_hex()}}",
+        "success.background": "{{local.tg_035}}",
         "success.border": "{{color.light.on_tertiary_container}}",
-        "surface.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "surface.background": "{{local.tg_044}}",
         "syntax": {
           "attribute": {
             "color": "{{syntax.light.title}}",
@@ -742,12 +810,12 @@
             "font_weight": null
           }
         },
-        "tab.active_background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "tab.active_background": "{{local.tg_039}}",
         "tab.active_foreground": "{{color.light.on_surface}}",
-        "tab.inactive_background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "tab.inactive_background": "{{local.tg_044}}",
         "tab.inactive_foreground": "{{color.light.on_surface_variant}}",
-        "tab_bar.background": "{{color.light.surface_container | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "terminal.ansi.background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "tab_bar.background": "{{local.tg_044}}",
+        "terminal.ansi.background": "{{local.tg_039}}",
         "terminal.ansi.black": "{{color.light.on_surface}}",
         "terminal.ansi.blue": "{{base16.light.base0D}}",
         "terminal.ansi.bright_black": "{{color.light.on_surface}}",
@@ -760,38 +828,38 @@
         "terminal.ansi.bright_yellow": "{{base16.light.base0A}}",
         "terminal.ansi.cyan": "{{base16.light.base0C}}",
         "terminal.ansi.dim_black": "{{color.light.on_surface_variant}}",
-        "terminal.ansi.dim_blue": "{{base16.light.base0D | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_cyan": "{{base16.light.base0C | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_green": "{{base16.light.base0B | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_magenta": "{{base16.light.base0E | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
-        "terminal.ansi.dim_red": "{{base16.light.base08 | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
+        "terminal.ansi.dim_blue": "{{local.tg_057}}",
+        "terminal.ansi.dim_cyan": "{{local.tg_058}}",
+        "terminal.ansi.dim_green": "{{local.tg_059}}",
+        "terminal.ansi.dim_magenta": "{{local.tg_060}}",
+        "terminal.ansi.dim_red": "{{local.tg_061}}",
         "terminal.ansi.dim_white": "{{color.light.surface}}",
-        "terminal.ansi.dim_yellow": "{{base16.light.base0A | mix(color.light.surface_container_low, 0.350000) | to_hex()}}",
+        "terminal.ansi.dim_yellow": "{{local.tg_062}}",
         "terminal.ansi.green": "{{base16.light.base0B}}",
         "terminal.ansi.magenta": "{{base16.light.base0E}}",
         "terminal.ansi.red": "{{base16.light.base08}}",
         "terminal.ansi.white": "{{color.light.surface_dim}}",
         "terminal.ansi.yellow": "{{base16.light.base0A}}",
-        "terminal.background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "terminal.background": "{{local.tg_039}}",
         "terminal.bright_foreground": "{{color.light.on_surface}}",
         "terminal.dim_foreground": "{{color.light.on_surface_variant}}",
         "terminal.foreground": "{{color.light.on_surface}}",
         "text": "{{color.light.on_surface}}",
         "text.accent": "{{color.light.primary}}",
-        "text.disabled": "{{color.light.on_surface | with_alpha(60) | to_hex()}}",
+        "text.disabled": "{{local.tg_049}}",
         "text.muted": "{{color.light.on_surface_variant}}",
-        "text.placeholder": "{{color.light.on_surface_variant | with_alpha(99) | to_hex()}}",
-        "title_bar.background": "{{color.light.surface | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "text.placeholder": "{{local.tg_063}}",
+        "title_bar.background": "{{local.tg_056}}",
         "title_bar.foreground": "{{color.light.on_surface}}",
-        "title_bar.inactive_background": "{{color.light.surface_dim | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
+        "title_bar.inactive_background": "{{local.tg_064}}",
         "title_bar.inactive_foreground": "{{color.light.on_surface_variant}}",
-        "toolbar.background": "{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}",
-        "unreachable": "{{color.light.on_surface_variant | with_alpha(60) | to_hex()}}",
-        "unreachable.background": "{{color.light.surface_variant | with_alpha(40) | to_hex()}}",
-        "unreachable.border": "{{color.light.outline_variant | with_alpha(60) | to_hex()}}",
+        "toolbar.background": "{{local.tg_039}}",
+        "unreachable": "{{local.tg_051}}",
+        "unreachable.background": "{{local.tg_048}}",
+        "unreachable.border": "{{local.tg_032}}",
         "warning": "{{base16.light.base0A}}",
-        "warning.background": "{{base16.light.base0A | to_hct() | tone(90) | with_alpha(80) | to_hex()}}",
-        "warning.border": "{{base16.light.base0A | to_hct() | tone(36) | readable(color.light.surface_container_low, 3.200000) | to_hex()}}"
+        "warning.background": "{{local.tg_065}}",
+        "warning.border": "{{local.tg_066}}"
       }
     }
   ]

@@ -1,3 +1,6 @@
+{{#themegen
+let local.tg_001 = mix(color.light.surface_container_low, seed.color, 0.080000, hct, hex)
+}}
 status is-interactive; or return
 
 set -l themegen_variant dark
@@ -49,7 +52,7 @@ case light
   printf '\e]4;14;{{base16.light.base0C}}\e\\'
   printf '\e]4;15;{{color.light.surface_container_high}}\e\\'
   printf '\e]10;{{color.light.on_surface}}\e\\'
-  printf '\e]11;{{color.light.surface_container_low | to_hct() | mix(seed.color | to_hct(), 0.080000) | to_hex()}}\e\\'
+  printf '\e]11;{{local.tg_001}}\e\\'
   printf '\e]12;{{color.light.primary}}\e\\'
   printf '\e]17;{{color.light.secondary_container}}\e\\'
   printf '\e]19;{{color.light.on_secondary_container}}\e\\'

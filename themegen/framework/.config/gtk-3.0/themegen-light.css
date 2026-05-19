@@ -1,3 +1,18 @@
+{{#themegen
+let local.tg_001 = alpha(color.light.on_surface, 38%, rgba)
+let local.tg_002 = alpha(color.light.on_surface_variant, 38%, rgba)
+let local.tg_003 = alpha(color.light.outline, 46%, rgba)
+let local.tg_004 = alpha(color.light.outline_variant, 38%, rgba)
+let local.tg_005 = alpha(color.light.outline_variant, 55%, rgba)
+let local.tg_006 = alpha(color.light.shadow, 25%, rgba)
+let local.tg_007 = alpha(color.light.shadow, 24%, rgba)
+let local.tg_008 = alpha(color.light.outline_variant, 50%, rgba)
+let local.tg_009 = alpha(color.light.outline, 42%, rgba)
+let local.tg_010 = alpha(color.light.primary, 20%, rgba)
+let local.tg_011 = alpha(color.light.outline_variant, 45%, rgba)
+let local.tg_012 = alpha(color.light.outline, 54%, rgba)
+let local.tg_013 = alpha(color.light.on_surface_variant, 62%, rgba)
+}}
 @define-color theme_bg_color {{color.light.background}};
 @define-color theme_fg_color {{color.light.on_surface}};
 @define-color theme_base_color {{color.light.surface}};
@@ -11,11 +26,11 @@
 @define-color theme_unfocused_selected_bg_color {{color.light.secondary_container}};
 @define-color theme_unfocused_selected_fg_color {{color.light.on_secondary_container}};
 @define-color insensitive_bg_color {{color.light.surface_container}};
-@define-color insensitive_fg_color {{color.light.on_surface | with_alpha(38%) | to_rgba()}};
+@define-color insensitive_fg_color {{local.tg_001}};
 @define-color insensitive_base_color {{color.light.surface_container_low}};
-@define-color unfocused_insensitive_color {{color.light.on_surface_variant | with_alpha(38%) | to_rgba()}};
-@define-color borders {{color.light.outline | with_alpha(46%) | to_rgba()}};
-@define-color unfocused_borders {{color.light.outline_variant | with_alpha(38%) | to_rgba()}};
+@define-color unfocused_insensitive_color {{local.tg_002}};
+@define-color borders {{local.tg_003}};
+@define-color unfocused_borders {{local.tg_004}};
 @define-color content_view_bg {{color.light.surface}};
 @define-color text_view_bg {{color.light.surface}};
 @define-color bg_color {{color.light.background}};
@@ -44,16 +59,16 @@
 @define-color app_notification_a {{color.light.surface_container_high}};
 @define-color app_notification_b {{color.light.surface_container_highest}};
 @define-color app_notification_c {{color.light.surface_container}};
-@define-color app_notification_border {{color.light.outline_variant | with_alpha(55%) | to_rgba()}};
-@define-color primary_toolbarbutton_text_shadow {{color.light.shadow | with_alpha(25%) | to_rgba()}};
+@define-color app_notification_border {{local.tg_005}};
+@define-color primary_toolbarbutton_text_shadow {{local.tg_006}};
 @define-color wm_title {{color.light.on_surface}};
 @define-color wm_unfocused_title {{color.light.on_surface_variant}};
 @define-color wm_bg_a {{color.light.surface_container_high}};
 @define-color wm_bg_b {{color.light.surface_container}};
-@define-color wm_shadow {{color.light.shadow | with_alpha(24%) | to_rgba()}};
-@define-color wm_border {{color.light.outline_variant | with_alpha(50%) | to_rgba()}};
-@define-color wm_borders_edge {{color.light.outline | with_alpha(42%) | to_rgba()}};
-@define-color wm_highlight {{color.light.primary | with_alpha(20%) | to_rgba()}};
+@define-color wm_shadow {{local.tg_007}};
+@define-color wm_border {{local.tg_008}};
+@define-color wm_borders_edge {{local.tg_009}};
+@define-color wm_highlight {{local.tg_010}};
 @define-color wm_button_hover_color_a {{color.light.surface_container_highest}};
 @define-color wm_button_hover_color_b {{color.light.surface_container_high}};
 @define-color wm_button_active_color_a {{color.light.primary}};
@@ -76,7 +91,7 @@ headerbar,
 .titlebar {
   background-color: {{color.light.surface_container}};
   color: {{color.light.on_surface}};
-  border-color: {{color.light.outline_variant | with_alpha(45%) | to_rgba()}};
+  border-color: {{local.tg_011}};
 }
 
 menu,
@@ -86,7 +101,7 @@ popover,
 .popover {
   background-color: {{color.light.surface_container_high}};
   color: {{color.light.on_surface}};
-  border-color: {{color.light.outline | with_alpha(42%) | to_rgba()}};
+  border-color: {{local.tg_009}};
 }
 
 button,
@@ -97,7 +112,7 @@ menubutton,
 dropdown {
   background-color: {{color.light.surface_container_high}};
   color: {{color.light.on_surface}};
-  border-color: {{color.light.outline | with_alpha(54%) | to_rgba()}};
+  border-color: {{local.tg_012}};
 }
 
 button:hover,
@@ -131,7 +146,7 @@ textview text,
 }
 
 scrollbar slider {
-  background-color: {{color.light.on_surface_variant | with_alpha(62%) | to_rgba()}};
+  background-color: {{local.tg_013}};
 }
 
 scrollbar slider:hover {

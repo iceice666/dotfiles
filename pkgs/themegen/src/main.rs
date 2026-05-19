@@ -25,7 +25,7 @@ use crate::model::{
 };
 use crate::palette::{build_base16, build_material_scheme, build_syntax, scheme_to_map};
 use crate::source::extract_source_color;
-use crate::template::{render_template, template_values};
+use crate::template::{template_values, TemplateRenderer};
 
 const NAME_COLUMN_WIDTH: usize = 26;
 const COLOR_COLUMN_WIDTH: usize = 7;
@@ -62,9 +62,10 @@ fn handle_render(command: RenderCommand) -> Result<()> {
     let output = build_palette_output(&command.common)?;
     let jobs = prepare_render_jobs(load_render_targets(&command)?)?;
     let values = template_values(&output);
+    let renderer = TemplateRenderer::new(&values);
 
     for job in jobs {
-        let rendered = render_template(&job.template, &values).with_context(|| {
+        let rendered = renderer.render(&job.template).with_context(|| {
             format!("failed to render template {}", job.template_path.display())
         })?;
 
