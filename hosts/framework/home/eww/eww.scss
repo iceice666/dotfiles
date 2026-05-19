@@ -111,7 +111,70 @@ button:active {
 }
 
 .audio {
+    padding: 1px 2px;
+}
+
+.battery {
     padding: 1px 4px;
+}
+
+.battery:hover {
+    background: $surfaceHover;
+}
+
+.battery:active {
+    background: $surfaceActive;
+}
+
+.battery-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.battery-device-label {
+    background: $surfaceHover;
+    border: 0 solid transparent;
+    border-radius: 8px;
+    border-color: $outline;
+    color: $foreground;
+    font-size: 11px;
+    padding: 1px 5px;
+}
+
+.battery-ring {
+    background: $surfaceActive;
+    color: #06b6d4;
+}
+
+.ring-slot {
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.battery.critical .battery-ring {
+    color: #ef4444;
+}
+
+.battery.low .battery-ring {
+    color: #f97316;
+}
+
+.battery.medium .battery-ring {
+    color: #eab308;
+}
+
+.battery.good .battery-ring {
+    color: #22c55e;
+}
+
+.battery.full .battery-ring {
+    color: #06b6d4;
+}
+
+.battery.charging .battery-ring {
+    color: $primary;
 }
 
 .audio-control {
@@ -126,32 +189,16 @@ button:active {
 }
 
 .audio-device-label {
-    background: transparent;
+    background: $surfaceHover;
     border: 0 solid transparent;
     border-radius: 8px;
-    color: transparent;
-    font-size: 0;
-    opacity: 0;
-    padding: 0;
-    transition:
-        background 120ms ease,
-        border-color 120ms ease,
-        color 120ms ease,
-        font-size 120ms ease,
-        opacity 120ms ease,
-        padding 120ms ease;
-}
-
-.audio-control:hover .audio-device-label {
-    background: $surfaceHover;
     border-color: $outline;
     color: $foreground;
     font-size: 11px;
-    opacity: 1;
     padding: 1px 5px;
 }
 
-.audio-control.muted:hover .audio-device-label {
+.audio-control.muted .audio-device-label {
     color: $foregroundDim;
 }
 
@@ -177,18 +224,6 @@ button:active {
 
 .net-row {
     min-height: 14px;
-}
-
-.battery.warning {
-    color: $warning;
-}
-
-.battery.critical {
-    color: $critical;
-}
-
-.battery.charging {
-    color: $success;
 }
 
 .datetime {

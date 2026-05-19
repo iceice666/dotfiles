@@ -10,24 +10,18 @@
 (defwidget bar-content [monitor]
   (box :class "bar-root" :hexpand true :vexpand true
     (centerbox :class "bar"
-      (box :class "left" :space-evenly false
+      (box :class "left" :space-evenly false :spacing 4
         (app-strip :monitor monitor))
       (box :class "center" :space-evenly false :visible {media != ""}
         (box :class "island media"
           (label :limit-width 52 :text {media})))
-      (box :class "right" :space-evenly false :halign "end" :valign "center"
+      (box :class "right" :space-evenly false :spacing 4 :halign "end" :valign "center"
         (perf-module)
         (battery-module)
         (audio-module)
-        (box :class "island tray" :space-evenly false
-          (systray :spacing 1 :icon-size 24 :prepend-new false))
-        (box :class "island datetime"
-          (label :limit-width 32 :text {datetime}))
-        (button :class {notifications.class} :onclick "@notificationAction@"
-          (overlay :class "notification-stack"
-            (box :class "notification-icon-wrap" :space-evenly false
-              (image :path "@notificationIcon@" :image-width 24 :image-height 24 :fill-svg {notifications.color}))
-            (label :class "notification-badge" :visible {notifications.count > 0} :halign "end" :valign "start" :limit-width 4 :text {notifications.label})))))))
+        (systray-module)
+        (datetime-module)
+        (notification-module)))))
 
 (defwidget perf-module []
   (box :class "island compact perf" :space-evenly false :valign "center"
@@ -49,19 +43,42 @@
         (label :class "net-value" :width 44 :xalign 1 :text "${perf.down}/s")))))
 
 (defwidget battery-module []
-  (box :class {battery.class} :space-evenly false
-    (image :path {battery.icon} :image-width 24 :image-height 24 :fill-svg {battery.color})
-    (label :text {battery.text})))
+  (eventbox :class {battery.class} :onhover "${EWW_CMD} update battery_revealed=true" :onhoverlost "${EWW_CMD} update battery_revealed=false"
+    (box :class "battery-device" :space-evenly false :spacing 0
+      (box :class "ring-slot" :space-evenly true :valign "center"
+        (circular-progress :class "battery-ring" :width 32 :height 32 :halign "center" :valign "center" :value {battery.value} :start-at 75 :thickness 3
+          (image :path {battery.icon} :image-width 20 :image-height 20 :fill-svg {battery.color})))
+      (revealer :class "battery-device-revealer" :transition "slideright" :reveal {battery_revealed} :duration "120ms"
+        (label :class "battery-device-label" :text {battery.tooltip})))))
 
 (defwidget audio-module []
-  (box :class "island audio" :space-evenly false :spacing 4
-    (eventbox :class {audio.speaker_class} :tooltip {audio.speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@" :onscroll "@changeSpeakerVolume@ {}"
+  (box :class "island audio" :space-evenly false
+    (eventbox :class {audio.speaker_class} :tooltip {audio.speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@" :onscroll "@changeSpeakerVolume@ {}" :onhover "${EWW_CMD} update audio_speaker_revealed=true" :onhoverlost "${EWW_CMD} update audio_speaker_revealed=false"
       (box :class "audio-device" :space-evenly false :spacing 0
-        (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.speaker_value} :start-at 75 :thickness 3
-          (image :path {audio.speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio.speaker_color}))
-        (label :class "audio-device-label" :limit-width 16 :text {audio.speaker_device})))
-    (eventbox :class {audio.mic_class} :tooltip {audio.mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@" :onscroll "@changeMicVolume@ {}"
+        (box :class "ring-slot" :space-evenly true :valign "center"
+          (circular-progress :class "audio-ring" :width 32 :height 32 :halign "center" :valign "center" :value {audio.speaker_value} :start-at 75 :thickness 3
+            (image :path {audio.speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio.speaker_color})))
+        (revealer :class "audio-device-revealer" :transition "slideright" :reveal {audio_speaker_revealed} :duration "120ms"
+          (label :class "audio-device-label" :text {audio.speaker_device}))))
+    (eventbox :class {audio.mic_class} :tooltip {audio.mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@" :onscroll "@changeMicVolume@ {}" :onhover "${EWW_CMD} update audio_mic_revealed=true" :onhoverlost "${EWW_CMD} update audio_mic_revealed=false"
       (box :class "audio-device" :space-evenly false :spacing 0
-        (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.mic_value} :start-at 75 :thickness 3
-          (image :path {audio.mic_icon} :image-width 20 :image-height 20 :fill-svg {audio.mic_color}))
-        (label :class "audio-device-label" :limit-width 16 :text {audio.mic_device})))))
+        (box :class "ring-slot" :space-evenly true :valign "center"
+          (circular-progress :class "audio-ring" :width 32 :height 32 :halign "center" :valign "center" :value {audio.mic_value} :start-at 75 :thickness 3
+            (image :path {audio.mic_icon} :image-width 20 :image-height 20 :fill-svg {audio.mic_color})))
+        (revealer :class "audio-device-revealer" :transition "slideright" :reveal {audio_mic_revealed} :duration "120ms"
+          (label :class "audio-device-label" :text {audio.mic_device}))))))
+
+(defwidget systray-module []
+  (box :class "island tray" :space-evenly false
+    (systray :spacing 2 :space-evenly true :icon-size 24 :prepend-new false)))
+
+(defwidget datetime-module []
+  (box :class "island datetime"
+    (label :limit-width 32 :text {datetime})))
+
+(defwidget notification-module []
+  (button :class {notifications.class} :onclick "@notificationAction@"
+    (overlay :class "notification-stack"
+      (box :class "notification-icon-wrap" :space-evenly false
+        (image :path "@notificationIcon@" :image-width 24 :image-height 24 :fill-svg {notifications.color}))
+      (label :class "notification-badge" :visible {notifications.count > 0} :halign "end" :valign "start" :limit-width 4 :text {notifications.label}))))
