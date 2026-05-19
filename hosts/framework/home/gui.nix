@@ -398,6 +398,7 @@ in
     ghostty
     grim
     imv
+    unstablePkgs.librepods
     jq
     libnotify
     lm_sensors
