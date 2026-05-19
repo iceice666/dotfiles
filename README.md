@@ -2,7 +2,7 @@
 
 Multi-host Nix configuration for `m3air` and `framework`.
 
-One flake drives system configuration, Home Manager, secrets, theme generation, and a small overlay of custom packages.
+One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
 See `AGENTS.md` for detailed repo and editing guidance.
 
@@ -16,10 +16,10 @@ See `AGENTS.md` for detailed repo and editing guidance.
 ## Layout
 
 ```text
-flake.nix            # flake inputs, overlay, and host outputs
-Justfile             # build, switch, validation, secrets, maintenance
+flake.nix            # flake inputs, overlay, dev shells, and host outputs
+Justfile             # build, switch, themegen, validation, secrets, maintenance
 treefmt.nix          # formatting (nixfmt + just)
-assets/              # wallpapers used by theme generation
+assets/              # wallpapers and host images used by theme generation
 
 common/              # baseline shared across all hosts
   configuration/     # shared Darwin system-level modules
@@ -29,7 +29,8 @@ hosts/               # per-host entrypoints
   m3air/             # macOS
   framework/         # NixOS system + Home Manager modules
 
-pkgs/                # custom overlay packages
+themegen/            # $HOME-relative theme templates rendered before builds
+pkgs/                # custom overlay packages and the themegen Rust CLI
 sensitive/           # sops-encrypted secrets
 ```
 
@@ -50,6 +51,7 @@ Host-specific:
 just m3air-build
 just framework-build
 just framework-rebuild
+just framework-boot
 ```
 
 Framework activation:
@@ -66,7 +68,7 @@ After the first switch, use `just switch`.
 NixOS owns the Framework system, including login/session launch, D-Bus,
 PipeWire, NetworkManager, Bluetooth, polkit, greetd/ReGreet, and fingerprint
 authentication for greetd and sudo. Home Manager is wired into the NixOS system
-configuration for user-level programs and dotfiles.
+configuration for user-level programs, Niri, Eww, and dotfiles.
 
 Enroll fingerprints with:
 

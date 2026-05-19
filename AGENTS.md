@@ -8,10 +8,10 @@ Use this file as the working agreement for coding agents editing this repo.
 ## Repository Shape
 
 ```text
-flake.nix            # all flake inputs and outputs
-Justfile             # rebuild, validation, secrets, maintenance workflows
+flake.nix            # flake inputs, overlay, dev shells, and host outputs
+Justfile             # build, switch, themegen, validation, secrets, maintenance
 treefmt.nix          # formatter configuration (nixfmt + just)
-assets/              # wallpaper/source images used by theme generation
+assets/              # wallpaper/source images and host avatar assets
 
 common/              # baseline shared across all hosts
   configuration/     # shared system-level modules for darwin hosts
@@ -21,23 +21,26 @@ common/              # baseline shared across all hosts
     packages.nix     # shared user package list
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
+    app-defaults.nix # shared app preference files
+    dev-env.nix      # shared development environment config
     ghostty.nix      # shared Ghostty config
     themegen/        # Home Manager installer for generated theme files
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
 
 themegen/            # root-level plain theme templates, split by common/host
-  common/            # shared $HOME-relative templates
+  common/            # shared $HOME-relative templates for shells/editors/terminal
   m3air/             # macOS-only $HOME-relative templates
-  framework/         # Linux-only $HOME-relative templates
+  framework/         # Linux-only $HOME-relative templates for GTK/Qt/fuzzel/Eww
+  preview.html       # HTML palette preview template
 
 hosts/               # per-host entrypoints
   m3air/             # macOS via nix-darwin
     configuration/   # default.nix, system-defaults.nix
-    home/            # default.nix, default-apps.nix, karabiner.nix, wallpaper.nix
+    home/            # default.nix, appearance, default apps, karabiner, wallpaper
   framework/         # NixOS system with Home Manager
-    configuration/   # active NixOS system entrypoint
-    home/            # Home Manager modules imported by the NixOS system
+    configuration/   # active NixOS system entrypoint, hardware, GRUB theme
+    home/            # GUI/Niri/Eww Home Manager modules imported by NixOS
 
 pkgs/                # overlay packages
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
@@ -46,7 +49,7 @@ pkgs/                # overlay packages
   themegen/          # Rust-based theme generator (Cargo project)
   utiluti/           # macOS utility for default app associations
   zed-bin/           # Zed official prebuilt releases
-  youtube-rss-proxy/ # EMPTY - not wired into the overlay or any host
+  zen-bin/           # Zen Browser Darwin package
 
 sensitive/           # encrypted secret and certificate material managed by sops
   shared/            # cross-host secrets
@@ -66,7 +69,13 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
+| `themegen-cache` | `path:./common/home/themegen/empty-cache` | no |
+| `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
+
+`themegen-cache` is a placeholder flake input. Build and switch recipes replace
+it with `path:$PWD/.cache/themegen/<host>` after running
+`just themegen-generate <host>`.
 
 ### Outputs
 
@@ -75,19 +84,24 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `homeConfigurations."iceice666@framework"` | legacy standalone Home Manager configuration |
+| `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
 There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
 from `pkgs.lixPackageSets.stable`.
 
-Additionally, `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
+Additionally:
+- `zen-bin` uses the `zen-browser` flake on Linux and the local Darwin package under `pkgs/zen-bin`.
+- `linux_zen_7_0` and `linuxPackages_zen_7_0` pin the Framework kernel family.
+- `eww` is patched on Linux so app windows can paint transparent backgrounds.
+- `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
 
 ### `unstablePkgsFor`
 
@@ -111,11 +125,19 @@ just framework-build
 just framework-rebuild
 ```
 
-Direct NixOS commands:
+Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
+`nixos-rebuild`, or `home-manager` commands. The recipes run required
+pre-build steps such as `themegen-generate` and pass the correct flake input
+overrides.
+
+Direct NixOS commands are for debugging only. If you must run one manually,
+mirror the matching `Justfile` recipe, including `--override-input
+themegen-cache ...` where applicable.
 
 ```sh
-nix build .#nixosConfigurations.framework.config.system.build.toplevel
-sudo nixos-rebuild switch --flake .#framework
+just themegen-generate framework
+nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input themegen-cache path:$PWD/.cache/themegen/framework
+sudo nixos-rebuild switch --flake .#framework --override-input themegen-cache path:$PWD/.cache/themegen/framework
 ```
 
 The standalone Home Manager output `.#iceice666@framework` is kept only as a
@@ -143,6 +165,7 @@ just m3air-build
 just m3air-rebuild
 just framework-build
 just framework-rebuild
+just framework-boot
 
 just fmt
 just check
@@ -150,6 +173,7 @@ just check
 
 - `just build` auto-detects the current host and runs the matching dry build.
 - `just switch` auto-detects the current host and applies the matching configuration.
+- `just boot` auto-detects the current host and sets the Framework boot generation when supported.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs `nix flake check --all-systems`.
 - Explicit rebuild commands apply changes; prefer dry builds while iterating.
@@ -159,8 +183,8 @@ just check
 There is no unit-test suite. The closest equivalent is the narrowest host build that covers the change.
 
 ```sh
-sudo darwin-rebuild build --flake .#iceice666@m3air
-nix build .#nixosConfigurations.framework.config.system.build.toplevel
+just m3air-build
+just framework-build
 ```
 
 Which build to run for a given change:
@@ -191,8 +215,10 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
+just framework-bootstrap # install legacy Arch-owned Framework dependencies
 just framework-build    # dry-build the Framework NixOS system
 just framework-rebuild  # switch the Framework NixOS system
+just framework-boot     # set the Framework NixOS system for next boot
 ```
 
 ### Secrets helpers
@@ -275,7 +301,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -299,9 +325,11 @@ Canonical module shape:
 - `framework` is NixOS with Home Manager imported into the system configuration.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.
 - `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
+- `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
+- `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
+- `hosts/m3air/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
-- `pkgs/youtube-rss-proxy/` is an empty directory that is not wired into the overlay or any host; do not reference it as an available package.
 
 ## Change Strategy for Agents
 
