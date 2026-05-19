@@ -67,7 +67,11 @@ in
     type = "fcitx5";
 
     fcitx5 = {
-      addons = [ fcitx5Rime ];
+      waylandFrontend = true;
+      addons = [
+        fcitx5Rime
+        pkgs.fcitx5-gtk
+      ];
       settings.inputMethod = {
         GroupOrder."0" = "Default";
         "Groups/0" = {

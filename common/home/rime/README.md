@@ -7,6 +7,11 @@ The module copies packaged Rime data into the writable user data directory on ea
 - macOS Squirrel: `~/Library/Rime`
 - Linux Fcitx5 Rime: `~/.local/share/fcitx5/rime`
 
+On Linux, Home Manager starts the Fcitx5 daemon for the graphical session, enables
+the Wayland frontend, and installs the GTK bridge. Framework imports the Fcitx5
+session variables into user systemd and dbus so apps launched from Niri,
+portals, and desktop services can reach the input method.
+
 Managed data:
 
 - `pkgs.rime-frost`: Frost schema, dictionaries, Lua helpers, and OpenCC configs.

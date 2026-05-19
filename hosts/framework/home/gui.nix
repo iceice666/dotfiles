@@ -144,6 +144,20 @@ let
     XDG_SESSION_TYPE = "wayland";
   };
 
+  frameworkSessionEnvironmentNames = [
+    "GLFW_IM_MODULE"
+    "NIX_XDG_DESKTOP_PORTAL_DIR"
+    "QT_PLUGIN_PATH"
+    "SDL_IM_MODULE"
+    "XDG_CURRENT_DESKTOP"
+    "XDG_DATA_DIRS"
+    "XDG_SESSION_DESKTOP"
+    "XDG_SESSION_TYPE"
+    "XMODIFIERS"
+  ];
+
+  frameworkSessionEnvironmentList = lib.concatStringsSep " " frameworkSessionEnvironmentNames;
+
   gsettingsSchemaDataDir = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}";
 
   cursorThemeName = "Bibata-Modern-Classic";
@@ -272,8 +286,8 @@ let
 
       if systemctl --user show-environment >/dev/null 2>&1; then
         systemctl --user daemon-reload
-        systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
-        dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+        systemctl --user import-environment ${frameworkSessionEnvironmentList}
+        dbus-update-activation-environment --systemd ${frameworkSessionEnvironmentList}
         systemctl --user start xdg-document-portal.service xdg-permission-store.service || true
         systemctl --user restart xdg-desktop-portal.service || true
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service || true
@@ -472,8 +486,8 @@ in
           export XDG_SESSION_DESKTOP=${lib.escapeShellArg frameworkPortalEnv.XDG_SESSION_DESKTOP}
           export XDG_SESSION_TYPE=${lib.escapeShellArg frameworkPortalEnv.XDG_SESSION_TYPE}
 
-          ${pkgs.systemd}/bin/systemctl --user import-environment XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
-          ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd XDG_DATA_DIRS NIX_XDG_DESKTOP_PORTAL_DIR XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+          ${pkgs.systemd}/bin/systemctl --user import-environment ${frameworkSessionEnvironmentList}
+          ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd ${frameworkSessionEnvironmentList}
           ${pkgs.systemd}/bin/systemctl --user reset-failed xdg-desktop-portal.service xdg-document-portal.service || true
           ${pkgs.systemd}/bin/systemctl --user start xdg-document-portal.service xdg-permission-store.service || true
           ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service || true
