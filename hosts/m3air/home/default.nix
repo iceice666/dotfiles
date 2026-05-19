@@ -21,6 +21,7 @@ in
   _module.args = {
     inherit desktopWallpaper;
     themegenHost = "m3air";
+    ghosttyFontSize = 16;
   };
 
   home.packages = with pkgs; [
