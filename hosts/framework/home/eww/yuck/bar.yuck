@@ -56,8 +56,12 @@
 (defwidget audio-module []
   (box :class "island audio" :space-evenly false :spacing 4
     (eventbox :class {audio.speaker_class} :tooltip {audio.speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@" :onscroll "@changeSpeakerVolume@ {}"
-      (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.speaker_value} :start-at 75 :thickness 3
-        (image :path {audio.speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio.speaker_color})))
+      (box :class "audio-device" :space-evenly false :spacing 0
+        (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.speaker_value} :start-at 75 :thickness 3
+          (image :path {audio.speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio.speaker_color}))
+        (label :class "audio-device-label" :limit-width 16 :text {audio.speaker_device})))
     (eventbox :class {audio.mic_class} :tooltip {audio.mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@" :onscroll "@changeMicVolume@ {}"
-      (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.mic_value} :start-at 75 :thickness 3
-        (image :path {audio.mic_icon} :image-width 20 :image-height 20 :fill-svg {audio.mic_color})))))
+      (box :class "audio-device" :space-evenly false :spacing 0
+        (circular-progress :class "audio-ring" :width 32 :height 32 :value {audio.mic_value} :start-at 75 :thickness 3
+          (image :path {audio.mic_icon} :image-width 20 :image-height 20 :fill-svg {audio.mic_color}))
+        (label :class "audio-device-label" :limit-width 16 :text {audio.mic_device})))))

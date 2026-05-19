@@ -119,6 +119,42 @@ button:active {
     padding: 0;
 }
 
+.audio-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+}
+
+.audio-device-label {
+    background: transparent;
+    border: 0 solid transparent;
+    border-radius: 8px;
+    color: transparent;
+    font-size: 0;
+    opacity: 0;
+    padding: 0;
+    transition:
+        background 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease,
+        font-size 120ms ease,
+        opacity 120ms ease,
+        padding 120ms ease;
+}
+
+.audio-control:hover .audio-device-label {
+    background: $surfaceHover;
+    border-color: $outline;
+    color: $foreground;
+    font-size: 11px;
+    opacity: 1;
+    padding: 1px 5px;
+}
+
+.audio-control.muted:hover .audio-device-label {
+    color: $foregroundDim;
+}
+
 .audio-ring {
     background: $surfaceActive;
     color: $primary;

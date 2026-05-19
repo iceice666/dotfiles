@@ -40,10 +40,10 @@ let
 
         case "$direction" in
           up)
-            wpctl set-volume ${device} 0.05+ -l 1.0
+            wpctl set-volume ${device} 0.025+ -l 1.0
             ;;
           down)
-            wpctl set-volume ${device} 0.05-
+            wpctl set-volume ${device} 0.025-
             ;;
           *)
             exit 0

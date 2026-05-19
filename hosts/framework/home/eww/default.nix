@@ -64,6 +64,7 @@ let
       [
         "@appPlaceholder@"
         "@audioStatus@"
+        "@audioStatusListen@"
         "@batteryStatus@"
         "@batteryUnknown@"
         "@changeMicVolume@"
@@ -85,6 +86,7 @@ let
       [
         (toString icons.appPlaceholder)
         (toString scripts.audioStatus)
+        (toString scripts.audioStatusListen)
         (toString scripts.batteryStatus)
         (toString icons.batteryUnknown)
         (toString scripts.changeMicVolume)
