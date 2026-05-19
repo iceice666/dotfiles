@@ -73,6 +73,7 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
+| `nirinit` | `github:amaanq/nirinit` | yes |
 | `themegen-cache` | `path:./common/home/themegen/empty-cache` | no |
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
@@ -158,6 +159,11 @@ Framework appearance scheduling is configured in `hosts/framework/home/gui.nix`
 with Home Manager's `services.darkman`. It uses coarse Taipei coordinates from
 the Framework timezone, exposes darkman through the XDG Settings portal, and
 runs GTK/GNOME color-scheme scripts on sunrise/sunset transitions.
+
+Framework Niri session persistence is configured through `services.nirinit` in
+`hosts/framework/configuration/default.nix`. The upstream NixOS module installs
+the `nirinit.service` user unit on `graphical-session.target`, so it starts with
+the existing Niri session.
 
 ### Primary workflows
 
@@ -332,6 +338,7 @@ Canonical module shape:
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.
 - `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
+- `hosts/framework/configuration/default.nix` enables the upstream `nirinit` NixOS module for Niri session persistence.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
 - `hosts/m3air/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.
 - `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.

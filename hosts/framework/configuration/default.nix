@@ -17,6 +17,7 @@ in
   imports = [
     ./grub-theme.nix
     ./hardware-configuration.nix
+    inputs.nirinit.nixosModules.nirinit
   ];
 
   networking.hostName = "framework";
@@ -125,6 +126,7 @@ in
       enable = true;
       settings.default_session.user = "greeter";
     };
+    nirinit.enable = true;
   };
 
   security = {

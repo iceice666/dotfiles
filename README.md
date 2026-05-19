@@ -68,7 +68,8 @@ After the first switch, use `just switch`.
 NixOS owns the Framework system, including login/session launch, D-Bus,
 PipeWire, NetworkManager, Bluetooth, polkit, greetd/ReGreet, and fingerprint
 authentication for greetd and sudo. Home Manager is wired into the NixOS system
-configuration for user-level programs, Niri, Eww, and dotfiles.
+configuration for user-level programs, Niri, Eww, nirinit session persistence,
+and dotfiles.
 
 Enroll fingerprints with:
 
