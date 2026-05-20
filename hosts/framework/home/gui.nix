@@ -290,19 +290,24 @@ let
       [ -f "$justfile" ] || exit 0
 
       just_dir="$(dirname "$justfile")"
+      recipe_order="$(
+        just --justfile "$justfile" --working-directory "$just_dir" --summary --unsorted 2>/dev/null
+      )" || exit 0
+      [ -n "$recipe_order" ] || exit 0
+
       recipes="$(
-        jq -r '
-          .recipes
-          | to_entries[]
-          | select(.value.private | not)
-          | "\(.value.namepath // .key)\t\(.value.doc // "")"
+        jq -r --arg recipe_order "$recipe_order" '
+          ($recipe_order | split(" ") | map(select(length > 0)))[] as $recipe_name
+          | (.recipes[$recipe_name] // empty) as $recipe
+          | select($recipe.private | not)
+          | "\($recipe.namepath // $recipe_name)\t\($recipe.doc // "")"
         ' <<< "$justfile_json"
       )" || exit 0
       [ -n "$recipes" ] || exit 0
 
       selection="$(
         printf '%s\n' "$recipes" \
-          | fuzzel --dmenu --prompt "Just: "
+          | fuzzel --dmenu --no-sort --prompt "Just: "
       )" || exit 0
 
       [ -n "$selection" ] || exit 0
