@@ -12,6 +12,28 @@ let
     mkdir -p "$out"
     cp -R ${bsolSource}/bsol/. "$out/"
     chmod -R u+w "$out"
+
+    rm -f "$out"/*.pf2
+    ${pkgs.grub2}/bin/grub-mkfont \
+      --name "Victor Mono" \
+      --size 20 \
+      --output "$out/victor-mono-regular-20.pf2" \
+      ${pkgs.victor-mono}/share/fonts/opentype/VictorMono-Regular.otf
+    ${pkgs.grub2}/bin/grub-mkfont \
+      --name "Victor Mono" \
+      --size 24 \
+      --output "$out/victor-mono-bold-24.pf2" \
+      ${pkgs.victor-mono}/share/fonts/opentype/VictorMono-Bold.otf
+    ${pkgs.grub2}/bin/grub-mkfont \
+      --name "Victor Mono" \
+      --size 28 \
+      --output "$out/victor-mono-bold-28.pf2" \
+      ${pkgs.victor-mono}/share/fonts/opentype/VictorMono-Bold.otf
+
+    substituteInPlace "$out/theme.txt" \
+      --replace-fail "Victor Mono Italic 20" "Victor Mono Regular 20" \
+      --replace-fail "Victor Mono Bold Italic 24" "Victor Mono Bold 24" \
+      --replace-fail "Victor Mono Bold Italic 28" "Victor Mono Bold 28"
   '';
 in
 {

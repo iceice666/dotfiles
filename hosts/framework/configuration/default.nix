@@ -46,6 +46,16 @@ in
         enable = true;
         efiSupport = true;
         device = "nodev";
+        extraEntries = ''
+          if [ "$grub_platform" = "efi" ]; then
+            fwsetup --is-supported
+            if [ "$?" = 0 ]; then
+              menuentry "UEFI Firmware Settings" --class efi $menuentry_id_option "uefi-firmware" {
+                fwsetup
+              }
+            fi
+          fi
+        '';
       };
     };
   };
