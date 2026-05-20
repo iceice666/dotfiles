@@ -49,6 +49,7 @@ let
   '';
 
   niriPkg = unstablePkgs.niri;
+  makoPkg = unstablePkgs.mako;
   niriScratchpadHelper = pkgs.niri-scratchpad-helper;
 
   frameworkDarkman = pkgs.darkman.overrideAttrs (oldAttrs: {
@@ -768,6 +769,7 @@ in
 
     mako = {
       enable = true;
+      package = makoPkg;
       settings = {
         anchor = "top-right";
         width = 360;
@@ -784,10 +786,10 @@ in
         max-history = 50;
         icons = true;
         max-icon-size = 24;
-        on-button-left = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl invoke -n \"$id\"";
-        on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-button-left = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
+        on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
         on-notify = "exec ${ewwNotificationMarkUnread} \"$id\"";
-        on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${pkgs.mako}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
       };
     };
 

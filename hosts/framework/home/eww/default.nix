@@ -55,6 +55,7 @@ let
     # Keep Eww background/system scripts aligned with the unstable Niri used by
     # the Framework session.
     pkgs = pkgs // {
+      mako = unstablePkgs.mako;
       niri = unstablePkgs.niri;
     };
   };
