@@ -143,7 +143,19 @@ in
       enable = true;
       settings.default_session.user = "greeter";
     };
-    nirinit.enable = true;
+    nirinit = {
+      enable = true;
+      settings = {
+        launch = {
+          "com.mitchellh.ghostty" = "${pkgs.ghostty}/bin/ghostty";
+          "dev.zed.Zed" = "${config.home-manager.users.${username}.programs.zed-editor.package}/bin/zed";
+        };
+
+        skip.apps = [
+          "dev.iceice666.lazygit.repo86ff3035c73490ab"
+        ];
+      };
+    };
   };
 
   security = {
