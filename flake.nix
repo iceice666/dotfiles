@@ -33,6 +33,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    niri-scratchpad-helper = {
+      url = "github:gvolpe/niri-scratchpad";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     themegen-cache = {
       url = "path:./common/home/themegen/empty-cache";
       flake = false;
@@ -68,6 +73,11 @@
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
+        niri-scratchpad-helper =
+          if final.stdenv.hostPlatform.isLinux then
+            inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad
+          else
+            throw "niri-scratchpad-helper is only supported on Linux";
         rime-frost = final.callPackage ./pkgs/rime-frost { };
         rime-octagram-zh-hant-essay-bgw = final.callPackage ./pkgs/rime-octagram-zh-hant-essay-bgw { };
         zen-bin =

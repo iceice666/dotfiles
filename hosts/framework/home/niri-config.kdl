@@ -58,6 +58,13 @@ window-rule {
     default-column-width { proportion 0.33333; }
 }
 
+window-rule {
+    match app-id=r#"^dev\.iceice666\.lazygit\."#
+    open-floating true
+    default-column-width { proportion 0.90; }
+    default-window-height { proportion 0.89; }
+}
+
 layer-rule {
     match namespace="framework-eww-bar"
     opacity 1.0
@@ -115,6 +122,7 @@ binds {
     Mod+Ctrl+WheelScrollUp cooldown-ms=150 { move-column-to-workspace-up; }
 
     Mod+Shift+N hotkey-overlay-title="Rename workspace" { spawn "@renameWorkspace@"; }
+    Mod+G hotkey-overlay-title="Toggle lazygit" { spawn "@toggleLazygit@"; }
 
     Mod+1 hotkey-overlay-title=null { focus-workspace 1; }
     Mod+2 hotkey-overlay-title=null { focus-workspace 2; }
@@ -163,3 +171,6 @@ binds {
     Ctrl+Alt+Delete allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
     Mod+Shift+P hotkey-overlay-title="Power off monitors" { power-off-monitors; }
 }
+
+// Scratchpad helper uses this persistent workspace as the hidden target.
+workspace "scratch"

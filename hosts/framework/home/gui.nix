@@ -49,6 +49,7 @@ let
   '';
 
   niriPkg = unstablePkgs.niri;
+  niriScratchpadHelper = pkgs.niri-scratchpad-helper;
 
   frameworkDarkman = pkgs.darkman.overrideAttrs (oldAttrs: {
     patches = (oldAttrs.patches or [ ]) ++ [
@@ -122,6 +123,130 @@ let
       ${niriPkg}/bin/niri msg action unset-workspace-name
     fi
   '';
+
+  lazygitRepoFromWorkspace = ''
+    workspace_json="$(niri msg -j workspaces 2>/dev/null || printf '[]')"
+    workspace_name="$(
+      jq -r 'first(.[]? | select(.is_focused // .focused // false) | .name // empty) // empty' \
+        <<< "$workspace_json"
+    )"
+
+    [ -n "$workspace_name" ] || exit 0
+
+    case "$workspace_name" in
+      \~)
+        workspace_path="$HOME"
+        ;;
+      \~/*)
+        workspace_path="$HOME/''${workspace_name#\~/}"
+        ;;
+      /*)
+        workspace_path="$workspace_name"
+        ;;
+      *)
+        workspace_path="$HOME/$workspace_name"
+        ;;
+    esac
+
+    workspace_path="$(realpath -e "$workspace_path" 2>/dev/null)" || exit 0
+    if [ ! -d "$workspace_path" ]; then
+      workspace_path="$(dirname "$workspace_path")"
+    fi
+
+    repo="$(git -C "$workspace_path" rev-parse --show-toplevel 2>/dev/null)" || exit 0
+    repo_hash="$(printf '%s' "$repo" | sha256sum | cut -c1-16)"
+    app_id="dev.iceice666.lazygit.repo$repo_hash"
+  '';
+
+  spawnLazygit = pkgs.writeShellApplication {
+    name = "spawn-niri-lazygit";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.git
+      pkgs.ghostty
+      pkgs.jq
+      pkgs.lazygit
+      niriPkg
+    ];
+    text = ''
+      ${lazygitRepoFromWorkspace}
+
+      exec ghostty \
+        "--class=$app_id" \
+        "--confirm-close-surface=false" \
+        "--title=lazygit: $repo" \
+        "--working-directory=$repo" \
+        -e lazygit
+    '';
+  };
+
+  toggleLazygit = pkgs.writeShellApplication {
+    name = "toggle-niri-lazygit";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.git
+      pkgs.jq
+      niriPkg
+      niriScratchpadHelper
+    ];
+    text = ''
+      ${lazygitRepoFromWorkspace}
+
+      workspace_id="$(
+        jq -r 'first(.[]? | select(.is_focused // .focused // false) | .id // empty) // empty' \
+          <<< "$workspace_json"
+      )"
+
+      [ -n "$workspace_id" ] || exit 0
+
+      resize_lazygit_window() {
+        niri msg action set-window-width --id "$1" "90%" || true
+        niri msg action set-window-height --id "$1" "89%" || true
+        sleep 0.1
+        niri msg action center-window --id "$1" || true
+        sleep 0.1
+        niri msg action center-window --id "$1" || true
+      }
+
+      lazygit_window_on_focused_workspace() {
+        windows="$(niri msg -j windows 2>/dev/null || printf '[]')"
+        jq -r --arg app_id "$app_id" --arg workspace_id "$workspace_id" '
+          first(
+            .[]?
+            | select(.app_id == $app_id)
+            | select(((.workspace_id // .workspace // "") | tostring) == $workspace_id)
+            | .id
+          ) // empty
+        ' <<< "$windows"
+      }
+
+      focused_lazygit_window() {
+        windows="$(niri msg -j windows 2>/dev/null || printf '[]')"
+        jq -r --arg app_id "$app_id" '
+          first(
+            .[]?
+            | select(.app_id == $app_id)
+            | select(.is_focused // .focused // false)
+            | .id
+          ) // empty
+        ' <<< "$windows"
+      }
+
+      visible_window_id="$(lazygit_window_on_focused_workspace)"
+      NS_WORKSPACE=scratch nscratch -id "$app_id" -s "${spawnLazygit}/bin/spawn-niri-lazygit" -m
+      [ -z "$visible_window_id" ] || exit 0
+
+      for _ in $(seq 1 40); do
+        sleep 0.05
+
+        window_id="$(focused_lazygit_window)"
+        if [ -n "$window_id" ]; then
+          resize_lazygit_window "$window_id"
+          exit 0
+        fi
+      done
+    '';
+  };
 
   clipboardManager = pkgs.writeShellScript "framework-clipboard-manager" ''
     selection="$(
@@ -317,6 +442,7 @@ let
         "@nautilus@"
         "@playerctl@"
         "@renameWorkspace@"
+        "@toggleLazygit@"
         "@slurp@"
         "@swaylock@"
         "@swappy@"
@@ -333,6 +459,7 @@ let
         "${pkgs.nautilus}/bin/nautilus"
         "${pkgs.playerctl}/bin/playerctl"
         (toString renameWorkspace)
+        "${toggleLazygit}/bin/toggle-niri-lazygit"
         "${pkgs.slurp}/bin/slurp"
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
@@ -404,6 +531,7 @@ in
     lm_sensors
     mpv
     nautilus
+    niriScratchpadHelper
     cascadia-code
     noto-fonts
     noto-fonts-color-emoji
