@@ -132,12 +132,12 @@ binds {
     Mod+Shift+M hotkey-overlay-title="Fullscreen window" { fullscreen-window; }
     Mod+Alt+M hotkey-overlay-title="Maximize window to edges" { maximize-window-to-edges; }
 
-    Mod+C hotkey-overlay-title="Center column" { center-column; }
+    Mod+Shift+C hotkey-overlay-title="Center column" { center-column; }
 
     Mod+Minus hotkey-overlay-title="Shrink column width" { set-column-width "-10%"; }
     Mod+Equal hotkey-overlay-title="Grow column width" { set-column-width "+10%"; }
 
-    Mod+V hotkey-overlay-title="Open clipboard manager" { spawn "@clipboardManager@"; }
+    Mod+Shift+V hotkey-overlay-title="Open clipboard manager" { spawn "@clipboardManager@"; }
 
     Mod+F hotkey-overlay-title="Toggle window floating" { toggle-window-floating; }
     Mod+Shift+F hotkey-overlay-title="Focus floating or tiling" { switch-focus-between-floating-and-tiling; }

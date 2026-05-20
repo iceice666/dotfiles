@@ -10,5 +10,7 @@
     "background-opacity-cells = true"
     "background-blur = true" # implies background-blur = true on non-macOS platforms.
     "theme = light:themegen-light,dark:themegen-dark"
+    "keybind = super+c=copy_to_clipboard:mixed"
+    "keybind = super+v=paste_from_clipboard"
   ];
 }
