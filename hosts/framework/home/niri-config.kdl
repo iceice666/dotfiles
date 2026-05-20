@@ -73,10 +73,13 @@ layer-rule {
 binds {
     Mod+Shift+Slash hotkey-overlay-title="Show hotkey overlay" { show-hotkey-overlay; }
 
-    Mod+Return hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
+    Mod+Alt+Q hotkey-overlay-title="Quit Niri" { quit; }
+    Mod+Alt+P hotkey-overlay-title="Power off monitors" { power-off-monitors; }
+    Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
+
     Mod+Space hotkey-overlay-title="Open launcher" { spawn "@fuzzel@"; }
+    Mod+T hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
     Mod+E hotkey-overlay-title="Open files" { spawn "@nautilus@"; }
-    Super+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
 
     XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05+ -l 1.0; '@ewwPoll@' audio"; }
     XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume down" { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05-; '@ewwPoll@' audio"; }
@@ -107,58 +110,38 @@ binds {
     Mod+Shift+K hotkey-overlay-title="Focus monitor up" { focus-monitor-up; }
     Mod+Shift+L hotkey-overlay-title="Focus monitor right" { focus-monitor-right; }
 
-    Mod+Alt+J { focus-workspace-down; }
-    Mod+Alt+K { focus-workspace-up; }
     Mod+U hotkey-overlay-title="Focus workspace down" { focus-workspace-down; }
     Mod+I hotkey-overlay-title="Focus workspace up" { focus-workspace-up; }
-    Mod+Ctrl+Alt+J { move-column-to-workspace-down; }
-    Mod+Ctrl+Alt+K { move-column-to-workspace-up; }
     Mod+Ctrl+U hotkey-overlay-title="Move column to workspace down" { move-column-to-workspace-down; }
     Mod+Ctrl+I hotkey-overlay-title="Move column to workspace up" { move-column-to-workspace-up; }
 
-    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
-    Mod+WheelScrollUp cooldown-ms=150 { focus-workspace-up; }
-    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
-    Mod+Ctrl+WheelScrollUp cooldown-ms=150 { move-column-to-workspace-up; }
-
-    Mod+Shift+N hotkey-overlay-title="Rename workspace" { spawn "@renameWorkspace@"; }
-    Mod+G hotkey-overlay-title="Toggle lazygit" { spawn "@toggleLazygit@"; }
-
-    Mod+1 hotkey-overlay-title=null { focus-workspace 1; }
-    Mod+2 hotkey-overlay-title=null { focus-workspace 2; }
-    Mod+3 hotkey-overlay-title=null { focus-workspace 3; }
-    Mod+4 hotkey-overlay-title=null { focus-workspace 4; }
-    Mod+5 hotkey-overlay-title=null { focus-workspace 5; }
-    Mod+6 hotkey-overlay-title=null { focus-workspace 6; }
-    Mod+7 hotkey-overlay-title=null { focus-workspace 7; }
-    Mod+8 hotkey-overlay-title=null { focus-workspace 8; }
-    Mod+9 hotkey-overlay-title=null { focus-workspace 9; }
-    Mod+Ctrl+1 hotkey-overlay-title=null { move-column-to-workspace 1; }
-    Mod+Ctrl+2 hotkey-overlay-title=null { move-column-to-workspace 2; }
-    Mod+Ctrl+3 hotkey-overlay-title=null { move-column-to-workspace 3; }
-    Mod+Ctrl+4 hotkey-overlay-title=null { move-column-to-workspace 4; }
-    Mod+Ctrl+5 hotkey-overlay-title=null { move-column-to-workspace 5; }
-    Mod+Ctrl+6 hotkey-overlay-title=null { move-column-to-workspace 6; }
-    Mod+Ctrl+7 hotkey-overlay-title=null { move-column-to-workspace 7; }
-    Mod+Ctrl+8 hotkey-overlay-title=null { move-column-to-workspace 8; }
-    Mod+Ctrl+9 hotkey-overlay-title=null { move-column-to-workspace 9; }
+    Alt+N hotkey-overlay-title="Rename workspace" { spawn "@renameWorkspace@"; }
+    Alt+G hotkey-overlay-title="Toggle lazygit" { spawn "@toggleLazygit@"; }
+    Alt+J hotkey-overlay-title="Run just recipe" { spawn "@runJustRecipe@"; }
 
     Mod+BracketLeft hotkey-overlay-title="Consume or expel window left" { consume-or-expel-window-left; }
     Mod+BracketRight hotkey-overlay-title="Consume or expel window right" { consume-or-expel-window-right; }
+
     Mod+Comma hotkey-overlay-title="Consume window into column" { consume-window-into-column; }
     Mod+Period hotkey-overlay-title="Expel window from column" { expel-window-from-column; }
 
     Mod+R hotkey-overlay-title="Next preset column width" { switch-preset-column-width; }
     Mod+Shift+R hotkey-overlay-title="Previous preset column width" { switch-preset-column-width-back; }
+
     Mod+M hotkey-overlay-title="Maximize column" { maximize-column; }
     Mod+Shift+M hotkey-overlay-title="Fullscreen window" { fullscreen-window; }
     Mod+Alt+M hotkey-overlay-title="Maximize window to edges" { maximize-window-to-edges; }
+
     Mod+C hotkey-overlay-title="Center column" { center-column; }
+
     Mod+Minus hotkey-overlay-title="Shrink column width" { set-column-width "-10%"; }
     Mod+Equal hotkey-overlay-title="Grow column width" { set-column-width "+10%"; }
+
     Mod+V hotkey-overlay-title="Open clipboard manager" { spawn "@clipboardManager@"; }
+
     Mod+F hotkey-overlay-title="Toggle window floating" { toggle-window-floating; }
     Mod+Shift+F hotkey-overlay-title="Focus floating or tiling" { switch-focus-between-floating-and-tiling; }
+
     Mod+W hotkey-overlay-title="Toggle column tabs" { toggle-column-tabbed-display; }
 
     Print hotkey-overlay-title="Screenshot" { screenshot; }
@@ -167,9 +150,7 @@ binds {
     Shift+Print hotkey-overlay-title="Screenshot region" { spawn-sh "@grim@ -g \"$(@slurp@)\" - | @swappy@ -f -"; }
 
     Mod+Escape allow-inhibiting=false hotkey-overlay-title="Toggle shortcut inhibition" { toggle-keyboard-shortcuts-inhibit; }
-    Mod+Shift+E hotkey-overlay-title="Quit Niri" { quit; }
-    Ctrl+Alt+Delete allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
-    Mod+Shift+P hotkey-overlay-title="Power off monitors" { power-off-monitors; }
+
 }
 
 // Scratchpad helper uses this persistent workspace as the hidden target.

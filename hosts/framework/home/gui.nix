@@ -125,7 +125,7 @@ let
     fi
   '';
 
-  lazygitRepoFromWorkspace = ''
+  workspacePathFromFocusedWorkspace = ''
     workspace_json="$(niri msg -j workspaces 2>/dev/null || printf '[]')"
     workspace_name="$(
       jq -r 'first(.[]? | select(.is_focused // .focused // false) | .name // empty) // empty' \
@@ -153,6 +153,10 @@ let
     if [ ! -d "$workspace_path" ]; then
       workspace_path="$(dirname "$workspace_path")"
     fi
+  '';
+
+  lazygitRepoFromWorkspace = ''
+    ${workspacePathFromFocusedWorkspace}
 
     repo="$(git -C "$workspace_path" rev-parse --show-toplevel 2>/dev/null)" || exit 0
     repo_hash="$(printf '%s' "$repo" | sha256sum | cut -c1-16)"
@@ -246,6 +250,52 @@ let
           exit 0
         fi
       done
+    '';
+  };
+
+  runJustRecipe = pkgs.writeShellApplication {
+    name = "run-niri-just-recipe";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.fuzzel
+      pkgs.ghostty
+      pkgs.jq
+      pkgs.just
+      niriPkg
+    ];
+    text = ''
+      ${workspacePathFromFocusedWorkspace}
+
+      justfile_json="$(
+        cd "$workspace_path" && just --dump --dump-format json 2>/dev/null
+      )" || exit 0
+
+      justfile="$(
+        jq -r '.source // empty' <<< "$justfile_json"
+      )"
+      [ -n "$justfile" ] || exit 0
+      [ -f "$justfile" ] || exit 0
+
+      just_dir="$(dirname "$justfile")"
+      recipes="$(
+        just --justfile "$justfile" --working-directory "$just_dir" \
+          --list --unsorted --list-heading "" --list-prefix "" 2>/dev/null
+      )" || exit 0
+      [ -n "$recipes" ] || exit 0
+
+      selection="$(
+        printf '%s\n' "$recipes" \
+          | fuzzel --dmenu --prompt "Just: "
+      )" || exit 0
+
+      [ -n "$selection" ] || exit 0
+      recipe="''${selection%%[[:space:]]*}"
+      [ -n "$recipe" ] || exit 0
+
+      exec ghostty \
+        "--title=just $recipe: $just_dir" \
+        "--working-directory=$just_dir" \
+        -e just --justfile "$justfile" --working-directory "$just_dir" "$recipe"
     '';
   };
 
@@ -443,6 +493,7 @@ let
         "@nautilus@"
         "@playerctl@"
         "@renameWorkspace@"
+        "@runJustRecipe@"
         "@toggleLazygit@"
         "@slurp@"
         "@swaylock@"
@@ -460,6 +511,7 @@ let
         "${pkgs.nautilus}/bin/nautilus"
         "${pkgs.playerctl}/bin/playerctl"
         (toString renameWorkspace)
+        "${runJustRecipe}/bin/run-niri-just-recipe"
         "${toggleLazygit}/bin/toggle-niri-lazygit"
         "${pkgs.slurp}/bin/slurp"
         "${pkgs.swaylock}/bin/swaylock"

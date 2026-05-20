@@ -76,10 +76,17 @@ in
       enable = true;
       keyboards.framework.config = ''
         (defsrc
-          caps)
+          caps ret
+          lmet lalt
+          ralt rctl)
 
         (deflayermap (default-layer)
-          caps (tap-hold 100 150 esc lctl))
+          caps (tap-hold 50 130 esc lctl)
+          ret (tap-hold 50 130 ret rctl)
+          lmet lalt
+          lalt lmet
+          ralt rmet
+          rctl ralt)
       '';
     };
     libinput.enable = true;
