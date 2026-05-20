@@ -161,11 +161,14 @@ in
       settings = {
         launch = {
           "com.mitchellh.ghostty" = "${pkgs.ghostty}/bin/ghostty";
-          "dev.zed.Zed" = "${config.home-manager.users.${username}.programs.zed-editor.package}/bin/zed";
         };
 
         skip.apps = [
+          "dev.zed.Zed"
           "dev.iceice666.lazygit.repo86ff3035c73490ab"
+          "equibop"
+          "org.equicord.equibop"
+          "zen"
         ];
       };
     };

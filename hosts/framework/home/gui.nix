@@ -503,6 +503,7 @@ let
         "@brightnessctl@"
         "@bash@"
         "@clipboardManager@"
+        "@equibop@"
         "@ewwPoll@"
         "@fuzzel@"
         "@ghostty@"
@@ -516,11 +517,13 @@ let
         "@swaylock@"
         "@swappy@"
         "@wpctl@"
+        "@zen@"
       ]
       [
         "${pkgs.brightnessctl}/bin/brightnessctl"
         "${pkgs.bash}/bin/bash"
         (toString clipboardManager)
+        (lib.getExe pkgs.equibop-bin)
         (toString ewwPoll)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${pkgs.ghostty}/bin/ghostty"
@@ -534,6 +537,7 @@ let
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
         "${pkgs.wireplumber}/bin/wpctl"
+        (lib.getExe pkgs.zen-bin)
       ]
       (builtins.readFile ./niri-config.kdl);
 in

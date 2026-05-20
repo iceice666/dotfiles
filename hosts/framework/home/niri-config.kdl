@@ -48,6 +48,14 @@ hotkey-overlay {
 prefer-no-csd
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
+spawn-at-startup "@zen@"
+spawn-at-startup "@equibop@"
+
+window-rule {
+    match app-id=r#"^(zen|equibop|org\.equicord\.equibop)$"#
+    open-on-workspace "home"
+}
+
 window-rule {
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
     open-floating true
@@ -152,6 +160,8 @@ binds {
     Mod+Escape allow-inhibiting=false hotkey-overlay-title="Toggle shortcut inhibition" { toggle-keyboard-shortcuts-inhibit; }
 
 }
+
+workspace "home"
 
 // Scratchpad helper uses this persistent workspace as the hidden target.
 workspace "scratch"
