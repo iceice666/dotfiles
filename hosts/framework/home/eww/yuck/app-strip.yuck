@@ -1,6 +1,6 @@
 (defwidget app-strip [monitor]
   (box :class "app-strip" :space-evenly false
-    (for group in {niri_state.groups ?: []}
+    (for group in {niri_groups ?: []}
       (box :visible {group.monitor == monitor} :class "workspace-group" :space-evenly false
         (for workspace in {group.workspaces}
           (box :class "workspace-apps" :space-evenly false

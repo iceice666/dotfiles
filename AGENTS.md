@@ -48,6 +48,7 @@ pkgs/                # overlay packages
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
+  framework-eww-state/ # Rust state daemon/action helper for Framework Eww
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
   themegen/          # Rust-based theme generator (Cargo project)
@@ -96,7 +97,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -307,7 +308,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

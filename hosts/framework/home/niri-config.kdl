@@ -94,14 +94,14 @@ binds {
     Mod+T hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
     Mod+E hotkey-overlay-title="Open files" { spawn "@nautilus@"; }
 
-    XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05+ -l 1.0; '@ewwPoll@' audio"; }
-    XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume down" { spawn "@bash@" "-c" "'@wpctl@' set-volume '@DEFAULT_AUDIO_SINK@' 0.05-; '@ewwPoll@' audio"; }
-    XF86AudioMute allow-when-locked=true hotkey-overlay-title="Mute audio" { spawn "@bash@" "-c" "'@wpctl@' set-mute '@DEFAULT_AUDIO_SINK@' toggle; '@ewwPoll@' audio"; }
-    XF86AudioMicMute allow-when-locked=true hotkey-overlay-title="Mute microphone" { spawn "@bash@" "-c" "'@wpctl@' set-mute '@DEFAULT_AUDIO_SOURCE@' toggle; '@ewwPoll@' audio"; }
-    XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play or pause media" { spawn "@bash@" "-c" "'@playerctl@' play-pause; '@ewwPoll@' media"; }
-    XF86AudioStop allow-when-locked=true hotkey-overlay-title="Stop media" { spawn "@bash@" "-c" "'@playerctl@' stop; '@ewwPoll@' media"; }
-    XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous track" { spawn "@bash@" "-c" "'@playerctl@' previous; '@ewwPoll@' media"; }
-    XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next track" { spawn "@bash@" "-c" "'@playerctl@' next; '@ewwPoll@' media"; }
+    XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "audio" "volume" "speaker" "up" "--step" "0.05"; }
+    XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume down" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "audio" "volume" "speaker" "down" "--step" "0.05"; }
+    XF86AudioMute allow-when-locked=true hotkey-overlay-title="Mute audio" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "audio" "toggle" "speaker"; }
+    XF86AudioMicMute allow-when-locked=true hotkey-overlay-title="Mute microphone" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "audio" "toggle" "mic"; }
+    XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play or pause media" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "media" "play-pause"; }
+    XF86AudioStop allow-when-locked=true hotkey-overlay-title="Stop media" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "media" "stop"; }
+    XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous track" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "media" "previous"; }
+    XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next track" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "media" "next"; }
     XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title="Brightness up" { spawn "@brightnessctl@" "--class=backlight" "set" "+10%"; }
     XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness down" { spawn "@brightnessctl@" "--class=backlight" "set" "10%-"; }
 

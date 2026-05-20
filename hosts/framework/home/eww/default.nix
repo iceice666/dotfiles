@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   unstablePkgs,
   ...
@@ -47,17 +48,40 @@ let
     '';
   };
 
-  scripts = import ./scripts/default.nix {
-    inherit
-      ewwConfigDir
-      icons
-      ;
-    # Keep Eww background/system scripts aligned with the unstable Niri used by
-    # the Framework session.
-    pkgs = pkgs // {
-      mako = unstablePkgs.mako;
-      niri = unstablePkgs.niri;
-    };
+  stateBinary = lib.getExe pkgs.framework-eww-state;
+  stateConfig = pkgs.writeText "framework-eww-state-config.json" (
+    builtins.toJSON {
+      inherit ewwConfigDir;
+      home = config.home.homeDirectory;
+      preferredInterface = "wlp192s0";
+      commands = {
+        eww = "${pkgs.eww}/bin/eww";
+        niri = "${unstablePkgs.niri}/bin/niri";
+        wpctl = "${pkgs.wireplumber}/bin/wpctl";
+        pactl = "${pkgs.pulseaudio}/bin/pactl";
+        upower = "${pkgs.upower}/bin/upower";
+        tlpStat = "${pkgs.tlp}/bin/tlp-stat";
+        playerctl = "${pkgs.playerctl}/bin/playerctl";
+        makoctl = "${unstablePkgs.mako}/bin/makoctl";
+        pavucontrol = "${pkgs.pavucontrol}/bin/pavucontrol";
+        systemctl = "${pkgs.systemd}/bin/systemctl";
+      };
+      icons = builtins.mapAttrs (_: toString) icons;
+    }
+  );
+  stateCommand = "${stateBinary} --config-file ${stateConfig}";
+  stateCommands = {
+    changeMicVolume = "${stateCommand} audio volume mic";
+    changeSpeakerVolume = "${stateCommand} audio volume speaker";
+    focusWindow = "${stateCommand} focus-window";
+    notificationAction = "${stateCommand} notifications action";
+    notificationMarkRead = "${stateCommand} notifications mark-read";
+    notificationMarkUnread = "${stateCommand} notifications mark-unread";
+    niriGroupsSeed = "${stateCommand} seed-niri-groups";
+    openPavucontrol = "${stateCommand} open-pavucontrol";
+    reloadEww = "${stateCommand} reload";
+    toggleMic = "${stateCommand} audio toggle mic";
+    toggleSpeaker = "${stateCommand} audio toggle speaker";
   };
 
   yuckFiles = [
@@ -69,59 +93,42 @@ let
   ewwYuck =
     builtins.replaceStrings
       [
-        "@appPlaceholder@"
-        "@audioStatus@"
-        "@audioStatusListen@"
-        "@batteryStatus@"
-        "@batteryStatusListen@"
         "@batteryUnknown@"
         "@changeMicVolume@"
         "@changeSpeakerVolume@"
-        "@datetimeStatus@"
         "@focusWindow@"
-        "@mediaStatus@"
         "@micActive@"
-        "@niriState@"
+        "@niriGroupsSeed@"
         "@notificationAction@"
         "@notificationIcon@"
-        "@notificationsStatus@"
         "@openPavucontrol@"
-        "@perfStatus@"
         "@speakerHigh@"
         "@toggleMic@"
         "@toggleSpeaker@"
       ]
       [
-        (toString icons.appPlaceholder)
-        (toString scripts.audioStatus)
-        (toString scripts.audioStatusListen)
-        (toString scripts.batteryStatus)
-        (toString scripts.batteryStatusListen)
         (toString icons.batteryUnknown)
-        (toString scripts.changeMicVolume)
-        (toString scripts.changeSpeakerVolume)
-        (toString scripts.datetimeStatus)
-        (toString scripts.focusWindow)
-        (toString scripts.mediaStatus)
+        stateCommands.changeMicVolume
+        stateCommands.changeSpeakerVolume
+        stateCommands.focusWindow
         (toString icons.micActive)
-        (toString scripts.niriState)
-        (toString scripts.notificationAction)
+        stateCommands.niriGroupsSeed
+        stateCommands.notificationAction
         (toString icons.notification)
-        (toString scripts.notificationsStatus)
-        (toString scripts.openPavucontrol)
-        (toString scripts.perfStatus)
+        stateCommands.openPavucontrol
         (toString icons.speakerHigh)
-        (toString scripts.toggleMic)
-        (toString scripts.toggleSpeaker)
+        stateCommands.toggleMic
+        stateCommands.toggleSpeaker
       ]
       (builtins.concatStringsSep "\n\n" (map builtins.readFile yuckFiles));
 in
 {
   _module.args = {
-    ewwNotificationMarkRead = scripts.notificationMarkRead;
-    ewwNotificationMarkUnread = scripts.notificationMarkUnread;
-    ewwPoll = scripts.pollEww;
-    ewwReload = scripts.reloadEww;
+    ewwNotificationMarkRead = stateCommands.notificationMarkRead;
+    ewwNotificationMarkUnread = stateCommands.notificationMarkUnread;
+    ewwReload = stateCommands.reloadEww;
+    ewwState = stateBinary;
+    ewwStateConfig = stateConfig;
   };
 
   programs.eww.enable = true;
@@ -170,7 +177,7 @@ in
 
   systemd.user.services.framework-eww-bars = {
     Unit = {
-      Description = "Framework Eww bar windows";
+      Description = "Framework Eww state daemon and bar windows";
       ConditionEnvironment = [ "WAYLAND_DISPLAY" ];
       ConditionPathExists = "${ewwConfigDir}/eww.yuck";
       PartOf = [ "graphical-session.target" ];
@@ -189,7 +196,7 @@ in
         "XDG_CONFIG_HOME=${config.home.homeDirectory}/.config"
       ];
       WorkingDirectory = ewwConfigDir;
-      ExecStart = scripts.watchBars;
+      ExecStart = "${stateCommand} daemon";
       Restart = "on-failure";
       RestartSec = 2;
     };

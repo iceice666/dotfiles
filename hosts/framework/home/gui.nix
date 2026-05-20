@@ -8,8 +8,9 @@
   desktopWallpaper,
   ewwNotificationMarkRead,
   ewwNotificationMarkUnread,
-  ewwPoll,
   ewwReload,
+  ewwState,
+  ewwStateConfig,
   ...
 }:
 
@@ -506,42 +507,38 @@ let
     builtins.replaceStrings
       [
         "@brightnessctl@"
-        "@bash@"
         "@clipboardManager@"
         "@equibop@"
-        "@ewwPoll@"
+        "@ewwState@"
+        "@ewwStateConfig@"
         "@fuzzel@"
         "@ghostty@"
         "@grim@"
         "@nautilus@"
-        "@playerctl@"
         "@renameWorkspace@"
         "@runJustRecipe@"
         "@toggleLazygit@"
         "@slurp@"
         "@swaylock@"
         "@swappy@"
-        "@wpctl@"
         "@zen@"
       ]
       [
         "${pkgs.brightnessctl}/bin/brightnessctl"
-        "${pkgs.bash}/bin/bash"
         (toString clipboardManager)
         (lib.getExe pkgs.equibop-bin)
-        (toString ewwPoll)
+        ewwState
+        (toString ewwStateConfig)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${pkgs.ghostty}/bin/ghostty"
         "${pkgs.grim}/bin/grim"
         "${pkgs.nautilus}/bin/nautilus"
-        "${pkgs.playerctl}/bin/playerctl"
         (toString renameWorkspace)
         "${runJustRecipe}/bin/run-niri-just-recipe"
         "${toggleLazygit}/bin/toggle-niri-lazygit"
         "${pkgs.slurp}/bin/slurp"
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
-        "${pkgs.wireplumber}/bin/wpctl"
         (lib.getExe pkgs.zen-bin)
       ]
       (builtins.readFile ./niri-config.kdl);
