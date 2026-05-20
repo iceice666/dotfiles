@@ -77,6 +77,10 @@ in
   swapDevices = [ { device = "/dev/disk/by-label/NIXOS_SWAP"; } ];
   powerManagement.enable = true;
 
+  systemd.sleep.extraConfig = ''
+    HibernateDelaySec=1h
+  '';
+
   services = {
     accounts-daemon.enable = true;
     blueman.enable = true;
@@ -100,6 +104,11 @@ in
       '';
     };
     libinput.enable = true;
+    logind.settings.Login = {
+      HandleLidSwitch = "suspend-then-hibernate";
+      HandleLidSwitchExternalPower = "suspend-then-hibernate";
+      HandleLidSwitchDocked = "ignore";
+    };
     gvfs.enable = true;
     power-profiles-daemon.enable = false;
     tailscale = {

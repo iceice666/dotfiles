@@ -107,6 +107,19 @@ let
     ExecStart=${frameworkNiri} --session
   '';
 
+  suspendThenHibernateOnBattery = pkgs.writeShellScript "suspend-then-hibernate-on-battery" ''
+    for supply in /sys/class/power_supply/*; do
+      [ -d "$supply" ] || continue
+
+      if [ "$(cat "$supply/type" 2>/dev/null || true)" = "Mains" ] \
+        && [ "$(cat "$supply/online" 2>/dev/null || true)" = "1" ]; then
+        exit 0
+      fi
+    done
+
+    exec ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
+  '';
+
   renameWorkspace = pkgs.writeShellScript "rename-niri-workspace" ''
     current_name="$(
         ${niriPkg}/bin/niri msg -j workspaces 2>/dev/null \
@@ -889,6 +902,10 @@ in
           timeout = 600;
           command = "${niriPkg}/bin/niri msg action power-off-monitors";
           resumeCommand = "${niriPkg}/bin/niri msg action power-on-monitors";
+        }
+        {
+          timeout = 1200;
+          command = "${suspendThenHibernateOnBattery}";
         }
       ];
       events = [
