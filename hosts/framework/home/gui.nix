@@ -573,6 +573,35 @@ in
     };
   };
 
+  systemd.user.services.tailscale-systray = {
+    Unit = {
+      Description = "Tailscale system tray";
+      Documentation = [ "https://tailscale.com/docs/features/client/linux-systray" ];
+      ConditionEnvironment = [ "WAYLAND_DISPLAY" ];
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "framework-eww.service"
+        "niri.service"
+        "graphical-session.target"
+      ];
+      Wants = [
+        "framework-eww.service"
+        "graphical-session.target"
+      ];
+    };
+
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.tailscale}/bin/tailscale systray";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
   home.packages = with pkgs; [
     frameworkPostSwitch
     adwaita-icon-theme

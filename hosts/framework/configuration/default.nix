@@ -102,6 +102,10 @@ in
     libinput.enable = true;
     gvfs.enable = true;
     power-profiles-daemon.enable = false;
+    tailscale = {
+      enable = true;
+      openFirewall = true;
+    };
     tlp = {
       enable = true;
       settings = {

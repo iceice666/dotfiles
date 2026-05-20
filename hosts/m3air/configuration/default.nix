@@ -70,6 +70,8 @@
   # Enable alternative shell support in nix-darwin.
   programs.fish.enable = true;
 
+  services.tailscale.enable = true;
+
   users.users.${username} = {
     name = username;
     home = homeDirectory;
