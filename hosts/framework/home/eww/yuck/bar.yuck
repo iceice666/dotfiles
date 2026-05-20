@@ -69,8 +69,13 @@
           (label :class "audio-device-label" :text {audio_mic_device}))))))
 
 (defwidget systray-module []
-  (box :class "island tray" :space-evenly false
-    (systray :spacing 2 :space-evenly true :icon-size 24 :prepend-new false)))
+  (eventbox :class "island tray" :onhover "${EWW_CMD} update systray_revealed=true" :onhoverlost "${EWW_CMD} update systray_revealed=false"
+    (box :class "tray-device" :space-evenly false :spacing 0
+      (box :class "tray-slot" :space-evenly true :valign "center"
+        (image :path "@trayIcon@" :image-width 20 :image-height 20 :fill-svg {battery_color}))
+      (revealer :class "tray-revealer" :transition "slideright" :reveal {systray_revealed} :duration "120ms"
+        (box :class "tray-icons" :space-evenly false
+          (systray :spacing 2 :space-evenly false :icon-size 24 :prepend-new false))))))
 
 (defwidget datetime-module []
   (box :class "island datetime"

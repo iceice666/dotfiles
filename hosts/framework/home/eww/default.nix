@@ -46,6 +46,9 @@ let
     speakerMuted = pkgs.writeText "eww-speaker-muted.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M3 10v4h4l6 5V5L7 10z"/><path d="m16 8 5 8h-3l-2-3-2 3h-3l4-6-4-6h3l2 3 2-3h3z"/></svg>
     '';
+    tray = pkgs.writeText "eww-tray.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M4 5h16v4H4z"/><path d="M4 11h7v8H4z"/><path d="M13 11h7v8h-7z"/></svg>
+    '';
   };
 
   stateBinary = lib.getExe pkgs.framework-eww-state;
@@ -103,6 +106,7 @@ let
         "@notificationIcon@"
         "@openPavucontrol@"
         "@speakerHigh@"
+        "@trayIcon@"
         "@toggleMic@"
         "@toggleSpeaker@"
       ]
@@ -117,6 +121,7 @@ let
         (toString icons.notification)
         stateCommands.openPavucontrol
         (toString icons.speakerHigh)
+        (toString icons.tray)
         stateCommands.toggleMic
         stateCommands.toggleSpeaker
       ]

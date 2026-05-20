@@ -122,7 +122,15 @@ button:active {
     background: $surfaceHover;
 }
 
+.tray:hover {
+    background: $surfaceHover;
+}
+
 .battery:active {
+    background: $surfaceActive;
+}
+
+.tray:active {
     background: $surfaceActive;
 }
 
@@ -210,6 +218,26 @@ button:active {
 .audio-control.muted .audio-ring {
     background: $surface;
     color: $foregroundDim;
+}
+
+.tray {
+    padding: 1px 4px;
+}
+
+.tray-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.tray-slot {
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.tray-icons {
+    padding: 0 2px 0 4px;
 }
 
 .perf-label {
