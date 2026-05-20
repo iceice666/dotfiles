@@ -37,21 +37,25 @@ sensitive/           # sops-encrypted secrets
 ## Commands
 
 ```sh
-just build           # dry-build current host
-just switch          # apply configuration to current host
+just build           # dry-build current platform host
+just switch          # apply configuration to current platform host
+just boot            # set Framework for next boot, Linux only
 just fmt             # format all files
-just check           # nix flake check --all-systems
-just themegen-generate framework # generate concrete theme cache
-just themegen-preview  # render and open the current host wallpaper palette preview
+just fmt-check       # check Justfile formatting
+just check           # format, Justfile metadata, and flake checks
+just theme           # generate concrete theme cache for this platform
+just theme-preview   # render and open this platform's wallpaper palette preview
 ```
 
-Host-specific:
+`just` recipes are platform-gated: macOS maps to `m3air`, and Linux maps to
+`framework`. The same `build` and `switch` recipe names have separate
+`[macos]` and `[linux]` implementations.
+
+M3 Air helper recipes are available only on macOS:
 
 ```sh
-just m3air-build
-just framework-build
-just framework-rebuild
-just framework-boot
+just m3air-homebrew
+just m3air-activate
 ```
 
 Framework activation:
@@ -59,8 +63,8 @@ Framework activation:
 ```sh
 git clone --recurse-submodules https://github.com/iceice666/dotfiles ~/dotfiles
 cd ~/dotfiles
-just framework-build
-just framework-rebuild
+just build
+just switch
 ```
 
 After the first switch, use `just switch`.
@@ -81,7 +85,7 @@ Other:
 
 ```sh
 just update
-just update-input nixpkgs
+just update nixpkgs
 just search <query>
 just gc
 just store-size

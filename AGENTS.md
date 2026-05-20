@@ -79,8 +79,8 @@ Composition is structural: `common/ -> hosts/<name>/`.
 `self.submodules = true` is set so Git submodules are fetched.
 
 `themegen-cache` is a placeholder flake input. Build and switch recipes replace
-it with `path:$PWD/.cache/themegen/<host>` after running
-`just themegen-generate <host>`.
+it with `path:$PWD/.cache/themegen/<host>` after running `just theme` on the
+matching platform.
 
 ### Outputs
 
@@ -126,13 +126,13 @@ active switch path is the NixOS system target.
 Build and activate the Framework system:
 
 ```sh
-just framework-build
-just framework-rebuild
+just build
+just switch
 ```
 
 Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
 `nixos-rebuild`, or `home-manager` commands. The recipes run required
-pre-build steps such as `themegen-generate` and pass the correct flake input
+pre-build steps such as `theme` and pass the correct flake input
 overrides.
 
 Direct NixOS commands are for debugging only. If you must run one manually,
@@ -140,14 +140,14 @@ mirror the matching `Justfile` recipe, including `--override-input
 themegen-cache ...` where applicable.
 
 ```sh
-just themegen-generate framework
+just theme
 nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input themegen-cache path:$PWD/.cache/themegen/framework
 sudo nixos-rebuild switch --flake .#framework --override-input themegen-cache path:$PWD/.cache/themegen/framework
 ```
 
 The standalone Home Manager output `.#iceice666@framework` is kept only as a
-legacy fallback while migration cleanup is pending. Do not use it for normal
-Framework changes.
+legacy fallback while migration cleanup is pending. The Justfile no longer
+uses it; do not use it for normal Framework changes.
 
 Fingerprint authentication is configured in
 `hosts/framework/configuration/default.nix` through `services.fprintd.enable`
@@ -170,32 +170,32 @@ the existing Niri session.
 ```sh
 just build
 just switch
+just boot
 
-just m3air-build
-just m3air-rebuild
-just framework-build
-just framework-rebuild
-just framework-boot
-
+just theme
+just theme-preview
 just fmt
+just fmt-check
 just check
 ```
 
-- `just build` auto-detects the current host and runs the matching dry build.
-- `just switch` auto-detects the current host and applies the matching configuration.
-- `just boot` auto-detects the current host and sets the Framework boot generation when supported.
+- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux maps to `framework`.
+- `just boot` is Linux-only and sets the Framework NixOS generation for next boot.
+- `just theme` generates the concrete theme cache for the current platform host.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
-- `just check` runs `nix flake check --all-systems`.
-- Explicit rebuild commands apply changes; prefer dry builds while iterating.
+- `just check` runs format, Justfile metadata, and `nix flake check --all-systems`.
+- Recipe groups and platform guards use official `just` attributes such as `[group('host')]`, `[macos]`, and `[linux]`.
 
 ### Dry builds / targeted validation
 
 There is no unit-test suite. The closest equivalent is the narrowest host build that covers the change.
 
 ```sh
-just m3air-build
-just framework-build
+just build
 ```
+
+Run it on the platform that owns the changed host. For shared changes, dry-build
+on both `m3air` and `framework`.
 
 Which build to run for a given change:
 
@@ -214,7 +214,7 @@ Overlay packages have no standalone `nix build` target; validate them through th
 
 ```sh
 just update
-just update-input nixpkgs
+just update nixpkgs
 just search <query>
 just gc
 just store-size
@@ -225,10 +225,6 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
-just framework-bootstrap # install legacy Arch-owned Framework dependencies
-just framework-build    # dry-build the Framework NixOS system
-just framework-rebuild  # switch the Framework NixOS system
-just framework-boot     # set the Framework NixOS system for next boot
 ```
 
 ### Secrets helpers
@@ -330,7 +326,7 @@ Canonical module shape:
 - `common/` is the baseline for all hosts.
 - `common/configuration/` is only imported by `m3air` and is for Darwin system-level settings.
 - `common/home/` is imported by all hosts and owns shared user packages.
-- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `just themegen-generate <host>` renders concrete files into `.cache/themegen/<host>/` before builds, and Home Manager installs them through the `themegen-cache` flake input override.
+- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `just theme` renders concrete files into `.cache/themegen/<host>/` before builds, and Home Manager installs them through the `themegen-cache` flake input override.
 - `common/home/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses Squirrel from Homebrew; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
 - `common/home/themegen/` supports wallpaper-driven theme generation. Template modules under `common/home/themegen/templates/` are auto-discovered, self-describe their rendered/copied outputs plus `home.file` targets, and include a VSCode theme module that installs a generated extension manifest into `.vscode-oss/extensions/`.
 - `hosts/<name>/` contains machine-specific choices only.

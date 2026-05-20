@@ -260,7 +260,7 @@ let
       pkgs.fuzzel
       pkgs.ghostty
       pkgs.jq
-      pkgs.just
+      unstablePkgs.just
       niriPkg
     ];
     text = ''
@@ -278,8 +278,12 @@ let
 
       just_dir="$(dirname "$justfile")"
       recipes="$(
-        just --justfile "$justfile" --working-directory "$just_dir" \
-          --list --unsorted --list-heading "" --list-prefix "" 2>/dev/null
+        jq -r '
+          .recipes
+          | to_entries[]
+          | select(.value.private | not)
+          | "\(.value.namepath // .key)\t\(.value.doc // "")"
+        ' <<< "$justfile_json"
       )" || exit 0
       [ -n "$recipes" ] || exit 0
 
@@ -289,7 +293,7 @@ let
       )" || exit 0
 
       [ -n "$selection" ] || exit 0
-      recipe="''${selection%%[[:space:]]*}"
+      recipe="''${selection%%$'\t'*}"
       [ -n "$recipe" ] || exit 0
 
       exec ghostty \

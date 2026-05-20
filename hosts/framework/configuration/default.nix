@@ -249,15 +249,17 @@ in
     ];
   };
 
-  environment.systemPackages = with pkgs; [
-    git
-    just
-    vim
-    cage
-    fprintd
-    regreet
-    networkmanagerapplet
-  ];
+  environment.systemPackages =
+    with pkgs;
+    [
+      git
+      vim
+      cage
+      fprintd
+      regreet
+      networkmanagerapplet
+    ]
+    ++ [ unstablePkgs.just ];
 
   fonts.packages = with pkgs; [
     cascadia-code

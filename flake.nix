@@ -180,8 +180,7 @@
           );
         };
 
-      treefmtEval =
-        system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} (self + /treefmt.nix);
+      treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
     in
     {
       devShells.aarch64-darwin.default = devShellFor "aarch64-darwin";

@@ -7,7 +7,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 ## Pipeline
 
 1. Each host chooses a wallpaper in its host module.
-2. `just themegen-generate <host>` renders `themegen/common/` and then `themegen/<host>/` into `.cache/themegen/<host>/` when the wallpaper or templates changed.
+2. `just theme` renders `themegen/common/` and then `themegen/<host>/` into `.cache/themegen/<host>/` for the current platform host when the wallpaper or templates changed.
 3. Host-specific templates overwrite common templates when their relative paths match.
 4. `common/home/themegen/default.nix` recursively installs the generated cache into Home Manager.
 5. On Framework, Home Manager wraps the generated GTK CSS into a named Nix GTK theme package under `share/themes` and switches between `Themegen` and `Themegen-dark`.
@@ -25,15 +25,16 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 Generate concrete themes:
 
 ```sh
-just themegen-generate m3air
-just themegen-generate framework
+just theme
 ```
+
+Run it on the platform that owns the host: macOS renders `m3air`, and Linux
+renders `framework`.
 
 Normal build and switch recipes run generation first and pass the generated cache into the flake:
 
 ```sh
-just m3air-build
-just framework-build
+just build
 ```
 
 Generation is skipped when the host wallpaper and all `themegen/common/` plus `themegen/<host>/` templates match the last run. Input fingerprints live under `.cache/themegen/.state/`, outside the generated cache that Home Manager installs.
@@ -48,8 +49,8 @@ nix build .#nixosConfigurations.framework.config.system.build.toplevel \
 Render and open an HTML preview for a wallpaper palette:
 
 ```sh
-just themegen-preview
-just themegen-preview ./assets/another-wallpaper.png
+just theme-preview
+just theme-preview ./assets/another-wallpaper.png
 ```
 
 The generated file is written to `.cache/themegen/preview/index.html`.
@@ -68,8 +69,8 @@ The generated file is written to `.cache/themegen/preview/index.html`.
 For template or theme installer changes:
 
 ```sh
-just themegen-generate framework
-just framework-build
+just theme
+just build
 just fmt
 ```
 

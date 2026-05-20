@@ -14,7 +14,6 @@ let
     lazygit
     lazydocker
     fish
-    just
     xz
     zstd
     unrar
@@ -40,6 +39,7 @@ let
 
   unstablePackages = with unstablePkgs; [
     bun
+    just
     sops
   ];
 in
