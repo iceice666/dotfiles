@@ -78,8 +78,9 @@
           (systray :spacing 2 :space-evenly false :icon-size 24 :prepend-new false))))))
 
 (defwidget datetime-module []
-  (box :class "island datetime"
-    (label :limit-width 32 :text {datetime_text})))
+  (box :class "island datetime" :orientation "v" :space-evenly false :valign "center"
+    (label :class "datetime-date" :limit-width 16 :xalign 0.5 :text {datetime_date})
+    (label :class "datetime-time" :limit-width 8 :xalign 0.5 :text {datetime_time})))
 
 (defwidget notification-module []
   (button :class {notifications_class} :onclick "@notificationAction@"

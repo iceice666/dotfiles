@@ -520,7 +520,7 @@ fn spawn_datetime_thread(tx: mpsc::Sender<Vars>) {
     thread::spawn(move || {
         loop {
             send_vars(&tx, datetime_vars());
-            thread::sleep(Duration::from_secs(30));
+            thread::sleep(Duration::from_secs(1));
         }
     });
 }
@@ -1395,15 +1395,12 @@ fn datetime_vars() -> Vars {
     };
     let mut vars = Vars::new();
     vars.insert(
-        "datetime_text".to_string(),
-        format!(
-            "{}\u{6708}{}\u{65e5} \u{5468}{} {:02}:{:02}",
-            now.month(),
-            now.day(),
-            weekday,
-            now.hour(),
-            now.minute()
-        ),
+        "datetime_date".to_string(),
+        format!("{:02}/{:02} {}", now.month(), now.day(), weekday),
+    );
+    vars.insert(
+        "datetime_time".to_string(),
+        format!("{:02}:{:02}", now.hour(), now.minute()),
     );
     vars
 }

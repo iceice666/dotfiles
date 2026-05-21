@@ -256,6 +256,18 @@ button:active {
 
 .datetime {
     color: $foreground;
+    padding: 1px 6px;
+}
+
+.datetime-date {
+    color: $foreground;
+    font-size: 12px;
+}
+
+.datetime-time {
+    color: $primary;
+    font-size: 16px;
+    font-weight: 700;
 }
 
 .notifications {
