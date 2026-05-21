@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     env,
     ffi::OsStr,
     fs::{self, File, OpenOptions},
@@ -47,6 +47,10 @@ enum CliCommand {
         #[command(subcommand)]
         command: AudioCommand,
     },
+    Brightness {
+        #[command(subcommand)]
+        command: BrightnessCommand,
+    },
     Media {
         action: MediaAction,
     },
@@ -62,9 +66,11 @@ enum RefreshDomain {
     Niri,
     Audio,
     Battery,
+    Brightness,
     Perf,
     Media,
     Datetime,
+    Network,
     Notifications,
 }
 
@@ -79,6 +85,15 @@ enum AudioCommand {
     Toggle {
         device: AudioDevice,
     },
+    Set {
+        device: AudioDevice,
+        value: f32,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum BrightnessCommand {
+    Set { value: f32 },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -128,6 +143,8 @@ struct CommandPaths {
     upower: PathBuf,
     tlp_stat: PathBuf,
     playerctl: PathBuf,
+    brightnessctl: PathBuf,
+    nmcli: PathBuf,
     makoctl: PathBuf,
     pavucontrol: PathBuf,
     systemctl: PathBuf,
@@ -198,6 +215,34 @@ struct IconResolver {
     memory: HashMap<String, PathBuf>,
 }
 
+#[derive(Debug, Deserialize)]
+struct MakoNotification {
+    id: u64,
+    #[serde(default)]
+    app_name: Option<String>,
+    #[serde(default)]
+    desktop_entry: Option<String>,
+    #[serde(default)]
+    summary: String,
+    #[serde(default)]
+    body: String,
+    #[serde(default)]
+    urgency: String,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq)]
+struct NotificationRow {
+    key: String,
+    id: String,
+    source: String,
+    class: String,
+    app: String,
+    summary: String,
+    body: String,
+    urgency: String,
+    unread: bool,
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let cfg = Arc::new(read_config(&cli.config_file)?);
@@ -223,6 +268,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         CliCommand::Audio { command } => run_audio_command(&cfg, command),
+        CliCommand::Brightness { command } => run_brightness_command(&cfg, command),
         CliCommand::Media { action } => run_media_command(&cfg, action),
         CliCommand::Notifications { command } => run_notification_command(&cfg, command),
     }
@@ -249,8 +295,10 @@ fn run_daemon(cfg: Arc<Config>) -> Result<()> {
     spawn_niri_thread(cfg.clone(), tx.clone());
     spawn_audio_thread(cfg.clone(), tx.clone());
     spawn_battery_thread(cfg.clone(), tx.clone());
+    spawn_brightness_thread(cfg.clone(), tx.clone());
     spawn_perf_thread(cfg.clone(), tx.clone());
     spawn_media_thread(cfg.clone(), tx.clone());
+    spawn_network_thread(cfg.clone(), tx.clone());
     spawn_datetime_thread(tx.clone());
     spawn_notifications_thread(cfg.clone(), tx);
 
@@ -497,6 +545,15 @@ fn spawn_battery_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
     });
 }
 
+fn spawn_brightness_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
+    thread::spawn(move || {
+        loop {
+            send_result(&tx, brightness_vars(&cfg));
+            thread::sleep(Duration::from_secs(2));
+        }
+    });
+}
+
 fn spawn_perf_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
     thread::spawn(move || {
         let mut sampler = PerfSampler::default();
@@ -512,6 +569,15 @@ fn spawn_media_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
         loop {
             send_result(&tx, media_vars(&cfg));
             thread::sleep(Duration::from_secs(2));
+        }
+    });
+}
+
+fn spawn_network_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
+    thread::spawn(move || {
+        loop {
+            send_result(&tx, network_vars(&cfg));
+            thread::sleep(Duration::from_secs(10));
         }
     });
 }
@@ -555,8 +621,10 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
             vars.extend(niri_vars(cfg, &mut resolver)?);
             vars.extend(audio_vars(cfg)?);
             vars.extend(battery_vars(cfg)?);
+            vars.extend(brightness_vars(cfg)?);
             vars.extend(perf_vars(cfg, &mut sampler)?);
             vars.extend(media_vars(cfg)?);
+            vars.extend(network_vars(cfg)?);
             vars.extend(datetime_vars());
             vars.extend(notification_vars(cfg, true)?);
         }
@@ -566,12 +634,14 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
         }
         RefreshDomain::Audio => vars.extend(audio_vars(cfg)?),
         RefreshDomain::Battery => vars.extend(battery_vars(cfg)?),
+        RefreshDomain::Brightness => vars.extend(brightness_vars(cfg)?),
         RefreshDomain::Perf => {
             let mut sampler = PerfSampler::default();
             vars.extend(perf_vars(cfg, &mut sampler)?);
         }
         RefreshDomain::Media => vars.extend(media_vars(cfg)?),
         RefreshDomain::Datetime => vars.extend(datetime_vars()),
+        RefreshDomain::Network => vars.extend(network_vars(cfg)?),
         RefreshDomain::Notifications => vars.extend(notification_vars(cfg, true)?),
     }
 
@@ -613,10 +683,34 @@ fn run_audio_command(cfg: &Arc<Config>, command: AudioCommand) -> Result<()> {
                 ["set-mute", audio_target(device), "toggle"],
             )?;
         }
+        AudioCommand::Set { device, value } => {
+            let value = format_audio_set_value(value);
+            status(
+                cfg,
+                &cfg.commands.wpctl,
+                ["set-volume", audio_target(device), value.as_str()],
+            )?;
+        }
     }
 
     thread::sleep(Duration::from_millis(40));
     eww_update(cfg, &audio_vars(cfg)?)
+}
+
+fn run_brightness_command(cfg: &Arc<Config>, command: BrightnessCommand) -> Result<()> {
+    match command {
+        BrightnessCommand::Set { value } => {
+            let value = format_brightness_set_value(value);
+            status(
+                cfg,
+                &cfg.commands.brightnessctl,
+                ["--class=backlight", "set", value.as_str()],
+            )?;
+        }
+    }
+
+    thread::sleep(Duration::from_millis(40));
+    eww_update(cfg, &brightness_vars(cfg)?)
 }
 
 fn run_media_command(cfg: &Arc<Config>, action: MediaAction) -> Result<()> {
@@ -994,12 +1088,17 @@ fn audio_vars(cfg: &Config) -> Result<Vars> {
     };
 
     vars.insert("audio_speaker_value".to_string(), speaker.value.to_string());
+    vars.insert(
+        "audio_speaker_percent".to_string(),
+        format!("{}%", speaker.value),
+    );
     vars.insert("audio_speaker_class".to_string(), speaker_class);
     vars.insert("audio_speaker_icon".to_string(), speaker_icon);
     vars.insert("audio_speaker_text".to_string(), speaker_text);
     vars.insert("audio_speaker_color".to_string(), speaker_color);
     vars.insert("audio_speaker_device".to_string(), speaker.device);
     vars.insert("audio_mic_value".to_string(), mic.value.to_string());
+    vars.insert("audio_mic_percent".to_string(), format!("{}%", mic.value));
     vars.insert("audio_mic_class".to_string(), mic_class);
     vars.insert("audio_mic_icon".to_string(), mic_icon);
     vars.insert("audio_mic_text".to_string(), mic_text);
@@ -1229,6 +1328,39 @@ fn battery_event_affects_bar(event: &str) -> bool {
         || event.contains("daemon changed:")
 }
 
+fn brightness_vars(cfg: &Config) -> Result<Vars> {
+    let value = output(
+        cfg,
+        &cfg.commands.brightnessctl,
+        ["--class=backlight", "--machine-readable", "info"],
+    )?
+    .and_then(|text| parse_brightness_machine(&text))
+    .unwrap_or(0);
+
+    let mut vars = Vars::new();
+    vars.insert("brightness_value".to_string(), value.to_string());
+    vars.insert("brightness_text".to_string(), format!("{value}%"));
+    Ok(vars)
+}
+
+fn parse_brightness_machine(text: &str) -> Option<u8> {
+    text.split(',')
+        .nth(3)?
+        .trim()
+        .trim_end_matches('%')
+        .parse::<f64>()
+        .ok()
+        .map(|value| value.round().clamp(0.0, 100.0) as u8)
+}
+
+fn format_audio_set_value(value: f32) -> String {
+    format!("{:.3}", value.clamp(0.0, 100.0) / 100.0)
+}
+
+fn format_brightness_set_value(value: f32) -> String {
+    format!("{}%", value.round().clamp(1.0, 100.0) as u8)
+}
+
 fn perf_vars(cfg: &Config, sampler: &mut PerfSampler) -> Result<Vars> {
     let iface = network_interface(cfg);
     let (up, down) = network_rates(&iface, sampler);
@@ -1282,6 +1414,88 @@ fn network_rates(iface: &str, sampler: &mut PerfSampler) -> (String, String) {
     let down = rx.saturating_sub(previous.rx) / 1024 / elapsed;
     let up = tx.saturating_sub(previous.tx) / 1024 / elapsed;
     (format_rate(up), format_rate(down))
+}
+
+fn network_vars(cfg: &Config) -> Result<Vars> {
+    let iface = network_interface(cfg);
+    let device = output(
+        cfg,
+        &cfg.commands.nmcli,
+        [
+            "-t",
+            "-f",
+            "GENERAL.STATE,GENERAL.CONNECTION",
+            "dev",
+            "show",
+            iface.as_str(),
+        ],
+    )?
+    .unwrap_or_default();
+    let state = parse_nmcli_field(&device, "GENERAL.STATE").unwrap_or_default();
+    let connection = parse_nmcli_field(&device, "GENERAL.CONNECTION").unwrap_or_default();
+    let signal = output(
+        cfg,
+        &cfg.commands.nmcli,
+        [
+            "-t",
+            "-f",
+            "ACTIVE,SSID,SIGNAL",
+            "dev",
+            "wifi",
+            "list",
+            "--rescan",
+            "no",
+        ],
+    )?
+    .and_then(|text| parse_active_wifi_signal(&text));
+
+    let connected = state.starts_with("100");
+    let label = if connected && !connection.is_empty() && connection != "--" {
+        connection
+    } else if connected {
+        iface.clone()
+    } else {
+        "Disconnected".to_string()
+    };
+    let detail = match signal {
+        Some(signal) if connected => format!("Wi-Fi {signal}%"),
+        _ if connected => "Connected".to_string(),
+        _ => "Offline".to_string(),
+    };
+    let class = if connected {
+        "cc-tile network connected"
+    } else {
+        "cc-tile network disconnected"
+    };
+
+    let mut vars = Vars::new();
+    vars.insert("network_label".to_string(), label);
+    vars.insert("network_detail".to_string(), detail);
+    vars.insert("network_class".to_string(), class.to_string());
+    Ok(vars)
+}
+
+fn parse_nmcli_field(text: &str, field: &str) -> Option<String> {
+    text.lines().find_map(|line| {
+        let (key, value) = line.split_once(':')?;
+        (key == field).then(|| unescape_nmcli(value))
+    })
+}
+
+fn parse_active_wifi_signal(text: &str) -> Option<u8> {
+    text.lines().find_map(|line| {
+        let mut fields = line.split(':');
+        let active = fields.next()?;
+        let _ssid = fields.next()?;
+        let signal = fields.next()?;
+        (active == "yes")
+            .then(|| signal.parse::<u8>().ok())
+            .flatten()
+    })
+}
+
+fn unescape_nmcli(value: &str) -> String {
+    value.replace("\\:", ":").replace("\\\\", "\\")
 }
 
 fn ram_percent() -> Option<String> {
@@ -1408,11 +1622,17 @@ fn datetime_vars() -> Vars {
 fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
     let foreground = theme_color(cfg, "foreground", "#e5e5e5");
     let critical = theme_color(cfg, "critical", "#ef4444");
+    let active_notifications = mako_notifications(cfg, "list").unwrap_or_default();
+    let history_notifications = mako_notifications(cfg, "history").unwrap_or_default();
     let state = notification_state()?;
     let _guard = state.lock()?;
 
     if prune {
-        let history_ids = mako_history_ids(cfg)?;
+        let history_ids = active_notifications
+            .iter()
+            .chain(history_notifications.iter())
+            .map(|notification| notification.id.to_string())
+            .collect::<Vec<_>>();
         let unread = state.read_unread()?;
         let retained = unread
             .into_iter()
@@ -1421,7 +1641,8 @@ fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
         state.write_unread(&retained)?;
     }
 
-    let count = state.read_unread()?.len();
+    let unread = state.read_unread()?;
+    let count = unread.len();
     let label = if count > 99 {
         "99+".to_string()
     } else {
@@ -1434,12 +1655,104 @@ fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
         color = critical;
     }
 
+    let rows = notification_rows(&active_notifications, &history_notifications, &unread);
     let mut vars = Vars::new();
     vars.insert("notifications_count".to_string(), count.to_string());
     vars.insert("notifications_label".to_string(), label);
     vars.insert("notifications_class".to_string(), class);
     vars.insert("notifications_color".to_string(), color);
+    vars.insert(
+        "notifications_history_count".to_string(),
+        rows.len().to_string(),
+    );
+    vars.insert(
+        "notifications_history".to_string(),
+        serde_json::to_string(&rows)?,
+    );
     Ok(vars)
+}
+
+fn mako_notifications(cfg: &Config, command_name: &str) -> Result<Vec<MakoNotification>> {
+    let text = output(cfg, &cfg.commands.makoctl, [command_name, "-j"])?.unwrap_or_default();
+    if text.trim().is_empty() {
+        Ok(Vec::new())
+    } else {
+        serde_json::from_str(&text)
+            .with_context(|| format!("failed to parse makoctl {command_name} JSON"))
+    }
+}
+
+fn notification_rows(
+    active: &[MakoNotification],
+    history: &[MakoNotification],
+    unread: &[String],
+) -> Vec<NotificationRow> {
+    let unread = unread.iter().cloned().collect::<HashSet<_>>();
+    let mut seen = HashSet::new();
+    let mut rows = Vec::new();
+
+    for (source, notifications) in [("active", active), ("history", history)] {
+        for notification in notifications {
+            if !seen.insert(notification.id) {
+                continue;
+            }
+            if rows.len() >= 6 {
+                return rows;
+            }
+            rows.push(notification_row(notification, source, &unread));
+        }
+    }
+
+    rows
+}
+
+fn notification_row(
+    notification: &MakoNotification,
+    source: &str,
+    unread: &HashSet<String>,
+) -> NotificationRow {
+    let id = notification.id.to_string();
+    let app = notification
+        .app_name
+        .as_deref()
+        .filter(|value| !value.is_empty())
+        .or(notification.desktop_entry.as_deref())
+        .filter(|value| !value.is_empty())
+        .unwrap_or("Notification")
+        .to_string();
+    let summary = if notification.summary.trim().is_empty() {
+        app.clone()
+    } else {
+        notification.summary.trim().to_string()
+    };
+    let body = notification
+        .body
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    let urgency = if notification.urgency.trim().is_empty() {
+        "normal".to_string()
+    } else {
+        notification.urgency.trim().to_string()
+    };
+
+    let mut class = format!("cc-notification-row {source} {urgency}");
+    let is_unread = unread.contains(&id);
+    if is_unread {
+        class.push_str(" unread");
+    }
+
+    NotificationRow {
+        key: format!("{source}-{id}"),
+        id,
+        source: source.to_string(),
+        class,
+        app,
+        summary,
+        body,
+        urgency,
+        unread: is_unread,
+    }
 }
 
 struct NotificationState {
@@ -1948,6 +2261,22 @@ mod tests {
     }
 
     #[test]
+    fn formats_audio_and_brightness_set_values() {
+        assert_eq!(format_audio_set_value(42.0), "0.420");
+        assert_eq!(format_audio_set_value(150.0), "1.000");
+        assert_eq!(format_brightness_set_value(0.0), "1%");
+        assert_eq!(format_brightness_set_value(92.4), "92%");
+    }
+
+    #[test]
+    fn parses_brightness_machine_output() {
+        assert_eq!(
+            parse_brightness_machine("amdgpu_bl1,backlight,60295,92%,65535"),
+            Some(92)
+        );
+    }
+
+    #[test]
     fn parses_wpctl_description_with_fallback() {
         let text = r#"
             node.name = "alsa_output"
@@ -1989,6 +2318,64 @@ mod tests {
     fn parses_mako_history() {
         let text = "Notification 42:\n  App name: test\nNotification 100:\n";
         assert_eq!(parse_mako_history_ids(text), vec!["42", "100"]);
+    }
+
+    #[test]
+    fn parses_mako_json_history() {
+        let text = r#"[{"id":42,"app_name":"Ghostty","summary":"Build","body":"Done","urgency":"normal"}]"#;
+        let notifications = serde_json::from_str::<Vec<MakoNotification>>(text).unwrap();
+        assert_eq!(notifications[0].id, 42);
+        assert_eq!(notifications[0].app_name.as_deref(), Some("Ghostty"));
+        assert_eq!(notifications[0].summary, "Build");
+    }
+
+    #[test]
+    fn builds_notification_rows_active_first() {
+        let active = vec![MakoNotification {
+            id: 2,
+            app_name: Some("Chat".to_string()),
+            desktop_entry: None,
+            summary: "Message".to_string(),
+            body: "hello\nthere".to_string(),
+            urgency: "normal".to_string(),
+        }];
+        let history = vec![
+            MakoNotification {
+                id: 2,
+                app_name: Some("Chat".to_string()),
+                desktop_entry: None,
+                summary: "Message".to_string(),
+                body: "duplicate".to_string(),
+                urgency: "normal".to_string(),
+            },
+            MakoNotification {
+                id: 1,
+                app_name: None,
+                desktop_entry: Some("app.desktop".to_string()),
+                summary: String::new(),
+                body: "old".to_string(),
+                urgency: String::new(),
+            },
+        ];
+        let rows = notification_rows(&active, &history, &["2".to_string()]);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].key, "active-2");
+        assert!(rows[0].class.contains("unread"));
+        assert_eq!(rows[0].body, "hello there");
+        assert_eq!(rows[1].summary, "app.desktop");
+    }
+
+    #[test]
+    fn parses_network_fields() {
+        let text = "GENERAL.STATE:100 (connected)\nGENERAL.CONNECTION:yee\\:lab\n";
+        assert_eq!(
+            parse_nmcli_field(text, "GENERAL.CONNECTION").as_deref(),
+            Some("yee:lab")
+        );
+        assert_eq!(
+            parse_active_wifi_signal("no:other:40\nyes:yee:95").as_ref(),
+            Some(&95)
+        );
     }
 
     #[test]

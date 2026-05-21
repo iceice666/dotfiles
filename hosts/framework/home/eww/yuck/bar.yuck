@@ -7,6 +7,14 @@
   :namespace "framework-eww-bar"
   (bar-content :monitor monitor))
 
+(defwindow control-center [monitor]
+  :monitor monitor
+  :geometry (geometry :x "10px" :y "42px" :width "392px" :height "720px" :anchor "top right")
+  :stacking "fg"
+  :exclusive false
+  :namespace "framework-eww-control-center"
+  (control-center-content))
+
 (defwidget bar-content [monitor]
   (box :class "bar-root" :hexpand true :vexpand true
     (centerbox :class "bar"
@@ -18,10 +26,8 @@
       (box :class "right" :space-evenly false :spacing 4 :halign "end" :valign "center"
         (perf-module)
         (battery-module)
-        (audio-module)
-        (systray-module)
         (datetime-module)
-        (notification-module)))))
+        (control-center-button :monitor monitor)))))
 
 (defwidget perf-module []
   (box :class "island compact perf" :space-evenly false :valign "center"
@@ -51,40 +57,95 @@
       (revealer :class "battery-device-revealer" :transition "slideright" :reveal {battery_revealed} :duration "120ms"
         (label :class "battery-device-label" :text {battery_tooltip})))))
 
-(defwidget audio-module []
-  (box :class "island audio" :space-evenly false
-    (eventbox :class {audio_speaker_class} :tooltip {audio_speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@" :onscroll "@changeSpeakerVolume@ {}" :onhover "${EWW_CMD} update audio_speaker_revealed=true" :onhoverlost "${EWW_CMD} update audio_speaker_revealed=false"
-      (box :class "audio-device" :space-evenly false :spacing 0
-        (box :class "ring-slot" :space-evenly true :valign "center"
-          (circular-progress :class "audio-ring" :width 32 :height 32 :halign "center" :valign "center" :value {audio_speaker_value} :start-at 75 :thickness 3
-            (image :path {audio_speaker_icon} :image-width 20 :image-height 20 :fill-svg {audio_speaker_color})))
-        (revealer :class "audio-device-revealer" :transition "slideright" :reveal {audio_speaker_revealed} :duration "120ms"
-          (label :class "audio-device-label" :text {audio_speaker_device}))))
-    (eventbox :class {audio_mic_class} :tooltip {audio_mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@" :onscroll "@changeMicVolume@ {}" :onhover "${EWW_CMD} update audio_mic_revealed=true" :onhoverlost "${EWW_CMD} update audio_mic_revealed=false"
-      (box :class "audio-device" :space-evenly false :spacing 0
-        (box :class "ring-slot" :space-evenly true :valign "center"
-          (circular-progress :class "audio-ring" :width 32 :height 32 :halign "center" :valign "center" :value {audio_mic_value} :start-at 75 :thickness 3
-            (image :path {audio_mic_icon} :image-width 20 :image-height 20 :fill-svg {audio_mic_color})))
-        (revealer :class "audio-device-revealer" :transition "slideright" :reveal {audio_mic_revealed} :duration "120ms"
-          (label :class "audio-device-label" :text {audio_mic_device}))))))
-
-(defwidget systray-module []
-  (eventbox :class "island tray" :onhover "${EWW_CMD} update systray_revealed=true" :onhoverlost "${EWW_CMD} update systray_revealed=false"
-    (box :class "tray-device" :space-evenly false :spacing 0
-      (box :class "tray-slot" :space-evenly true :valign "center"
-        (image :path "@trayIcon@" :image-width 20 :image-height 20 :fill-svg {battery_color}))
-      (revealer :class "tray-revealer" :transition "slideright" :reveal {systray_revealed} :duration "120ms"
-        (box :class "tray-icons" :space-evenly false
-          (systray :spacing 2 :space-evenly false :icon-size 24 :prepend-new false))))))
-
 (defwidget datetime-module []
   (box :class "island datetime" :orientation "v" :space-evenly false :valign "center"
     (label :class "datetime-date" :limit-width 16 :xalign 0.5 :text {datetime_date})
     (label :class "datetime-time" :limit-width 8 :xalign 0.5 :text {datetime_time})))
 
-(defwidget notification-module []
-  (button :class {notifications_class} :onclick "@notificationAction@"
-    (overlay :class "notification-stack"
-      (box :class "notification-icon-wrap" :space-evenly false
-        (image :path "@notificationIcon@" :image-width 24 :image-height 24 :fill-svg {notifications_color}))
+(defwidget control-center-button [monitor]
+  (button :class {notifications_count > 0 ? "island control-center-button active" : "island control-center-button"} :onclick "${EWW_CMD} open --toggle --arg monitor=${monitor} control-center"
+    (overlay :class "control-center-stack"
+      (box :class "control-center-icon-wrap" :space-evenly false
+        (image :path "@controlCenterIcon@" :image-width 23 :image-height 23 :fill-svg {notifications_count > 0 ? notifications_color : battery_color}))
       (label :class "notification-badge" :visible {notifications_count > 0} :halign "end" :valign "start" :limit-width 4 :text {notifications_label}))))
+
+(defwidget control-center-content []
+  (box :class "control-center-panel" :orientation "v" :space-evenly false :spacing 10
+    (box :class "cc-header" :space-evenly false
+      (label :class "cc-title" :xalign 0 :hexpand true :text "Control Center")
+      (button :class "cc-close" :onclick "${EWW_CMD} close control-center"
+        (label :text "Close")))
+    (box :class "cc-grid" :space-evenly true :spacing 8
+      (box :class {network_class} :orientation "v" :space-evenly false :hexpand true
+        (box :class "cc-tile-head" :space-evenly false
+          (image :path "@networkIcon@" :image-width 24 :image-height 24 :fill-svg {battery_color})
+          (label :class "cc-tile-title" :xalign 0 :text "Wi-Fi"))
+        (label :class "cc-tile-main" :xalign 0 :limit-width 18 :text {network_label})
+        (label :class "cc-tile-sub" :xalign 0 :text {network_detail}))
+      (box :class "cc-tile battery-status" :orientation "v" :space-evenly false :hexpand true
+        (box :class "cc-tile-head" :space-evenly false
+          (image :path {battery_icon} :image-width 24 :image-height 24 :fill-svg {battery_color})
+          (label :class "cc-tile-title" :xalign 0 :text "Battery"))
+        (label :class "cc-tile-main" :xalign 0 :text "${battery_value}%")
+        (label :class "cc-tile-sub" :xalign 0 :limit-width 20 :text {battery_tooltip})))
+    (box :class "cc-section sliders" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (button :class {audio_speaker_class} :tooltip {audio_speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@"
+          (image :path {audio_speaker_icon} :image-width 22 :image-height 22 :fill-svg {audio_speaker_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_speaker_device})
+            (label :class "cc-slider-value" :text {audio_speaker_percent}))
+          (scale :class "cc-scale" :min 0 :max 100 :value {audio_speaker_value} :onchange "@setSpeakerVolume@ {}")))
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (button :class {audio_mic_class} :tooltip {audio_mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@"
+          (image :path {audio_mic_icon} :image-width 22 :image-height 22 :fill-svg {audio_mic_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_mic_device})
+            (label :class "cc-slider-value" :text {audio_mic_percent}))
+          (scale :class "cc-scale" :min 0 :max 100 :value {audio_mic_value} :onchange "@setMicVolume@ {}")))
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (box :class "cc-slider-icon" :space-evenly true
+          (image :path "@brightnessIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text "Display")
+            (label :class "cc-slider-value" :text {brightness_text}))
+          (scale :class "cc-scale" :min 1 :max 100 :value {brightness_value} :onchange "@setBrightness@ {}"))))
+    (box :class "cc-section media-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-section-head" :space-evenly false
+        (image :path "@mediaIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color})
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Now Playing"))
+      (label :class "cc-media-text" :xalign 0 :limit-width 44 :text {media_text == "" ? "No media" : media_text})
+      (box :class "cc-media-actions" :space-evenly true :visible {media_text != ""}
+        (button :class "cc-action-button" :onclick "@previousMedia@"
+          (label :text "Prev"))
+        (button :class "cc-action-button primary" :onclick "@playPauseMedia@"
+          (label :text "Play"))
+        (button :class "cc-action-button" :onclick "@nextMedia@"
+          (label :text "Next"))))
+    (box :class "cc-section tray-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-section-head" :space-evenly false
+        (image :path "@trayIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color})
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Menu Bar"))
+      (box :class "cc-tray-icons" :space-evenly false
+        (systray :spacing 6 :space-evenly false :icon-size 24 :prepend-new false)))
+    (box :class "cc-section notifications-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-section-head" :space-evenly false
+        (image :path "@notificationIcon@" :image-width 22 :image-height 22 :fill-svg {notifications_color})
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Notifications")
+        (label :class "cc-count" :text {notifications_history_count}))
+      (label :class "cc-empty" :visible {notifications_history_count == 0} :xalign 0 :text "No notifications")
+      (box :class "cc-notification-list" :orientation "v" :space-evenly false :spacing 6 :visible {notifications_history_count > 0}
+        (for notification in {notifications_history ?: []}
+          (box :class {notification.class} :orientation "v" :space-evenly false
+            (button :class "cc-notification-summary" :onclick "${EWW_CMD} update notification_expanded_id=${notification_expanded_id == notification.key ? "__none" : notification.key}"
+              (box :space-evenly false :spacing 8
+                (box :class "cc-notification-dot" :visible {notification.unread})
+                (box :orientation "v" :space-evenly false :hexpand true
+                  (label :class "cc-notification-app" :xalign 0 :limit-width 34 :text {notification.app})
+                  (label :class "cc-notification-title" :xalign 0 :limit-width 34 :text {notification.summary}))
+                (label :class "cc-notification-source" :text {notification.source == "active" ? "Now" : "History"})))
+            (revealer :class "cc-notification-body-wrap" :transition "slidedown" :reveal {notification_expanded_id == notification.key} :duration "140ms"
+              (label :class "cc-notification-body" :xalign 0 :limit-width 46 :wrap true :text {notification.body == "" ? "No details" : notification.body}))))))))

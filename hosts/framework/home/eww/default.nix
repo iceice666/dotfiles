@@ -28,8 +28,20 @@ let
     batteryUnknown = pkgs.writeText "eww-battery-unknown.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M10 2h4v2h-4z"/><path d="M8 5h8a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm3 4v2h2V9zm0 4v5h2v-5z"/></svg>
     '';
+    brightness = pkgs.writeText "eww-brightness.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M11 1h2v4h-2zM11 19h2v4h-2zM1 11h4v2H1zM19 11h4v2h-4zM4.22 2.8 7.05 5.64 5.64 7.05 2.8 4.22zM16.95 18.36l1.41-1.41 2.84 2.83-1.42 1.42zM2.8 19.78l2.84-2.83 1.41 1.41-2.83 2.84zM16.95 5.64l2.83-2.84 1.42 1.42-2.84 2.83zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>
+    '';
+    controlCenter = pkgs.writeText "eww-control-center.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 1 1 0 6H7a3 3 0 0 1-3-3zm3-1a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2zM4 17a3 3 0 1 1 3 3h10a3 3 0 1 1 0-6H7a3 3 0 0 1-3 3zm3-1a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2z"/></svg>
+    '';
+    media = pkgs.writeText "eww-media.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M5 4h2v16H5zM9 5l10 7-10 7z"/></svg>
+    '';
     micActive = pkgs.writeText "eww-mic-active.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.92V21h4v2H7v-2h4v-3.08A7 7 0 0 1 5 11z"/></svg>
+    '';
+    network = pkgs.writeText "eww-network.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12 18.5 8.5 15a5 5 0 0 1 7 0z"/><path d="m5.65 12.15 1.42 1.42a7 7 0 0 1 9.86 0l1.42-1.42a9 9 0 0 0-12.7 0z"/><path d="m2.8 9.3 1.42 1.4a11 11 0 0 1 15.56 0l1.42-1.4a13 13 0 0 0-18.4 0z"/><circle cx="12" cy="20" r="1.5"/></svg>
     '';
     micMuted = pkgs.writeText "eww-mic-muted.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M4.7 3.3 21 19.6 19.6 21l-3.5-3.5A7 7 0 0 1 13 17.92V21h4v2H7v-2h4v-3.08A7 7 0 0 1 5 11h2a5 5 0 0 0 7.6 4.26l-2.1-2.1A3 3 0 0 1 9 10.5V6.7l-5.7-5.7z"/><path d="M15 11.7V6a3 3 0 0 0-4.88-2.34l6.1 6.1A5 5 0 0 1 15 11.7zM17 11h2a6.95 6.95 0 0 1-1.04 3.65l-1.5-1.5A5 5 0 0 0 17 11z"/></svg>
@@ -65,6 +77,8 @@ let
         upower = "${pkgs.upower}/bin/upower";
         tlpStat = "${pkgs.tlp}/bin/tlp-stat";
         playerctl = "${pkgs.playerctl}/bin/playerctl";
+        brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
+        nmcli = "${pkgs.networkmanager}/bin/nmcli";
         makoctl = "${unstablePkgs.mako}/bin/makoctl";
         pavucontrol = "${pkgs.pavucontrol}/bin/pavucontrol";
         systemctl = "${pkgs.systemd}/bin/systemctl";
@@ -81,8 +95,14 @@ let
     notificationMarkRead = "${stateCommand} notifications mark-read";
     notificationMarkUnread = "${stateCommand} notifications mark-unread";
     niriGroupsSeed = "${stateCommand} seed-niri-groups";
+    nextMedia = "${stateCommand} media next";
     openPavucontrol = "${stateCommand} open-pavucontrol";
+    playPauseMedia = "${stateCommand} media play-pause";
+    previousMedia = "${stateCommand} media previous";
     reloadEww = "${stateCommand} reload";
+    setBrightness = "${stateCommand} brightness set";
+    setMicVolume = "${stateCommand} audio set mic";
+    setSpeakerVolume = "${stateCommand} audio set speaker";
     toggleMic = "${stateCommand} audio toggle mic";
     toggleSpeaker = "${stateCommand} audio toggle speaker";
   };
@@ -97,14 +117,24 @@ let
     builtins.replaceStrings
       [
         "@batteryUnknown@"
+        "@brightnessIcon@"
         "@changeMicVolume@"
         "@changeSpeakerVolume@"
+        "@controlCenterIcon@"
         "@focusWindow@"
+        "@mediaIcon@"
         "@micActive@"
+        "@networkIcon@"
+        "@nextMedia@"
         "@niriGroupsSeed@"
         "@notificationAction@"
         "@notificationIcon@"
         "@openPavucontrol@"
+        "@playPauseMedia@"
+        "@previousMedia@"
+        "@setBrightness@"
+        "@setMicVolume@"
+        "@setSpeakerVolume@"
         "@speakerHigh@"
         "@trayIcon@"
         "@toggleMic@"
@@ -112,14 +142,24 @@ let
       ]
       [
         (toString icons.batteryUnknown)
+        (toString icons.brightness)
         stateCommands.changeMicVolume
         stateCommands.changeSpeakerVolume
+        (toString icons.controlCenter)
         stateCommands.focusWindow
+        (toString icons.media)
         (toString icons.micActive)
+        (toString icons.network)
+        stateCommands.nextMedia
         stateCommands.niriGroupsSeed
         stateCommands.notificationAction
         (toString icons.notification)
         stateCommands.openPavucontrol
+        stateCommands.playPauseMedia
+        stateCommands.previousMedia
+        stateCommands.setBrightness
+        stateCommands.setMicVolume
+        stateCommands.setSpeakerVolume
         (toString icons.speakerHigh)
         (toString icons.tray)
         stateCommands.toggleMic

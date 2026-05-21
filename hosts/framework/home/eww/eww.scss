@@ -17,6 +17,41 @@ button {
     background-image: none;
 }
 
+menu {
+    background: $surfaceActive;
+    background-color: $surfaceActive;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    color: $foreground;
+    padding: 6px;
+}
+
+menuitem {
+    background: transparent;
+    background-color: transparent;
+    border-radius: 6px;
+    color: $foreground;
+    min-height: 24px;
+    padding: 4px 10px;
+}
+
+menuitem:hover,
+menuitem:selected {
+    background: $surfaceHover;
+    background-color: $surfaceHover;
+}
+
+menuitem:disabled {
+    color: $foregroundDim;
+}
+
+menu separator {
+    background: $outline;
+    background-color: $outline;
+    margin: 4px 6px;
+    min-height: 1px;
+}
+
 .left,
 .center,
 .right,
@@ -299,4 +334,229 @@ button:active {
     min-height: 14px;
     min-width: 14px;
     padding: 0 3px;
+}
+
+.control-center-button {
+    margin-right: 0;
+    padding: 2px 5px;
+}
+
+.control-center-button:hover,
+.control-center-button.active {
+    background: $surfaceHover;
+}
+
+.control-center-stack {
+    min-height: 26px;
+    min-width: 32px;
+}
+
+.control-center-icon-wrap {
+    margin: 1px 4px 0 0;
+}
+
+.control-center-panel {
+    background: $surface;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    color: $foreground;
+    margin: 0;
+    padding: 12px;
+}
+
+.cc-header {
+    min-height: 28px;
+}
+
+.cc-title {
+    color: $foreground;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.cc-close {
+    background: $surfaceHover;
+    border-radius: 8px;
+    color: $foregroundDim;
+    font-size: 11px;
+    min-width: 48px;
+    padding: 4px 8px;
+}
+
+.cc-close:hover {
+    background: $surfaceActive;
+    color: $foreground;
+}
+
+.cc-grid {
+    min-height: 92px;
+}
+
+.cc-tile,
+.cc-section {
+    background: $surfaceHover;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.cc-tile {
+    min-height: 74px;
+}
+
+.cc-tile.connected {
+    border-color: $primary;
+}
+
+.cc-tile.disconnected {
+    color: $foregroundDim;
+}
+
+.cc-tile-head,
+.cc-section-head,
+.cc-slider-labels {
+    min-height: 24px;
+}
+
+.cc-tile-title,
+.cc-section-title,
+.cc-slider-title {
+    color: $foreground;
+    font-weight: 700;
+    padding-left: 7px;
+}
+
+.cc-tile-main {
+    color: $foreground;
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+.cc-tile-sub,
+.cc-slider-value,
+.cc-media-text,
+.cc-count,
+.cc-empty,
+.cc-notification-app,
+.cc-notification-source,
+.cc-notification-body {
+    color: $foregroundDim;
+}
+
+.cc-section {
+    padding: 9px 10px;
+}
+
+.cc-slider-row {
+    min-height: 48px;
+}
+
+.cc-slider-icon,
+.cc-slider-row .audio-control {
+    background: $surfaceActive;
+    border-radius: 8px;
+    min-height: 36px;
+    min-width: 36px;
+}
+
+.cc-slider-row .audio-control:hover {
+    background: $surfaceActive;
+}
+
+.cc-slider-stack {
+    min-height: 44px;
+}
+
+.cc-scale {
+    min-width: 284px;
+}
+
+.cc-scale trough {
+    background: $surfaceActive;
+    border-radius: 999px;
+    min-height: 8px;
+}
+
+.cc-scale highlight {
+    background: $primary;
+    border-radius: 999px;
+}
+
+.cc-scale slider {
+    background: $foreground;
+    border: 1px solid $outline;
+    border-radius: 999px;
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.cc-media-actions {
+    min-height: 32px;
+}
+
+.cc-action-button {
+    background: $surfaceActive;
+    border-radius: 8px;
+    color: $foreground;
+    min-width: 70px;
+    padding: 5px 10px;
+}
+
+.cc-action-button:hover,
+.cc-action-button.primary {
+    background: $primary;
+    color: $surface;
+}
+
+.cc-tray-icons {
+    background: $surfaceActive;
+    border-radius: 8px;
+    min-height: 34px;
+    padding: 5px 7px;
+}
+
+.cc-notification-list {
+    min-height: 0;
+}
+
+.cc-notification-row {
+    background: $surfaceActive;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+.cc-notification-row.unread {
+    border-color: $critical;
+}
+
+.cc-notification-row.critical {
+    border-color: $critical;
+}
+
+.cc-notification-summary {
+    border-radius: 8px;
+    padding: 7px 8px;
+}
+
+.cc-notification-dot {
+    background: $critical;
+    border-radius: 999px;
+    margin-top: 6px;
+    min-height: 8px;
+    min-width: 8px;
+}
+
+.cc-notification-title {
+    color: $foreground;
+    font-weight: 700;
+}
+
+.cc-notification-source {
+    font-size: 10px;
+    min-width: 44px;
+}
+
+.cc-notification-body {
+    padding: 0 10px 9px 24px;
 }

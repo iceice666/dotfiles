@@ -83,6 +83,11 @@ layer-rule {
     opacity 1.0
 }
 
+layer-rule {
+    match namespace="framework-eww-control-center"
+    opacity 1.0
+}
+
 binds {
     Mod+Shift+Slash hotkey-overlay-title="Show hotkey overlay" { show-hotkey-overlay; }
 
