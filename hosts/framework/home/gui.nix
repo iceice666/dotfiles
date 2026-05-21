@@ -424,9 +424,10 @@ let
     '';
 
   installThemegenAppearance = mode: ''
-    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/niri" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
     ln -sfn "theme-${mode}.scss" "$HOME/.config/eww/theme.scss"
     ln -sfn "themegen-${mode}.ini" "$HOME/.config/fuzzel/fuzzel.ini"
+    ln -sfn "theme-${mode}.kdl" "$HOME/.config/niri/theme.kdl"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt5ct/colors/themegen.conf"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt6ct/colors/themegen.conf"
     ln -sfn "qt5ct-${mode}.conf" "$HOME/.config/qt5ct/qt5ct.conf"

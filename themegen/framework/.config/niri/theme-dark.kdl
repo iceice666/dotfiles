@@ -1,0 +1,42 @@
+{{#themegen
+let local.insert_hint = alpha(color.dark.primary, 45%, hex)
+let local.shadow = alpha(color.dark.shadow, 55%, hex)
+let local.workspace_shadow = alpha(color.dark.shadow, 70%, hex)
+}}
+layout {
+    background-color "{{color.dark.background}}"
+
+    focus-ring {
+        active-color "{{color.dark.primary}}"
+        inactive-color "{{color.dark.outline}}"
+        urgent-color "{{color.dark.error}}"
+    }
+
+    border {
+        active-color "{{color.dark.primary}}"
+        inactive-color "{{color.dark.outline_variant}}"
+        urgent-color "{{color.dark.error}}"
+    }
+
+    shadow {
+        color "{{local.shadow}}"
+    }
+
+    tab-indicator {
+        active-color "{{color.dark.primary}}"
+        inactive-color "{{color.dark.outline_variant}}"
+        urgent-color "{{color.dark.error}}"
+    }
+
+    insert-hint {
+        color "{{local.insert_hint}}"
+    }
+}
+
+overview {
+    backdrop-color "{{color.dark.surface_container_lowest}}"
+
+    workspace-shadow {
+        color "{{local.workspace_shadow}}"
+    }
+}

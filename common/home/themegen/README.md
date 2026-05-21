@@ -15,7 +15,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 ## File Map
 
 - `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
-- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, and Eww bar templates. GTK templates become a standalone package on Framework.
+- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and Eww bar templates. GTK templates become a standalone package on Framework.
 - `themegen/m3air/`: macOS-only Equibop template.
 - `common/home/themegen/default.nix`: Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
@@ -63,6 +63,7 @@ The generated file is written to `.cache/themegen/preview/index.html`.
 - Use direct `{{color.dark.primary}}`-style lookups in template bodies. Put derived colors in an optional leading `{{#themegen ... }}` header with `let local.name = ...` declarations, then reference them as `{{local.name}}`.
 - Header helpers cover the current derived-color operations: `alpha`, `mix`, `lightness_add`, `tone`, `readable`, `readable_alpha`, `tone_alpha`, and `tone_readable`.
 - Framework GTK templates should define the full Adwaita/libadwaita color token surface; `hosts/framework/home/gui.nix` adds the Adwaita base imports and packages the rendered CSS as `Themegen` / `Themegen-dark`.
+- Framework Niri templates should render mode-specific snippets as `.config/niri/theme-{dark,light}.kdl`; the static Niri config includes `.config/niri/theme.kdl`, and darkman switches that symlink with the rest of the appearance files.
 
 ## Validation
 
