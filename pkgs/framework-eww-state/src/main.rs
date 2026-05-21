@@ -21,6 +21,7 @@ use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 type Vars = BTreeMap<String, String>;
+const NOTIFICATION_PREVIEW_CHARS: usize = 96;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -238,6 +239,7 @@ struct NotificationRow {
     class: String,
     app: String,
     summary: String,
+    preview: String,
     body: String,
     urgency: String,
     unread: bool,
@@ -1730,6 +1732,7 @@ fn notification_row(
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ");
+    let preview = notification_preview(&body);
     let urgency = if notification.urgency.trim().is_empty() {
         "normal".to_string()
     } else {
@@ -1749,9 +1752,28 @@ fn notification_row(
         class,
         app,
         summary,
+        preview,
         body,
         urgency,
         unread: is_unread,
+    }
+}
+
+fn notification_preview(body: &str) -> String {
+    if body.is_empty() {
+        return "No details".to_string();
+    }
+
+    cap_text(body, NOTIFICATION_PREVIEW_CHARS)
+}
+
+fn cap_text(text: &str, max_chars: usize) -> String {
+    let mut iter = text.chars();
+    let preview = iter.by_ref().take(max_chars).collect::<String>();
+    if iter.next().is_some() {
+        format!("{preview}...")
+    } else {
+        preview
     }
 }
 
@@ -2362,7 +2384,15 @@ mod tests {
         assert_eq!(rows[0].key, "active-2");
         assert!(rows[0].class.contains("unread"));
         assert_eq!(rows[0].body, "hello there");
+        assert_eq!(rows[0].preview, "hello there");
         assert_eq!(rows[1].summary, "app.desktop");
+    }
+
+    #[test]
+    fn caps_notification_preview() {
+        assert_eq!(notification_preview(""), "No details");
+        assert_eq!(cap_text("hello", 8), "hello");
+        assert_eq!(cap_text("hello world", 5), "hello...");
     }
 
     #[test]

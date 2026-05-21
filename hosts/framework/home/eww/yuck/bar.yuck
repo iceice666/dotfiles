@@ -128,7 +128,7 @@
     (box :class "cc-section tray-panel" :orientation "v" :space-evenly false :spacing 8
       (box :class "cc-section-head" :space-evenly false
         (image :path "@trayIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color})
-        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Menu Bar"))
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "System Tray"))
       (box :class "cc-tray-icons" :space-evenly false
         (systray :spacing 6 :space-evenly false :icon-size 24 :prepend-new false)))
     (box :class "cc-section notifications-panel" :orientation "v" :space-evenly false :spacing 8
@@ -144,8 +144,8 @@
               (box :space-evenly false :spacing 8
                 (box :class "cc-notification-dot" :visible {notification.unread})
                 (box :orientation "v" :space-evenly false :hexpand true
-                  (label :class "cc-notification-app" :xalign 0 :limit-width 34 :text {notification.app})
-                  (label :class "cc-notification-title" :xalign 0 :limit-width 34 :text {notification.summary}))
+                  (label :class "cc-notification-title" :xalign 0 :limit-width 34 :text {notification.summary})
+                  (label :class "cc-notification-preview" :xalign 0 :limit-width 40 :wrap true :text {notification.preview}))
                 (label :class "cc-notification-source" :text {notification.source == "active" ? "Now" : "History"})))
             (revealer :class "cc-notification-body-wrap" :transition "slidedown" :reveal {notification_expanded_id == notification.key} :duration "140ms"
               (label :class "cc-notification-body" :xalign 0 :limit-width 46 :wrap true :text {notification.body == "" ? "No details" : notification.body}))))))))

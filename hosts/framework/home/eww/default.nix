@@ -32,7 +32,7 @@ let
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M11 1h2v4h-2zM11 19h2v4h-2zM1 11h4v2H1zM19 11h4v2h-4zM4.22 2.8 7.05 5.64 5.64 7.05 2.8 4.22zM16.95 18.36l1.41-1.41 2.84 2.83-1.42 1.42zM2.8 19.78l2.84-2.83 1.41 1.41-2.83 2.84zM16.95 5.64l2.83-2.84 1.42 1.42-2.84 2.83zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>
     '';
     controlCenter = pkgs.writeText "eww-control-center.svg" ''
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 1 1 0 6H7a3 3 0 0 1-3-3zm3-1a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2zM4 17a3 3 0 1 1 3 3h10a3 3 0 1 1 0-6H7a3 3 0 0 1-3 3zm3-1a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><rect x="3" y="3" width="10" height="7" rx="3.5"/><rect x="15" y="3" width="6" height="7" rx="2.5"/><rect x="3" y="13" width="7" height="8" rx="2.5"/><rect x="13" y="13" width="8" height="3" rx="1.5"/><rect x="13" y="19" width="8" height="3" rx="1.5"/></svg>
     '';
     media = pkgs.writeText "eww-media.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M5 4h2v16H5zM9 5l10 7-10 7z"/></svg>

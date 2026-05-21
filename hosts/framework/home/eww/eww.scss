@@ -439,6 +439,7 @@ button:active {
 .cc-count,
 .cc-empty,
 .cc-notification-app,
+.cc-notification-preview,
 .cc-notification-source,
 .cc-notification-body {
     color: $foregroundDim;
@@ -475,6 +476,7 @@ button:active {
 .cc-scale trough {
     background: $surfaceActive;
     border-radius: 999px;
+    margin: 0 8px;
     min-height: 8px;
 }
 
@@ -550,6 +552,10 @@ button:active {
 .cc-notification-title {
     color: $foreground;
     font-weight: 700;
+}
+
+.cc-notification-preview {
+    margin-top: 2px;
 }
 
 .cc-notification-source {
