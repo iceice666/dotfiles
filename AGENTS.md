@@ -357,3 +357,24 @@ Canonical module shape:
 - For docs-only changes, a careful reread and consistency pass is usually enough.
 - If you touch formatting-sensitive files, run `just fmt`.
 - If you touch flake wiring or common modules, run `just check`.
+
+## Commit Messages
+
+Use Conventional Commits with this subject format:
+
+```text
+topic(machine/scope): subject
+```
+
+- `topic` is the Conventional Commit type, such as `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, or `chore`.
+- `machine` is the affected host or layer, such as `m3air`, `framework`, `common`, `pkgs`, or `repo`.
+- `scope` is the focused area, package, or module, such as `home`, `niri`, `themegen`, `rime`, or `flake`.
+- Keep `subject` short, imperative, and lowercase unless it contains proper nouns.
+
+Examples:
+
+```text
+feat(framework/niri): add workspace keybindings
+fix(m3air/default-apps): update browser associations
+docs(repo/agents): document commit message format
+```
