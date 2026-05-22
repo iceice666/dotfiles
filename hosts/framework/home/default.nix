@@ -12,6 +12,7 @@ in
   imports = [
     (dotfiles + /common/home)
     ./gui.nix
+    ./qutebrowser
   ];
 
   _module.args = {
