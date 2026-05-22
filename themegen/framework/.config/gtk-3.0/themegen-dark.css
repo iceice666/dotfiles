@@ -104,6 +104,17 @@ popover,
   border-color: {{local.tg_009}};
 }
 
+tooltip,
+tooltip.background {
+  background-color: {{color.dark.surface_container_highest}};
+  color: {{color.dark.on_surface}};
+  border-color: {{color.dark.outline}};
+}
+
+tooltip label {
+  color: {{color.dark.on_surface}};
+}
+
 button,
 entry,
 spinbutton,

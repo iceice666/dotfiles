@@ -204,3 +204,14 @@ let local.tg_038 = alpha(color.dark.outline_variant, 38%, rgba)
   --overview-bg-color: {{color.dark.surface_container_low}};
   --overview-fg-color: {{color.dark.on_surface}};
 }
+
+tooltip,
+tooltip.background {
+  background-color: {{color.dark.surface_container_highest}};
+  color: {{color.dark.on_surface}};
+  border-color: {{color.dark.outline}};
+}
+
+tooltip label {
+  color: {{color.dark.on_surface}};
+}
