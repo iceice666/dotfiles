@@ -270,7 +270,6 @@ in
     with pkgs;
     [
       git
-      vim
       cage
       fprintd
       regreet

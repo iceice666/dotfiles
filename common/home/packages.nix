@@ -10,7 +10,6 @@ let
     with pkgs;
     [
       fzf
-      neovim
       ripgrep
       fd
       bat

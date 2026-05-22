@@ -35,6 +35,13 @@
     nix-direnv.enable = true;
   };
 
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
+  };
+
   programs.zoxide = {
     enable = true;
     enableFishIntegration = true;

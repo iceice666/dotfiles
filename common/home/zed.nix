@@ -36,8 +36,18 @@ let
       exec nix develop --command rust-analyzer "$@"
     '';
   };
+
+  gvimWrapper = pkgs.writeShellApplication {
+    name = "gvim";
+    text = ''
+      exec ${lib.getExe zedPackage} "$@"
+    '';
+  };
 in
 {
+  home.packages = [ gvimWrapper ];
+  home.sessionVariables.VISUAL = "zed --wait";
+
   programs.zed-editor = {
     enable = true;
     package = zedPackage;
