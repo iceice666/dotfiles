@@ -64,6 +64,18 @@
         "type": "github"
       }
     },
+    "kaguya-cache": {
+      "flake": false,
+      "locked": {
+        "path": "./pkgs/kaguya-bin/empty-cache",
+        "type": "path"
+      },
+      "original": {
+        "path": "./pkgs/kaguya-bin/empty-cache",
+        "type": "path"
+      },
+      "parent": []
+    },
     "niri-scratchpad-helper": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -163,6 +175,7 @@
     "root": {
       "inputs": {
         "home-manager": "home-manager",
+        "kaguya-cache": "kaguya-cache",
         "niri-scratchpad-helper": "niri-scratchpad-helper",
         "nirinit": "nirinit",
         "nix-darwin": "nix-darwin",

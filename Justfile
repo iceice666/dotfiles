@@ -17,9 +17,9 @@ switch: theme
 # Apply the Framework NixOS configuration
 [group('host')]
 [linux]
-switch: theme
+switch: theme kaguya
     test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
-    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -30,15 +30,171 @@ build: theme
 # Dry-build the Framework NixOS configuration
 [group('host')]
 [linux]
-build: theme
-    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+build: theme kaguya
+    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
-boot: theme
+boot: theme kaguya
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
+
+# Copy the latest Kaguya browser build from homolab into the local Nix path input cache
+[group('host')]
+[linux]
+kaguya:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    remote="${KAGUYA_REMOTE:-iceice666@homolab}"
+    port="${KAGUYA_REMOTE_PORT:-2222}"
+    root_override="${KAGUYA_REMOTE_ROOT:-}"
+    cache_dir='{{ repo_root }}/.cache/kaguya/framework'
+    state_dir='{{ repo_root }}/.cache/kaguya/.state'
+
+    mkdir -p "$(dirname "$cache_dir")" "$state_dir"
+    tmp_dir=$(mktemp -d '{{ repo_root }}/.cache/kaguya/.tmp-framework.XXXXXXXXXX')
+
+    cleanup_tmp() {
+        if [[ -d "$tmp_dir" ]]; then
+            chmod -R u+w "$tmp_dir"
+            rm -rf "$tmp_dir"
+        fi
+    }
+
+    trap cleanup_tmp EXIT
+
+    remote_info="$(
+        ssh -p "$port" -o BatchMode=yes "$remote" \
+            env KAGUYA_REMOTE_ROOT="$root_override" bash -s <<'REMOTE'
+    set -euo pipefail
+
+    candidates=()
+    if [ -n "${KAGUYA_REMOTE_ROOT:-}" ]; then
+        candidates+=("$KAGUYA_REMOTE_ROOT")
+    fi
+    candidates+=(
+        "$HOME/Project/kaguya-linux"
+        "$HOME/Projects/kaguya-linux"
+        "$HOME/Project/kaguya"
+        "$HOME/Projects/kaguya"
+    )
+
+    for base in "$HOME/Project" "$HOME/Projects"; do
+        if [ -d "$base" ]; then
+            while IFS= read -r found; do
+                candidates+=("$found")
+            done < <(find "$base" -maxdepth 3 -type d \( -name 'kaguya-linux' -o -name 'kaguya' \) 2>/dev/null | sort)
+        fi
+    done
+
+    for root in "${candidates[@]}"; do
+        [ -n "$root" ] || continue
+        out="$root/build/src/out/Default"
+        if [ -x "$out/kaguya" ]; then
+            printf '%s\n%s\n' "$root" kaguya
+            exit 0
+        fi
+        if [ -x "$out/helium" ]; then
+            printf '%s\n%s\n' "$root" helium
+            exit 0
+        fi
+    done
+
+    echo "No Kaguya build found. Set KAGUYA_REMOTE_ROOT to the repository containing build/src/out/Default." >&2
+    exit 1
+    REMOTE
+    )"
+
+    remote_root="$(printf '%s\n' "$remote_info" | sed -n '1p')"
+    binary="$(printf '%s\n' "$remote_info" | sed -n '2p')"
+
+    if [[ -z "$remote_root" || -z "$binary" ]]; then
+        echo "Failed to locate a Kaguya browser binary on $remote" >&2
+        exit 1
+    fi
+
+    echo "copying Kaguya from $remote:$remote_root ($binary)"
+
+    ssh -p "$port" -o BatchMode=yes "$remote" \
+        env KAGUYA_REMOTE_ROOT="$remote_root" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' \
+            | tar -xf - -C "$tmp_dir"
+    set -euo pipefail
+
+    root="$KAGUYA_REMOTE_ROOT"
+    binary="$KAGUYA_BINARY"
+    out="$root/build/src/out/Default"
+    stage="$(mktemp -d)"
+    trap 'rm -rf "$stage"' EXIT
+
+    mkdir -p "$stage/app" "$stage/package"
+
+    files=(
+        "$binary"
+        "${binary}_crashpad_handler"
+        chromedriver
+        chrome_100_percent.pak
+        chrome_200_percent.pak
+        icudtl.dat
+        libEGL.so
+        libGLESv2.so
+        libqt5_shim.so
+        libqt6_shim.so
+        libvk_swiftshader.so
+        libvulkan.so.1
+        locales
+        product_logo_256.png
+        resources.pak
+        v8_context_snapshot.bin
+        vk_swiftshader_icd.json
+        xdg-mime
+        xdg-settings
+    )
+
+    for file in "${files[@]}"; do
+        if [ -e "$out/$file" ]; then
+            cp -a --reflink=auto "$out/$file" "$stage/app/"
+        else
+            echo "warning: missing Kaguya runtime file: $file" >&2
+        fi
+    done
+
+    if [ -f "$root/package/kaguya.desktop" ]; then
+        cp -a "$root/package/kaguya.desktop" "$stage/package/"
+    fi
+    if [ -f "$root/package/apparmor.cfg" ]; then
+        cp -a "$root/package/apparmor.cfg" "$stage/package/"
+    fi
+
+    printf '%s\n' "$binary" > "$stage/binary-name"
+    python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
+        --tree "$root/kaguya-chromium" \
+        --platform-tree "$root" \
+        --print > "$stage/version" 2>/dev/null \
+        || printf '0-unstable\n' > "$stage/version"
+
+    {
+        printf 'remote=%s\n' "$root"
+        printf 'binary=%s\n' "$binary"
+        printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    } > "$stage/manifest"
+
+    tar -C "$stage" -cf - .
+    REMOTE
+
+    test -x "$tmp_dir/app/$binary"
+    chmod -R u+w "$tmp_dir"
+
+    if [[ -d "$cache_dir" ]]; then
+        chmod -R u+w "$cache_dir"
+    fi
+    rm -rf "$cache_dir"
+    mv "$tmp_dir" "$cache_dir"
+    tmp_dir=''
+
+    cp "$cache_dir/manifest" "$state_dir/framework.manifest"
+    echo "Kaguya cache updated at $cache_dir"
 
 # Install Homebrew on M3 Air
 [group('host')]

@@ -566,7 +566,7 @@ let
         "@slurp@"
         "@swaylock@"
         "@swappy@"
-        "@vivaldi@"
+        "@browser@"
       ]
       [
         "${pkgs.brightnessctl}/bin/brightnessctl"
@@ -584,7 +584,7 @@ let
         "${pkgs.slurp}/bin/slurp"
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
-        (lib.getExe pkgs.vivaldi)
+        (lib.getExe pkgs.kaguya-bin)
       ]
       (builtins.readFile ./niri-config.kdl);
 in
@@ -696,6 +696,7 @@ in
     slurp
     swappy
     swaybg
+    kaguya-bin
     vivaldi
     wev
     wf-recorder

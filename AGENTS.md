@@ -48,7 +48,8 @@ pkgs/                # overlay packages
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
   framework-eww-state/ # Rust state daemon/action helper for Framework Eww
-  ketch/           # web/code/docs search and scraping CLI for Pi tools
+  kaguya-bin/        # Framework Kaguya browser binary wrapper fed by kaguya-cache
+  ketch/             # web/code/docs search and scraping CLI for Pi tools
   pi-coding-agent-bin/ # official prebuilt Pi Coding Agent releases
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
@@ -77,12 +78,18 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `themegen-cache` | `path:./common/home/themegen/empty-cache` | no |
+| `kaguya-cache` | `path:./pkgs/kaguya-bin/empty-cache` | no |
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
 
 `themegen-cache` is a placeholder flake input. Build and switch recipes replace
 it with `path:$PWD/.cache/themegen/<host>` after running `just theme` on the
 matching platform.
+
+`kaguya-cache` is a placeholder flake input for the Framework-only Kaguya
+browser binary. Linux build, boot, and switch recipes replace it with
+`path:$PWD/.cache/kaguya/framework` after `just kaguya` copies the browser
+runtime files from `iceice666@homolab:2222`.
 
 ### Outputs
 
@@ -98,7 +105,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -181,6 +188,7 @@ just switch
 just boot
 
 just theme
+just kaguya
 just theme-preview
 just fmt
 just fmt-check
@@ -315,7 +323,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

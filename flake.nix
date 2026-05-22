@@ -43,6 +43,11 @@
       flake = false;
     };
 
+    kaguya-cache = {
+      url = "path:./pkgs/kaguya-bin/empty-cache";
+      flake = false;
+    };
+
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -74,6 +79,7 @@
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         framework-eww-state = final.callPackage ./pkgs/framework-eww-state { };
         ketch = final.callPackage ./pkgs/ketch { };
+        kaguya-bin = final.callPackage ./pkgs/kaguya-bin { src = inputs."kaguya-cache"; };
         niri-scratchpad-helper =
           if final.stdenv.hostPlatform.isLinux then
             inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad

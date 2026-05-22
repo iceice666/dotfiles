@@ -1,7 +1,7 @@
 { lib, pkgs, ... }:
 
 let
-  browserDesktop = "vivaldi-stable.desktop";
+  browserDesktop = "kaguya.desktop";
   editorDesktop = "dev.zed.Zed.desktop";
 
   browserAssociations = {

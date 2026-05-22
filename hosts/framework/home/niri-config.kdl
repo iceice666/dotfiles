@@ -50,21 +50,21 @@ hotkey-overlay {
 prefer-no-csd
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
-spawn-at-startup "@vivaldi@"
+spawn-at-startup "@browser@"
 spawn-at-startup "@equibop@"
 
 window-rule {
-    match app-id=r#"^(vivaldi|vivaldi-stable|equibop|org\.equicord\.equibop)$"#
+    match app-id=r#"^(kaguya|helium|vivaldi|vivaldi-stable|equibop|org\.equicord\.equibop)$"#
     open-on-workspace "home"
 }
 
 window-rule {
-    match app-id=r#"^(vivaldi|vivaldi-stable)$"# title="^Picture-in-Picture$"
+    match app-id=r#"^(kaguya|helium|vivaldi|vivaldi-stable)$"# title="^Picture-in-Picture$"
     open-floating true
 }
 
 window-rule {
-    match app-id=r#"^(vivaldi|vivaldi-stable)$"# title="^Extension:"
+    match app-id=r#"^(kaguya|helium|vivaldi|vivaldi-stable)$"# title="^Extension:"
     open-floating true
 }
 
