@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+themegen_flags=(--scheme tonal-spot --base16-contrast 0.3 --base16-mode follow-palette)
+
+usage() {
+  cat >&2 <<'USAGE'
+Usage:
+  scripts/themegen-cache generate <host> <image>
+  scripts/themegen-cache preview <host> [image]
+USAGE
+}
+
+hash_file() {
+  local file=$1
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{print $1}'
+  else
+    shasum -a 256 "$file" | awk '{print $1}'
+  fi
+}
+
+hash_stdin() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print $1}'
+  else
+    shasum -a 256 | awk '{print $1}'
+  fi
+}
+
+default_image_for_host() {
+  case "$1" in
+    m3air) printf '%s\n' "$repo_root/assets/win_chan.jpg" ;;
+    framework) printf '%s\n' "$repo_root/assets/mzen.png" ;;
+    *) echo "Unsupported host: $1" >&2; exit 1 ;;
+  esac
+}
+
+themegen_command() {
+  if [[ -n "${THEMEGEN_BIN:-}" ]]; then
+    printf '%s\0' "$THEMEGEN_BIN"
+  elif command -v cargo >/dev/null 2>&1; then
+    printf '%s\0' cargo run --manifest-path "$repo_root/pkgs/themegen/Cargo.toml" --
+  else
+    printf '%s\0' themegen
+  fi
+}
+
+fingerprint_inputs() {
+  local host=$1 image=$2
+
+  {
+    printf 'themegen-cache-v2\n'
+    printf 'host %s\n' "$host"
+    printf 'render-options scheme=tonal-spot base16-contrast=0.3 base16-mode=follow-palette\n'
+    printf 'image %s %s\n' "$image" "$(hash_file "$image")"
+
+    for scope in common "$host"; do
+      local template_dir="$repo_root/themegen/$scope"
+      [[ -d "$template_dir" ]] || continue
+
+      while IFS= read -r template; do
+        local relative=${template#"$template_dir"/}
+        printf 'template %s %s %s\n' "$scope" "$relative" "$(hash_file "$template")"
+      done < <(find "$template_dir" -type f | sort)
+    done
+  } | hash_stdin
+}
+
+cache_has_files() {
+  local cache_dir=$1
+
+  [[ -d "$cache_dir" ]] || return 1
+  [[ -n "$(find "$cache_dir" -type f -print -quit)" ]]
+}
+
+add_render_scope() {
+  local scope=$1 tmp_dir=$2
+  local template_dir="$repo_root/themegen/$scope"
+
+  [[ -d "$template_dir" ]] || return 0
+
+  while IFS= read -r template; do
+    local relative=${template#"$template_dir"/}
+    local output="$tmp_dir/$relative"
+    local replaced=0
+
+    for index in "${!render_outputs[@]}"; do
+      if [[ "${render_outputs[$index]}" == "$output" ]]; then
+        render_templates[$index]="$template"
+        replaced=1
+        break
+      fi
+    done
+
+    if [[ "$replaced" == 0 ]]; then
+      render_templates+=("$template")
+      render_outputs+=("$output")
+    fi
+  done < <(find "$template_dir" -type f | sort)
+}
+
+generate_cache() {
+  local host=$1 image=$2
+
+  if [[ ! -f "$image" ]]; then
+    echo "Wallpaper not found: $image" >&2
+    exit 1
+  fi
+
+  local cache_dir="$repo_root/.cache/themegen/$host"
+  local state_dir="$repo_root/.cache/themegen/.state"
+  local fingerprint_file="$state_dir/$host.sha256"
+  local input_fingerprint
+  input_fingerprint=$(fingerprint_inputs "$host" "$image")
+
+  if [[ -f "$fingerprint_file" && "$(cat "$fingerprint_file")" == "$input_fingerprint" ]] && cache_has_files "$cache_dir"; then
+    echo "themegen cache up to date for $host"
+    exit 0
+  fi
+
+  local -a themegen_cmd
+  mapfile -d '' -t themegen_cmd < <(themegen_command)
+
+  mkdir -p "$repo_root/.cache/themegen" "$state_dir"
+  local tmp_dir
+  tmp_dir=$(mktemp -d "$repo_root/.cache/themegen/.tmp-$host.XXXXXXXXXX")
+
+  cleanup_tmp() {
+    if [[ -d "$tmp_dir" ]]; then
+      chmod -R u+w "$tmp_dir"
+      rm -rf "$tmp_dir"
+    fi
+  }
+
+  trap cleanup_tmp EXIT
+
+  render_templates=()
+  render_outputs=()
+
+  add_render_scope common "$tmp_dir"
+  add_render_scope "$host" "$tmp_dir"
+
+  local -a render_args=()
+  for index in "${!render_templates[@]}"; do
+    render_args+=(--render "${render_templates[$index]}=${render_outputs[$index]}")
+  done
+
+  "${themegen_cmd[@]}" render \
+    --image "$image" \
+    "${themegen_flags[@]}" \
+    "${render_args[@]}"
+
+  if [[ -d "$cache_dir" ]]; then
+    chmod -R u+w "$cache_dir"
+  fi
+  rm -rf "$cache_dir"
+  mv "$tmp_dir" "$cache_dir"
+  tmp_dir=''
+
+  chmod -R u+w "$cache_dir"
+  printf '%s\n' "$input_fingerprint" > "$fingerprint_file"
+  echo "themegen cache regenerated for $host"
+}
+
+preview() {
+  local host=$1 image=${2:-}
+
+  if [[ -z "$image" ]]; then
+    image=$(default_image_for_host "$host")
+  fi
+
+  if [[ ! -f "$image" ]]; then
+    echo "Wallpaper not found: $image" >&2
+    exit 1
+  fi
+
+  local -a themegen_cmd
+  mapfile -d '' -t themegen_cmd < <(themegen_command)
+
+  local output="$repo_root/.cache/themegen/preview/index.html"
+  mkdir -p "$(dirname "$output")"
+
+  "${themegen_cmd[@]}" render \
+    --image "$image" \
+    "${themegen_flags[@]}" \
+    --render "$repo_root/themegen/preview.html=$output"
+
+  echo "themegen preview rendered to $output"
+
+  if command -v open >/dev/null 2>&1; then
+    open "$output"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$output"
+  fi
+}
+
+command=${1:-}
+case "$command" in
+  generate)
+    [[ $# -eq 3 ]] || { usage; exit 2; }
+    generate_cache "$2" "$3"
+    ;;
+  preview)
+    [[ $# -ge 2 && $# -le 3 ]] || { usage; exit 2; }
+    preview "$2" "${3:-}"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: scripts/nix-search-platforms <query>" >&2
+  exit 2
+fi
+
+query=$1
+
+pkg_supported() {
+  local system=$1 pkg=$2 result
+
+  result=$(nix eval --json \
+    --extra-experimental-features 'nix-command flakes' \
+    "nixpkgs#legacyPackages.$system.$pkg.meta.available" 2>/dev/null) || return 1
+  [[ "$result" == "true" ]]
+}
+
+search_system() {
+  local system=$1 query=$2 found=false
+
+  echo "=== $system ==="
+  while IFS= read -r line; do
+    local clean pkg
+    clean=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+    pkg=$(echo "$clean" | rg -o 'legacyPackages\.[^.]+\.(\S+) ' -r '$1')
+    [[ -z "$pkg" ]] && continue
+    pkg_supported "$system" "$pkg" || continue
+    echo "$clean"
+    found=true
+  done < <(nix search --extra-experimental-features 'nix-command flakes' \
+    "nixpkgs#legacyPackages.$system" "$query" 2>/dev/null || true)
+  [[ "$found" == "false" ]] && echo "(no results for $system)"
+  echo ""
+}
+
+for system in aarch64-darwin x86_64-linux; do
+  search_system "$system" "$query"
+done

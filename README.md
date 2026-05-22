@@ -17,7 +17,8 @@ See `AGENTS.md` for detailed repo and editing guidance.
 
 ```text
 flake.nix            # flake inputs, overlay, dev shells, and host outputs
-Justfile             # build, switch, themegen, validation, secrets, maintenance
+Justfile             # thin task runner for build, switch, validation, secrets, maintenance
+scripts/             # shell implementations for complex just recipes
 treefmt.nix          # formatting (nixfmt + just)
 assets/              # wallpapers and host images used by theme generation
 

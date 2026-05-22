@@ -9,7 +9,8 @@ Use this file as the working agreement for coding agents editing this repo.
 
 ```text
 flake.nix            # flake inputs, overlay, dev shells, and host outputs
-Justfile             # build, switch, themegen, validation, secrets, maintenance
+Justfile             # thin task runner for build, switch, validation, secrets, maintenance
+scripts/             # shell implementations for complex just recipes
 treefmt.nix          # formatter configuration (nixfmt + just)
 assets/              # wallpaper/source images and host avatar assets
 
