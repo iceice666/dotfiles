@@ -20,6 +20,7 @@ config.bind(";M", "hint --rapid links spawn --userscript umpv {hint-url}")
 
 c.auto_save.session = True
 c.content.autoplay = False
+c.editor.command = ["ghostty", "-e", "nvim", "+call cursor({line}, {column})", "{file}"]
 
 config.set(
     "content.headers.user_agent",

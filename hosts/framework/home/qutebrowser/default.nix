@@ -18,16 +18,31 @@ let
 in
 {
   home.packages = with pkgs; [
-    bitwarden-cli
     keyutils
     mpv
     qutebrowser
   ];
 
+  home.activation.qutebrowserBookmarks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    bookmarks_dir="$HOME/.config/qutebrowser/bookmarks"
+    bookmarks_file="$bookmarks_dir/urls"
+
+    ${pkgs.coreutils}/bin/mkdir -p "$bookmarks_dir"
+
+    if [ -L "$bookmarks_file" ]; then
+      ${pkgs.coreutils}/bin/rm "$bookmarks_file"
+    fi
+
+    if [ ! -e "$bookmarks_file" ]; then
+      {
+        printf '%s\n' 'https://gemini.google.com/app Google Gemini'
+      } > "$bookmarks_file"
+    fi
+
+    ${pkgs.coreutils}/bin/chmod u+rw "$bookmarks_file"
+  '';
+
   xdg.configFile = {
-    "qutebrowser/bookmarks/urls".text = ''
-      https://gemini.google.com/app Google Gemini
-    '';
     "qutebrowser/config.py".source = ./config.py;
     "qutebrowser/userscripts/qute-bitwarden-fuzzel" = {
       source = quteBitwardenFuzzel;

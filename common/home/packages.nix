@@ -48,6 +48,7 @@ let
     ];
 
   unstablePackages = with unstablePkgs; [
+    bitwarden-cli
     bun
     just
     sops
