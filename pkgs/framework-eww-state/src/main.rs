@@ -21,6 +21,7 @@ use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 type Vars = BTreeMap<String, String>;
+const FORCE_RESYNC_VAR: &str = "__force_resync";
 const NOTIFICATION_PREVIEW_CHARS: usize = 96;
 
 #[derive(Debug, Parser)]
@@ -310,17 +311,23 @@ fn run_daemon(cfg: Arc<Config>) -> Result<()> {
 fn update_loop(cfg: Arc<Config>, rx: mpsc::Receiver<Vars>) -> Result<()> {
     let mut desired = Vars::new();
     let mut applied = Vars::new();
+    let mut force_resync = false;
 
     loop {
         match rx.recv_timeout(Duration::from_millis(250)) {
             Ok(vars) => {
-                desired.extend(vars);
+                force_resync |= merge_desired_vars(&mut desired, vars);
                 while let Ok(vars) = rx.try_recv() {
-                    desired.extend(vars);
+                    force_resync |= merge_desired_vars(&mut desired, vars);
                 }
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {}
             Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(()),
+        }
+
+        if force_resync {
+            applied.clear();
+            force_resync = false;
         }
 
         let changed = desired
@@ -346,6 +353,12 @@ fn update_loop(cfg: Arc<Config>, rx: mpsc::Receiver<Vars>) -> Result<()> {
             }
         }
     }
+}
+
+fn merge_desired_vars(desired: &mut Vars, mut vars: Vars) -> bool {
+    let force_resync = vars.remove(FORCE_RESYNC_VAR).is_some();
+    desired.extend(vars);
+    force_resync
 }
 
 fn spawn_niri_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
@@ -438,10 +451,13 @@ fn niri_refresh(
 ) {
     match niri_snapshot(cfg, resolver) {
         Ok(snapshot) => {
-            open_bars_if_needed(cfg, &snapshot.outputs, last_outputs);
+            let bars_reopened = open_bars_if_needed(cfg, &snapshot.outputs, last_outputs);
             if let Ok(groups) = serde_json::to_string(&snapshot.groups) {
                 let mut vars = Vars::new();
                 vars.insert("niri_groups".to_string(), groups);
+                if bars_reopened {
+                    vars.insert(FORCE_RESYNC_VAR.to_string(), "1".to_string());
+                }
                 send_vars(tx, vars);
             }
         }
@@ -828,7 +844,7 @@ fn sanitize_update_value(value: &str) -> String {
     value.replace(['\n', '\r'], " ")
 }
 
-fn open_bars_if_needed(cfg: &Config, outputs: &[String], last_outputs: &mut Vec<String>) {
+fn open_bars_if_needed(cfg: &Config, outputs: &[String], last_outputs: &mut Vec<String>) -> bool {
     let mut outputs = outputs.to_vec();
     outputs.sort();
     outputs.dedup();
@@ -837,7 +853,7 @@ fn open_bars_if_needed(cfg: &Config, outputs: &[String], last_outputs: &mut Vec<
     }
 
     if outputs == *last_outputs {
-        return;
+        return false;
     }
     *last_outputs = outputs.clone();
 
@@ -865,6 +881,8 @@ fn open_bars_if_needed(cfg: &Config, outputs: &[String], last_outputs: &mut Vec<
             ],
         );
     }
+
+    true
 }
 
 fn niri_snapshot(cfg: &Arc<Config>, resolver: &mut IconResolver) -> Result<NiriSnapshot> {
@@ -2406,6 +2424,24 @@ mod tests {
             parse_active_wifi_signal("no:other:40\nyes:yee:95").as_ref(),
             Some(&95)
         );
+    }
+
+    #[test]
+    fn merges_desired_vars_with_resync_sentinel() {
+        let mut desired = Vars::new();
+        desired.insert("battery_value".to_string(), "42".to_string());
+
+        let mut vars = Vars::new();
+        vars.insert(FORCE_RESYNC_VAR.to_string(), "1".to_string());
+        vars.insert("battery_color".to_string(), "#ffffff".to_string());
+
+        assert!(merge_desired_vars(&mut desired, vars));
+        assert_eq!(desired.get("battery_value").map(String::as_str), Some("42"));
+        assert_eq!(
+            desired.get("battery_color").map(String::as_str),
+            Some("#ffffff")
+        );
+        assert!(!desired.contains_key(FORCE_RESYNC_VAR));
     }
 
     #[test]
