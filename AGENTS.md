@@ -80,6 +80,7 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `themegen-cache` | `path:./common/home/themegen/empty-cache` | no |
 | `kaguya-cache` | `path:./pkgs/kaguya-bin/empty-cache` | no |
+| `kaguya-browser` | `path:./pkgs/kaguya-bin` | yes |
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
 
@@ -87,10 +88,11 @@ Composition is structural: `common/ -> hosts/<name>/`.
 it with `path:$PWD/.cache/themegen/<host>` after running `just theme` on the
 matching platform.
 
-`kaguya-cache` is a placeholder flake input for the Framework-only Kaguya
-browser binary. Linux build, boot, and switch recipes replace it with
-`path:$PWD/.cache/kaguya/framework` after `just kaguya` copies the browser
-runtime files from `iceice666@homolab:2222`.
+`kaguya-browser` is the local flake under `pkgs/kaguya-bin` that exposes the
+Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
+for the copied binary runtime. Linux build, boot, and switch recipes replace the
+root `kaguya-cache` input with `path:$PWD/.cache/kaguya/framework` after
+`just kaguya` copies the browser runtime files from `iceice666@homolab:2222`.
 
 ### Outputs
 

@@ -48,6 +48,12 @@
       flake = false;
     };
 
+    kaguya-browser = {
+      url = "path:./pkgs/kaguya-bin";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.kaguya-cache.follows = "kaguya-cache";
+    };
+
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -79,7 +85,11 @@
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         framework-eww-state = final.callPackage ./pkgs/framework-eww-state { };
         ketch = final.callPackage ./pkgs/ketch { };
-        kaguya-bin = final.callPackage ./pkgs/kaguya-bin { src = inputs."kaguya-cache"; };
+        kaguya-bin =
+          if final.stdenv.hostPlatform.isLinux then
+            inputs."kaguya-browser".packages.${final.system}.default
+          else
+            throw "kaguya-bin is only supported on Linux";
         niri-scratchpad-helper =
           if final.stdenv.hostPlatform.isLinux then
             inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad

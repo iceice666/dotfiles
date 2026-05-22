@@ -64,6 +64,25 @@
         "type": "github"
       }
     },
+    "kaguya-browser": {
+      "inputs": {
+        "kaguya-cache": [
+          "kaguya-cache"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./pkgs/kaguya-bin",
+        "type": "path"
+      },
+      "original": {
+        "path": "./pkgs/kaguya-bin",
+        "type": "path"
+      },
+      "parent": []
+    },
     "kaguya-cache": {
       "flake": false,
       "locked": {
@@ -175,6 +194,7 @@
     "root": {
       "inputs": {
         "home-manager": "home-manager",
+        "kaguya-browser": "kaguya-browser",
         "kaguya-cache": "kaguya-cache",
         "niri-scratchpad-helper": "niri-scratchpad-helper",
         "nirinit": "nirinit",
