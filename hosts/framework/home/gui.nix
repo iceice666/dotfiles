@@ -177,6 +177,50 @@ let
     app_id="dev.iceice666.lazygit.repo$repo_hash"
   '';
 
+  openGhostty = pkgs.writeShellApplication {
+    name = "open-niri-ghostty";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.ghostty
+      pkgs.jq
+      niriPkg
+    ];
+    text = ''
+      workspace_json="$(niri msg -j workspaces 2>/dev/null || printf '[]')"
+      workspace_name="$(
+        jq -r 'first(.[]? | select(.is_focused // .focused // false) | .name // empty) // empty' \
+          <<< "$workspace_json"
+      )"
+
+      if [ -n "$workspace_name" ]; then
+        case "$workspace_name" in
+          \~)
+            workspace_path="$HOME"
+            ;;
+          \~/*)
+            workspace_path="$HOME/''${workspace_name#\~/}"
+            ;;
+          /*)
+            workspace_path="$workspace_name"
+            ;;
+          *)
+            workspace_path="$HOME/$workspace_name"
+            ;;
+        esac
+
+        if workspace_path="$(realpath -e "$workspace_path" 2>/dev/null)"; then
+          if [ ! -d "$workspace_path" ]; then
+            workspace_path="$(dirname "$workspace_path")"
+          fi
+
+          exec ghostty "--working-directory=$workspace_path"
+        fi
+      fi
+
+      exec ghostty
+    '';
+  };
+
   spawnLazygit = pkgs.writeShellApplication {
     name = "spawn-niri-lazygit";
     runtimeInputs = [
@@ -531,7 +575,7 @@ let
         ewwState
         (toString ewwStateConfig)
         "${pkgs.fuzzel}/bin/fuzzel"
-        "${pkgs.ghostty}/bin/ghostty"
+        "${openGhostty}/bin/open-niri-ghostty"
         "${pkgs.grim}/bin/grim"
         "${pkgs.nautilus}/bin/nautilus"
         (toString renameWorkspace)
