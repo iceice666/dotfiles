@@ -24,7 +24,6 @@ in
 
   home.packages = with pkgs; [
     obsidian
-    ssh-to-age
   ];
 
   programs.fish.interactiveShellInit = ''

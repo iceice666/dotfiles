@@ -4,7 +4,7 @@
 keys:
   # Per-device age recipients (public)
   - &m3air age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
-  - &framework age1c27ha4s5d890vmztrw2fyd6qzhg9x9m0mscmfj7yqqj4u3ur730s9p36lp
+  - &framework age1cxxr5xe7u7zxepf7y4eka07m856dx9hqwynu6jyf9xftc7q53ulqd997ah
   # Optional recovery recipient (public)
   # - &recovery age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 

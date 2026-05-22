@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  dotfiles,
+  pkgs,
+  ...
+}:
 
 let
   ketchBrowser =
@@ -8,12 +13,23 @@ let
       "/Applications/Chromium.app/Contents/MacOS/Chromium";
 in
 {
-  home.file.".config/ketch/config.json".text = builtins.toJSON {
-    backend = "ddg";
-    limit = 5;
-    cache_ttl = "72h";
-    browser = ketchBrowser;
+  sops.secrets.ketch_exa_api_key = {
+    sopsFile = dotfiles + /sensitive/shared/ketch.yaml;
+    mode = "0400";
   };
+
+  sops.templates."ketch-config".path = ".config/ketch/config.json";
+  sops.templates."ketch-config".mode = "0600";
+  sops.templates."ketch-config".content = ''
+    {
+      "backend": "ddg",
+      "limit": 5,
+      "cache_ttl": "72h",
+      "browser": "${ketchBrowser}",
+      "brave_api_key": "${config.sops.placeholder.ketch_exa_api_key}",
+      "exa_api_key": "${config.sops.placeholder.ketch_exa_api_key}"
+    }
+  '';
 
   home.file.".pi/agent/extensions/ketch.ts".text = ''
     import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

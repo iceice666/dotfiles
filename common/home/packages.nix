@@ -31,6 +31,7 @@ let
       tldr
       zulu21
       age
+      ssh-to-age
       ffmpeg
       nodejs_24
       ketch
