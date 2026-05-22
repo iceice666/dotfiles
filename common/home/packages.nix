@@ -34,7 +34,7 @@ let
       age
       ffmpeg
       nodejs_24
-      codex-cli-bin
+      pi-coding-agent-bin
       equibop-bin
       gh
       git-lfs

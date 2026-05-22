@@ -70,7 +70,6 @@
           nixpkgs-review
           ;
 
-        codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         framework-eww-state = final.callPackage ./pkgs/framework-eww-state { };
@@ -94,6 +93,7 @@
           else
             final.callPackage ./pkgs/zen-bin { };
         themegen = final.callPackage ./pkgs/themegen { };
+        pi-coding-agent-bin = final.callPackage ./pkgs/pi-coding-agent-bin { };
         utiluti = final.callPackage ./pkgs/utiluti { };
         zed-bin = final.callPackage ./pkgs/zed-bin { };
         linux_zen_7_0 = prev.linux_zen.override {
