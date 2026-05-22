@@ -95,8 +95,8 @@ in
           ralt rctl)
 
         (deflayermap (default-layer)
-          caps (tap-hold 50 150 esc lctl)
-          ret (tap-hold 50 150 ret rctl)
+          caps (tap-hold 50 140 esc lctl)
+          ret (tap-hold 50 140 ret rctl)
           lmet lalt
           lalt lmet
           ralt rmet
