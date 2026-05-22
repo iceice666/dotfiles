@@ -79,6 +79,31 @@
             inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad
           else
             throw "niri-scratchpad-helper is only supported on Linux";
+        vivaldi =
+          if final.stdenv.hostPlatform.isLinux then
+            let
+              system = final.stdenv.hostPlatform.system;
+              suffix =
+                {
+                  aarch64-linux = "arm64";
+                  x86_64-linux = "amd64";
+                }
+                .${system} or (throw "Unsupported system: ${system}");
+            in
+            prev.vivaldi.overrideAttrs (_oldAttrs: rec {
+              version = "8.0.4033.26";
+              src = final.fetchurl {
+                url = "https://downloads.vivaldi.com/stable/vivaldi-stable_${version}-1_${suffix}.deb";
+                hash =
+                  {
+                    aarch64-linux = "sha256-WJLEdzqF+HBdSSYLlkbxlSwO9IcYeFh7BTAk+2FQln8=";
+                    x86_64-linux = "sha256-6BexB3ZQLNqMPjM9XQgX3RowF+cEJcQmV/Z9QpzhKOE=";
+                  }
+                  .${system} or (throw "Unsupported system: ${system}");
+              };
+            })
+          else
+            throw "vivaldi is only supported on Linux";
         rime-frost = final.callPackage ./pkgs/rime-frost { };
         rime-octagram-zh-hant-essay-bgw = final.callPackage ./pkgs/rime-octagram-zh-hant-essay-bgw { };
         zen-bin =

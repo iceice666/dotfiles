@@ -106,6 +106,7 @@ from `pkgs.lixPackageSets.stable`.
 
 Additionally:
 - `zen-bin` uses the `zen-browser` flake on Linux and the local Darwin package under `pkgs/zen-bin`.
+- `vivaldi` is pinned to the upstream Linux 8.0.4033.26 stable build until nixpkgs catches up.
 - `linux_zen_7_0` and `linuxPackages_zen_7_0` pin the Framework kernel family.
 - `eww` is patched on Linux so app windows can paint transparent backgrounds.
 - `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).

@@ -1,7 +1,7 @@
 { lib, pkgs, ... }:
 
 let
-  browserDesktop = "org.qutebrowser.qutebrowser.desktop";
+  browserDesktop = "vivaldi-stable.desktop";
   editorDesktop = "dev.zed.Zed.desktop";
 
   browserAssociations = {

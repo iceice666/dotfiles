@@ -468,11 +468,10 @@ let
     '';
 
   installThemegenAppearance = mode: ''
-    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/niri" "$HOME/.config/qutebrowser" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/niri" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
     ln -sfn "theme-${mode}.scss" "$HOME/.config/eww/theme.scss"
     ln -sfn "themegen-${mode}.ini" "$HOME/.config/fuzzel/fuzzel.ini"
     ln -sfn "theme-${mode}.kdl" "$HOME/.config/niri/theme.kdl"
-    ln -sfn "theme-${mode}.py" "$HOME/.config/qutebrowser/theme.py"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt5ct/colors/themegen.conf"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt6ct/colors/themegen.conf"
     ln -sfn "qt5ct-${mode}.conf" "$HOME/.config/qt5ct/qt5ct.conf"
@@ -567,7 +566,7 @@ let
         "@slurp@"
         "@swaylock@"
         "@swappy@"
-        "@qutebrowser@"
+        "@vivaldi@"
       ]
       [
         "${pkgs.brightnessctl}/bin/brightnessctl"
@@ -585,7 +584,7 @@ let
         "${pkgs.slurp}/bin/slurp"
         "${pkgs.swaylock}/bin/swaylock"
         "${pkgs.swappy}/bin/swappy"
-        (lib.getExe pkgs.qutebrowser)
+        (lib.getExe pkgs.vivaldi)
       ]
       (builtins.readFile ./niri-config.kdl);
 in
@@ -697,6 +696,7 @@ in
     slurp
     swappy
     swaybg
+    vivaldi
     wev
     wf-recorder
     wl-clipboard
