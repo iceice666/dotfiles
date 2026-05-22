@@ -48,6 +48,7 @@ pkgs/                # overlay packages
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
   framework-eww-state/ # Rust state daemon/action helper for Framework Eww
+  ketch/           # web/code/docs search and scraping CLI for Pi tools
   pi-coding-agent-bin/ # official prebuilt Pi Coding Agent releases
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
@@ -97,7 +98,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `framework-eww-state`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -112,6 +113,11 @@ Additionally:
 ### `unstablePkgsFor`
 
 A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used by shared Home Manager modules to pull in `bun` and `sops` from unstable.
+
+## Web, Code, and Docs Research
+
+Pi is configured through `common/home/pi.nix` to install `ketch` and expose these Pi tools: `ketch_search`, `ketch_scrape`, `ketch_code`, and `ketch_docs`.
+Use them for external web research, URL fetching, OSS code examples, and library docs when repository-local information is insufficient.
 
 ## Build, Format, and Validation Commands
 
@@ -308,7 +314,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `default-browser`, `equibop-bin`, `framework-eww-state`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

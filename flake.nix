@@ -73,6 +73,7 @@
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
         framework-eww-state = final.callPackage ./pkgs/framework-eww-state { };
+        ketch = final.callPackage ./pkgs/ketch { };
         niri-scratchpad-helper =
           if final.stdenv.hostPlatform.isLinux then
             inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad

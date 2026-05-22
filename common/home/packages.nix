@@ -34,6 +34,7 @@ let
       age
       ffmpeg
       nodejs_24
+      ketch
       pi-coding-agent-bin
       equibop-bin
       gh
