@@ -17,9 +17,9 @@ switch: theme
 # Apply the Framework NixOS configuration
 [group('host')]
 [linux]
-switch: theme kaguya
+switch: theme
     test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
-    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
+    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -30,15 +30,15 @@ build: theme
 # Dry-build the Framework NixOS configuration
 [group('host')]
 [linux]
-build: theme kaguya
-    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
+build: theme
+    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
-boot: theme kaguya
+boot: theme
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ repo_root }}/.cache/kaguya/framework
+    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
 
 # Copy the latest Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]

@@ -45,7 +45,7 @@ just fmt             # format all files
 just fmt-check       # check Justfile formatting
 just check           # format, Justfile metadata, and flake checks
 just theme           # generate concrete theme cache for this platform
-just kaguya          # copy Framework Kaguya browser binary cache from homolab
+just kaguya          # refresh optional Framework Kaguya browser cache from homolab
 just theme-preview   # render and open this platform's wallpaper palette preview
 ```
 

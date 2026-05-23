@@ -89,10 +89,10 @@ it with `path:$PWD/.cache/themegen/<host>` after running `just theme` on the
 matching platform.
 
 `kaguya-browser` is the local flake under `pkgs/kaguya-bin` that exposes the
-Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
-for the copied binary runtime. Linux build, boot, and switch recipes replace the
-root `kaguya-cache` input with `path:$PWD/.cache/kaguya/framework` after
-`just kaguya` copies the browser runtime files from `iceice666@homolab:2222`.
+optional Framework-only Kaguya browser package. Its `kaguya-cache` input is a
+placeholder for the copied binary runtime. Keep `scripts/kaguya-cache` and
+`just kaguya` available for manual Kaguya testing; normal Framework build,
+boot, and switch recipes use Zen and do not override `kaguya-cache`.
 
 ### Outputs
 
@@ -201,6 +201,7 @@ just check
 - `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux maps to `framework`.
 - `just boot` is Linux-only and sets the Framework NixOS generation for next boot.
 - `just theme` generates the concrete theme cache for the current platform host.
+- `just kaguya` refreshes the optional Framework Kaguya runtime cache.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs format, Justfile metadata, and `nix flake check --all-systems`.
 - Recipe groups and platform guards use official `just` attributes such as `[group('host')]`, `[macos]`, and `[linux]`.
