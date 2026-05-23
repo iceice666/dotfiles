@@ -62,25 +62,25 @@ m3air-activate:
 [group('theme')]
 [macos]
 theme:
-    {{ scripts }}/themegen-cache generate m3air {{ repo_root }}/assets/win_chan.jpg
+    @{{ scripts }}/themegen-cache generate m3air {{ repo_root }}/assets/win_chan.jpg
 
 # Generate concrete theme files for Framework
 [group('theme')]
 [linux]
 theme:
-    {{ scripts }}/themegen-cache generate framework {{ repo_root }}/assets/mzen.png
+    @{{ scripts }}/themegen-cache generate framework {{ repo_root }}/assets/mzen.png
 
 # Render an HTML preview for the current or specified wallpaper palette
 [group('theme')]
 [macos]
 theme-preview image='':
-    {{ scripts }}/themegen-cache preview m3air '{{ image }}'
+    @{{ scripts }}/themegen-cache preview m3air '{{ image }}'
 
 # Render an HTML preview for the current or specified wallpaper palette
 [group('theme')]
 [linux]
 theme-preview image='':
-    {{ scripts }}/themegen-cache preview framework '{{ image }}'
+    @{{ scripts }}/themegen-cache preview framework '{{ image }}'
 
 # Update all flake inputs, or selected inputs when names are passed
 [group('flake')]

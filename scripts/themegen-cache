@@ -129,7 +129,7 @@ generate_cache() {
   tmp_dir=$(mktemp -d "$repo_root/.cache/themegen/.tmp-$host.XXXXXXXXXX")
 
   cleanup_tmp() {
-    if [[ -d "$tmp_dir" ]]; then
+    if [[ -n "${tmp_dir:-}" && -d "$tmp_dir" ]]; then
       chmod -R u+w "$tmp_dir"
       rm -rf "$tmp_dir"
     fi
@@ -159,6 +159,7 @@ generate_cache() {
   rm -rf "$cache_dir"
   mv "$tmp_dir" "$cache_dir"
   tmp_dir=''
+  trap - EXIT
 
   chmod -R u+w "$cache_dir"
   printf '%s\n' "$input_fingerprint" > "$fingerprint_file"
