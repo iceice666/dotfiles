@@ -89,10 +89,10 @@ it with `path:$PWD/.cache/themegen/<host>` after running `just theme` on the
 matching platform.
 
 `kaguya-browser` is the local flake under `pkgs/kaguya-bin` that exposes the
-optional Framework-only Kaguya browser package. Its `kaguya-cache` input is a
-placeholder for the copied binary runtime. Keep `scripts/kaguya-cache` and
-`just kaguya` available for manual Kaguya testing; normal Framework build,
-boot, and switch recipes use Zen and do not override `kaguya-cache`.
+Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
+for the copied binary runtime. Linux build, boot, and switch recipes run
+`just kaguya`, then replace the root `kaguya-cache` input with
+`path:$PWD/.cache/kaguya/framework`.
 
 ### Outputs
 
@@ -116,7 +116,6 @@ from `pkgs.lixPackageSets.stable`.
 
 Additionally:
 - `zen-bin` uses the `zen-browser` flake on Linux and the local Darwin package under `pkgs/zen-bin`.
-- `vivaldi` is pinned to the upstream Linux 8.0.4033.26 stable build until nixpkgs catches up.
 - `linux_zen_7_0` and `linuxPackages_zen_7_0` pin the Framework kernel family.
 - `eww` is patched on Linux so app windows can paint transparent backgrounds.
 - `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
@@ -155,12 +154,13 @@ overrides.
 
 Direct NixOS commands are for debugging only. If you must run one manually,
 mirror the matching `Justfile` recipe, including `--override-input
-themegen-cache ...` where applicable.
+themegen-cache ...` and `--override-input kaguya-cache ...` where applicable.
 
 ```sh
 just theme
-nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input themegen-cache path:$PWD/.cache/themegen/framework
-sudo nixos-rebuild switch --flake .#framework --override-input themegen-cache path:$PWD/.cache/themegen/framework
+just kaguya
+nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input themegen-cache path:$PWD/.cache/themegen/framework --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
+sudo nixos-rebuild switch --flake .#framework --override-input themegen-cache path:$PWD/.cache/themegen/framework --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
 ```
 
 The standalone Home Manager output `.#iceice666@framework` is kept only as a
@@ -201,7 +201,7 @@ just check
 - `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux maps to `framework`.
 - `just boot` is Linux-only and sets the Framework NixOS generation for next boot.
 - `just theme` generates the concrete theme cache for the current platform host.
-- `just kaguya` refreshes the optional Framework Kaguya runtime cache.
+- `just kaguya` refreshes the Framework Kaguya runtime cache.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs format, Justfile metadata, and `nix flake check --all-systems`.
 - Recipe groups and platform guards use official `just` attributes such as `[group('host')]`, `[macos]`, and `[linux]`.

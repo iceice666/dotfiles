@@ -697,7 +697,6 @@ in
     swappy
     swaybg
     kaguya-bin
-    vivaldi
     wev
     wf-recorder
     wl-clipboard

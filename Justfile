@@ -6,6 +6,7 @@ repo_root := justfile_directory()
 m3air_flake := ".#iceice666@m3air"
 framework_flake := ".#framework"
 framework_build_attr := ".#nixosConfigurations.framework.config.system.build.toplevel"
+framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
 scripts := repo_root / "scripts"
 
 # Apply the M3 Air nix-darwin configuration
@@ -17,9 +18,9 @@ switch: theme
 # Apply the Framework NixOS configuration
 [group('host')]
 [linux]
-switch: theme
+switch: theme kaguya
     test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
-    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -30,15 +31,15 @@ build: theme
 # Dry-build the Framework NixOS configuration
 [group('host')]
 [linux]
-build: theme
-    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+build: theme kaguya
+    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
-boot: theme
+boot: theme kaguya
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework
+    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Copy the latest Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]
