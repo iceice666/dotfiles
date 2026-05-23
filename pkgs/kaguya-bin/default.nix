@@ -49,8 +49,11 @@
   nss,
   openjpeg,
   pango,
+  patchelf,
   pciutils,
   pipewire,
+  qt5,
+  qt6,
   re2,
   snappy,
   speechd,
@@ -120,6 +123,8 @@ let
     pango
     pciutils
     pipewire
+    qt5.qtbase
+    qt6.qtbase
     re2
     snappy
     speechd
@@ -144,6 +149,8 @@ stdenvNoCC.mkDerivation {
   inherit version src;
 
   dontUnpack = true;
+
+  nativeBuildInputs = [ patchelf ];
 
   installPhase = ''
         runHook preInstall
@@ -197,6 +204,24 @@ stdenvNoCC.mkDerivation {
           echo "kaguya-bin: recorded executable is not executable: $binary" >&2
           exit 1
         fi
+
+        runtimeRpath='$ORIGIN:$ORIGIN/lib:$ORIGIN/lib.target:${runtimeLibraryPath}'
+        while IFS= read -r -d $'\0' file; do
+          if ! patchelf --print-needed "$file" >/dev/null 2>&1; then
+            continue
+          fi
+
+          currentRpath="$(patchelf --print-rpath "$file" 2>/dev/null || true)"
+          if [ -n "$currentRpath" ]; then
+            patchelf --force-rpath --set-rpath "$currentRpath:$runtimeRpath" "$file"
+          else
+            patchelf --force-rpath --set-rpath "$runtimeRpath" "$file"
+          fi
+
+          if patchelf --print-interpreter "$file" >/dev/null 2>&1; then
+            patchelf --set-interpreter '${stdenv.cc.bintools.dynamicLinker}' "$file"
+          fi
+        done < <(find "$out/opt/kaguya" -maxdepth 1 -type f -print0)
 
         cat > "$out/bin/kaguya" <<'EOF'
     #!@runtimeShell@

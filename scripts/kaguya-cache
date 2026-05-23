@@ -86,6 +86,16 @@ trap 'rm -rf "$stage"' EXIT
 
 mkdir -p "$stage/app" "$stage/package"
 
+copy_entry() {
+  local entry="$1"
+
+  if [ -e "$out/$entry" ]; then
+    cp -a --reflink=auto "$out/$entry" "$stage/app/"
+  else
+    echo "warning: missing Kaguya runtime file: $entry" >&2
+  fi
+}
+
 files=(
   "$binary"
   "${binary}_crashpad_handler"
@@ -93,15 +103,12 @@ files=(
   chrome_100_percent.pak
   chrome_200_percent.pak
   icudtl.dat
-  libEGL.so
-  libGLESv2.so
-  libqt5_shim.so
-  libqt6_shim.so
-  libvk_swiftshader.so
-  libvulkan.so.1
   locales
   product_logo_256.png
+  resources
   resources.pak
+  snapshot_blob.bin
+  v8_build_config.json
   v8_context_snapshot.bin
   vk_swiftshader_icd.json
   xdg-mime
@@ -109,12 +116,18 @@ files=(
 )
 
 for file in "${files[@]}"; do
-  if [ -e "$out/$file" ]; then
-    cp -a --reflink=auto "$out/$file" "$stage/app/"
-  else
-    echo "warning: missing Kaguya runtime file: $file" >&2
-  fi
+  copy_entry "$file"
 done
+
+while IFS= read -r -d '' file; do
+  cp -a --reflink=auto "$file" "$stage/app/"
+done < <(
+  find "$out" -maxdepth 1 -type f \
+    \( -name '*.so' -o -name '*.so.[0-9]*' \) \
+    ! -name '*.TOC' \
+    -print0 \
+    | sort -z
+)
 
 if [ -f "$root/package/kaguya.desktop" ]; then
   cp -a "$root/package/kaguya.desktop" "$stage/package/"
@@ -133,6 +146,7 @@ python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
 {
   printf 'remote=%s\n' "$root"
   printf 'binary=%s\n' "$binary"
+  printf 'shared_libraries=%s\n' "$(find "$stage/app" -maxdepth 1 -type f -name '*.so*' -printf . | wc -c)"
   printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } > "$stage/manifest"
 
