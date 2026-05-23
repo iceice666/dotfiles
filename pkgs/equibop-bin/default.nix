@@ -21,6 +21,7 @@
   glib,
   gtk3,
   libdrm,
+  libglvnd,
   libnotify,
   libpulseaudio,
   libuuid,
@@ -103,6 +104,7 @@ stdenvNoCC.mkDerivation {
     glib
     gtk3
     libdrm
+    libglvnd
     libnotify
     libpulseaudio
     libuuid
@@ -149,11 +151,12 @@ stdenvNoCC.mkDerivation {
         makeWrapper "$out/opt/equibop/equibop" "$out/bin/equibop" \
           --prefix LD_LIBRARY_PATH : "${
             lib.makeLibraryPath [
+              libglvnd
               libpulseaudio
               pipewire
             ]
           }:$out/opt/equibop" \
-          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations,WebRTCPipeWireCapturer --enable-wayland-ime=true}}"
+          --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform=wayland --enable-features=UseOzonePlatform,WaylandWindowDecorations,WebRTCPipeWireCapturer --enable-webrtc-pipewire-capturer --enable-wayland-ime=true --disable-gpu-memory-buffer-video-frames}}"
         runHook postInstall
       '';
 
