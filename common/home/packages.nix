@@ -34,6 +34,7 @@ let
       ssh-to-age
       ffmpeg
       nodejs_24
+      codex-cli-bin
       ketch
       pi-coding-agent-bin
       equibop-bin
