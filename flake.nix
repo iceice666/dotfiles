@@ -83,12 +83,12 @@
         ketch = final.callPackage ./pkgs/ketch { };
         kaguya-bin =
           if final.stdenv.hostPlatform.isLinux then
-            inputs."kaguya-browser".packages.${final.system}.default
+            inputs."kaguya-browser".packages.${final.stdenv.hostPlatform.system}.default
           else
             throw "kaguya-bin is only supported on Linux";
         niri-scratchpad-helper =
           if final.stdenv.hostPlatform.isLinux then
-            inputs."niri-scratchpad-helper".packages.${final.system}.niri-scratchpad
+            inputs."niri-scratchpad-helper".packages.${final.stdenv.hostPlatform.system}.niri-scratchpad
           else
             throw "niri-scratchpad-helper is only supported on Linux";
         rime-frost = final.callPackage ./pkgs/rime-frost { };
@@ -96,8 +96,8 @@
         zen-bin =
           if final.stdenv.hostPlatform.isLinux then
             final.wrapFirefox
-              (inputs."zen-browser".packages.${final.system}.zen-browser-unwrapped
-                or inputs."zen-browser".packages.${final.system}.default
+              (inputs."zen-browser".packages.${final.stdenv.hostPlatform.system}.zen-browser-unwrapped
+                or inputs."zen-browser".packages.${final.stdenv.hostPlatform.system}.default
               )
               {
                 pname = "zen-bin";

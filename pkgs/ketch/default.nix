@@ -6,13 +6,13 @@
 
 buildGoModule rec {
   pname = "ketch";
-  version = "0.9.0";
+  version = "0.9.1";
 
   src = fetchFromGitHub {
     owner = "1broseidon";
     repo = "ketch";
     rev = "v${version}";
-    hash = "sha256-IWmlNd7Fy47Wc4vyc0XjkqCHvGR7SdOIQl4oyDgIU54=";
+    hash = "sha256-oFgLV/p+5eoClCl5efjAdOyFw+HTtx2vI4aBgXvDK9A=";
   };
 
   vendorHash = "sha256-m3IwAYsczsxcVk9fay+f2AsNjmXoPk7NS0abES6b594=";
