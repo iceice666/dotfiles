@@ -18,7 +18,7 @@ switch:
 # Apply the Framework NixOS configuration
 [group('host')]
 [linux]
-switch: kaguya
+switch: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
     sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
@@ -31,21 +31,26 @@ build:
 # Dry-build the Framework NixOS configuration
 [group('host')]
 [linux]
-build: kaguya
+build: _kaguya-cache
     nix build {{ framework_build_attr }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
-boot: kaguya
+boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
     sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
-# Copy the latest Kaguya browser build from homolab into the local Nix path input cache
+# Ensure the local Kaguya Nix path input cache exists before Framework builds
+[linux]
+_kaguya-cache:
+    {{ scripts }}/kaguya-cache ensure
+
+# Refresh the Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]
 [linux]
 kaguya:
-    {{ scripts }}/kaguya-cache
+    {{ scripts }}/kaguya-cache refresh
 
 # Install Homebrew on M3 Air
 [group('host')]

@@ -8,6 +8,76 @@ port="${KAGUYA_REMOTE_PORT:-2222}"
 root_override="${KAGUYA_REMOTE_ROOT:-}"
 cache_dir="$repo_root/.cache/kaguya/framework"
 state_dir="$repo_root/.cache/kaguya/.state"
+mode="${1:-ensure}"
+
+usage() {
+  cat <<'EOF'
+Usage: kaguya-cache [ensure|refresh]
+
+ensure   Reuse an existing local Kaguya cache, fetching only when it is missing or invalid.
+refresh  Always fetch a fresh Kaguya runtime from the remote build tree.
+EOF
+}
+
+case "$mode" in
+  ensure | refresh)
+    ;;
+  -h | --help | help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac
+
+cache_binary() {
+  if [[ -f "$cache_dir/binary-name" ]]; then
+    tr -d '\n' < "$cache_dir/binary-name"
+    return 0
+  fi
+
+  if [[ -x "$cache_dir/app/kaguya" ]]; then
+    printf 'kaguya\n'
+    return 0
+  fi
+
+  if [[ -x "$cache_dir/app/helium" ]]; then
+    printf 'helium\n'
+    return 0
+  fi
+
+  return 1
+}
+
+cache_valid() {
+  [[ -d "$cache_dir/app" ]] || return 1
+
+  local binary
+  binary="$(cache_binary)" || return 1
+  [[ -n "$binary" && "$binary" != */* && -x "$cache_dir/app/$binary" ]]
+}
+
+if [[ "$mode" == "ensure" ]] && cache_valid; then
+  version=""
+  if [[ -f "$cache_dir/version" ]]; then
+    version="$(tr -d '\n' < "$cache_dir/version")"
+  fi
+
+  if [[ -n "$version" ]]; then
+    echo "Using cached Kaguya $version at $cache_dir"
+  else
+    echo "Using cached Kaguya at $cache_dir"
+  fi
+  exit 0
+fi
+
+if [[ "$mode" == "ensure" ]]; then
+  echo "Kaguya cache missing or invalid; fetching from $remote"
+else
+  echo "Refreshing Kaguya cache from $remote"
+fi
 
 mkdir -p "$(dirname "$cache_dir")" "$state_dir"
 tmp_dir=$(mktemp -d "$repo_root/.cache/kaguya/.tmp-framework.XXXXXXXXXX")

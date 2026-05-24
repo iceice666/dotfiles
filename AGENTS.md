@@ -89,9 +89,11 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 
 `kaguya-browser` is the local flake under `pkgs/kaguya-bin` that exposes the
 Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
-for the copied binary runtime. Linux build, boot, and switch recipes run
-`just kaguya`, then replace the root `kaguya-cache` input with
-`path:$PWD/.cache/kaguya/framework`.
+for the copied binary runtime. Linux build, boot, and switch recipes ensure
+`.cache/kaguya/framework` exists, fetching from homolab only when missing or
+invalid, then replace the root `kaguya-cache` input with
+`path:$PWD/.cache/kaguya/framework`. Run `just kaguya` to force-refresh the
+cache.
 
 ### Outputs
 
@@ -148,15 +150,15 @@ just switch
 
 Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
 `nixos-rebuild`, or `home-manager` commands. The recipes run required
-pre-build steps such as `kaguya` on Linux and pass the correct flake input
-overrides.
+pre-build steps such as the Kaguya cache ensure on Linux and pass the correct
+flake input overrides.
 
 Direct NixOS commands are for debugging only. If you must run one manually,
 mirror the matching `Justfile` recipe, including `--override-input
 kaguya-cache ...` where applicable.
 
 ```sh
-just kaguya
+./scripts/kaguya-cache ensure
 nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
 sudo nixos-rebuild switch --flake .#framework --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
 ```
@@ -200,7 +202,9 @@ just check
 - `just boot` is Linux-only and sets the Framework NixOS generation for next boot.
 - Theme files are generated inside the host build by a Nix derivation.
 - `just theme` generates a local concrete theme cache for inspection only.
-- `just kaguya` refreshes the Framework Kaguya runtime cache.
+- Framework build, switch, and boot recipes reuse `.cache/kaguya/framework` and
+  fetch Kaguya only when missing or invalid.
+- `just kaguya` force-refreshes the Framework Kaguya runtime cache.
 - `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
 - `just check` runs format, Justfile metadata, and `nix flake check --all-systems`.
 - Recipe groups and platform guards use official `just` attributes such as `[group('host')]`, `[macos]`, and `[linux]`.
