@@ -202,7 +202,6 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
-        "themegen-cache": "themegen-cache",
         "treefmt-nix": "treefmt-nix",
         "zen-browser": "zen-browser"
       }
@@ -258,18 +257,6 @@
         "repo": "default-linux",
         "type": "github"
       }
-    },
-    "themegen-cache": {
-      "flake": false,
-      "locked": {
-        "path": "./common/home/themegen/empty-cache",
-        "type": "path"
-      },
-      "original": {
-        "path": "./common/home/themegen/empty-cache",
-        "type": "path"
-      },
-      "parent": []
     },
     "treefmt-nix": {
       "inputs": {

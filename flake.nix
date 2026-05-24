@@ -38,11 +38,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    themegen-cache = {
-      url = "path:./common/home/themegen/empty-cache";
-      flake = false;
-    };
-
     kaguya-cache = {
       url = "path:./pkgs/kaguya-bin/empty-cache";
       flake = false;
@@ -214,7 +209,6 @@
           username = "iceice666";
           homeDirectory = "/Users/iceice666";
           dotfiles = ./.;
-          themegenCache = inputs."themegen-cache";
           unstablePkgs = unstablePkgsFor "aarch64-darwin";
         };
         modules = [
@@ -232,7 +226,6 @@
           username = "iceice666";
           homeDirectory = "/home/iceice666";
           dotfiles = ./.;
-          themegenCache = inputs."themegen-cache";
           unstablePkgs = unstablePkgsFor "x86_64-linux";
         };
         modules = [
@@ -255,7 +248,6 @@
           username = "iceice666";
           homeDirectory = "/home/iceice666";
           dotfiles = ./.;
-          themegenCache = inputs."themegen-cache";
           unstablePkgs = unstablePkgsFor "x86_64-linux";
         };
         modules = [

@@ -18,6 +18,7 @@ in
     inherit desktopWallpaper;
     avatarImage = frameworkAvatar;
     ghosttyFontSize = 14;
+    themegenHost = "framework";
   };
 
   home.packages = with pkgs; [

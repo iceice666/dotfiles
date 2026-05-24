@@ -30,7 +30,7 @@ hosts/               # per-host entrypoints
   m3air/             # macOS
   framework/         # NixOS system + Home Manager modules
 
-themegen/            # $HOME-relative theme templates rendered before builds
+themegen/            # $HOME-relative theme templates rendered by Nix derivations
 pkgs/                # custom overlay packages and the themegen Rust CLI
 sensitive/           # sops-encrypted secrets
 ```
@@ -44,7 +44,7 @@ just boot            # set Framework for next boot, Linux only
 just fmt             # format all files
 just fmt-check       # check Justfile formatting
 just check           # format, Justfile metadata, and flake checks
-just theme           # generate concrete theme cache for this platform
+just theme           # generate a local concrete theme cache for inspection
 just kaguya          # refresh Framework Kaguya browser cache from homolab
 just theme-preview   # render and open this platform's wallpaper palette preview
 ```

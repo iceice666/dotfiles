@@ -5,7 +5,6 @@
   username,
   homeDirectory,
   dotfiles,
-  themegenCache,
   unstablePkgs,
   ...
 }:
@@ -88,7 +87,6 @@
         username
         homeDirectory
         dotfiles
-        themegenCache
         unstablePkgs
         ;
     };

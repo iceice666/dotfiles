@@ -1,15 +1,15 @@
 # Theming
 
-This repo uses `themegen` to derive Material You and Base16 colors from each host wallpaper, then renders root-level plain templates before the Nix build starts.
+This repo uses `themegen` to derive Material You and Base16 colors from each host wallpaper, then renders root-level plain templates in a Nix derivation.
 
 Templates live under `themegen/` and are already relative to `$HOME`; there is no extra `home/` path segment.
 
 ## Pipeline
 
-1. Each host chooses a wallpaper in its host module.
-2. `just theme` renders `themegen/common/` and then `themegen/<host>/` into `.cache/themegen/<host>/` for the current platform host when the wallpaper or templates changed.
+1. Each host chooses a wallpaper in its host Home Manager module.
+2. `common/home/themegen/default.nix` builds a host-specific `themegen-cache-<host>` derivation from the wallpaper plus `themegen/common/` and `themegen/<host>/` templates.
 3. Host-specific templates overwrite common templates when their relative paths match.
-4. `common/home/themegen/default.nix` recursively installs the generated cache into Home Manager.
+4. The same module installs the derivation outputs into Home Manager using the target list known at evaluation time.
 5. On Framework, Home Manager wraps the generated GTK CSS into a named Nix GTK theme package under `share/themes` and switches between `Themegen` and `Themegen-dark`.
 
 ## File Map
@@ -17,34 +17,25 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 - `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
 - `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and Eww bar templates. GTK templates become a standalone package on Framework.
 - `themegen/m3air/`: macOS-only Equibop template.
-- `common/home/themegen/default.nix`: Home Manager installer for generated concrete files.
+- `common/home/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
 
 ## Workflows
 
-Generate concrete themes:
+Normal build and switch recipes build the theme derivation automatically:
+
+```sh
+just build
+just switch
+```
+
+Render a local cache for quick inspection outside a system build:
 
 ```sh
 just theme
 ```
 
-Run it on the platform that owns the host: macOS renders `m3air`, and Linux
-renders `framework`.
-
-Normal build and switch recipes run generation first and pass the generated cache into the flake:
-
-```sh
-just build
-```
-
-Generation is skipped when the host wallpaper and all `themegen/common/` plus `themegen/<host>/` templates match the last run. Input fingerprints live under `.cache/themegen/.state/`, outside the generated cache that Home Manager installs.
-
-Direct Nix commands must pass the generated cache input explicitly:
-
-```sh
-nix build .#nixosConfigurations.framework.config.system.build.toplevel \
-  --override-input themegen-cache path:$PWD/.cache/themegen/framework
-```
+The local cache is written to `.cache/themegen/<host>/`; it is not used by Home Manager activation.
 
 Render and open an HTML preview for a wallpaper palette:
 
@@ -53,7 +44,7 @@ just theme-preview
 just theme-preview ./assets/another-wallpaper.png
 ```
 
-The generated file is written to `.cache/themegen/preview/index.html`.
+The generated preview is written to `.cache/themegen/preview/index.html`.
 
 ## Editing
 
@@ -70,7 +61,6 @@ The generated file is written to `.cache/themegen/preview/index.html`.
 For template or theme installer changes:
 
 ```sh
-just theme
 just build
 just fmt
 ```

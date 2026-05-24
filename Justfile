@@ -12,34 +12,34 @@ scripts := repo_root / "scripts"
 # Apply the M3 Air nix-darwin configuration
 [group('host')]
 [macos]
-switch: theme
-    sudo darwin-rebuild switch --flake {{ m3air_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/m3air
+switch:
+    sudo darwin-rebuild switch --flake {{ m3air_flake }}
 
 # Apply the Framework NixOS configuration
 [group('host')]
 [linux]
-switch: theme kaguya
+switch: kaguya
     test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
-    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
 [macos]
-build: theme
-    darwin-rebuild build --flake {{ m3air_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/m3air
+build:
+    darwin-rebuild build --flake {{ m3air_flake }}
 
 # Dry-build the Framework NixOS configuration
 [group('host')]
 [linux]
-build: theme kaguya
-    nix build {{ framework_build_attr }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+build: kaguya
+    nix build {{ framework_build_attr }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
-boot: theme kaguya
+boot: kaguya
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input themegen-cache path:{{ repo_root }}/.cache/themegen/framework --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Copy the latest Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]
@@ -59,13 +59,13 @@ m3air-homebrew:
 m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# Generate concrete theme files for M3 Air
+# Generate a local concrete theme cache for M3 Air inspection
 [group('theme')]
 [macos]
 theme:
     @{{ scripts }}/themegen-cache generate m3air {{ repo_root }}/assets/win_chan.jpg
 
-# Generate concrete theme files for Framework
+# Generate a local concrete theme cache for Framework inspection
 [group('theme')]
 [linux]
 theme:

@@ -5,7 +5,6 @@
   username,
   homeDirectory,
   dotfiles,
-  themegenCache,
   unstablePkgs,
   ...
 }:
@@ -316,7 +315,6 @@ in
         username
         homeDirectory
         dotfiles
-        themegenCache
         unstablePkgs
         ;
     };

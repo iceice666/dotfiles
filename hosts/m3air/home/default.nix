@@ -20,6 +20,7 @@ in
 
   _module.args = {
     inherit desktopWallpaper;
+    themegenHost = "m3air";
   };
 
   home.packages = with pkgs; [
