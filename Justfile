@@ -19,7 +19,6 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    test -e /etc/NIXOS || { echo "Framework switch requires NixOS. The legacy standalone Home Manager path was removed." >&2; exit 1; }
     sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
