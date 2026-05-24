@@ -92,6 +92,11 @@ theme-preview image='':
 update *inputs:
     nix flake update {{ inputs }}
 
+# Ask a coding agent to update custom package versions and commit the result
+[group('flake')]
+update-custom-pkgs agent='codex':
+    {{ scripts }}/update-custom-pkgs-agent '{{ agent }}' '{{ repo_root }}'
+
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]
 check: fmt-check _just-check
