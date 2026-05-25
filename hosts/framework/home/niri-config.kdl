@@ -95,7 +95,7 @@ binds {
 
     Mod+Alt+Q hotkey-overlay-title="Quit Niri" { quit; }
     Mod+Alt+P hotkey-overlay-title="Power off monitors" { power-off-monitors; }
-    Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@swaylock@" "-f"; }
+    Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@lockScreen@" "lock"; }
 
     Mod+Space hotkey-overlay-title="Open launcher" { spawn "@fuzzel@"; }
     Mod+T hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }

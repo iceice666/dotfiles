@@ -179,7 +179,7 @@ in
     rtkit.enable = true;
     pam.services = {
       greetd.fprintAuth = true;
-      swaylock = {
+      limes = {
         fprintAuth = true;
         unixAuth = true;
       };

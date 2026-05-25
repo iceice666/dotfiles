@@ -564,7 +564,7 @@ let
         "@runJustRecipe@"
         "@toggleLazygit@"
         "@slurp@"
-        "@swaylock@"
+        "@lockScreen@"
         "@swappy@"
         "@browser@"
       ]
@@ -582,7 +582,7 @@ let
         "${runJustRecipe}/bin/run-niri-just-recipe"
         "${toggleLazygit}/bin/toggle-niri-lazygit"
         "${pkgs.slurp}/bin/slurp"
-        "${pkgs.swaylock}/bin/swaylock"
+        "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water"
         "${pkgs.swappy}/bin/swappy"
         (lib.getExe pkgs.kaguya-bin)
       ]
@@ -875,21 +875,6 @@ in
     enable = true;
   };
 
-  programs.swaylock = {
-    enable = true;
-    settings = {
-      color = "171717";
-      font = "Cascadia Code NF";
-      indicator-radius = 120;
-      indicator-thickness = 8;
-      ring-color = "3b82f6";
-      key-hl-color = "93c5fd";
-      line-color = "00000000";
-      inside-color = "171717cc";
-      separator-color = "00000000";
-    };
-  };
-
   services = {
     blueman-applet.enable = true;
     darkman = {
@@ -948,7 +933,7 @@ in
       timeouts = [
         {
           timeout = 300;
-          command = "${pkgs.swaylock}/bin/swaylock -f";
+          command = "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water lock";
         }
         {
           timeout = 600;
@@ -963,7 +948,7 @@ in
       events = [
         {
           event = "before-sleep";
-          command = "${pkgs.swaylock}/bin/swaylock -f";
+          command = "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water lock";
         }
       ];
     };
