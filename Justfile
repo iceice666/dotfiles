@@ -51,6 +51,12 @@ _kaguya-cache:
 kaguya:
     {{ scripts }}/kaguya-cache refresh
 
+# Incrementally sync the Kaguya cache (faster updates)
+[group('host')]
+[linux]
+kaguya-sync:
+    {{ scripts }}/kaguya-cache sync
+
 # Install Homebrew on M3 Air
 [group('host')]
 [macos]

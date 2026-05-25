@@ -12,15 +12,16 @@ mode="${1:-ensure}"
 
 usage() {
   cat <<'EOF'
-Usage: kaguya-cache [ensure|refresh]
+Usage: kaguya-cache [ensure|refresh|sync]
 
 ensure   Reuse an existing local Kaguya cache, fetching only when it is missing or invalid.
 refresh  Always fetch a fresh Kaguya runtime from the remote build tree.
+sync     Incrementally sync the cache from the remote with rsync.
 EOF
 }
 
 case "$mode" in
-  ensure | refresh)
+  ensure | refresh | sync)
     ;;
   -h | --help | help)
     usage
@@ -59,6 +60,92 @@ cache_valid() {
   [[ -n "$binary" && "$binary" != */* && -x "$cache_dir/app/$binary" ]]
 }
 
+collect_runtime_file_list() {
+  local out="$1"
+  local binary="$2"
+  local list_file="$3"
+
+  : > "$list_file"
+  ssh -p "$port" -o BatchMode=yes "$remote" \
+    env KAGUYA_REMOTE_OUT="$out" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' >"$list_file"
+set -euo pipefail
+
+out="$KAGUYA_REMOTE_OUT"
+binary="$KAGUYA_BINARY"
+
+entries=(
+  "$binary"
+  "${binary}_crashpad_handler"
+  chromedriver
+  chrome_100_percent.pak
+  chrome_200_percent.pak
+  icudtl.dat
+  locales
+  product_logo_256.png
+  resources
+  resources.pak
+  snapshot_blob.bin
+  v8_build_config.json
+  v8_context_snapshot.bin
+  vk_swiftshader_icd.json
+  xdg-mime
+  xdg-settings
+)
+
+for entry in "${entries[@]}"; do
+  if [ -e "$out/$entry" ]; then
+    printf '%s\n' "$entry"
+  else
+    echo "warning: missing Kaguya runtime file: $entry" >&2
+  fi
+done
+
+while IFS= read -r -d '' file; do
+  printf '%s\n' "${file#./}"
+done < <(
+  find "$out" -maxdepth 1 -type f \
+    \( -name '*.so' -o -name '*.so.[0-9]*' \) \
+    ! -name '*.TOC' \
+    -print0 \
+    | sort -z
+)
+REMOTE
+
+  if [[ ! -s "$list_file" ]]; then
+    echo "No Kaguya runtime files found in $out" >&2
+    exit 1
+  fi
+}
+
+collect_version() {
+  local root="$1"
+  local version_file="$2"
+
+  if ssh -p "$port" -o BatchMode=yes "$remote" \
+    env KAGUYA_REMOTE_ROOT="$root" bash -s <<'REMOTE' > "$version_file".tmp
+set -euo pipefail
+
+root="$KAGUYA_REMOTE_ROOT"
+if python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
+  --tree "$root/kaguya-chromium" \
+  --platform-tree "$root" \
+  --print >/dev/null 2>&1; then
+  python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
+    --tree "$root/kaguya-chromium" \
+    --platform-tree "$root" \
+    --print
+else
+  printf '0-unstable\n'
+fi
+REMOTE
+  then
+    mv "$version_file".tmp "$version_file"
+  else
+    rm -f "$version_file".tmp
+    return 1
+  fi
+}
+
 if [[ "$mode" == "ensure" ]] && cache_valid; then
   version=""
   if [[ -f "$cache_dir/version" ]]; then
@@ -75,8 +162,10 @@ fi
 
 if [[ "$mode" == "ensure" ]]; then
   echo "Kaguya cache missing or invalid; fetching from $remote"
-else
+elif [[ "$mode" == "refresh" ]]; then
   echo "Refreshing Kaguya cache from $remote"
+else
+  echo "Synchronizing Kaguya cache from $remote"
 fi
 
 mkdir -p "$(dirname "$cache_dir")" "$state_dir"
@@ -142,10 +231,52 @@ if [[ -z "$remote_root" || -z "$binary" ]]; then
 fi
 
 echo "copying Kaguya from $remote:$remote_root ($binary)"
+remote_out="$remote_root/build/src/out/Default"
 
-ssh -p "$port" -o BatchMode=yes "$remote" \
-  env KAGUYA_REMOTE_ROOT="$remote_root" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' \
-    | tar -xf - -C "$tmp_dir"
+mkdir -p "$tmp_dir/app" "$tmp_dir/package"
+
+if [[ "$mode" == "sync" ]] && ! command -v rsync >/dev/null; then
+  echo "warning: rsync not available; falling back to full refresh" >&2
+  mode=refresh
+fi
+
+if [[ "$mode" == "sync" ]]; then
+  collect_runtime_file_list "$remote_out" "$binary" "$tmp_dir/.runtime-files"
+
+  rsync_opts=( -a --partial --inplace --mkpath --delete --delete-excluded --files-from="$tmp_dir/.runtime-files" )
+  if [[ -d "$cache_dir/app" ]]; then
+    rsync_opts+=(--link-dest="$cache_dir/app")
+  fi
+
+  rsync "${rsync_opts[@]}" \
+    -e "ssh -p $port -o BatchMode=yes" \
+    "$remote:$remote_out/" "$tmp_dir/app/"
+
+  if ssh -p "$port" -o BatchMode=yes "$remote" \
+    env KAGUYA_REMOTE_ROOT="$remote_root" bash -s <<'REMOTE'
+if [ -f "$KAGUYA_REMOTE_ROOT/package/kaguya.desktop" ]; then
+  exit 0
+fi
+REMOTE
+  then
+    rsync -a -e "ssh -p $port -o BatchMode=yes" \
+      "$remote:$remote_root/package/kaguya.desktop" "$tmp_dir/package/"
+  fi
+
+  if ssh -p "$port" -o BatchMode=yes "$remote" \
+    env KAGUYA_REMOTE_ROOT="$remote_root" bash -s <<'REMOTE'
+if [ -f "$KAGUYA_REMOTE_ROOT/package/apparmor.cfg" ]; then
+  exit 0
+fi
+REMOTE
+  then
+    rsync -a -e "ssh -p $port -o BatchMode=yes" \
+      "$remote:$remote_root/package/apparmor.cfg" "$tmp_dir/package/"
+  fi
+else
+  ssh -p "$port" -o BatchMode=yes "$remote" \
+    env KAGUYA_REMOTE_ROOT="$remote_root" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' \
+      | tar -xf - -C "$tmp_dir"
 set -euo pipefail
 
 root="$KAGUYA_REMOTE_ROOT"
@@ -222,6 +353,19 @@ python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
 
 tar -C "$stage" -cf - .
 REMOTE
+fi
+
+printf '%s\n' "$binary" > "$tmp_dir/binary-name"
+if ! collect_version "$remote_root" "$tmp_dir/version"; then
+  printf '0-unstable\n' > "$tmp_dir/version"
+fi
+
+{
+  printf 'remote=%s\n' "$remote_root"
+  printf 'binary=%s\n' "$binary"
+  printf 'shared_libraries=%s\n' "$(find "$tmp_dir/app" -maxdepth 1 -type f -name '*.so*' -printf . | wc -c)"
+  printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "$tmp_dir/manifest"
 
 test -x "$tmp_dir/app/$binary"
 chmod -R u+w "$tmp_dir"
