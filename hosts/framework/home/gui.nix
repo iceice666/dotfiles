@@ -118,7 +118,7 @@ let
       fi
     done
 
-    exec ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
+    exec ${pkgs.systemd}/bin/systemctl --no-block suspend-then-hibernate
   '';
 
   renameWorkspace = pkgs.writeShellScript "rename-niri-workspace" ''
