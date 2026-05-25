@@ -194,8 +194,8 @@
     "reimu-on-starlit-water": {
       "flake": false,
       "locked": {
-        "lastModified": 1779708036,
-        "narHash": "sha256-WUHZc2gAU5Bl0kHtyfwBRLhvCdpAjbA7g3KL8avtRGk=",
+        "lastModified": 1779720006,
+        "narHash": "sha256-7xUa/gGrBwLrptDWh/1vDP9tJGiM8dEjJJtn6s9lZrQ=",
         "path": "/home/iceice666/code/reimu_lays_on_water",
         "type": "path"
       },

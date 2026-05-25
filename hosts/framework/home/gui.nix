@@ -953,7 +953,7 @@ in
       timeouts = [
         {
           timeout = 300;
-          command = "${lockScreen} lock";
+          command = "${lockScreen} lock --daemonize";
         }
         {
           timeout = 600;
@@ -968,7 +968,7 @@ in
       events = [
         {
           event = "before-sleep";
-          command = "${lockScreen} lock";
+          command = "${lockScreen} lock --daemonize";
         }
       ];
     };
