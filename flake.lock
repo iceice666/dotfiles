@@ -231,11 +231,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1779671746,
-        "narHash": "sha256-w/7JYXzPNF7iyy3/HVrL51MLqI+mfdHbGk2G32aPN5A=",
+        "lastModified": 1779679011,
+        "narHash": "sha256-EQIgTlFUFh53otuPxdAiuRjh7rrqfibGmea0dIgR4ng=",
         "owner": "iceice666",
         "repo": "reimu_lays_on_water",
-        "rev": "cecb803cd329175ee2f277d9b8071411ed623c5c",
+        "rev": "c9698cf7a77eb04705751ddace703c328150efba",
         "type": "github"
       },
       "original": {

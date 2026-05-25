@@ -97,7 +97,8 @@
             throw "niri-scratchpad-helper is only supported on Linux";
         reimu-lays-on-water =
           if final.stdenv.hostPlatform.isLinux then
-            inputs."reimu-lays-on-water".packages.${final.stdenv.hostPlatform.system}.reimu-lays-on-water
+            (inputs."reimu-lays-on-water".packages.${final.stdenv.hostPlatform.system}.default or
+              inputs."reimu-lays-on-water".packages.${final.stdenv.hostPlatform.system}.reimu-lays-on-water)
           else
             throw "reimu-lays-on-water is only supported on Linux";
         rime-frost = final.callPackage ./pkgs/rime-frost { };

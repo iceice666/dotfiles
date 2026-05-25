@@ -379,6 +379,26 @@ let
       | ${pkgs.wl-clipboard}/bin/wl-copy
   '';
 
+  lockScreen = pkgs.writeShellScript "framework-lock-screen" ''
+    ${frameworkGraphicsEnv}
+
+    if [ -z "''${XDG_RUNTIME_DIR:-}" ]; then
+      export XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)"
+    fi
+
+    if ${pkgs.systemd}/bin/systemctl --user show-environment >/dev/null 2>&1; then
+      while IFS='=' read -r name value; do
+        case "$name" in
+          WAYLAND_DISPLAY | XDG_RUNTIME_DIR | XDG_CURRENT_DESKTOP | XDG_SESSION_DESKTOP | XDG_SESSION_TYPE)
+            export "$name=$value"
+            ;;
+        esac
+      done < <(${pkgs.systemd}/bin/systemctl --user show-environment)
+    fi
+
+    exec ${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water "$@"
+  '';
+
   frameworkPortalEnv = {
     XDG_DATA_DIRS = "${config.home.profileDirectory}/share:/nix/var/nix/profiles/default/share:/usr/local/share:/usr/share";
     NIX_XDG_DESKTOP_PORTAL_DIR = "${config.home.profileDirectory}/share/xdg-desktop-portal/portals";
@@ -582,7 +602,7 @@ let
         "${runJustRecipe}/bin/run-niri-just-recipe"
         "${toggleLazygit}/bin/toggle-niri-lazygit"
         "${pkgs.slurp}/bin/slurp"
-        "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water"
+        "${lockScreen}"
         "${pkgs.swappy}/bin/swappy"
         (lib.getExe pkgs.kaguya-bin)
       ]
@@ -933,7 +953,7 @@ in
       timeouts = [
         {
           timeout = 300;
-          command = "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water lock";
+          command = "${lockScreen} lock";
         }
         {
           timeout = 600;
@@ -948,7 +968,7 @@ in
       events = [
         {
           event = "before-sleep";
-          command = "${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water lock";
+          command = "${lockScreen} lock";
         }
       ];
     };
