@@ -396,7 +396,7 @@ let
       done < <(${pkgs.systemd}/bin/systemctl --user show-environment)
     fi
 
-    exec ${pkgs.reimu-lays-on-water}/bin/reimu-lays-on-water "$@"
+    exec ${lib.getExe pkgs.reimu-on-starlit-water} "$@"
   '';
 
   frameworkPortalEnv = {

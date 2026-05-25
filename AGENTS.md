@@ -79,7 +79,7 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
-| `reimu-lays-on-water` | `github:iceice666/reimu_lays_on_water` | no |
+| `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 | `kaguya-cache` | `path:./pkgs/kaguya-bin/empty-cache` | no |
 | `kaguya-browser` | `path:./pkgs/kaguya-bin` | yes |
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
@@ -111,14 +111,14 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-lays-on-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-on-starlit-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
 from `pkgs.lixPackageSets.stable`.
 
 Additionally:
-- `reimu-lays-on-water` uses its own upstream `nixpkgs` pin because it requires a newer Rust toolchain than the repo's main `nixpkgs` currently provides.
+- `reimu-on-starlit-water` imports the local package expression from `/home/iceice666/code/reimu_lays_on_water/nix/package.nix` through a non-flake path input and builds it with the `nixpkgs-unstable` Rust toolchain.
 - `zen-bin` uses the `zen-browser` flake on Linux and the local Darwin package under `pkgs/zen-bin`.
 - `linux_zen_7_0` and `linuxPackages_zen_7_0` pin the Framework kernel family.
 - `eww` is patched on Linux so app windows can paint transparent backgrounds.

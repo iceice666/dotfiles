@@ -38,8 +38,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    reimu-lays-on-water = {
-      url = "github:iceice666/reimu_lays_on_water";
+    reimu-on-starlit-water = {
+      url = "path:/home/iceice666/code/reimu_lays_on_water";
+      flake = false;
     };
 
     kaguya-cache = {
@@ -95,12 +96,24 @@
             inputs."niri-scratchpad-helper".packages.${final.stdenv.hostPlatform.system}.niri-scratchpad
           else
             throw "niri-scratchpad-helper is only supported on Linux";
-        reimu-lays-on-water =
+        reimu-on-starlit-water =
           if final.stdenv.hostPlatform.isLinux then
-            (inputs."reimu-lays-on-water".packages.${final.stdenv.hostPlatform.system}.default or
-              inputs."reimu-lays-on-water".packages.${final.stdenv.hostPlatform.system}.reimu-lays-on-water)
+            let
+              unstablePkgs = import nixpkgs-unstable {
+                system = final.stdenv.hostPlatform.system;
+                config = {
+                  allowUnfree = true;
+                  cudaSupport = true;
+                };
+              };
+            in
+            final.callPackage (inputs."reimu-on-starlit-water" + /nix/package.nix) {
+              rustPlatform = final.makeRustPlatform {
+                inherit (unstablePkgs) cargo rustc;
+              };
+            }
           else
-            throw "reimu-lays-on-water is only supported on Linux";
+            throw "reimu-on-starlit-water is only supported on Linux";
         rime-frost = final.callPackage ./pkgs/rime-frost { };
         rime-octagram-zh-hant-essay-bgw = final.callPackage ./pkgs/rime-octagram-zh-hant-essay-bgw { };
         zen-bin =
