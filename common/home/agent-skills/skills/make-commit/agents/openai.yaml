@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make Commit"
+  short_description: "Commit scoped changes cleanly."
+  default_prompt: "Use $make-commit to inspect changes, validate tests, split unrelated scopes, and create concise Conventional Commits."

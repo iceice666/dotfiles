@@ -7,6 +7,7 @@
 {
   imports = [
     ./app-defaults.nix
+    ./agent-skills.nix
     ./dev-env.nix
     ./fish
     ./ghostty.nix
