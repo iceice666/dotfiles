@@ -223,6 +223,8 @@
       treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
     in
     {
+      colmena = import ./colmena.nix { inherit inputs self overlay unstablePkgsFor; };
+
       devShells.aarch64-darwin.default = devShellFor "aarch64-darwin";
       devShells.x86_64-linux.default = devShellFor "x86_64-linux";
 

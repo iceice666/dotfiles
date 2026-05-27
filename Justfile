@@ -4,11 +4,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
 m3air_flake := ".#iceice666@m3air"
-framework_flake := ".#framework"
-framework_build_attr := ".#nixosConfigurations.framework.config.system.build.toplevel"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
-homolab_flake := ".#homolab"
-homolab_host := "iceice666@homolab"
 scripts := repo_root / "scripts"
 
 # Apply the M3 Air nix-darwin configuration
@@ -21,7 +17,7 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    sudo nixos-rebuild switch --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    colmena apply-local switch -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -33,14 +29,14 @@ build:
 [group('host')]
 [linux]
 build: _kaguya-cache
-    nix build {{ framework_build_attr }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    colmena apply-local build -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
 boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    sudo nixos-rebuild boot --flake {{ framework_flake }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    colmena apply-local boot -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Ensure the local Kaguya Nix path input cache exists before Framework builds
 [linux]
@@ -62,29 +58,22 @@ kaguya-sync:
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
-    nixos-rebuild switch --flake {{ homolab_flake }} \
-        --target-host {{ homolab_host }} \
-        --build-host {{ homolab_host }} \
-        --use-remote-sudo
+    colmena apply switch --on homolab
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
-    nixos-rebuild boot --flake {{ homolab_flake }} \
-        --target-host {{ homolab_host }} \
-        --build-host {{ homolab_host }} \
-        --use-remote-sudo
+    colmena apply boot --on homolab
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
-    nixos-rebuild build --flake {{ homolab_flake }} \
-        --build-host {{ homolab_host }}
+    colmena apply build --on homolab
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]
 homolab-gen-hardware:
-    ssh {{ homolab_host }} sudo nixos-generate-config --show-hardware-config \
+    ssh iceice666@homolab sudo nixos-generate-config --show-hardware-config \
         > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
 
 # Smoke-check the homolab OpenAI-compatible LLM endpoint
