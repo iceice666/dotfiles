@@ -114,7 +114,6 @@ cache.
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
-| `homeConfigurations."iceice666@framework"` | legacy standalone Home Manager configuration |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
@@ -167,19 +166,14 @@ Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
 pre-build steps such as the Kaguya cache ensure on Linux and pass the correct
 flake input overrides.
 
-Direct NixOS commands are for debugging only. If you must run one manually,
-mirror the matching `Justfile` recipe, including `--override-input
-kaguya-cache ...` where applicable.
+Direct Colmena commands are for debugging only. If you must run one manually,
+mirror the matching `Justfile` recipe, including the Kaguya cache override.
 
 ```sh
 ./scripts/kaguya-cache ensure
-nix build .#nixosConfigurations.framework.config.system.build.toplevel --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
-sudo nixos-rebuild switch --flake .#framework --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
+colmena apply-local build  -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
+colmena apply-local switch -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
 ```
-
-The standalone Home Manager output `.#iceice666@framework` is kept only as a
-legacy fallback while migration cleanup is pending. The Justfile no longer
-uses it; do not use it for normal Framework changes.
 
 Fingerprint authentication is configured in
 `hosts/framework/configuration/default.nix` through `services.fprintd.enable`

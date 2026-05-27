@@ -223,7 +223,14 @@
       treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
     in
     {
-      colmena = import ./colmena.nix { inherit inputs self overlay unstablePkgsFor; };
+      colmena = import ./colmena.nix {
+        inherit
+          inputs
+          self
+          overlay
+          unstablePkgsFor
+          ;
+      };
 
       devShells.aarch64-darwin.default = devShellFor "aarch64-darwin";
       devShells.x86_64-linux.default = devShellFor "x86_64-linux";
@@ -281,26 +288,6 @@
           sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           { nixpkgs.overlays = [ overlay ]; }
-        ];
-      };
-
-      # Legacy standalone Home Manager output; Framework normally uses nixosConfigurations.framework.
-      homeConfigurations."iceice666@framework" = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
-          overlays = [ overlay ];
-        };
-        extraSpecialArgs = {
-          inherit inputs self;
-          username = "iceice666";
-          homeDirectory = "/home/iceice666";
-          dotfiles = ./.;
-          unstablePkgs = unstablePkgsFor "x86_64-linux";
-        };
-        modules = [
-          ./hosts/framework/home
-          sops-nix.homeManagerModules.sops
         ];
       };
 
