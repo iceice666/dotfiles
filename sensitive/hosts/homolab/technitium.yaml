@@ -1,15 +1,24 @@
 homepageApiKey: ENC[AES256_GCM,data:vFgyaOedFme7ZLMJf4B1nzHBdU4CfQgh/4q4U9i9SGtN4JAJSAm5oPUaGty6V7b5sUpqSBhfmP2bUi0EO9S69g==,iv:+7SnDDMeJHCeWMyDv3pUApM1MYK3uJ5NWqT/JefWO/Q=,tag:3rMpQyb+U2Jp+8kULk27RA==,type:str]
 sops:
     age:
-        - recipient: age1vy0h0mt92lcp8mg6rgk3fhstej7e6qmls0krrk3ghllwazczgueswzznwm
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA1cXVLTy9CYnp6UEtCSWRr
-            TE5nZ0phMHVDQjk3RkEwRTlwYXhiRWJOd1VVCmQwdURsbEtLZk50REl5VUtYUmRs
-            KzdFV3lYdEFRbVlITFZQeFpqL3NTWnMKLS0tIHdEQWpBdlRQaDdHTnpVbW4zT0du
-            V0JjbGZSUG5TZ3NUNjNnUlVJUE9GTkUK3ZBQpzU+C8/5ideKfCbU6epo5I8ARWhu
-            SlXqreB5/M8I0K5YbEGigqa0L4R+NN44jyMBqDSljxB6CP0Mf5/Pkw==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA0ZnJtTVAyMEtMOHJYZGJw
+            Q1VkVW13RFE2UlFyaGdrK1pGMXFzaCtOdUMwCkJEb01JVTRhdTV0NVZpckw5cGR0
+            eTdBUVFnY1ZlWjJ3bk5Za0dhWi85eHMKLS0tIG85YXdYL1cvSitxcFRXYzlGVS85
+            Tis3RGhpMzZoWEFrNHVGaGJVVC9aM1UKMHxrEzo5eIcw1ZkZJlnGUt2m9ct9FeXK
+            8Qr8Cn2l806WUXKD7xiEtwTub9z3eDBC17D8X4NLmQOJ3BXCtoflUg==
             -----END AGE ENCRYPTED FILE-----
+          recipient: age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAwbGp0RkdKUE4yR1NCbDBx
+            cllmdUE4RjJNblNGZmxWb2ZpU01LaWZXTWcwCnpVeXBWeDJpZVpjdFZ3Qy9tT1pO
+            bW51UkJFSEdxTjBMRE1wZlBNTnZqdjgKLS0tIDJZK04vODVCaXNRWUxvb09lWkdP
+            bVdNd2lDd1RiUWlnQTBza0lwZmYzZk0KLYz/f5aehmqvVZWMrXZLCZFCR+jAgen7
+            DroIjxi50n/uHXhvVIY9cuk5CVqPKTCUJ0Lc3l5xfFUgthrY1FWn6g==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1vy0h0mt92lcp8mg6rgk3fhstej7e6qmls0krrk3ghllwazczgueswzznwm
     lastmodified: "2026-04-25T15:45:50Z"
     mac: ENC[AES256_GCM,data:/BYxvEwOxlvWlk7fJLuZWLgPBM0p8O5TI9vW1PmVkx1okfvBEH3ojuiBCGV/eXmuMNBWs51k+mlhX04kmX9EmuSjiVP9RJ+uVmw+twuhG5Bp/EYqg7hryJS9yz0Vr5MFr7THJ0U7w4JtFhTgtFn+sale7rA6EfWCvJuPFc/Zb0k=,iv:JQetZsTuBCYpESqHKwPfc4LrBpC1Qcjd9vcRztwDxus=,tag:GDUZ16eF+ic97EEeINqQvQ==,type:str]
     unencrypted_suffix: _unencrypted
