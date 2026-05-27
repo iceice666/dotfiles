@@ -21,14 +21,6 @@ let
     else
       pkgs.zed-bin;
 
-  zlsFromFlake = pkgs.writeShellApplication {
-    name = "zed-zls";
-    runtimeInputs = [ pkgs.nix ];
-    text = ''
-      exec nix develop --command zls "$@"
-    '';
-  };
-
   rustAnalyzerFromFlake = pkgs.writeShellApplication {
     name = "zed-rust-analyzer";
     runtimeInputs = [ pkgs.nix ];
@@ -356,6 +348,7 @@ in
       lsp = {
         rust-analyzer.binary = {
           path = "${rustAnalyzerFromFlake}/bin/zed-rust-analyzer";
+          arguments = [ ];
         };
 
         rust-analyzer.initialization_options = {
@@ -372,7 +365,9 @@ in
         };
 
         zls.binary = {
-          path = "${zlsFromFlake}/bin/zed-zls";
+          # Use the project/worktree shell. Your failing env already had zls on PATH.
+          path = "zls";
+          arguments = [ ];
         };
       };
 
@@ -381,7 +376,10 @@ in
           "nil"
           "!nixd"
         ];
-        formatter.external.command = "nixfmt .";
+        formatter.external = {
+          command = "nixfmt";
+          arguments = [ ];
+        };
       };
     };
   };
