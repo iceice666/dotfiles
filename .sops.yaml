@@ -3,22 +3,37 @@
 
 keys:
   # Per-device age recipients (public)
-  - &m3air age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
-  - &framework age1cxxr5xe7u7zxepf7y4eka07m856dx9hqwynu6jyf9xftc7q53ulqd997ah
+  - &m3air         age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
+  - &framework     age1cxxr5xe7u7zxepf7y4eka07m856dx9hqwynu6jyf9xftc7q53ulqd997ah
+  - &homolab       age1vy0h0mt92lcp8mg6rgk3fhstej7e6qmls0krrk3ghllwazczgueswzznwm
+  - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   # Optional recovery recipient (public)
-  # - &recovery age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+  # - &recovery    age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
 creation_rules:
   # Shared secrets: decryptable on all three devices (+ recovery)
-  - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
       - *m3air
       - *framework
+      - *homolab
       # - *recovery
 
-  # Per-device secrets: only the device (+ recovery)
-  - path_regex: ^sensitive/hosts/m3air/.*\.(yaml|yml|json|env|ini|key)$
+  # Per-host secrets
+  - path_regex: ^sensitive/hosts/m3air/.*\.(yaml|yml|json|env|ini|key|pem)$
     age: [*m3air]
 
-  - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key)$
+  - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key|pem)$
     age: [*framework]
+
+  # Homolab home-user secrets: editable from m3air, decryptable by the home user on homolab
+  - path_regex: ^sensitive/hosts/homolab/home/.*\.(yaml|yml|json|env|ini|key|pem)$
+    age:
+      - *m3air
+      - *homolab-home
+
+  # Homolab system secrets: editable from m3air, decryptable by the system on homolab
+  - path_regex: ^sensitive/hosts/homolab/.*\.(yaml|yml|json|env|ini|key|pem)$
+    age:
+      - *m3air
+      - *homolab

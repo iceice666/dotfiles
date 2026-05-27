@@ -82,8 +82,7 @@
       "original": {
         "path": "./pkgs/kaguya-bin",
         "type": "path"
-      },
-      "parent": []
+      }
     },
     "kaguya-cache": {
       "flake": false,
@@ -96,8 +95,7 @@
       "original": {
         "path": "./pkgs/kaguya-bin/empty-cache",
         "type": "path"
-      },
-      "parent": []
+      }
     },
     "niri-scratchpad-helper": {
       "inputs": {
@@ -198,14 +196,17 @@
     "reimu-on-starlit-water": {
       "flake": false,
       "locked": {
-        "lastModified": 1779752663,
-        "narHash": "sha256-pNJk2aX9mhSoGWFr3vM5SvEDfKCAzjRyoGrXOePdL/I=",
-        "path": "/home/iceice666/code/reimu_lays_on_water",
-        "type": "path"
+        "lastModified": 1779751942,
+        "narHash": "sha256-zi8px1ugW8p9jm5ow6ydDD1zTQ3cVRhNJvt9EkqFGuA=",
+        "owner": "iceice666",
+        "repo": "reimu_on_starlit_water",
+        "rev": "56a679fc4fba6d7a2730c56af9a79953e3fcb2cb",
+        "type": "github"
       },
       "original": {
-        "path": "/home/iceice666/code/reimu_lays_on_water",
-        "type": "path"
+        "owner": "iceice666",
+        "repo": "reimu_on_starlit_water",
+        "type": "github"
       }
     },
     "root": {

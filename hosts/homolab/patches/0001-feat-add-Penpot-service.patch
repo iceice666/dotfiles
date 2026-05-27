@@ -1,0 +1,489 @@
+From f75f72057d5eab71b199765575b0e228d3d6bb49 Mon Sep 17 00:00:00 2001
+From: Brian Duan <iceice666@outlook.com>
+Date: Sat, 9 May 2026 06:49:06 +0800
+Subject: [PATCH] feat: add Penpot service
+
+---
+ configuration/networking.nix    |   3 +
+ configuration/sensitive/dev.nix |   9 ++
+ lib/homolab.nix                 |   3 +
+ services/dev/database.nix       |  29 +++-
+ services/dev/default.nix        |   1 +
+ services/dev/penpot.nix         | 229 ++++++++++++++++++++++++++++++++
+ services/edge/authelia.nix      |   4 +
+ services/edge/dynacat.nix       |   4 +
+ services/edge/traefik.nix       |  20 +++
+ 9 files changed, 301 insertions(+), 1 deletion(-)
+ create mode 100644 services/dev/penpot.nix
+
+diff --git a/configuration/networking.nix b/configuration/networking.nix
+index f0a9882..76ebfeb 100644
+--- a/configuration/networking.nix
++++ b/configuration/networking.nix
+@@ -73,6 +73,7 @@ in
+         homolab.domains.auth
+         homolab.domains.dns
+         homolab.domains.omniroute
++        homolab.domains.penpot
+         homolab.domains.home
+         homolab.domains.traefik
+       ];
+@@ -133,6 +134,7 @@ in
+         ${mkDropRule homolab.ports.woodpecker}
+         ${mkDropRule homolab.ports.woodpeckerGrpc}
+         ${mkDropRule homolab.ports.woodpeckerHealth}
++        ${mkDropRule homolab.ports.penpot}
+         ${mkDropRule homolab.ports.rustfs}
+         ${mkDropRule homolab.ports.omnirouteDashboard}
+         ${mkDropRule homolab.ports.shimmy}
+@@ -181,6 +183,7 @@ in
+         ${mkDeleteDropRule homolab.ports.woodpecker}
+         ${mkDeleteDropRule homolab.ports.woodpeckerGrpc}
+         ${mkDeleteDropRule homolab.ports.woodpeckerHealth}
++        ${mkDeleteDropRule homolab.ports.penpot}
+         ${mkDeleteDropRule homolab.ports.rustfs}
+         ${mkDeleteDropRule homolab.ports.omnirouteDashboard}
+         ${mkDeleteDropRule homolab.ports.shimmy}
+diff --git a/configuration/sensitive/dev.nix b/configuration/sensitive/dev.nix
+index 91c3406..5655411 100644
+--- a/configuration/sensitive/dev.nix
++++ b/configuration/sensitive/dev.nix
+@@ -116,6 +116,15 @@
+         mode = "0400";
+         restartUnits = [ "woodpecker-server.service" ];
+       };
++
++      "penpot-smtp-password" = {
++        sopsFile = dotfiles + /sensitive/hosts/homolab/resend.yaml;
++        key = "apiKey";
++        owner = "root";
++        group = "root";
++        mode = "0400";
++        restartUnits = [ "penpot-env.service" ];
++      };
+     };
+ 
+     templates = {
+diff --git a/lib/homolab.nix b/lib/homolab.nix
+index 620e5d5..f3f59e7 100644
+--- a/lib/homolab.nix
++++ b/lib/homolab.nix
+@@ -14,6 +14,7 @@ let
+     woodpecker = 17800;
+     woodpeckerGrpc = 17900;
+     woodpeckerHealth = 17301;
++    penpot = 19001;
+     rustfs = 18100;
+     omnirouteDashboard = 20128;
+     omnirouteApi = 20129;
+@@ -47,6 +48,7 @@ rec {
+     dns = "dns.${root}";
+     grafana = "grafana.${root}";
+     omniroute = "omniroute.${root}";
++    penpot = "penpot.${root}";
+     traefik = "traefik.${root}";
+     home = "home.${root}";
+   };
+@@ -57,6 +59,7 @@ rec {
+     ci = "https://${domains.ci}";
+     grafana = "https://${domains.grafana}";
+     omniroute = "https://${domains.omniroute}";
++    penpot = "https://${domains.penpot}";
+     traefik = "https://${domains.traefik}";
+     technitium = "https://${domains.dns}/";
+     home = "https://${domains.home}";
+diff --git a/services/dev/database.nix b/services/dev/database.nix
+index 60878cf..3c94257 100644
+--- a/services/dev/database.nix
++++ b/services/dev/database.nix
+@@ -1,15 +1,25 @@
+ { config, pkgs, ... }:
+ 
++let
++  penpotSubnet = "10.91.0.0/24";
++in
++
+ {
+   services.postgresql = {
+     enable = true;
+     package = pkgs.postgresql_17;
+-    enableTCPIP = false;
++    enableTCPIP = true;
++
++    settings = {
++      listen_addresses = pkgs.lib.mkForce "*";
++      password_encryption = "scram-sha-256";
++    };
+ 
+     # Create the databases and users automatically on startup
+     ensureDatabases = [
+       "authelia"
+       "forgejo"
++      "penpot"
+     ];
+     ensureUsers = [
+       {
+@@ -20,6 +30,10 @@
+         name = "forgejo";
+         ensureDBOwnership = true;
+       }
++      {
++        name = "penpot";
++        ensureDBOwnership = true;
++      }
+     ];
+ 
+     # Restrict socket auth to the service accounts that actually need it.
+@@ -28,7 +42,9 @@
+       local   all             postgres                                peer map=postgres
+       local   authelia        authelia                                peer map=authelia
+       local   forgejo         forgejo                                 peer
++      host    penpot          penpot          ${penpotSubnet}          scram-sha-256
+       local   all             all                                     reject
++      host    all             all             all                     reject
+     '';
+ 
+     identMap = pkgs.lib.mkForce ''
+@@ -37,6 +53,17 @@
+     '';
+   };
+ 
++  networking.firewall = {
++    extraCommands = ''
++      # PostgreSQL: only Penpot's private Podman subnet may reach the host DB.
++      iptables -A INPUT -p tcp -s ${penpotSubnet} --dport 5432 -j ACCEPT
++    '';
++
++    extraStopCommands = ''
++      iptables -D INPUT -p tcp -s ${penpotSubnet} --dport 5432 -j ACCEPT || true
++    '';
++  };
++
+   services.redis = {
+     package = pkgs.valkey;
+ 
+diff --git a/services/dev/default.nix b/services/dev/default.nix
+index a300033..51d545e 100644
+--- a/services/dev/default.nix
++++ b/services/dev/default.nix
+@@ -4,6 +4,7 @@
+   imports = [
+     ./database.nix
+     ./forgejo.nix
++    ./penpot.nix
+     ./podman.nix
+     ./rustfs.nix
+     ./woodpecker.nix
+diff --git a/services/dev/penpot.nix b/services/dev/penpot.nix
+new file mode 100644
+index 0000000..522915d
+--- /dev/null
++++ b/services/dev/penpot.nix
+@@ -0,0 +1,229 @@
++{
++  config,
++  homolab,
++  pkgs,
++  ...
++}:
++
++let
++  penpotVersion = "2.14.5";
++  penpotBaseDir = "/mnt/storage/penpot";
++  penpotAssetsDir = "${penpotBaseDir}/assets";
++  penpotSecretDir = "/var/lib/penpot/secrets";
++  penpotRuntimeDir = "/run/penpot";
++  penpotNetwork = "penpot-static";
++  penpotSubnet = "10.91.0.0/24";
++  penpotGateway = "10.91.0.1";
++  valkeyIp = "10.91.0.11";
++  exporterIp = "10.91.0.12";
++  backendIp = "10.91.0.13";
++  frontendIp = "10.91.0.14";
++
++  commonEnvironment = {
++    PENPOT_FLAGS = "enable-smtp enable-prepl-server enable-mcp disable-registration";
++    PENPOT_HTTP_SERVER_MAX_BODY_SIZE = "367001600";
++    PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE = "367001600";
++    PENPOT_PUBLIC_URI = homolab.urls.penpot;
++  };
++in
++{
++  systemd.tmpfiles.rules = [
++    "d '${penpotBaseDir}' 0750 root root - -"
++    "d '${penpotAssetsDir}' 0750 root root - -"
++    "d '${penpotSecretDir}' 0700 root root - -"
++  ];
++
++  systemd.services = {
++    penpot-network = {
++      description = "Create the private Podman network for Penpot";
++      wantedBy = [ "multi-user.target" ];
++      after = [ "network-online.target" ];
++      wants = [ "network-online.target" ];
++
++      path = [ config.virtualisation.podman.package ];
++
++      script = ''
++        podman network exists ${penpotNetwork} \
++          || podman network create --disable-dns --subnet ${penpotSubnet} --gateway ${penpotGateway} ${penpotNetwork}
++      '';
++
++      serviceConfig = {
++        Type = "oneshot";
++        RemainAfterExit = true;
++      };
++    };
++
++    penpot-env = {
++      description = "Generate local Penpot environment files";
++      wantedBy = [ "multi-user.target" ];
++
++      path = [
++        pkgs.coreutils
++        pkgs.openssl
++      ];
++
++      script = ''
++        install -d -m 0700 ${penpotSecretDir} ${penpotRuntimeDir}
++
++        if [ ! -s ${penpotSecretDir}/secret-key ]; then
++          openssl rand -base64 64 > ${penpotSecretDir}/secret-key
++          chmod 0400 ${penpotSecretDir}/secret-key
++        fi
++
++        if [ ! -s ${penpotSecretDir}/postgres-password ]; then
++          openssl rand -base64 48 > ${penpotSecretDir}/postgres-password
++          chmod 0400 ${penpotSecretDir}/postgres-password
++        fi
++
++        secret_key="$(tr -d '\n' < ${penpotSecretDir}/secret-key)"
++        postgres_password="$(tr -d '\n' < ${penpotSecretDir}/postgres-password)"
++        smtp_password="$(tr -d '\n' < ${config.sops.secrets."penpot-smtp-password".path})"
++
++        umask 077
++        printf 'PENPOT_SECRET_KEY=%s\nPENPOT_DATABASE_PASSWORD=%s\nPENPOT_SMTP_PASSWORD=%s\n' \
++          "$secret_key" "$postgres_password" "$smtp_password" \
++          > ${penpotRuntimeDir}/backend.env
++      '';
++
++      serviceConfig = {
++        Type = "oneshot";
++        RemainAfterExit = true;
++      };
++    };
++
++    penpot-postgres-role = {
++      description = "Apply the Penpot password to the central PostgreSQL role";
++      after = [
++        "postgresql-setup.service"
++        "penpot-env.service"
++      ];
++      requires = [
++        "postgresql-setup.service"
++        "penpot-env.service"
++      ];
++
++      path = [
++        config.services.postgresql.package
++        pkgs.coreutils
++        pkgs.util-linux
++      ];
++
++      script = ''
++        postgres_password="$(tr -d '\n' < ${penpotSecretDir}/postgres-password)"
++        runuser -u postgres -- psql \
++          --dbname=postgres \
++          --command "ALTER ROLE penpot WITH LOGIN PASSWORD '$postgres_password';"
++      '';
++
++      serviceConfig = {
++        Type = "oneshot";
++        RemainAfterExit = true;
++      };
++    };
++
++    penpot-valkey = {
++      after = [ "penpot-network.service" ];
++      requires = [ "penpot-network.service" ];
++    };
++
++    penpot-exporter = {
++      after = [ "penpot-env.service" ];
++      requires = [ "penpot-env.service" ];
++    };
++
++    penpot-backend = {
++      after = [
++        "penpot-env.service"
++        "penpot-postgres-role.service"
++      ];
++      requires = [
++        "penpot-env.service"
++        "penpot-postgres-role.service"
++      ];
++      unitConfig.RequiresMountsFor = penpotAssetsDir;
++    };
++
++    penpot-frontend.unitConfig.RequiresMountsFor = penpotAssetsDir;
++  };
++
++  virtualisation.oci-containers = {
++    backend = "podman";
++
++    containers = {
++      penpot-valkey = {
++        serviceName = "penpot-valkey";
++        image = "docker.io/valkey/valkey:8.1";
++        cmd = [
++          "valkey-server"
++          "--maxmemory"
++          "128mb"
++          "--maxmemory-policy"
++          "volatile-lfu"
++        ];
++        networks = [ "${penpotNetwork}:ip=${valkeyIp}" ];
++        extraOptions = [
++          "--health-cmd=valkey-cli ping | grep PONG"
++          "--health-interval=1s"
++          "--health-timeout=3s"
++          "--health-retries=5"
++          "--health-start-period=3s"
++        ];
++      };
++
++      penpot-exporter = {
++        serviceName = "penpot-exporter";
++        image = "docker.io/penpotapp/exporter:${penpotVersion}";
++        dependsOn = [ "penpot-valkey" ];
++        environment = {
++          PENPOT_PUBLIC_URI = "http://${frontendIp}:8080";
++          PENPOT_REDIS_URI = "redis://${valkeyIp}/0";
++        };
++        environmentFiles = [ "${penpotRuntimeDir}/backend.env" ];
++        networks = [ "${penpotNetwork}:ip=${exporterIp}" ];
++      };
++
++      penpot-backend = {
++        serviceName = "penpot-backend";
++        image = "docker.io/penpotapp/backend:${penpotVersion}";
++        dependsOn = [ "penpot-valkey" ];
++        environment = commonEnvironment // {
++          PENPOT_DATABASE_URI = "postgresql://${penpotGateway}/penpot";
++          PENPOT_DATABASE_USERNAME = "penpot";
++          PENPOT_EXPORTER_URI = "http://${exporterIp}:6061";
++          PENPOT_OBJECTS_STORAGE_BACKEND = "fs";
++          PENPOT_OBJECTS_STORAGE_FS_DIRECTORY = "/opt/data/assets";
++          PENPOT_REDIS_URI = "redis://${valkeyIp}/0";
++          PENPOT_SMTP_DEFAULT_FROM = "Penpot <${homolab.contact.noReplyEmail}>";
++          PENPOT_SMTP_DEFAULT_REPLY_TO = "Penpot <${homolab.contact.noReplyEmail}>";
++          PENPOT_SMTP_HOST = "smtp.resend.com";
++          PENPOT_SMTP_PORT = "465";
++          PENPOT_SMTP_SSL = "true";
++          PENPOT_SMTP_TLS = "false";
++          PENPOT_SMTP_USERNAME = "resend";
++          PENPOT_TELEMETRY_ENABLED = "false";
++        };
++        environmentFiles = [ "${penpotRuntimeDir}/backend.env" ];
++        networks = [ "${penpotNetwork}:ip=${backendIp}" ];
++        volumes = [ "${penpotAssetsDir}:/opt/data/assets" ];
++      };
++
++      penpot-frontend = {
++        serviceName = "penpot-frontend";
++        image = "docker.io/penpotapp/frontend:${penpotVersion}";
++        dependsOn = [
++          "penpot-backend"
++          "penpot-exporter"
++        ];
++        environment = commonEnvironment;
++        networks = [ "${penpotNetwork}:ip=${frontendIp}" ];
++        ports = [ "127.0.0.1:${toString homolab.ports.penpot}:8080" ];
++        volumes = [ "${penpotAssetsDir}:/opt/data/assets" ];
++        extraOptions = [
++          "--add-host=penpot-backend:${backendIp}"
++          "--add-host=penpot-exporter:${exporterIp}"
++        ];
++      };
++    };
++  };
++
++}
+diff --git a/services/edge/authelia.nix b/services/edge/authelia.nix
+index 971b988..953e0ef 100644
+--- a/services/edge/authelia.nix
++++ b/services/edge/authelia.nix
+@@ -52,6 +52,10 @@
+             domain = homolab.domains.omniroute;
+             policy = "two_factor";
+           }
++          {
++            domain = homolab.domains.penpot;
++            policy = "two_factor";
++          }
+           {
+             domain = homolab.domains.home;
+             policy = "two_factor";
+diff --git a/services/edge/dynacat.nix b/services/edge/dynacat.nix
+index 52d7ac9..fcebf8e 100644
+--- a/services/edge/dynacat.nix
++++ b/services/edge/dynacat.nix
+@@ -37,6 +37,7 @@ let
+     forgejo = "si:forgejo";
+     grafana = "si:grafana";
+     omniroute = "https://raw.githubusercontent.com/diegosouzapw/OmniRoute/main/electron/assets/icon.png";
++    penpot = "si:penpot";
+     proxy = "si:traefikproxy";
+     shimmy = "si:openai";
+     technitium = "https://technitium.com/img/logo.png";
+@@ -83,6 +84,9 @@ let
+     (mkMonitorSite "OmniRoute" serviceIcons.omniroute homolab.urls.omniroute (
+       mkLoopbackUrl homolab.ports.omnirouteDashboard ""
+     ))
++    (mkMonitorSite "Penpot" serviceIcons.penpot homolab.urls.penpot (
++      mkLoopbackUrl homolab.ports.penpot ""
++    ))
+   ];
+ 
+   infraMonitorSites = [
+diff --git a/services/edge/traefik.nix b/services/edge/traefik.nix
+index 239e6eb..ad96732 100644
+--- a/services/edge/traefik.nix
++++ b/services/edge/traefik.nix
+@@ -233,6 +233,23 @@ in
+           tls.certResolver = "letsencrypt";
+         };
+ 
++        penpot-http = {
++          rule = mkPrivateHostRule homolab.domains.penpot;
++          entryPoints = [ "web" ];
++
++          middlewares = [ "redirect-to-https@file" ];
++          service = "noop@internal";
++        };
++
++        penpot = {
++          rule = mkPrivateHostRule homolab.domains.penpot;
++          entryPoints = [ "websecure" ];
++
++          middlewares = [ "authelia@file" ];
++          service = "penpot";
++          tls.certResolver = "letsencrypt";
++        };
++
+         woodpecker-http = {
+           rule = "Host(`${homolab.domains.ci}`)";
+           entryPoints = [ "web" ];
+@@ -316,6 +333,9 @@ in
+           { url = "http://127.0.0.1:${toString homolab.ports.omnirouteDashboard}"; }
+         ];
+         grafana.loadBalancer.servers = [ { url = "http://127.0.0.1:${toString homolab.ports.grafana}"; } ];
++        penpot.loadBalancer.servers = [
++          { url = "http://127.0.0.1:${toString homolab.ports.penpot}"; }
++        ];
+         technitium.loadBalancer.servers = [
+           { url = "http://127.0.0.1:${toString homolab.ports.technitium}"; }
+         ];
+-- 
+2.51.2
+

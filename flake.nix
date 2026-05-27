@@ -37,7 +37,7 @@
     };
 
     reimu-on-starlit-water = {
-      url = "path:/home/iceice666/code/reimu_lays_on_water";
+      url = "github:iceice666/reimu_on_starlit_water";
       flake = false;
     };
 
@@ -79,6 +79,7 @@
           nixpkgs-review
           ;
 
+        codex-bin = final.callPackage ./pkgs/codex-bin { };
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
@@ -213,6 +214,10 @@
           LD_LIBRARY_PATH = pkgs.lib.optionalString pkgs.stdenv.isLinux (
             pkgs.lib.makeLibraryPath linuxLibraries
           );
+
+          shellHook = ''
+            export PATH="$HOME/.local/bin:$PATH"
+          '';
         };
 
       treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
@@ -252,6 +257,25 @@
         };
         modules = [
           ./hosts/framework/configuration
+          sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          { nixpkgs.overlays = [ overlay ]; }
+        ];
+      };
+
+      nixosConfigurations.homolab = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs self;
+          homolab = import ./lib/homolab.nix;
+          username = "iceice666";
+          homeDirectory = "/home/iceice666";
+          dotfiles = ./.;
+          unstablePkgs = unstablePkgsFor "x86_64-linux";
+          sopsNix = inputs.sops-nix;
+        };
+        modules = [
+          ./hosts/homolab/configuration
           sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           { nixpkgs.overlays = [ overlay ]; }

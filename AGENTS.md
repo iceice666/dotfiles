@@ -45,6 +45,15 @@ hosts/               # per-host entrypoints
   framework/         # NixOS system with Home Manager
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/Eww Home Manager modules imported by NixOS
+  homolab/           # NixOS server, deployed from m3air over SSH
+    configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
+    services/        # edge/ (Traefik, Authelia, DNS, SSH, Tailscale), dev/ (Postgres, Valkey, Podman), ai/ (Shimmy, OmniRoute), audit.nix
+    home/            # Home Manager modules for the homolab login user
+    apps/            # repo-local applications (e.g. daily-audit)
+    patches/         # nixpkgs patches to apply at build time
+    plan/            # design notes for in-flight homolab work
+
+lib/                 # shared nix helpers (e.g. homolab.nix — hostnames, ports, domains, IP ranges)
 
 pkgs/                # overlay packages
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
@@ -104,6 +113,7 @@ cache.
 |---|---|
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
+| `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
 | `homeConfigurations."iceice666@framework"` | legacy standalone Home Manager configuration |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -112,7 +122,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 
 ### Overlay
 
-Custom packages registered in the overlay: `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-on-starlit-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+Custom packages registered in the overlay: `codex-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-on-starlit-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
 `colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
@@ -231,6 +241,8 @@ Which build to run for a given change:
 | `hosts/m3air/**` | `m3air` |
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | `framework` |
+| `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
+| `lib/homolab.nix` | `homolab` |
 | `common/configuration/**` | `m3air` |
 | `common/home/**` | `m3air` and `framework` |
 | `pkgs/<name>` | dry-build any host that uses the package |
@@ -252,7 +264,30 @@ just store-size
 ```sh
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
+
+just homolab-build           # dry-build homolab on the server itself
+just homolab-switch          # build + activate homolab via SSH (uses --use-remote-sudo)
+just homolab-boot            # stage the closure for next homolab boot
+just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
+just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab LLM stack
 ```
+
+Homolab is built and switched on the server itself over SSH
+(`--build-host iceice666@homolab --target-host iceice666@homolab`), so the
+recipes work from any platform without cross-compilation. `--use-remote-sudo`
+elevates the activation step; ensure the deploy user has passwordless sudo
+for `/run/current-system/sw/bin/nixos-rebuild`.
+
+### Homolab-specific danger areas
+
+Touch these with care; misconfiguration affects the server's reachability or
+trust boundary:
+
+- `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
+- `lib/homolab.nix` — hostnames, ports, domains, IP ranges. A change here can ripple through every service.
+- `hosts/homolab/services/dev/podman.nix` — container runtime trust boundary.
+- `hosts/homolab/services/ai/omniroute.nix` — OpenAI-compatible proxy; touches auth and routing.
+- `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 
 ### Secrets helpers
 
@@ -263,6 +298,13 @@ just secret-edit sensitive/hosts/m3air/forgejo.yaml
 ```
 
 Never commit plaintext secrets. Keep secret material in `sensitive/shared/` encrypted with `sops`.
+
+Homolab secrets live under `sensitive/hosts/homolab/` (system secrets) and
+`sensitive/hosts/homolab/home/` (per-user secrets). They are encrypted to both
+the homolab age key *and* `m3air`, so they can be edited from `m3air` while the
+server can still decrypt them at activation. Service modules under
+`hosts/homolab/configuration/sensitive/*.nix` and `hosts/homolab/services/**`
+reference these via `dotfiles + /sensitive/hosts/homolab/<file>`.
 
 ## Editor Rule Files
 

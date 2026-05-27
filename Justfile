@@ -7,6 +7,8 @@ m3air_flake := ".#iceice666@m3air"
 framework_flake := ".#framework"
 framework_build_attr := ".#nixosConfigurations.framework.config.system.build.toplevel"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
+homolab_flake := ".#homolab"
+homolab_host := "iceice666@homolab"
 scripts := repo_root / "scripts"
 
 # Apply the M3 Air nix-darwin configuration
@@ -56,6 +58,40 @@ kaguya:
 [linux]
 kaguya-sync:
     {{ scripts }}/kaguya-cache sync
+
+# Apply the homolab NixOS configuration over SSH
+[group('host')]
+homolab-switch:
+    nixos-rebuild switch --flake {{ homolab_flake }} \
+        --target-host {{ homolab_host }} \
+        --build-host {{ homolab_host }} \
+        --use-remote-sudo
+
+# Stage the homolab NixOS configuration for next boot over SSH
+[group('host')]
+homolab-boot:
+    nixos-rebuild boot --flake {{ homolab_flake }} \
+        --target-host {{ homolab_host }} \
+        --build-host {{ homolab_host }} \
+        --use-remote-sudo
+
+# Dry-build the homolab NixOS configuration on the server
+[group('host')]
+homolab-build:
+    nixos-rebuild build --flake {{ homolab_flake }} \
+        --build-host {{ homolab_host }}
+
+# Refresh hardware-configuration.nix from the live homolab server
+[group('host')]
+homolab-gen-hardware:
+    ssh {{ homolab_host }} sudo nixos-generate-config --show-hardware-config \
+        > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
+
+# Smoke-check the homolab OpenAI-compatible LLM endpoint
+[group('host')]
+homolab-llama-smoke:
+    LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
+        {{ scripts }}/llama-swap-smoke
 
 # Install Homebrew on M3 Air
 [group('host')]

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+base_url="${LLAMA_SWAP_BASE_URL:-http://127.0.0.1:11434}"
+models=(
+    qwen3.6-35b-a3b
+    gemma-4-26b-a4b-it
+)
+
+echo "GET $base_url/v1/models"
+curl -fsS "$base_url/v1/models" | jq -c '{models: [.data[].id]}'
+
+for model in "${models[@]}"; do
+    echo
+    echo "POST $base_url/v1/chat/completions model=$model"
+    curl -fsS --max-time "${LLAMA_SWAP_SMOKE_TIMEOUT:-300}" \
+        "$base_url/v1/chat/completions" \
+        -H 'Content-Type: application/json' \
+        -d "$(jq -nc --arg model "$model" '{
+            model: $model,
+            messages: [
+                {
+                    role: "user",
+                    content: "Return a short confirmation."
+                }
+            ],
+            max_tokens: 16,
+            temperature: 0
+        }')" \
+        | jq -c '{
+            model,
+            system_fingerprint,
+            finish_reason: .choices[0].finish_reason,
+            content: .choices[0].message.content,
+            reasoning_present: ((.choices[0].message.reasoning_content // "") != ""),
+            usage
+        }'
+done
