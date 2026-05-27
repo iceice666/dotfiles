@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 let
   managedSkills = [
@@ -22,10 +22,22 @@ let
       force = true;
     };
   };
-in
-{
+  in
+  {
   home.file =
     builtins.listToAttrs (map canonicalSkillFile managedSkillFiles)
     // builtins.listToAttrs (map (skillAdapter ".agents/skills") managedSkills)
     // builtins.listToAttrs (map (skillAdapter ".codex/skills") managedSkills);
+
+  home.activation.cleanup-managed-skill-links =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      for skill in ${lib.concatStringsSep " " managedSkills}; do
+        for base in "${config.home.homeDirectory}/.agents/skills" "${config.home.homeDirectory}/.codex/skills"; do
+          target="$base/$skill"
+          if [ -e "$target" ] && [ ! -L "$target" ]; then
+            rm -rf "$target"
+          fi
+        done
+      done
+    '';
 }
