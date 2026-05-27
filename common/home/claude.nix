@@ -23,8 +23,7 @@ in
   home.file = builtins.listToAttrs (map mkClaudeFile managedFiles);
 
   # Ensure statusline.sh is executable in the dotfiles source
-  home.activation.claude-statusline-executable =
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      chmod +x "${dotfilesHome}/statusline.sh" 2>/dev/null || true
-    '';
+  home.activation.claude-statusline-executable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    chmod +x "${dotfilesHome}/statusline.sh" 2>/dev/null || true
+  '';
 }

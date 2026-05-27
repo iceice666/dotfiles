@@ -1,6 +1,11 @@
 # Colmena hive for NixOS hosts (framework + homolab).
 # m3air is nix-darwin and stays on darwin-rebuild — Colmena is NixOS-only.
-{ inputs, self, overlay, unstablePkgsFor }:
+{
+  inputs,
+  self,
+  overlay,
+  unstablePkgsFor,
+}:
 let
   inherit (inputs) nixpkgs sops-nix home-manager;
 
@@ -24,25 +29,29 @@ in
     specialArgs = commonSpecialArgs;
   };
 
-  framework = { ... }: {
-    deployment = {
-      targetHost = null;
-      targetUser = "iceice666";
-      allowLocalDeployment = true;
+  framework =
+    { ... }:
+    {
+      deployment = {
+        targetHost = null;
+        targetUser = "iceice666";
+        allowLocalDeployment = true;
+      };
+      imports = [ ./hosts/framework/configuration ] ++ commonModules;
     };
-    imports = [ ./hosts/framework/configuration ] ++ commonModules;
-  };
 
-  homolab = { ... }: {
-    deployment = {
-      targetHost = "homolab";
-      targetUser = "iceice666";
-      buildOnTarget = true;
+  homolab =
+    { ... }:
+    {
+      deployment = {
+        targetHost = "homolab";
+        targetUser = "iceice666";
+        buildOnTarget = true;
+      };
+      _module.args = {
+        homolab = import ./lib/homolab.nix;
+        sopsNix = inputs.sops-nix;
+      };
+      imports = [ ./hosts/homolab/configuration ] ++ commonModules;
     };
-    _module.args = {
-      homolab = import ./lib/homolab.nix;
-      sopsNix = inputs.sops-nix;
-    };
-    imports = [ ./hosts/homolab/configuration ] ++ commonModules;
-  };
 }
