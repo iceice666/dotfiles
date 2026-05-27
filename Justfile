@@ -175,6 +175,43 @@ secret-decrypt secret output='':
 secret-edit secret:
     {{ scripts }}/sops-secret edit '{{ secret }}'
 
+# Re-encrypt secrets under the given path (default: sensitive/) so their recipients match .sops.yaml
+[group('secrets')]
+secret-refresh path='sensitive':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    target='{{ path }}'
+
+    if [[ -f "$target" ]]; then
+        files=("$target")
+    elif [[ -d "$target" ]]; then
+        mapfile -t files < <(find "$target" -type f \( \
+            -name '*.yaml' -o -name '*.yml' -o -name '*.json' \
+            -o -name '*.env'  -o -name '*.ini' \
+            -o -name '*.key'  -o -name '*.pem' \
+        \) | sort)
+    else
+        echo "secret-refresh: not a file or directory: $target" >&2
+        exit 1
+    fi
+
+    if (( ${#files[@]} == 0 )); then
+        echo "secret-refresh: no candidate secret files under $target" >&2
+        exit 0
+    fi
+
+    failed=0
+    for file in "${files[@]}"; do
+        echo ">>> $file"
+        if ! sops updatekeys --yes "$file"; then
+            echo "!!! failed: $file" >&2
+            failed=1
+        fi
+    done
+
+    exit "$failed"
+
 # Search nixpkgs for a package across platforms
 [group('nix')]
 search query:

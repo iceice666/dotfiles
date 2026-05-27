@@ -125,16 +125,19 @@ just secret-edit sensitive/hosts/m3air/forgejo.yaml
 Homolab secrets are encrypted to both the `homolab` (or `homolab-home`) age key
 and `m3air`, so they can be edited from `m3air` and decrypted by the homolab
 system at activation. After the initial merge from the standalone
-`server_config` repo, the existing homolab secrets must be re-encrypted once
-so the new recipient list takes effect:
+`server_config` repo — or any other time you change `.sops.yaml` recipients —
+refresh the existing secrets so their recipient lists are rewritten in place:
 
 ```sh
 # Run from a machine that holds one of the *current* recipient keys
 # (e.g. on the homolab itself, where /var/lib/sops-nix/key.txt exists).
-for f in sensitive/hosts/homolab/**/*.{yaml,yml,key,env,ini}; do
-    [ -f "$f" ] && sops updatekeys --yes "$f"
-done
+just secret-refresh sensitive/hosts/homolab
 ```
+
+`just secret-refresh` takes a file or directory and walks it for
+`.yaml`/`.yml`/`.json`/`.env`/`.ini`/`.key`/`.pem` files, running
+`sops updatekeys --yes` on each. Pass no argument to refresh the whole
+`sensitive/` tree.
 
 Once re-keyed, `just secret-edit sensitive/hosts/homolab/<file>` works from
 `m3air` (using `~/.config/sops/age/keys.txt`).

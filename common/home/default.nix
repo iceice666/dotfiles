@@ -62,6 +62,13 @@
 
   sops.age.sshKeyPaths = [ "${homeDirectory}/.ssh/id_ed25519" ];
 
+  # Derive the native age identity from the SSH key so the sops CLI can
+  # decrypt files. sops only auto-tries id_rsa; ed25519 must be converted
+  # explicitly. SOPS_AGE_SSH_PRIVATE_KEY_FILE uses the SSH identity type
+  # which cannot decrypt native age1… recipients — SOPS_AGE_KEY_CMD is the
+  # correct hook (sops runs it and treats stdout as the raw AGE-SECRET-KEY-…).
+  home.sessionVariables.SOPS_AGE_KEY_CMD = "ssh-to-age -private-key -i ${homeDirectory}/.ssh/id_ed25519";
+
   home.stateVersion = "25.11";
 
   programs.fish.interactiveShellInit = ''
