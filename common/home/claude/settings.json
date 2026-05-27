@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 1,
+    "hideVimModeIndicator": true
+  },
+  "cleanupPeriodDays": 14,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(nix flake check*)",
+      "Bash(nix build*)",
+      "Bash(direnv reload*)",
+      "Bash(cargo check*)",
+      "Bash(cargo test*)",
+      "Bash(cargo fmt*)",
+      "Bash(cargo clippy*)",
+      "Bash(zig build*)",
+      "Bash(zig test*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run test*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm test*)",
+      "Bash(make test*)",
+      "Bash(make check*)",
+      "Read(~/.config/**)",
+      "Read(~/.zshrc)",
+      "Read(~/.bashrc)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./**/secrets/**)",
+      "Read(./**/*secret*)",
+      "Read(./**/*credential*)",
+      "Read(./**/*token*)",
+      "Bash(rm -rf / *)",
+      "Bash(rm -rf ~*)",
+      "Bash(sudo rm*)",
+      "Bash(curl * | sh*)",
+      "Bash(curl * | bash*)",
+      "Bash(wget * | sh*)",
+      "Bash(wget * | bash*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git commit*)",
+      "Bash(git rebase*)",
+      "Bash(git reset*)",
+      "Bash(nix flake update*)",
+      "Bash(cargo publish*)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(docker push*)",
+      "Bash(kubectl*)"
+    ],
+    "defaultMode": "plan"
+  },
+  "model": "opusplan",
+  "spinnerTipsEnabled": false,
+  "effortLevel": "xhigh",
+  "editorMode": "vim",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true
+}
