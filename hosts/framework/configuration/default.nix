@@ -81,6 +81,13 @@ in
   '';
 
   services = {
+    openssh = {
+      enable = true;
+      settings = {
+        PermitRootLogin = "no";
+        PasswordAuthentication = false;
+      };
+    };
     accounts-daemon.enable = true;
     blueman.enable = true;
     dbus.enable = true;

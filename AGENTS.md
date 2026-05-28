@@ -88,6 +88,7 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
+| `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 | `kaguya-cache` | `path:./pkgs/kaguya-bin/empty-cache` | no |
@@ -114,7 +115,9 @@ cache.
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
-| `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell |
+| `deploy` | deploy-rs node definitions for `framework` and `homolab` |
+| `checks.x86_64-linux` | deploy-rs schema validation checks |
+| `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
 There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
@@ -124,7 +127,7 @@ There are **no `packages.*` outputs** in the flake. Overlay packages are only ac
 Custom packages registered in the overlay: `codex-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-on-starlit-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 
 The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
-`colmena`, `nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
+`nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
 from `pkgs.lixPackageSets.stable`.
 
 Additionally:
@@ -166,13 +169,13 @@ Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
 pre-build steps such as the Kaguya cache ensure on Linux and pass the correct
 flake input overrides.
 
-Direct Colmena commands are for debugging only. If you must run one manually,
+Direct `deploy` commands are for debugging only. If you must run one manually,
 mirror the matching `Justfile` recipe, including the Kaguya cache override.
 
 ```sh
 ./scripts/kaguya-cache ensure
-colmena apply-local build  -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
-colmena apply-local switch -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
+deploy .#framework --dry-activate -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
+deploy .#framework -- --override-input kaguya-cache path:$PWD/.cache/kaguya/framework
 ```
 
 Fingerprint authentication is configured in
@@ -259,18 +262,16 @@ just store-size
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
 
-just homolab-build           # dry-build homolab on the server itself
-just homolab-switch          # build + activate homolab via SSH (uses --use-remote-sudo)
+just homolab-build           # dry-activate homolab on the server itself
+just homolab-switch          # build + activate homolab via SSH
 just homolab-boot            # stage the closure for next homolab boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab LLM stack
 ```
 
-Homolab is built and switched on the server itself over SSH
-(`--build-host iceice666@homolab --target-host iceice666@homolab`), so the
-recipes work from any platform without cross-compilation. `--use-remote-sudo`
-elevates the activation step; ensure the deploy user has passwordless sudo
-for `/run/current-system/sw/bin/nixos-rebuild`.
+Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs on
+the server itself over SSH and avoids cross-compilation. The deploy user must have
+passwordless sudo for the deploy-rs activation script.
 
 ### Homolab-specific danger areas
 

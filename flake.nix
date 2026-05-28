@@ -26,6 +26,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nirinit = {
       url = "github:amaanq/nirinit";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -73,7 +78,6 @@
     let
       overlay = final: prev: {
         inherit (prev.lixPackageSets.stable)
-          colmena
           nix-eval-jobs
           nix-fast-build
           nixpkgs-review
@@ -208,6 +212,7 @@
               rust-analyzer
               rustc
               rustfmt
+              inputs.deploy-rs.packages.${system}.deploy-rs
             ]
             ++ lib.optionals stdenv.isLinux linuxLibraries;
 
@@ -223,14 +228,34 @@
       treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
     in
     {
-      colmena = import ./colmena.nix {
-        inherit
-          inputs
-          self
-          overlay
-          unstablePkgsFor
-          ;
+      deploy = {
+        nodes = {
+          framework = {
+            hostname = "framework";
+            fastConnection = true;
+            sshUser = "iceice666";
+            profiles.system = {
+              user = "root";
+              path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.framework;
+            };
+          };
+          homolab = {
+            hostname = "homolab";
+            sshUser = "iceice666";
+            sshOpts = [
+              "-p"
+              "2222"
+            ];
+            remoteBuild = true;
+            profiles.system = {
+              user = "root";
+              path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.homolab;
+            };
+          };
+        };
       };
+
+      checks.x86_64-linux = inputs.deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
 
       devShells.aarch64-darwin.default = devShellFor "aarch64-darwin";
       devShells.x86_64-linux.default = devShellFor "x86_64-linux";

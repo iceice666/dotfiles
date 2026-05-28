@@ -17,7 +17,7 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    colmena apply-local switch -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -29,14 +29,14 @@ build:
 [group('host')]
 [linux]
 build: _kaguya-cache
-    colmena apply-local build -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework --dry-activate -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
 boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    colmena apply-local boot -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework --boot -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Ensure the local Kaguya Nix path input cache exists before Framework builds
 [linux]
@@ -58,17 +58,17 @@ kaguya-sync:
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
-    colmena apply switch --on homolab
+    nix develop --command deploy .#homolab
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
-    colmena apply boot --on homolab
+    nix develop --command deploy .#homolab --boot
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
-    colmena apply build --on homolab
+    nix develop --command deploy .#homolab --dry-activate
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]
