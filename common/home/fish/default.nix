@@ -21,6 +21,7 @@
       end
 
       fish_add_path --global --prepend $nix_user_profile/bin /nix/var/nix/profiles/default/bin
+      fish_add_path --global --append $HOME/.local/bin
     '';
 
     plugins = [
