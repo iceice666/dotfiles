@@ -1,76 +1,104 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh",
-    "padding": 1,
-    "hideVimModeIndicator": true
-  },
   "cleanupPeriodDays": 14,
   "attribution": {
     "commit": "",
     "pr": ""
   },
+  "includeGitInstructions": false,
   "permissions": {
-    "allow": [
-      "Bash(git status*)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git branch*)",
-      "Bash(git show*)",
-      "Bash(nix flake check*)",
-      "Bash(nix build*)",
-      "Bash(direnv reload*)",
-      "Bash(cargo check*)",
-      "Bash(cargo test*)",
-      "Bash(cargo fmt*)",
-      "Bash(cargo clippy*)",
-      "Bash(zig build*)",
-      "Bash(zig test*)",
-      "Bash(npm run lint*)",
-      "Bash(npm run test*)",
-      "Bash(pnpm lint*)",
-      "Bash(pnpm test*)",
-      "Bash(make test*)",
-      "Bash(make check*)",
-      "Read(~/.config/**)",
-      "Read(~/.zshrc)",
-      "Read(~/.bashrc)"
-    ],
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./secrets/**)",
-      "Read(./**/secrets/**)",
-      "Read(./**/*secret*)",
-      "Read(./**/*credential*)",
-      "Read(./**/*token*)",
-      "Bash(rm -rf / *)",
-      "Bash(rm -rf ~*)",
-      "Bash(sudo rm*)",
-      "Bash(curl * | sh*)",
-      "Bash(curl * | bash*)",
-      "Bash(wget * | sh*)",
-      "Bash(wget * | bash*)"
+      "Read(//**/.env)",
+      "Read(//**/.env.*)",
+      "Read(//**/secrets/**)",
+      "Read(//**/.ssh/**)",
+      "Read(//**/.gnupg/**)",
+      "Read(//**/.aws/credentials)",
+      "Read(//**/.config/sops/**)"
     ],
     "ask": [
-      "Bash(git push*)",
-      "Bash(git commit*)",
-      "Bash(git rebase*)",
-      "Bash(git reset*)",
-      "Bash(nix flake update*)",
-      "Bash(cargo publish*)",
-      "Bash(npm publish*)",
-      "Bash(pnpm publish*)",
-      "Bash(docker push*)",
-      "Bash(kubectl*)"
+      "Bash(git push *)",
+      "Bash(git push --force*)",
+      "Bash(gh pr merge *)",
+      "Bash(npm publish *)",
+      "Bash(pnpm publish *)",
+      "Bash(cargo publish *)",
+      "Bash(sudo *)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(kubectl apply *)",
+      "Bash(kubectl delete *)",
+      "Bash(docker system prune *)"
     ],
-    "defaultMode": "plan"
+    "defaultMode": "acceptEdits",
+    "disableBypassPermissionsMode": "disable"
   },
   "model": "opusplan",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 0
+  },
+  "viewMode": "focus",
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": false,
+    "autoAllowBashIfSandboxed": true,
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "raw.githubusercontent.com",
+        "*.githubusercontent.com",
+        "crates.io",
+        "*.crates.io",
+        "static.crates.io",
+        "index.crates.io",
+        "registry.npmjs.org",
+        "*.npmjs.org",
+        "pypi.org",
+        "*.pythonhosted.org",
+        "cache.nixos.org",
+        "releases.nixos.org",
+        "*.nixos.org"
+      ],
+      "allowLocalBinding": true
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/.cache",
+        "~/.cargo",
+        "~/.npm",
+        "~/.pnpm-store",
+        "~/Library/Caches",
+        "/tmp",
+        "/var/tmp"
+      ]
+    }
+  },
   "spinnerTipsEnabled": false,
   "effortLevel": "xhigh",
+  "awaySummaryEnabled": false,
+  "autoUpdatesChannel": "stable",
+  "tui": "fullscreen",
+  "prefersReducedMotion": true,
   "editorMode": "vim",
-  "remoteControlAtStartup": true,
-  "agentPushNotifEnabled": true
+  "preferredNotifChannel": "notifications_disabled",
+  "showTurnDuration": false,
+  "terminalProgressBarEnabled": false,
+  "agentPushNotifEnabled": true,
+  "advisorModel": "opus",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "timeout 300 true || echo 'long-running cmd: add --timeout'"
+          }
+        ]
+      }
+    ]
+  }
 }
