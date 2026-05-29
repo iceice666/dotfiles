@@ -14,6 +14,8 @@
 {
   programs.fish.enable = true;
 
+  security.sudo.wheelNeedsPassword = false;
+
   users.users.${username} = {
     isNormalUser = true;
     home = homeDirectory;
