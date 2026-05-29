@@ -61,6 +61,7 @@
 
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
+  nix.settings.extra-deprecated-features = [ "url-literals" ];
   nix.settings.trusted-users = [
     "root"
     username

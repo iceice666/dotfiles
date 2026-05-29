@@ -58,17 +58,17 @@ kaguya-sync:
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
-    nix develop --command deploy .#homolab
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
-    nix develop --command deploy .#homolab --boot
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --boot
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
-    nix develop --command deploy .#homolab --dry-activate
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --dry-activate
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]

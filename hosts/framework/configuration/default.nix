@@ -30,6 +30,7 @@ in
       "nix-command"
       "flakes"
     ];
+    settings.extra-deprecated-features = [ "url-literals" ];
   };
 
   nixpkgs.config.allowUnfree = true;
