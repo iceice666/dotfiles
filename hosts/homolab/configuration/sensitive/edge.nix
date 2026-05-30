@@ -64,6 +64,15 @@
         restartUnits = [ "dynacat.service" ];
       };
 
+      "grafana-secret-key" = {
+        sopsFile = dotfiles + /sensitive/hosts/homolab/grafana.yaml;
+        key = "secretKey";
+        owner = "grafana";
+        group = "grafana";
+        mode = "0400";
+        restartUnits = [ "grafana.service" ];
+      };
+
     };
 
     templates = {

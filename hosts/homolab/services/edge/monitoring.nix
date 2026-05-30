@@ -1,4 +1,5 @@
 {
+  config,
   homolab,
   pkgs,
   ...
@@ -138,7 +139,10 @@ in
         root_url = "${homolab.urls.grafana}/";
       };
 
-      security.disable_initial_admin_creation = true;
+      security = {
+        disable_initial_admin_creation = true;
+        secret_key = "$__file{${config.sops.secrets."grafana-secret-key".path}}";
+      };
 
       users = {
         allow_sign_up = false;
