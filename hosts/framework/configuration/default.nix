@@ -77,9 +77,9 @@ in
   swapDevices = [ { device = "/dev/disk/by-label/NIXOS_SWAP"; } ];
   powerManagement.enable = true;
 
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=1h
-  '';
+  systemd.sleep.settings.Sleep = {
+    HibernateDelaySec = "1h";
+  };
 
   services = {
     openssh = {

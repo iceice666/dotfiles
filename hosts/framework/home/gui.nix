@@ -752,6 +752,7 @@ in
       name = "Themegen-dark";
       package = themegenGtkTheme;
     };
+    gtk4.theme = config.gtk.theme;
   };
 
   qt = {
@@ -965,12 +966,7 @@ in
           command = "${suspendThenHibernateOnBattery}";
         }
       ];
-      events = [
-        {
-          event = "before-sleep";
-          command = "${lockScreen} lock --daemonize";
-        }
-      ];
+      events.before-sleep = "${lockScreen} lock --daemonize";
     };
   };
 }
