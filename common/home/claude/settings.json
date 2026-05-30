@@ -30,7 +30,7 @@
       "Bash(kubectl delete *)",
       "Bash(docker system prune *)"
     ],
-    "defaultMode": "acceptEdits",
+    "defaultMode": "auto",
     "disableBypassPermissionsMode": "disable"
   },
   "model": "opusplan",
@@ -104,5 +104,6 @@
   "terminalProgressBarEnabled": false,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipWorkflowUsageWarning": true
+  "skipWorkflowUsageWarning": true,
+  "skipAutoPermissionPrompt": true
 }
