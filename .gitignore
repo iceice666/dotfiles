@@ -1,6 +1,7 @@
 .devenv/
 .direnv/
-.claude/
+.claude/*
+!.claude/workflows/
 __pycache__
 target
 .cache/
