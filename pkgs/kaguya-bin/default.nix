@@ -40,9 +40,19 @@
   libva,
   libvpx,
   libwebp,
+  libx11,
+  libxcomposite,
+  libxdamage,
+  libxext,
+  libxfixes,
   libxkbcommon,
+  libxrandr,
+  libxscrnsaver,
   libxml2,
   libxslt,
+  libxt,
+  libxtst,
+  libxcb,
   mesa,
   minizip,
   nspr,
@@ -60,7 +70,6 @@
   stdenv,
   systemd,
   wayland,
-  xorg,
   zlib,
   src,
 }:
@@ -131,16 +140,16 @@ let
     stdenv.cc.cc.lib
     systemd
     wayland
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXrandr
-    xorg.libXScrnSaver
-    xorg.libXt
-    xorg.libXtst
-    xorg.libxcb
+    libx11
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxrandr
+    libxscrnsaver
+    libxt
+    libxtst
+    libxcb
     zlib
   ];
 in

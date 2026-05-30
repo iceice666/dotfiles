@@ -25,6 +25,18 @@
   libnotify,
   libpulseaudio,
   libuuid,
+  libx11,
+  libxcomposite,
+  libxcursor,
+  libxdamage,
+  libxext,
+  libxfixes,
+  libxi,
+  libxrandr,
+  libxrender,
+  libxscrnsaver,
+  libxshmfence,
+  libxtst,
   libxcb,
   libxkbcommon,
   mesa,
@@ -34,7 +46,6 @@
   pipewire,
   systemd,
   wayland,
-  xorg,
 }:
 
 let
@@ -117,18 +128,18 @@ stdenvNoCC.mkDerivation {
     pipewire
     systemd
     wayland
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXcursor
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXi
-    xorg.libXrandr
-    xorg.libXrender
-    xorg.libXScrnSaver
-    xorg.libXtst
-    xorg.libxshmfence
+    libx11
+    libxcomposite
+    libxcursor
+    libxdamage
+    libxext
+    libxfixes
+    libxi
+    libxrandr
+    libxrender
+    libxscrnsaver
+    libxshmfence
+    libxtst
   ];
 
   installPhase =
