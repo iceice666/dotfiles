@@ -9,27 +9,27 @@
 
 let
   pname = "zen-bin";
-  version = "1.19.13b";
+  version = "1.20.1b";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-universal.dmg";
-      hash = "sha256-EQmBjYgxuTRl4XV+UcHTBfqcIHo40RKeFGnUj/bih8Y=";
+      hash = "sha256-ss/JxbCT2oSQQV7nroOeXLd9Row9iCfICQ6bDyYV/ys=";
     };
 
     "x86_64-darwin" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-universal.dmg";
-      hash = "sha256-EQmBjYgxuTRl4XV+UcHTBfqcIHo40RKeFGnUj/bih8Y=";
+      hash = "sha256-ss/JxbCT2oSQQV7nroOeXLd9Row9iCfICQ6bDyYV/ys=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-x86_64.tar.xz";
-      hash = "sha256-38ef+0RMbb+TWmD2/0xcsZBWe6om+DyOnPhFdXHh2QA=";
+      hash = "sha256-Q/qM3gLWC0cxZP176O5vwKnw3AcSiPBFaFDsVuV1wJo=";
     };
 
     "aarch64-linux" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-aarch64.tar.xz";
-      hash = "sha256-nldMY/ZS9BwqD1e0gD3GKPZqfwqJRpJxq+GESJbwOfI=";
+      hash = "sha256-wT+tULXKD60ifhg1FGbeMHvaPdLaJQH73G6DB1YsLGo=";
     };
   };
 

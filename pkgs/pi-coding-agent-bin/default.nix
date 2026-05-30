@@ -8,27 +8,27 @@
 
 let
   pname = "pi-coding-agent-bin";
-  version = "0.75.5";
+  version = "0.78.0";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${version}/pi-darwin-arm64.tar.gz";
-      hash = "sha256-648DnEHoexQxyCuql/gHxNORt31m7LQeCWJwrjb5Ni0=";
+      hash = "sha256-aOu+T1ahNqHHus4zk+ykrQqh/Z8lO3l/03AFi9Of4HA=";
     };
 
     "x86_64-darwin" = fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${version}/pi-darwin-x64.tar.gz";
-      hash = "sha256-JVbFFmtJW4OArlC1ntYc8ubE19IxwN8O0hTZ3kn0faw=";
+      hash = "sha256-ZgdLJxJgBoGZ9Hc4oXI5fx4LWjM0aX3SrOo1u9NHCxw=";
     };
 
     "aarch64-linux" = fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${version}/pi-linux-arm64.tar.gz";
-      hash = "sha256-i1xm/Duu5f6kB39iMH95LWKTZgMVs85NCUDEk1O0X1A=";
+      hash = "sha256-SRVRc2gkc3INnez03uy+11T66Ekl7wA8C2aqwx1fkAU=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/earendil-works/pi/releases/download/v${version}/pi-linux-x64.tar.gz";
-      hash = "sha256-rGh6zXJwXavpZ/1A02Uxf2gFSHi+HLLArpoFkv0Qi10=";
+      hash = "sha256-isAzQ9HhIoEG6BchV/Mta4goKeRrNP6vV38XGl8Th8w=";
     };
   };
 
