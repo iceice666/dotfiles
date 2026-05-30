@@ -212,7 +212,7 @@
               rust-analyzer
               rustc
               rustfmt
-              inputs.deploy-rs.packages.${system}.deploy-rs
+              pkgs.deploy-rs
             ]
             ++ lib.optionals stdenv.isLinux linuxLibraries;
 

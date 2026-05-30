@@ -37,7 +37,8 @@
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",
-    "padding": 0
+    "padding": 1,
+    "hideVimModeIndicator": true
   },
   "viewMode": "focus",
   "sandbox": {
@@ -88,6 +89,8 @@
   "terminalProgressBarEnabled": false,
   "agentPushNotifEnabled": true,
   "advisorModel": "opus",
+  "verbose": true,
+  "remoteControlAtStartup": true,
   "hooks": {
     "PreToolUse": [
       {
