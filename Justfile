@@ -128,6 +128,11 @@ update *inputs:
 update-custom-pkgs agent='codex':
     {{ scripts }}/update-custom-pkgs-agent '{{ agent }}' '{{ repo_root }}'
 
+# Run the Claude update-pkgs workflow to bump all custom packages to latest
+[group('flake')]
+update-pkgs:
+    claude --print "workflow: run the update-pkgs workflow"
+
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]
 check: fmt-check _just-check
