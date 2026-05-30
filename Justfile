@@ -131,7 +131,7 @@ update-custom-pkgs agent='codex':
 # Run the Claude update-pkgs workflow to bump all custom packages to latest
 [group('flake')]
 update-pkgs:
-    claude --print "workflow: run the update-pkgs workflow"
+    claude "workflow: run the update-pkgs workflow"
 
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]

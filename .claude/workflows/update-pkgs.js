@@ -12,6 +12,7 @@ export const meta = {
 const REPO = '/Users/iceice666/dotfiles'
 
 const PACKAGES = [
+  { name: 'claude-code-bin',     github: 'anthropics/claude-code',      tagPrefix: 'v' },
   { name: 'codex-cli-bin',       github: 'openai/codex',                tagPrefix: 'rust-v' },
   { name: 'rime-frost',          github: 'gaboolic/rime-frost',          tagPrefix: '' },
   { name: 'zen-bin',             github: 'zen-browser/desktop',          tagPrefix: '' },

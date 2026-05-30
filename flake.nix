@@ -83,6 +83,7 @@
           nixpkgs-review
           ;
 
+        claude-code-bin = final.callPackage ./pkgs/claude-code-bin { };
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
