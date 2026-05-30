@@ -83,10 +83,10 @@ Composition is structural: `common/ -> hosts/<name>/`.
 
 | Input | Source | Follows nixpkgs |
 |---|---|---|
-| `nixpkgs` | `github:NixOS/nixpkgs/nixos-25.11` | — |
+| `nixpkgs` | `github:NixOS/nixpkgs/nixos-26.05` | — |
 | `nixpkgs-unstable` | `github:NixOS/nixpkgs/nixpkgs-unstable` | no |
-| `nix-darwin` | `github:nix-darwin/nix-darwin/nix-darwin-25.11` | yes |
-| `home-manager` | `github:nix-community/home-manager/release-25.11` | yes |
+| `nix-darwin` | `github:nix-darwin/nix-darwin/nix-darwin-26.05` | yes |
+| `home-manager` | `github:nix-community/home-manager/release-26.05` | yes |
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
