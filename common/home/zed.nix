@@ -38,7 +38,7 @@ let
 in
 {
   home.packages = [ gvimWrapper ];
-  home.sessionVariables.VISUAL = "zed --wait";
+  home.sessionVariables.VISUAL = lib.mkForce "zed --wait";
 
   programs.zed-editor = {
     enable = true;
