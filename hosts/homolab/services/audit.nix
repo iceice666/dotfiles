@@ -190,7 +190,7 @@ let
       cmark-gfm
       gnused
       jq
-      pkgs.codex-bin
+      pkgs.codex-cli-bin
     ];
     text = ''
       set -euo pipefail

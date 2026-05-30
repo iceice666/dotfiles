@@ -44,7 +44,7 @@
     nodejs_24
     bubblewrap
 
-    pkgs."codex-bin"
+    pkgs.codex-cli-bin
     unstablePkgs.agent-browser
     unstablePkgs.vulnix
     unstablePkgs.trivy

@@ -83,7 +83,6 @@
           nixpkgs-review
           ;
 
-        codex-bin = final.callPackage ./pkgs/codex-bin { };
         codex-cli-bin = final.callPackage ./pkgs/codex-cli-bin { };
         default-browser = final.callPackage ./pkgs/default-browser { };
         equibop-bin = final.callPackage ./pkgs/equibop-bin { };
