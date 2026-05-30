@@ -44,13 +44,13 @@ let
   srcs = {
     "aarch64-darwin" = fetchzip {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/Equibop-${version}-universal-mac.zip";
-      hash = "sha256-UhTYfiEoEmpbKrpf15MXD6cI7u5tubuIx6bpNNni+po=";
+      hash = "sha256-DCte/WclxwuSbWNsw2Aj7/It5hID9EWljOJnSkJYAfY=";
       stripRoot = false;
     };
 
     "x86_64-darwin" = fetchzip {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/Equibop-${version}-universal-mac.zip";
-      hash = "sha256-UhTYfiEoEmpbKrpf15MXD6cI7u5tubuIx6bpNNni+po=";
+      hash = "sha256-DCte/WclxwuSbWNsw2Aj7/It5hID9EWljOJnSkJYAfY=";
       stripRoot = false;
     };
 
