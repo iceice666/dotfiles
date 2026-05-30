@@ -43,6 +43,14 @@ stdenv.mkDerivation {
   dontConfigure = true;
   dontBuild = true;
 
+  unpackPhase = ''
+    runHook preUnpack
+
+    tar -xzf "$src"
+
+    runHook postUnpack
+  '';
+
   nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [
     autoPatchelfHook
   ];
