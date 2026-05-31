@@ -314,6 +314,7 @@ in
         "audio"
         "input"
         "plugdev"
+        "dialout"
       ];
       shell = pkgs.fish;
       hashedPassword = "$y$j9T$fbTjrWvTrGjiwdrOngS7r/$R7YM5G5.sAkwmaWVR3aeMQyjP0ILHAOZXsg9SoAmCe5";
