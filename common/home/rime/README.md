@@ -4,7 +4,7 @@ Shared Rime data is managed by `common/home/rime/default.nix`.
 
 The module copies packaged Rime data into the writable user data directory on each host:
 
-- macOS Squirrel: `~/Library/Rime`
+- macOS Squirrel (`squirrel-app` Homebrew cask): `~/Library/Rime`
 - Linux Fcitx5 Rime: `~/.local/share/fcitx5/rime`
 
 On Linux, Home Manager starts the Fcitx5 daemon for the graphical session, enables
