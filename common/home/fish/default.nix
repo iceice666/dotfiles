@@ -20,8 +20,8 @@
           set nix_user_profile $HOME/.local/state/nix/profile
       end
 
-      fish_add_path --global --prepend $nix_user_profile/bin /nix/var/nix/profiles/default/bin
-      fish_add_path --global --append $HOME/.local/bin
+      fish_add_path --global --move --prepend $nix_user_profile/bin /nix/var/nix/profiles/default/bin
+      fish_add_path --global --move --append $HOME/.local/bin
     '';
 
     plugins = [

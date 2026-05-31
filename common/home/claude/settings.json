@@ -97,6 +97,8 @@
   "autoUpdatesChannel": "stable",
   "tui": "fullscreen",
   "prefersReducedMotion": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark",
   "editorMode": "vim",
   "verbose": true,
   "preferredNotifChannel": "notifications_disabled",
@@ -104,6 +106,5 @@
   "terminalProgressBarEnabled": false,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipWorkflowUsageWarning": true,
   "skipAutoPermissionPrompt": true
 }
