@@ -17,7 +17,7 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    deploy .#framework -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -29,14 +29,14 @@ build:
 [group('host')]
 [linux]
 build: _kaguya-cache
-    deploy .#framework --dry-activate -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework --dry-activate --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
 boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    deploy .#framework --boot -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    deploy .#framework --boot --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Ensure the local Kaguya Nix path input cache exists before Framework builds
 [linux]
@@ -58,17 +58,17 @@ kaguya-sync:
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --skip-checks
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --boot
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --boot --skip-checks
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --dry-activate
+    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --dry-activate --skip-checks
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]

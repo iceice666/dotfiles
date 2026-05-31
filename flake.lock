@@ -112,28 +112,26 @@
         ]
       },
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-sRYyyoTl5otKryyKtPfU4yEGy6OT/XqKn6q22Xi/qFA=",
         "path": "./pkgs/kaguya-bin",
         "type": "path"
       },
       "original": {
         "path": "./pkgs/kaguya-bin",
         "type": "path"
-      }
+      },
+      "parent": []
     },
     "kaguya-cache": {
       "flake": false,
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-Q3QXOoy+iN4VK2CflvRulYvPZXYgF0dO7FoF7CvWFTA=",
         "path": "./pkgs/kaguya-bin/empty-cache",
         "type": "path"
       },
       "original": {
         "path": "./pkgs/kaguya-bin/empty-cache",
         "type": "path"
-      }
+      },
+      "parent": []
     },
     "niri-scratchpad-helper": {
       "inputs": {

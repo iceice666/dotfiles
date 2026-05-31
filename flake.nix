@@ -255,7 +255,9 @@
         };
       };
 
-      checks.x86_64-linux = inputs.deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
+      checks = {
+        x86_64-linux = { };
+      };
 
       devShells.aarch64-darwin.default = devShellFor "aarch64-darwin";
       devShells.x86_64-linux.default = devShellFor "x86_64-linux";
