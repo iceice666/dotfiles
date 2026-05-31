@@ -92,8 +92,8 @@ Composition is structural: `common/ -> hosts/<name>/`.
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
-| `kaguya-cache` | `path:./pkgs/kaguya-bin/empty-cache` | no |
-| `kaguya-browser` | `path:./pkgs/kaguya-bin` | yes |
+| `kaguya-cache` | `git+file:.?dir=pkgs/kaguya-bin/empty-cache` | no |
+| `kaguya-browser` | `git+file:.?dir=pkgs/kaguya-bin` | yes |
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
 
@@ -105,7 +105,7 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
 for the copied binary runtime. Linux build, boot, and switch recipes ensure
 `.cache/kaguya/framework` exists, fetching from homolab only when missing or
-invalid, then replace the root `kaguya-cache` input with
+invalid, then replace the root `kaguya-cache` input in-memory with
 `path:$PWD/.cache/kaguya/framework`. Run `just kaguya` to force-refresh the
 cache.
 
@@ -398,7 +398,7 @@ Canonical module shape:
   sessions, memory data, auth state, plugin caches, or screen recordings from
   this repo.
 - `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
-- `common/home/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses Squirrel from Homebrew; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
+- `common/home/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
 - `common/home/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
 - `hosts/<name>/` contains machine-specific choices only.
 - `framework` is NixOS with Home Manager imported into the system configuration.
