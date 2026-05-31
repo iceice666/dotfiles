@@ -112,26 +112,38 @@
         ]
       },
       "locked": {
-        "path": "./pkgs/kaguya-bin",
-        "type": "path"
+        "dir": "pkgs/kaguya-bin",
+        "lastModified": 1780243913,
+        "narHash": "sha256-Wnf407eSUO+nuDbt/uT9dQzl9J5dCWbVvoR3GYx3KWY=",
+        "ref": "refs/heads/main",
+        "rev": "925ff62ce66ee2d5a62e9f1d3f02c134debfd67b",
+        "revCount": 375,
+        "type": "git",
+        "url": "file:."
       },
       "original": {
-        "path": "./pkgs/kaguya-bin",
-        "type": "path"
-      },
-      "parent": []
+        "dir": "pkgs/kaguya-bin",
+        "type": "git",
+        "url": "file:."
+      }
     },
     "kaguya-cache": {
       "flake": false,
       "locked": {
-        "path": "./pkgs/kaguya-bin/empty-cache",
-        "type": "path"
+        "dir": "pkgs/kaguya-bin/empty-cache",
+        "lastModified": 1780243913,
+        "narHash": "sha256-Wnf407eSUO+nuDbt/uT9dQzl9J5dCWbVvoR3GYx3KWY=",
+        "ref": "refs/heads/main",
+        "rev": "925ff62ce66ee2d5a62e9f1d3f02c134debfd67b",
+        "revCount": 375,
+        "type": "git",
+        "url": "file:."
       },
       "original": {
-        "path": "./pkgs/kaguya-bin/empty-cache",
-        "type": "path"
-      },
-      "parent": []
+        "dir": "pkgs/kaguya-bin/empty-cache",
+        "type": "git",
+        "url": "file:."
+      }
     },
     "niri-scratchpad-helper": {
       "inputs": {

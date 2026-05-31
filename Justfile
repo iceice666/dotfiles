@@ -5,7 +5,6 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 repo_root := justfile_directory()
 m3air_flake := ".#iceice666@m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
-framework_kaguya_lock := repo_root / ".cache/kaguya/framework.lock"
 framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
 scripts := repo_root / "scripts"
 
@@ -19,7 +18,7 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
     sudo ./result/bin/switch-to-configuration switch
 
 # Dry-build the M3 Air nix-darwin configuration
@@ -32,21 +31,20 @@ build:
 [group('host')]
 [linux]
 build: _kaguya-cache
-    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
 boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
     sudo ./result/bin/switch-to-configuration boot
 
 # Ensure the local Kaguya Nix path input cache exists before Framework builds
 [linux]
 _kaguya-cache:
     {{ scripts }}/kaguya-cache ensure
-    nix flake lock --override-input kaguya-cache path:{{ framework_kaguya_cache }} --output-lock-file {{ framework_kaguya_lock }}
 
 # Refresh the Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]

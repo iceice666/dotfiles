@@ -47,12 +47,12 @@
     };
 
     kaguya-cache = {
-      url = "path:./pkgs/kaguya-bin/empty-cache";
+      url = "git+file:.?dir=pkgs/kaguya-bin/empty-cache";
       flake = false;
     };
 
     kaguya-browser = {
-      url = "path:./pkgs/kaguya-bin";
+      url = "git+file:.?dir=pkgs/kaguya-bin";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.kaguya-cache.follows = "kaguya-cache";
     };
