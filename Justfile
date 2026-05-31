@@ -5,6 +5,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 repo_root := justfile_directory()
 m3air_flake := ".#iceice666@m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
+framework_kaguya_lock := repo_root / ".cache/kaguya/framework.lock"
+framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
 scripts := repo_root / "scripts"
 
 # Apply the M3 Air nix-darwin configuration
@@ -17,7 +19,8 @@ switch:
 [group('host')]
 [linux]
 switch: _kaguya-cache
-    deploy .#framework --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    sudo ./result/bin/switch-to-configuration switch
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -29,19 +32,21 @@ build:
 [group('host')]
 [linux]
 build: _kaguya-cache
-    deploy .#framework --dry-activate --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
 
 # Set the Framework NixOS configuration for next boot
 [group('host')]
 [linux]
 boot: _kaguya-cache
     test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    deploy .#framework --boot --skip-checks -- --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    nix build {{ framework_system }} --reference-lock-file {{ framework_kaguya_lock }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+    sudo ./result/bin/switch-to-configuration boot
 
 # Ensure the local Kaguya Nix path input cache exists before Framework builds
 [linux]
 _kaguya-cache:
     {{ scripts }}/kaguya-cache ensure
+    nix flake lock --override-input kaguya-cache path:{{ framework_kaguya_cache }} --output-lock-file {{ framework_kaguya_lock }}
 
 # Refresh the Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]
@@ -58,17 +63,17 @@ kaguya-sync:
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --skip-checks
+    nix develop --command deploy .#homolab --skip-checks
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --boot --skip-checks
+    nix develop --command deploy .#homolab --boot --skip-checks
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
-    NIX_CONFIG="extra-deprecated-features = url-literals" nix develop --command deploy .#homolab --dry-activate --skip-checks
+    nix develop --command deploy .#homolab --dry-activate --skip-checks
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]

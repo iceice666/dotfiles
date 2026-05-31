@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   username,
   homeDirectory,
@@ -30,7 +31,6 @@ in
       "nix-command"
       "flakes"
     ];
-    settings.extra-deprecated-features = [ "url-literals" ];
   };
 
   nixpkgs.config.allowUnfree = true;
@@ -76,6 +76,16 @@ in
   zramSwap.enable = false;
   swapDevices = [ { device = "/dev/disk/by-label/NIXOS_SWAP"; } ];
   powerManagement.enable = true;
+
+  systemd.services.dbus-broker = {
+    reloadIfChanged = lib.mkForce false;
+    restartIfChanged = false;
+  };
+
+  systemd.user.services.dbus-broker = {
+    reloadIfChanged = lib.mkForce false;
+    restartIfChanged = false;
+  };
 
   systemd.sleep.settings.Sleep = {
     HibernateDelaySec = "1h";
