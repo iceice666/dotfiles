@@ -42,6 +42,7 @@ stdenv.mkDerivation {
 
   dontConfigure = true;
   dontBuild = true;
+  dontStrip = true;
 
   unpackPhase = ''
     runHook preUnpack
