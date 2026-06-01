@@ -6,7 +6,10 @@
     ports = [ 2222 ];
     settings = {
       PermitRootLogin = "no";
-      AllowUsers = [ username ];
+      AllowUsers = [
+        username
+        "git"
+      ];
       PasswordAuthentication = false;
     };
   };
