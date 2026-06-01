@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   unstablePkgs,
   ...
 }:
@@ -58,4 +59,9 @@ let
 in
 {
   home.packages = stablePackages ++ unstablePackages;
+
+  home.activation.claudeLocalBin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    install -dm755 "$HOME/.local/bin"
+    ln -sf "${config.home.profileDirectory}/bin/claude" "$HOME/.local/bin/claude"
+  '';
 }
