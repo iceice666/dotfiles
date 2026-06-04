@@ -50,6 +50,7 @@ rec {
     traefik = "traefik.${root}";
     home = "home.${root}";
     dev = "dev.${root}";
+    npu = "npu.${root}";
   };
 
   urls = {
@@ -60,6 +61,7 @@ rec {
     technitium = "https://${domains.dns}/";
     home = "https://${domains.home}";
     dev = "https://${domains.dev}";
+    npu = "https://${domains.npu}";
   };
 
   contact = {

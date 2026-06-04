@@ -35,6 +35,7 @@ let
     ];
   };
 
+  npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] homolab.domains.npu;
   technitiumHost = homolab.domains.dns;
 in
 {
@@ -157,10 +158,33 @@ in
           permanent = true;
         };
 
+        npu-youtube.redirectRegex = {
+          regex = "^https?://${npuHostRegex}/.*";
+          replacement = "https://youtu.be/s461yhBc1wo";
+          permanent = true;
+        };
+
         technitium-strip-dns.stripPrefix.prefixes = [ "/dns" ];
       };
 
       http.routers = {
+        npu-http = {
+          rule = mkHostRule homolab.domains.npu;
+          entryPoints = [ "web" ];
+
+          middlewares = [ "npu-youtube@file" ];
+          service = "noop@internal";
+        };
+
+        npu = {
+          rule = mkHostRule homolab.domains.npu;
+          entryPoints = [ "websecure" ];
+
+          middlewares = [ "npu-youtube@file" ];
+          service = "noop@internal";
+          tls.certResolver = "letsencrypt";
+        };
+
         authelia-http = {
           rule = "Host(`${homolab.domains.auth}`)";
           entryPoints = [ "web" ];

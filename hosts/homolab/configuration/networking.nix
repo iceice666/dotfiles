@@ -76,6 +76,7 @@ in
         homolab.domains.omniroute
         homolab.domains.home
         homolab.domains.traefik
+        homolab.domains.npu
       ];
     };
 
