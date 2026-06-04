@@ -28,6 +28,7 @@
     onActivation = {
       autoUpdate = true;
       cleanup = "zap";
+      extraFlags = [ "--force-cleanup" ];
     };
     taps = [
       "pear-devs/pear"
