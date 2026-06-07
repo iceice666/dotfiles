@@ -8,6 +8,7 @@
 let
   blackboxPort = 19115;
   blackboxTarget = "127.0.0.1:${toString blackboxPort}";
+  nodeExporterPort = 19100;
   llamaSwapProbeTargets = [
     "${homolab.ai.baseUrl}/health"
     "${homolab.ai.openaiBaseUrl}/models"
@@ -45,12 +46,36 @@ in
       );
     };
 
+    exporters.node = {
+      enable = true;
+      listenAddress = "127.0.0.1";
+      port = nodeExporterPort;
+      enabledCollectors = [
+        "processes"
+        "systemd"
+      ];
+      extraFlags = [
+        "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)"
+        "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$"
+        "--collector.systemd.unit-include=(authelia-main|cloudflare-ips-refresh|dynacat|grafana|llama-swap|omniroute|podman|postgresql|prometheus|redis|tailscaled|technitium-dns-server|traefik)\\.(service|socket|timer)"
+      ];
+    };
+
     scrapeConfigs = [
       {
         job_name = "prometheus";
         static_configs = [
           {
             targets = [ "127.0.0.1:${toString homolab.ports.prometheus}" ];
+            labels.instance = homolab.hostName;
+          }
+        ];
+      }
+      {
+        job_name = "node";
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString nodeExporterPort}" ];
             labels.instance = homolab.hostName;
           }
         ];
@@ -117,6 +142,35 @@ in
                 annotations:
                   summary: "llama-swap endpoint probe is slow"
                   description: "{{ $labels.target }} has taken more than 5 seconds to answer for 5 minutes."
+          - name: host-resource.rules
+            rules:
+              - alert: HomolabHighCpuUsage
+                expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="node", mode="idle"}[5m]))) > 90
+                for: 15m
+                labels:
+                  severity: warning
+                  service: host
+                annotations:
+                  summary: "homolab CPU usage is high"
+                  description: "{{ $labels.instance }} CPU usage has stayed above 90% for 15 minutes."
+              - alert: HomolabHighMemoryUsage
+                expr: 100 * (1 - node_memory_MemAvailable_bytes{job="node"} / node_memory_MemTotal_bytes{job="node"}) > 90
+                for: 15m
+                labels:
+                  severity: warning
+                  service: host
+                annotations:
+                  summary: "homolab memory usage is high"
+                  description: "{{ $labels.instance }} memory usage has stayed above 90% for 15 minutes."
+              - alert: HomolabLowDiskSpace
+                expr: 100 * (1 - node_filesystem_avail_bytes{job="node", fstype!~"tmpfs|ramfs"} / node_filesystem_size_bytes{job="node", fstype!~"tmpfs|ramfs"}) > 85
+                for: 30m
+                labels:
+                  severity: warning
+                  service: host
+                annotations:
+                  summary: "homolab disk usage is high"
+                  description: "{{ $labels.instance }} filesystem {{ $labels.mountpoint }} has stayed above 85% usage for 30 minutes."
       ''
     ];
   };

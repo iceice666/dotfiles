@@ -49,6 +49,8 @@ let
       iptables
       jq
       podman
+      procps
+      sysstat
       systemd
       util-linux
     ];
@@ -147,6 +149,14 @@ let
       run_sh podman-containers "podman ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}'"
       run_cmd mounts findmnt --real --output TARGET,SOURCE,FSTYPE,OPTIONS
       run_cmd disk-free df -h
+      run_cmd memory-free free -h
+      run_cmd vmstat vmstat 1 5
+      run_cmd io-summary iostat -xz 1 2
+      run_sh top-cpu "top -b -n 1 -o %CPU | head -n 40"
+      run_sh processes-by-cpu "ps -eo pid,ppid,user,stat,%cpu,%mem,rss,vsz,comm,args --sort=-%cpu | head -n 40"
+      run_sh processes-by-memory "ps -eo pid,ppid,user,stat,%cpu,%mem,rss,vsz,comm,args --sort=-%mem | head -n 40"
+      run_sh systemd-cgroups "systemd-cgtop --batch --iterations=1 --depth=3"
+      run_sh podman-stats "podman stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'"
       run_cmd podman-group getent group podman
       run_cmd audit-group getent group ${auditGroup}
       run_sh journal-selected-24h "journalctl --no-pager --since '24 hours ago' ${selectedJournalUnitArgs}"
