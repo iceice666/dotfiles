@@ -14,8 +14,8 @@ let
 
   testWildcardDomain = "test.${homolab.domains.root}";
 
-  # Keep internal routes portless while only matching tailnet or local callers.
-  privateClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
+  # Keep internal routes portless while only matching LAN, tailnet, or local callers.
+  privateClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`${homolab.network.lan.cidr}`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
 
   mkHostRule = host: "Host(`${host}`)";
   mkHostPathRule = host: pathRule: "${mkHostRule host} && ${pathRule}";
