@@ -29,7 +29,7 @@ in
       blocking = {
         denylists.default = [
           "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/pro.txt"
-          "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif.txt"
+          "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif.mini.txt"
         ];
         clientGroupsBlock.default = [ "default" ];
         blockType = "zeroIp";
