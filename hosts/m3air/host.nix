@@ -1,16 +1,26 @@
-{ ... }:
+{
+  inputs,
+  dotfiles,
+  name,
+}:
 
 {
-  name = "m3air";
+  inherit name;
   kind = "darwin";
   system = "aarch64-darwin";
   username = "iceice666";
   homeDirectory = "/Users/iceice666";
 
   modules = [ ./configuration ];
+  homeModules = [ ./home ];
 
   features = {
     homeManager = true;
     sops = true;
+    gui = true;
+    themegen = true;
+    rime = true;
+    devEnv = true;
+    pi = true;
   };
 }

@@ -17,23 +17,15 @@ in
   imports = [
     ./grub-theme.nix
     ./hardware-configuration.nix
-    inputs.nirinit.nixosModules.nirinit
   ];
+
+  nixpkgs.overlays = [ (import ../overlay.nix) ];
 
   networking.hostName = "framework";
   networking.networkmanager.enable = true;
 
   time.timeZone = "Asia/Taipei";
   i18n.defaultLocale = "en_US.UTF-8";
-
-  nix = {
-    settings.experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-  };
-
-  nixpkgs.config.allowUnfree = true;
 
   boot = {
     kernelPackages = pkgs.linuxPackages_zen_7_0;
@@ -206,7 +198,6 @@ in
   };
 
   programs = {
-    fish.enable = true;
     dconf.enable = true;
     regreet = {
       enable = true;
@@ -295,7 +286,6 @@ in
     ++ [ unstablePkgs.just ];
 
   fonts.packages = with pkgs; [
-    cascadia-code
     sarasa-gothic
     noto-fonts
     noto-fonts-color-emoji
@@ -323,21 +313,6 @@ in
     users.root = {
       hashedPassword = "$y$j9T$pdHphuflshVqXSrSyPiqF.$YpuXSNnoqNDG6RXzDy3p/IU5aAgSzOHSvYUMloQ/rb/";
     };
-  };
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-    extraSpecialArgs = {
-      inherit
-        username
-        homeDirectory
-        dotfiles
-        unstablePkgs
-        ;
-    };
-    users.${username} = import ../home;
   };
 
   system.stateVersion = "25.11";

@@ -1,24 +1,12 @@
-{
-  pkgs,
-  homeDirectory,
-  ...
-}:
+{ pkgs, homeDirectory, ... }:
 
 {
   imports = [
-    ./app-defaults.nix
     ./agent-skills.nix
     ./claude.nix
-    ./dev-env.nix
     ./fish
-    ./ghostty.nix
-    ./packages.nix
-    ./pi.nix
-    ./rime
-    ./themegen
+    ./packages-cli.nix
     ./user.nix
-    ./vscodium.nix
-    ./zed.nix
   ];
 
   programs.git = {

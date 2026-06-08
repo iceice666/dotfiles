@@ -14,23 +14,28 @@ scripts/             # shell implementations for complex just recipes
 treefmt.nix          # formatter configuration (nixfmt + just)
 assets/              # wallpaper/source images and host avatar assets
 
-common/              # baseline shared across all hosts
-  configuration/     # shared system-level modules for darwin hosts
-    default.nix      # sets Lix and shared Darwin system settings
-  home/              # shared Home Manager baseline (imported by all hosts)
-    default.nix      # shared programs, sops age key path, state version
-    packages.nix     # shared user package list
+common/              # shared modules injected by mk-host into every host
+  system/            # always-on: Lix, cascadia-code font, fish, allowUnfree
+  system-darwin/     # darwin-only system settings (experimental-features)
+  system-nixos/      # nixos-only system settings (experimental-features)
+  home-base/         # CLI baseline for all HM-enabled hosts
+    default.nix      # git, direnv, neovim, zoxide, starship, sops-age, zellij config
+    packages-cli.nix # shared CLI package list
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
-    app-defaults.nix # shared app preference files
     agent-skills.nix # shared agent-agnostic personal skills
-    dev-env.nix      # shared development environment config
-    ghostty.nix      # shared Ghostty config
-    rime/            # Rime Frost setup with Traditional Chinese octagram model
-    themegen/        # wallpaper-driven theme generation and templates
-      templates/     # ghostty, equibop, starship, zed, vscode, terminal-sequences
+    claude.nix       # Claude Code config symlinks
+    dev-env.nix      # developer environment PATH/ENV (features.devEnv)
+    pi.nix           # Pi coding-agent ketch extension (features.pi)
+  home-gui/          # GUI workstation baseline (features.gui)
+    default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
+    packages-gui.nix # GUI binaries: claude-code-bin, equibop-bin, zen-bin, …
+    app-defaults.nix # XDG MIME associations
+    ghostty.nix      # Ghostty config
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
+    rime/            # Rime Frost setup with Traditional Chinese octagram model (features.rime)
+    themegen/        # wallpaper-driven theme generation (features.themegen)
 
 themegen/            # root-level plain theme templates, split by common/host
   common/            # shared $HOME-relative templates for shells/editors/terminal
@@ -40,23 +45,30 @@ themegen/            # root-level plain theme templates, split by common/host
 
 hosts/               # per-host entrypoints
   m3air/             # macOS via nix-darwin
+    host.nix         # feature manifest
     configuration/   # default.nix, system-defaults.nix
-    home/            # default.nix, appearance, default apps, karabiner, wallpaper
+    home/            # appearance, default-apps, karabiner, wallpaper, _module.args
+    wallpaper.jpg    # symlink → assets/win_chan.jpg
   framework/         # NixOS system with Home Manager
+    host.nix         # feature manifest
+    overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
-    home/            # GUI/Niri/Eww Home Manager modules imported by NixOS
+    home/            # GUI/Niri/Eww Home Manager modules
+    wallpaper.png    # symlink → assets/mzen.png
   homolab/           # NixOS server, deployed from m3air over SSH
+    host.nix         # feature manifest
     configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
     services/        # edge/ (Traefik, Authelia, DNS, SSH, Tailscale), dev/ (Postgres, Valkey, Podman), ai/ (Shimmy, OmniRoute), audit.nix
-    home/            # Home Manager modules for the homolab login user
+    home/            # homolab-specific home additions (fish-pj.nix, user.nix, mise)
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
   gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
+    host.nix         # feature manifest
     configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
 
 lib/                 # shared nix helpers and local flake framework
-  flake/             # host registry, mkHost, overlay, deploy, formatter, dev shell outputs
+  flake/             # auto-discovery, mk-host, home-manager wiring, overlays/, deploy, formatter, devshell outputs
   homolab.nix        # hostnames, ports, domains, IP ranges for homolab
 
 pkgs/                # overlay packages
@@ -79,8 +91,9 @@ sensitive/           # encrypted secret and certificate material managed by sops
   shared/            # cross-host secrets
 ```
 
-Composition is structural: `common/ -> hosts/<name>/`. Public host outputs are
-generated from per-host specs in `hosts/<name>/host.nix`.
+Host outputs are **auto-discovered**: `lib/flake/hosts.nix` scans `hosts/*/host.nix` at
+evaluation time — no hand-maintained list. Per-host specs declare a `features` attrset;
+`lib/flake/mk-host.nix` injects matching `common/` modules and wires Home Manager.
 
 ## Flake Details
 
@@ -102,7 +115,7 @@ generated from per-host specs in `hosts/<name>/host.nix`.
 | `zen-browser` | `github:youwen5/zen-browser-flake` | yes |
 `self.submodules = true` is set so Git submodules are fetched.
 
-Theme files are generated by `common/home/themegen/default.nix` as host-specific
+Theme files are generated by `common/home-gui/themegen/default.nix` as host-specific
 Nix derivations from each host wallpaper plus `themegen/common/` and
 `themegen/<host>/` templates.
 
@@ -126,40 +139,56 @@ cache.
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
+| `packages.<system>.*` | standalone overlay packages (themegen, ketch, claude-code-bin, …) |
 
-There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
+Standalone packages are available for all systems: `nix build .#themegen` works without going through a host build.
 
 ### Local flake framework
 
 `flake.nix` only declares inputs and imports `lib/flake`. Framework files are
 split by output responsibility:
 
-- `lib/flake/hosts.nix` imports per-host specs from `hosts/<name>/host.nix`.
-- `lib/flake/mk-host.nix` builds `nixosSystem` or `darwinSystem` from a spec.
-- `lib/flake/overlay.nix` registers custom packages and package overrides.
+- `lib/flake/hosts.nix` **auto-discovers** `hosts/*/host.nix` via `builtins.readDir` — no hand-maintained list.
+- `lib/flake/mk-host.nix` builds `nixosSystem` or `darwinSystem` from a spec. It reads `host.features` to inject `common/system*` system modules and `common/home-base`/`common/home-gui` HM modules, then appends the HM wiring module.
+- `lib/flake/home-manager.nix` generates the `home-manager = { … };` module from host features and home imports — no per-host duplication.
+- `lib/flake/overlays/` registers custom packages split by purpose: `lix.nix`, `binaries.nix`, `linux-gui.nix` (Linux-only, no throw on Darwin), `global-patches.nix`.
 - `lib/flake/pkgs.nix` defines `unstablePkgsFor`.
+- `lib/flake/systems.nix` is the single source of truth for the supported system list.
 - `lib/flake/deploy.nix` generates deploy-rs nodes from host deploy metadata.
-- `lib/flake/dev-shells.nix` and `lib/flake/formatters.nix` preserve per-system tooling outputs.
+- `lib/flake/dev-shells.nix` and `lib/flake/formatters.nix` consume `systems.nix`.
 
-Host specs own host metadata: `name`, `kind`, `system`, `username`,
-`homeDirectory`, modules, feature toggles, extra special args, and optional
-deploy metadata. Keep runtime behavior in host/common modules; use host specs
-only for flake-level wiring.
+Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, `modules`, `homeModules`, `features`, `extraSpecialArgs`, optional `deploy`. The `features` attrset controls which common modules are injected:
+
+| Feature flag | What it injects |
+|---|---|
+| `homeManager` | `home-manager.<kind>Modules.home-manager` + wiring module |
+| `sops` | `sops-nix.<kind>Modules.sops` + `home-manager.sharedModules` sops-nix |
+| `gui` | `common/home-gui` |
+| `themegen` | `common/home-gui/themegen` |
+| `rime` | `common/home-gui/rime` |
+| `devEnv` | `common/home-base/dev-env.nix` |
+| `pi` | `common/home-base/pi.nix` |
+| `nirinit` | `inputs.nirinit.nixosModules.nirinit` |
+| `kaguya` | (signals framework-local overlay; no module) |
+
+**Adding a host:** create `hosts/<new>/host.nix` with `{ inputs, dotfiles, name }:` signature, declare `features`, and add `homeModules = [ ./home ]`. The host appears as a flake output automatically.
 
 ### Overlay
 
-Custom packages registered in the overlay: `claude-code-bin`, `codex-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `reimu-on-starlit-water`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+The overlay is split into four focused files under `lib/flake/overlays/`:
 
-The overlay also follows Lix's advanced setup guidance by inheriting Lix-backed
-`nix-eval-jobs`, `nix-fast-build`, and `nixpkgs-review`
-from `pkgs.lixPackageSets.stable`.
+- `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
+- `binaries.nix` — cross-platform packages: `claude-code-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
+- `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
-Additionally:
+The Framework-only kernel pin (`linux_zen_7_0`, `linuxPackages_zen_7_0`) lives in
+`hosts/framework/overlay.nix` and is applied locally via `nixpkgs.overlays` in the
+Framework system configuration — not in the shared overlay.
+
+Additional notes:
 - `reimu-on-starlit-water` imports the local package expression from `/home/iceice666/code/reimu_lays_on_water/nix/package.nix` through a non-flake path input and builds it with the `nixpkgs-unstable` Rust toolchain.
 - `zen-bin` uses the `zen-browser` flake on Linux and the local Darwin package under `pkgs/zen-bin`.
-- `linux_zen_7_0` and `linuxPackages_zen_7_0` pin the Framework kernel family.
-- `eww` is patched on Linux so app windows can paint transparent backgrounds.
-- `direnv` is overridden to strip `-linkmode=external` from its Makefile (build fix).
 
 ### `unstablePkgsFor`
 
@@ -167,7 +196,7 @@ A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` an
 
 ## Web, Code, and Docs Research
 
-Pi is configured through `common/home/pi.nix` to install `ketch` and expose these Pi tools: `ketch_search`, `ketch_scrape`, `ketch_code`, and `ketch_docs`.
+Pi is configured through `common/home-base/pi.nix` to install `ketch` and expose these Pi tools: `ketch_search`, `ketch_scrape`, `ketch_code`, and `ketch_docs`.
 Use them for external web research, URL fetching, OSS code examples, and library docs when repository-local information is insufficient.
 
 ## Build, Format, and Validation Commands
@@ -213,10 +242,10 @@ with Home Manager's `services.darkman`. It uses coarse Taipei coordinates from
 the Framework timezone, exposes darkman through the XDG Settings portal, and
 runs GTK/GNOME color-scheme scripts on sunrise/sunset transitions.
 
-Framework Niri session persistence is configured through `services.nirinit` in
-`hosts/framework/configuration/default.nix`. The upstream NixOS module installs
-the `nirinit.service` user unit on `graphical-session.target`, so it starts with
-the existing Niri session.
+Framework Niri session persistence is configured through `services.nirinit`. The
+`nirinit` NixOS module is injected via `features.nirinit = true` in
+`hosts/framework/host.nix`. It installs the `nirinit.service` user unit on
+`graphical-session.target`, so it starts with the existing Niri session.
 
 ### Primary workflows
 
@@ -265,11 +294,12 @@ Which build to run for a given change:
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
 | `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
 | `lib/homolab.nix` | `homolab` |
-| `common/configuration/**` | `m3air` |
-| `common/home/**` | `m3air` and `framework` |
-| `pkgs/<name>` | dry-build any host that uses the package |
-
-Overlay packages have no standalone `nix build` target; validate them through their host build.
+| `common/system/**` | `m3air` + `framework` + `homolab` + `gce-dns` |
+| `common/system-darwin/**` | `m3air` |
+| `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
+| `common/home-base/**` | `m3air` + `framework` + `homolab` (all HM-enabled hosts) |
+| `common/home-gui/**` | `m3air` + `framework` |
+| `pkgs/<name>` | `nix build .#<name>` (standalone) or any host that uses it |
 
 ### Other useful commands
 
@@ -351,7 +381,7 @@ None are present. `AGENTS.md` is the canonical instruction file in this repo.
 
 - Keep `README.md` concise and operator-facing.
 - Keep detailed repo guidance in `AGENTS.md`.
-- Put subsystem-specific detail close to the code, such as `common/home/themegen/README.md`.
+- Put subsystem-specific detail close to the code, such as `common/home-gui/themegen/README.md`.
 
 ## Code Style
 
@@ -375,7 +405,7 @@ Canonical module shape:
 ```nix
 { pkgs, dotfiles, ... }:
 {
-  imports = [ (dotfiles + /common/home) ./local-file.nix ];
+  imports = [ (dotfiles + /common/home-base) ./local-file.nix ];
   programs.foo.enable = true;
 }
 ```
@@ -424,27 +454,28 @@ Canonical module shape:
 
 ## Repository Conventions
 
-- `common/` is the baseline for all hosts.
-- `common/configuration/` is only imported by `m3air` and is for Darwin system-level settings.
-- `common/home/` is imported by all hosts and owns shared user packages.
-- `common/home/agent-skills.nix` installs curated reusable skills into
+- `common/system/` is always injected by `mk-host` for every host (darwin and NixOS). Do not put OS-specific settings here.
+- `common/system-darwin/` is injected for darwin hosts only; `common/system-nixos/` for NixOS hosts only.
+- `common/home-base/` is the CLI baseline, injected for every `features.homeManager = true` host.
+- `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (ghostty, vscodium, zed, rime, themegen, zen-bin, etc.) live here and are not imported by server hosts.
+- `common/home-base/agent-skills.nix` installs curated reusable skills into
   `$HOME/.skills`, then exposes Codex-compatible adapters under
   `$HOME/.agents/skills` and `$HOME/.codex/skills`. Keep `$HOME/.skills` as the
   agent-neutral source of truth, and do not manage generated system skills,
   sessions, memory data, auth state, plugin caches, or screen recordings from
   this repo.
-- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
-- `common/home/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
-- `common/home/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
-- `hosts/<name>/` contains machine-specific choices only.
-- `framework` is NixOS with Home Manager imported into the system configuration.
-- `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules imported by it.
+- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
+- `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
+- `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
+- `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
+- `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
+- `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
+- `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
 - `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
-- `hosts/framework/configuration/default.nix` enables the upstream `nirinit` NixOS module for Niri session persistence.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
 - `hosts/m3air/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.
-- `m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
+- `hosts/m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
 
 ## Change Strategy for Agents

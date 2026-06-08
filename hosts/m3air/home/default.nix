@@ -1,17 +1,10 @@
-{
-  inputs,
-  pkgs,
-  dotfiles,
-  ...
-}:
+{ pkgs, dotfiles, ... }:
 
 let
   desktopWallpaper = dotfiles + /assets/win_chan.jpg;
 in
 {
   imports = [
-    inputs.sops-nix.homeManagerModules.sops
-    (dotfiles + /common/home)
     ./appearance.nix
     ./default-apps.nix
     ./karabiner.nix

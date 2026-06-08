@@ -4,7 +4,7 @@ let
   # Canonical source lives alongside this module under ./claude/
   # mkOutOfStoreSymlink keeps the targets writable so Claude Code can update
   # settings.json in place, and edits to dotfiles are reflected immediately.
-  dotfilesHome = "${config.home.homeDirectory}/dotfiles/common/home/claude";
+  dotfilesHome = "${config.home.homeDirectory}/dotfiles/common/home-base/claude";
 
   managedFiles = [
     "settings.json"

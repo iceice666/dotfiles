@@ -1,7 +1,11 @@
-{ inputs, ... }:
+{
+  inputs,
+  dotfiles,
+  name,
+}:
 
 {
-  name = "gce-dns";
+  inherit name;
   kind = "nixos";
   system = "x86_64-linux";
   username = "iceice666";
@@ -19,7 +23,7 @@
 
   deploy = {
     enable = true;
-    hostname = "gce-dns";
+    hostname = name;
     sshUser = "iceice666";
     remoteBuild = true;
   };

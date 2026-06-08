@@ -10,7 +10,6 @@ let
 in
 {
   imports = [
-    (dotfiles + /common/home)
     ./gui.nix
   ];
 

@@ -12,7 +12,6 @@
 {
   imports = [
     ./system-defaults.nix
-    (dotfiles + /common/configuration)
   ];
 
   sops = {
@@ -52,23 +51,16 @@
     ];
   };
 
-  nixpkgs.config.allowUnfree = true;
-
   # macOS-only system packages (desktop apps, macOS-specific tools)
   environment.systemPackages = with pkgs; [
     orbstack
     ghostty-bin
   ];
 
-  # Necessary for using flakes on this system.
-  nix.settings.experimental-features = "nix-command flakes";
   nix.settings.trusted-users = [
     "root"
     username
   ];
-
-  # Enable alternative shell support in nix-darwin.
-  programs.fish.enable = true;
 
   services.tailscale.enable = true;
 
@@ -76,24 +68,6 @@
     name = username;
     home = homeDirectory;
     shell = pkgs.fish;
-  };
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    extraSpecialArgs = {
-      inherit
-        inputs
-        self
-        username
-        homeDirectory
-        dotfiles
-        unstablePkgs
-        ;
-    };
-    users.${username} = {
-      imports = [ ../home ];
-    };
   };
 
   networking.computerName = "M3Air";

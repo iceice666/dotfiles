@@ -11,7 +11,7 @@ let
     sops-nix
     ;
 
-  overlay = import ./overlay.nix {
+  overlay = import ./overlays {
     inherit inputs nixpkgs-unstable dotfiles;
   };
 
@@ -20,6 +20,8 @@ let
   };
 
   inherit (pkgsLib) unstablePkgsFor;
+
+  systems = import ./systems.nix;
 
   hosts = import ./hosts.nix { inherit inputs dotfiles; };
 
@@ -57,6 +59,39 @@ let
       value = hostConfigurations.${host.name};
     }) (builtins.filter (host: host.kind == "darwin") hosts)
   );
+
+  packages = builtins.listToAttrs (
+    map (system: {
+      name = system;
+      value =
+        let
+          p = unstablePkgsFor system;
+          isLinux = p.stdenv.hostPlatform.isLinux;
+        in
+        {
+          inherit (p)
+            themegen
+            ketch
+            equibop-bin
+            claude-code-bin
+            codex-cli-bin
+            pi-coding-agent-bin
+            zed-bin
+            rime-frost
+            rime-octagram-zh-hant-essay-bgw
+            ;
+        }
+        // nixpkgs.lib.optionalAttrs (!isLinux) {
+          inherit (p)
+            utiluti
+            default-browser
+            ;
+        }
+        // nixpkgs.lib.optionalAttrs isLinux {
+          inherit (p) framework-eww-state;
+        };
+    }) systems
+  );
 in
 {
   deploy = import ./deploy.nix {
@@ -67,11 +102,16 @@ in
     x86_64-linux = { };
   };
 
-  devShells = import ./dev-shells.nix { inherit unstablePkgsFor; };
+  devShells = import ./dev-shells.nix { inherit unstablePkgsFor systems; };
 
   formatter = import ./formatters.nix {
-    inherit self treefmt-nix unstablePkgsFor;
+    inherit
+      self
+      treefmt-nix
+      unstablePkgsFor
+      systems
+      ;
   };
 
-  inherit darwinConfigurations nixosConfigurations;
+  inherit darwinConfigurations nixosConfigurations packages;
 }

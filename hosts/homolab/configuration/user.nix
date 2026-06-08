@@ -1,19 +1,11 @@
 {
   pkgs,
-  inputs,
-  self,
   username,
   homeDirectory,
-  dotfiles,
-  homolab,
-  unstablePkgs,
-  sopsNix,
   ...
 }:
 
 {
-  programs.fish.enable = true;
-
   security.sudo.wheelNeedsPassword = false;
 
   users.users.${username} = {
@@ -23,28 +15,5 @@
     extraGroups = [
       "wheel"
     ];
-  };
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    extraSpecialArgs = {
-      inherit
-        inputs
-        self
-        username
-        homeDirectory
-        dotfiles
-        homolab
-        unstablePkgs
-        sopsNix
-        ;
-    };
-    users.${username} = {
-      imports = [
-        ../home
-        sopsNix.homeManagerModules.sops
-      ];
-    };
   };
 }

@@ -1,8 +1,10 @@
 { inputs, dotfiles }:
 
-[
-  (import (dotfiles + /hosts/m3air/host.nix) { inherit inputs dotfiles; })
-  (import (dotfiles + /hosts/framework/host.nix) { inherit inputs dotfiles; })
-  (import (dotfiles + /hosts/homolab/host.nix) { inherit inputs dotfiles; })
-  (import (dotfiles + /hosts/gce-dns/host.nix) { inherit inputs dotfiles; })
-]
+let
+  hostsDir = dotfiles + /hosts;
+  entries = builtins.readDir hostsDir;
+  hostNames = builtins.filter (
+    n: entries.${n} == "directory" && builtins.pathExists (hostsDir + "/${n}/host.nix")
+  ) (builtins.attrNames entries);
+in
+map (name: import (hostsDir + "/${name}/host.nix") { inherit inputs dotfiles name; }) hostNames

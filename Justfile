@@ -3,6 +3,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
+host := if os() == "macos" { "m3air" } else { "framework" }
 m3air_flake := ".#m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
 framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
@@ -114,29 +115,24 @@ m3air-homebrew:
 m3air-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# Generate a local concrete theme cache for M3 Air inspection
+# Generate a local concrete theme cache for the current host
 [group('theme')]
-[macos]
 theme:
-    @{{ scripts }}/themegen-cache generate m3air {{ repo_root }}/assets/win_chan.jpg
-
-# Generate a local concrete theme cache for Framework inspection
-[group('theme')]
-[linux]
-theme:
-    @{{ scripts }}/themegen-cache generate framework {{ repo_root }}/assets/mzen.png
+    #!/usr/bin/env bash
+    set -euo pipefail
+    wallpaper=$(find '{{ repo_root }}/hosts/{{ host }}' -maxdepth 1 -name 'wallpaper.*' | head -1)
+    '{{ scripts }}/themegen-cache' generate '{{ host }}' "$wallpaper"
 
 # Render an HTML preview for the current or specified wallpaper palette
 [group('theme')]
-[macos]
 theme-preview image='':
-    @{{ scripts }}/themegen-cache preview m3air '{{ image }}'
-
-# Render an HTML preview for the current or specified wallpaper palette
-[group('theme')]
-[linux]
-theme-preview image='':
-    @{{ scripts }}/themegen-cache preview framework '{{ image }}'
+    #!/usr/bin/env bash
+    set -euo pipefail
+    image='{{ image }}'
+    if [[ -z "$image" ]]; then
+        image=$(find '{{ repo_root }}/hosts/{{ host }}' -maxdepth 1 -name 'wallpaper.*' | head -1)
+    fi
+    '{{ scripts }}/themegen-cache' preview '{{ host }}' "$image"
 
 # Update all flake inputs, or selected inputs when names are passed
 [group('flake')]

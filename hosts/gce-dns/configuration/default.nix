@@ -27,15 +27,6 @@
     };
   };
 
-  nix = {
-    settings.experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-  };
-
-  nixpkgs.config.allowUnfree = true;
-
   swapDevices = [
     {
       device = "/swapfile";
@@ -68,8 +59,6 @@
     neovim
     ripgrep
   ];
-
-  programs.fish.enable = true;
 
   time.timeZone = "Asia/Taipei";
   i18n.defaultLocale = "en_US.UTF-8";

@@ -1,17 +1,25 @@
-{ inputs, dotfiles }:
+{
+  inputs,
+  dotfiles,
+  name,
+}:
 
 {
-  name = "homolab";
+  inherit name;
   kind = "nixos";
   system = "x86_64-linux";
   username = "iceice666";
   homeDirectory = "/home/iceice666";
 
   modules = [ ./configuration ];
+  homeModules = [ ./home ];
 
   features = {
     homeManager = true;
     sops = true;
+    gui = false;
+    devEnv = false;
+    pi = false;
   };
 
   extraSpecialArgs = {
@@ -21,7 +29,7 @@
 
   deploy = {
     enable = true;
-    hostname = "homolab";
+    hostname = name;
     sshUser = "iceice666";
     sshOpts = [
       "-p"

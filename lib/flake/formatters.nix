@@ -2,14 +2,10 @@
   self,
   treefmt-nix,
   unstablePkgsFor,
+  systems,
 }:
 
 let
-  systems = [
-    "aarch64-darwin"
-    "x86_64-linux"
-  ];
-
   treefmtEval = system: treefmt-nix.lib.evalModule (unstablePkgsFor system) (self + /treefmt.nix);
 in
 builtins.listToAttrs (
