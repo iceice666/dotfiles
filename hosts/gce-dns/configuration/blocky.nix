@@ -21,6 +21,7 @@ in
       };
 
       ports = {
+        dns = [ ];
         http = ":${toString blockyMetricsPort}";
         dohPath = "/dns-query";
       };
