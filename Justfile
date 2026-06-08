@@ -3,7 +3,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
-m3air_flake := ".#iceice666@m3air"
+m3air_flake := ".#m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
 framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
 gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"

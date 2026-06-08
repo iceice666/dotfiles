@@ -8,7 +8,7 @@ Use this file as the working agreement for coding agents editing this repo.
 ## Repository Shape
 
 ```text
-flake.nix            # flake inputs, overlay, dev shells, and host outputs
+flake.nix            # flake inputs and thin local framework entrypoint
 Justfile             # thin task runner for build, switch, validation, secrets, maintenance
 scripts/             # shell implementations for complex just recipes
 treefmt.nix          # formatter configuration (nixfmt + just)
@@ -55,7 +55,9 @@ hosts/               # per-host entrypoints
   gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
     configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
 
-lib/                 # shared nix helpers (e.g. homolab.nix — hostnames, ports, domains, IP ranges)
+lib/                 # shared nix helpers and local flake framework
+  flake/             # host registry, mkHost, overlay, deploy, formatter, dev shell outputs
+  homolab.nix        # hostnames, ports, domains, IP ranges for homolab
 
 pkgs/                # overlay packages
   claude-code-bin/   # official prebuilt Anthropic Claude Code CLI releases
@@ -77,7 +79,8 @@ sensitive/           # encrypted secret and certificate material managed by sops
   shared/            # cross-host secrets
 ```
 
-Composition is structural: `common/ -> hosts/<name>/`.
+Composition is structural: `common/ -> hosts/<name>/`. Public host outputs are
+generated from per-host specs in `hosts/<name>/host.nix`.
 
 ## Flake Details
 
@@ -115,7 +118,7 @@ cache.
 
 | Output | Type |
 |---|---|
-| `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
+| `darwinConfigurations.m3air` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
 | `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
@@ -125,6 +128,23 @@ cache.
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
 
 There are **no `packages.*` outputs** in the flake. Overlay packages are only accessible through host configurations, not as standalone flake outputs.
+
+### Local flake framework
+
+`flake.nix` only declares inputs and imports `lib/flake`. Framework files are
+split by output responsibility:
+
+- `lib/flake/hosts.nix` imports per-host specs from `hosts/<name>/host.nix`.
+- `lib/flake/mk-host.nix` builds `nixosSystem` or `darwinSystem` from a spec.
+- `lib/flake/overlay.nix` registers custom packages and package overrides.
+- `lib/flake/pkgs.nix` defines `unstablePkgsFor`.
+- `lib/flake/deploy.nix` generates deploy-rs nodes from host deploy metadata.
+- `lib/flake/dev-shells.nix` and `lib/flake/formatters.nix` preserve per-system tooling outputs.
+
+Host specs own host metadata: `name`, `kind`, `system`, `username`,
+`homeDirectory`, modules, feature toggles, extra special args, and optional
+deploy metadata. Keep runtime behavior in host/common modules; use host specs
+only for flake-level wiring.
 
 ### Overlay
 

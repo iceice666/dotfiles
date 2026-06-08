@@ -146,13 +146,7 @@
       }
     },
     "niri-scratchpad-helper": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "systems": "systems_2"
-      },
+      "flake": false,
       "locked": {
         "lastModified": 1762334439,
         "narHash": "sha256-3PVc17NWTE7O5IS6/wT4V7M9moIC035vJZ0vFi7DQ0Q=",
