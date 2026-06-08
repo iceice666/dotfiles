@@ -208,6 +208,7 @@
               cargo
               clippy
               fastfetch
+              google-cloud-sdk
               pkg-config
               rust-analyzer
               rustc
@@ -250,6 +251,15 @@
             profiles.system = {
               user = "root";
               path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.homolab;
+            };
+          };
+          gce-dns = {
+            hostname = "gce-dns";
+            sshUser = "iceice666";
+            remoteBuild = true;
+            profiles.system = {
+              user = "root";
+              path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.gce-dns;
             };
           };
         };
@@ -314,6 +324,22 @@
           ./hosts/homolab/configuration
           sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
+          { nixpkgs.overlays = [ overlay ]; }
+        ];
+      };
+
+      nixosConfigurations.gce-dns = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs self;
+          username = "iceice666";
+          homeDirectory = "/home/iceice666";
+          dotfiles = ./.;
+          unstablePkgs = unstablePkgsFor "x86_64-linux";
+        };
+        modules = [
+          "${nixpkgs}/nixos/modules/virtualisation/google-compute-image.nix"
+          ./hosts/gce-dns/configuration
           { nixpkgs.overlays = [ overlay ]; }
         ];
       };

@@ -6,6 +6,8 @@ repo_root := justfile_directory()
 m3air_flake := ".#iceice666@m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
 framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
+gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"
+gce_dns_image := ".#nixosConfigurations.gce-dns.config.system.build.googleComputeImage"
 scripts := repo_root / "scripts"
 
 # Apply the M3 Air nix-darwin configuration
@@ -84,6 +86,21 @@ homolab-gen-hardware:
 homolab-llama-smoke:
     LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
         {{ scripts }}/llama-swap-smoke
+
+# Build the gce-dns NixOS system toplevel
+[group('host')]
+gce-dns-build:
+    nix build {{ gce_dns_system }}
+
+# Build the gce-dns Google Compute Engine image
+[group('host')]
+gce-dns-image:
+    nix build {{ gce_dns_image }}
+
+# Apply the gce-dns NixOS configuration over Tailscale SSH
+[group('host')]
+gce-dns-switch:
+    nix develop --command deploy .#gce-dns --skip-checks
 
 # Install Homebrew on M3 Air
 [group('host')]

@@ -52,6 +52,8 @@ hosts/               # per-host entrypoints
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
+  gce-dns/           # minimal Google Compute Engine NixOS image host for future DNS split
+    configuration/   # GCE image, Tailscale metadata bootstrap, local deploy user
 
 lib/                 # shared nix helpers (e.g. homolab.nix — hostnames, ports, domains, IP ranges)
 
@@ -116,7 +118,8 @@ cache.
 | `darwinConfigurations."iceice666@m3air"` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
-| `deploy` | deploy-rs node definitions for `framework` and `homolab` |
+| `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
+| `deploy` | deploy-rs node definitions for `framework`, `homolab`, and `gce-dns` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -240,6 +243,7 @@ Which build to run for a given change:
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | `framework` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
+| `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
 | `lib/homolab.nix` | `homolab` |
 | `common/configuration/**` | `m3air` |
 | `common/home/**` | `m3air` and `framework` |
@@ -268,11 +272,21 @@ just homolab-switch          # build + activate homolab via SSH
 just homolab-boot            # stage the closure for next homolab boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab LLM stack
+
+just gce-dns-build           # dry-build the gce-dns NixOS system toplevel
+just gce-dns-image           # build the gce-dns Google Compute Engine image
+just gce-dns-switch          # deploy gce-dns over Tailscale after first boot
 ```
 
 Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs on
 the server itself over SSH and avoids cross-compilation. The deploy user must have
 passwordless sudo for the deploy-rs activation script.
+
+`gce-dns` is a minimal GCE image host for a future Technitium DNS split. First
+boot expects a GCE instance metadata attribute named `tailscale-auth-key`,
+containing a preauthorized Tailscale auth key. The host joins as `gce-dns`,
+enables Tailscale SSH, keeps public OpenSSH disabled, and disables Google OS
+Login. Build the image on `x86_64-linux` or through an available Linux builder.
 
 ### Homolab-specific danger areas
 

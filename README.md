@@ -1,6 +1,6 @@
 # dotfiles
 
-Multi-host Nix configuration for `m3air`, `framework`, and `homolab`.
+Multi-host Nix configuration for `m3air`, `framework`, `homolab`, and `gce-dns`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
@@ -13,6 +13,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
 | `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, deployed from `m3air` over SSH |
+| `gce-dns` | `.#gce-dns` | `x86_64-linux` | minimal Google Compute Engine NixOS image for future DNS split |
 
 ## Layout
 
@@ -31,6 +32,7 @@ hosts/               # per-host entrypoints
   m3air/             # macOS
   framework/         # NixOS system + Home Manager modules
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
+  gce-dns/           # minimal Google Compute Engine image host
 
 lib/                 # shared nix helpers (e.g. homolab.nix constants — hostnames, ports, domains)
 themegen/            # $HOME-relative theme templates rendered by Nix derivations
@@ -71,6 +73,20 @@ just homolab-boot            # stage the closure for next boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against homolab's LLM stack
 ```
+
+GCE DNS image recipes build the minimal `gce-dns` NixOS system and custom Google
+Compute Engine image. Build these on `x86_64-linux` or with a Linux builder.
+
+```sh
+just gce-dns-build    # dry-build the NixOS system toplevel
+just gce-dns-image    # build the googleComputeImage artifact
+just gce-dns-switch   # deploy over Tailscale after first boot
+```
+
+The first boot expects a GCE instance metadata attribute named
+`tailscale-auth-key`. Use a preauthorized Tailscale auth key and ensure tailnet
+ACLs allow `tailscale ssh iceice666@gce-dns`. The image does not enable public
+OpenSSH or Google OS Login.
 
 M3 Air helper recipes are available only on macOS:
 
