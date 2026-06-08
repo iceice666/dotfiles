@@ -17,9 +17,13 @@
     hostName = "gce-dns";
     firewall = {
       enable = true;
-      interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
-        4000
-      ];
+      interfaces.${config.services.tailscale.interfaceName} = {
+        allowedTCPPorts = [
+          53
+          4000
+        ];
+        allowedUDPPorts = [ 53 ];
+      };
     };
   };
 

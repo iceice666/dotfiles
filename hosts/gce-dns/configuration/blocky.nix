@@ -3,6 +3,7 @@
 let
   blockyMetricsPort = 4000;
   homolab = import (dotfiles + /lib/homolab.nix);
+  tailnetAddress = "100.126.249.103";
 in
 {
   services.blocky = {
@@ -21,7 +22,7 @@ in
       };
 
       ports = {
-        dns = [ ];
+        dns = "${tailnetAddress}:53";
         http = ":${toString blockyMetricsPort}";
         dohPath = "/dns-query";
       };
