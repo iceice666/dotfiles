@@ -13,7 +13,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | `m3air` | `.#iceice666@m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
 | `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, deployed from `m3air` over SSH |
-| `gce-dns` | `.#gce-dns` | `x86_64-linux` | minimal Google Compute Engine NixOS image for future DNS split |
+| `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 
 ## Layout
 
@@ -32,7 +32,7 @@ hosts/               # per-host entrypoints
   m3air/             # macOS
   framework/         # NixOS system + Home Manager modules
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
-  gce-dns/           # minimal Google Compute Engine image host
+  gce-dns/           # Google Compute Engine image host for Blocky DoH
 
 lib/                 # shared nix helpers (e.g. homolab.nix constants — hostnames, ports, domains)
 themegen/            # $HOME-relative theme templates rendered by Nix derivations
@@ -74,8 +74,10 @@ just homolab-gen-hardware    # refresh hardware-configuration.nix from the serve
 just homolab-llama-smoke     # OpenAI-compatible smoke check against homolab's LLM stack
 ```
 
-GCE DNS image recipes build the minimal `gce-dns` NixOS system and custom Google
-Compute Engine image. Build these on `x86_64-linux` or with a Linux builder.
+GCE DNS image recipes build the `gce-dns` NixOS system and custom Google Compute
+Engine image. The host runs Blocky as a DoH resolver and exposes its DoH and
+Prometheus metrics listener over Tailscale TCP. Build these on `x86_64-linux` or
+with a Linux builder.
 
 ```sh
 just gce-dns-build    # dry-build the NixOS system toplevel

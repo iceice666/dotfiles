@@ -8,6 +8,7 @@
 
 {
   imports = [
+    ./blocky.nix
     ./tailscale-bootstrap.nix
     ./user.nix
   ];
@@ -16,7 +17,9 @@
     hostName = "gce-dns";
     firewall = {
       enable = true;
-      trustedInterfaces = [ config.services.tailscale.interfaceName ];
+      interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
+        4000
+      ];
     };
   };
 
@@ -42,7 +45,7 @@
     openssh.enable = lib.mkForce false;
     tailscale = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
       package = unstablePkgs.tailscale;
       authKeyFile = "/run/gce-dns/tailscale-auth-key";
       extraUpFlags = [

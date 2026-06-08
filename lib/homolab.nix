@@ -13,8 +13,6 @@ let
     omnirouteDashboard = 20128;
     omnirouteApi = 20129;
     shimmy = 11434;
-    technitium = 5380;
-    technitiumDoh = 8053;
     dynacat = 18075;
     devPortProxy = 18076;
   };
@@ -38,6 +36,11 @@ rec {
       prefixLength = 24;
     };
 
+    tailnet = {
+      address = "100.90.20.64";
+      dnsName = "homolab.skate-kanyu.ts.net";
+    };
+
     docker.bridgeAddress = "172.17.0.1";
   };
 
@@ -56,9 +59,9 @@ rec {
   urls = {
     auth = "https://${domains.auth}";
     grafana = "https://${domains.grafana}";
+    dns = "https://${domains.dns}/dns-query";
     omniroute = "https://${domains.omniroute}";
     traefik = "https://${domains.traefik}";
-    technitium = "https://${domains.dns}/";
     home = "https://${domains.home}";
     dev = "https://${domains.dev}";
     npu = "https://${domains.npu}";

@@ -104,12 +104,6 @@ in
         ${ipset} create cloudflare-v4 hash:net family inet -exist
         ${ipset} create cloudflare-v6 hash:net family inet6 -exist
 
-        # DNS: LAN only
-        iptables -A INPUT -i ${interface} -p udp -s ${lanCidr} --dport 53 -j ACCEPT
-        iptables -A INPUT -i ${interface} -p tcp -s ${lanCidr} --dport 53 -j ACCEPT
-        iptables -A INPUT -i ${interface} -p udp --dport 53 -j DROP
-        iptables -A INPUT -i ${interface} -p tcp --dport 53 -j DROP
-
         # SSH: LAN only
         ${mkIpv4AcceptRule homolab.ports.ssh lanCidr}
         iptables -A INPUT -i ${interface} -p tcp --dport ${toString homolab.ports.ssh} -j DROP
@@ -133,8 +127,6 @@ in
         ${mkDropRule homolab.ports.authelia}
         ${mkDropRule homolab.ports.omnirouteDashboard}
         ${mkDropRule homolab.ports.shimmy}
-        ${mkDropRule homolab.ports.technitium}
-        ${mkDropRule homolab.ports.technitiumDoh}
         ${mkDropRule homolab.ports.dynacat}
         ${mkDropRule homolab.ports.devPortProxy}
         ${mkDropRule homolab.ports.traefikPing}
@@ -155,11 +147,6 @@ in
       '';
 
       extraStopCommands = ''
-        iptables -D INPUT -i ${interface} -p udp -s ${lanCidr} --dport 53 -j ACCEPT || true
-        iptables -D INPUT -i ${interface} -p tcp -s ${lanCidr} --dport 53 -j ACCEPT || true
-        iptables -D INPUT -i ${interface} -p udp --dport 53 -j DROP || true
-        iptables -D INPUT -i ${interface} -p tcp --dport 53 -j DROP || true
-
         ${mkIpv4DeleteRule homolab.ports.ssh lanCidr}
         iptables -D INPUT -i ${interface} -p tcp --dport ${toString homolab.ports.ssh} -j DROP || true
 
@@ -178,8 +165,6 @@ in
         ${mkDeleteDropRule homolab.ports.authelia}
         ${mkDeleteDropRule homolab.ports.omnirouteDashboard}
         ${mkDeleteDropRule homolab.ports.shimmy}
-        ${mkDeleteDropRule homolab.ports.technitium}
-        ${mkDeleteDropRule homolab.ports.technitiumDoh}
         ${mkDeleteDropRule homolab.ports.dynacat}
         ${mkDeleteDropRule homolab.ports.devPortProxy}
         ${mkDeleteDropRule homolab.ports.traefikPing}

@@ -55,15 +55,6 @@
         restartUnits = [ "authelia-main.service" ];
       };
 
-      "dynacat-technitium-api-key" = {
-        sopsFile = dotfiles + /sensitive/hosts/homolab/technitium.yaml;
-        key = "homepageApiKey";
-        owner = "dynacat";
-        group = "dynacat";
-        mode = "0400";
-        restartUnits = [ "dynacat.service" ];
-      };
-
       "grafana-secret-key" = {
         sopsFile = dotfiles + /sensitive/hosts/homolab/grafana.yaml;
         key = "secretKey";
@@ -89,15 +80,6 @@
         '';
         owner = "authelia-main";
         group = "authelia-main";
-        mode = "0400";
-      };
-
-      "dynacat.env" = {
-        content = ''
-          TECHNITIUM_API_TOKEN=${config.sops.placeholder."dynacat-technitium-api-key"}
-        '';
-        owner = "dynacat";
-        group = "dynacat";
         mode = "0400";
       };
 

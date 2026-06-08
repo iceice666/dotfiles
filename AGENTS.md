@@ -52,8 +52,8 @@ hosts/               # per-host entrypoints
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
-  gce-dns/           # minimal Google Compute Engine NixOS image host for future DNS split
-    configuration/   # GCE image, Tailscale metadata bootstrap, local deploy user
+  gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
+    configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
 
 lib/                 # shared nix helpers (e.g. homolab.nix — hostnames, ports, domains, IP ranges)
 
@@ -282,11 +282,13 @@ Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs o
 the server itself over SSH and avoids cross-compilation. The deploy user must have
 passwordless sudo for the deploy-rs activation script.
 
-`gce-dns` is a minimal GCE image host for a future Technitium DNS split. First
-boot expects a GCE instance metadata attribute named `tailscale-auth-key`,
-containing a preauthorized Tailscale auth key. The host joins as `gce-dns`,
-enables Tailscale SSH, keeps public OpenSSH disabled, and disables Google OS
-Login. Build the image on `x86_64-linux` or through an available Linux builder.
+`gce-dns` is a GCE image host for Blocky DoH. Blocky serves `/dns-query` and
+Prometheus metrics on TCP port 4000 over Tailscale; classic UDP DNS is not
+opened. First boot expects a GCE instance metadata attribute named
+`tailscale-auth-key`, containing a preauthorized Tailscale auth key. The host
+joins as `gce-dns`, enables Tailscale SSH, keeps public OpenSSH disabled, and
+disables Google OS Login. Build the image on `x86_64-linux` or through an
+available Linux builder.
 
 ### Homolab-specific danger areas
 

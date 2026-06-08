@@ -38,7 +38,6 @@ let
     omniroute = "https://raw.githubusercontent.com/diegosouzapw/OmniRoute/main/electron/assets/icon.png";
     proxy = "si:traefikproxy";
     shimmy = "si:openai";
-    technitium = "https://technitium.com/img/logo.png";
   };
 
   mkMonitorSite =
@@ -68,12 +67,6 @@ let
   publicMonitorSites = [
     (mkMonitorSite "OmniRoute" serviceIcons.omniroute homolab.urls.omniroute (
       mkLoopbackUrl homolab.ports.omnirouteDashboard ""
-    ))
-  ];
-
-  privateMonitorSites = [
-    (mkMonitorSite "Technitium" serviceIcons.technitium homolab.urls.technitium (
-      mkLoopbackUrl homolab.ports.technitium ""
     ))
   ];
 
@@ -143,17 +136,6 @@ let
                   }
                 ];
               }
-              {
-                type = "dns-stats";
-                title = "Technitium DNS";
-                service = "technitium";
-                # Dynacat fetches this server-side, so use Technitium directly and
-                # avoid the Authelia-protected Traefik route entirely.
-                url = mkLoopbackUrl homolab.ports.technitium "";
-                token = "\${TECHNITIUM_API_TOKEN}";
-                "hide-top-domains" = true;
-                "hour-format" = "24h";
-              }
             ];
           }
           {
@@ -164,7 +146,6 @@ let
                 "max-columns" = 3;
                 widgets = [
                   (mkMonitorWidget "Public" publicMonitorSites)
-                  (mkMonitorWidget "Private" privateMonitorSites)
                   (mkMonitorWidget "Infra" infraMonitorSites)
                 ];
               }
@@ -202,7 +183,6 @@ in
     serviceConfig = {
       User = "dynacat";
       Group = "dynacat";
-      EnvironmentFile = [ config.sops.templates."dynacat.env".path ];
       ExecStart = lib.escapeShellArgs [
         "${dynacatPackage}/bin/dynacat"
         "-config"

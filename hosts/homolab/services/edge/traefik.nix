@@ -36,7 +36,6 @@ let
   };
 
   npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] homolab.domains.npu;
-  technitiumHost = homolab.domains.dns;
 in
 {
   services.traefik = {
@@ -152,19 +151,11 @@ in
           permanent = true;
         };
 
-        technitium-dns-slash.redirectRegex = {
-          regex = "^(https?://[^/]+)/dns$";
-          replacement = "\${1}/dns/";
-          permanent = true;
-        };
-
         npu-youtube.redirectRegex = {
           regex = "^https?://${npuHostRegex}/.*";
           replacement = "https://youtu.be/s461yhBc1wo";
           permanent = true;
         };
-
-        technitium-strip-dns.stripPrefix.prefixes = [ "/dns" ];
       };
 
       http.routers = {
@@ -243,6 +234,15 @@ in
           tls.certResolver = "letsencrypt";
         };
 
+        blocky-doh = {
+          rule = mkPrivateHostPathRule homolab.domains.dns "Path(`/dns-query`)";
+          entryPoints = [ "websecure" ];
+          priority = 120;
+
+          service = "blocky";
+          tls.certResolver = "letsencrypt";
+        };
+
         traefik-http = {
           rule = mkPrivateHostRule homolab.domains.traefik;
           entryPoints = [ "web" ];
@@ -257,32 +257,6 @@ in
 
           middlewares = [ "authelia@file" ];
           service = "api@internal";
-          tls.certResolver = "letsencrypt";
-        };
-
-        technitium-short-http = {
-          rule = mkPrivateHostRule technitiumHost;
-          entryPoints = [ "web" ];
-
-          middlewares = [ "redirect-to-https@file" ];
-          service = "noop@internal";
-        };
-
-        technitium-short = {
-          rule = mkPrivateHostRule technitiumHost;
-          entryPoints = [ "websecure" ];
-
-          middlewares = [ "authelia@file" ];
-          service = "technitium";
-          tls.certResolver = "letsencrypt";
-        };
-
-        technitium-short-doh = {
-          rule = mkPrivateHostPathRule technitiumHost "Path(`/dns-query`)";
-          entryPoints = [ "websecure" ];
-          priority = 120;
-
-          service = "technitium-doh";
           tls.certResolver = "letsencrypt";
         };
 
@@ -323,11 +297,8 @@ in
           { url = "http://127.0.0.1:${toString homolab.ports.omnirouteDashboard}"; }
         ];
         grafana.loadBalancer.servers = [ { url = "http://127.0.0.1:${toString homolab.ports.grafana}"; } ];
-        technitium.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.technitium}"; }
-        ];
-        technitium-doh.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.technitiumDoh}"; }
+        blocky.loadBalancer.servers = [
+          { url = "http://gce-dns:4000"; }
         ];
         dynacat.loadBalancer.servers = [
           { url = "http://127.0.0.1:${toString homolab.ports.dynacat}"; }

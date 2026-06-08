@@ -72,14 +72,8 @@ in
 
   systemd.services.cloudflare-ips-refresh = {
     description = "Refresh Cloudflare IP sets";
-    after = [
-      "network-online.target"
-      "technitium-dns-server.service"
-    ];
-    wants = [
-      "network-online.target"
-      "technitium-dns-server.service"
-    ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {

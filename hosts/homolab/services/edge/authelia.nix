@@ -34,7 +34,7 @@
           }
           {
             domain = homolab.domains.dns;
-            policy = "two_factor";
+            policy = "bypass";
           }
           {
             domain = homolab.domains.grafana;

@@ -8,6 +8,7 @@
 let
   blackboxPort = 19115;
   blackboxTarget = "127.0.0.1:${toString blackboxPort}";
+  blockyMetricsTarget = "gce-dns:4000";
   nodeExporterPort = 19100;
   llamaSwapProbeTargets = [
     "${homolab.ai.baseUrl}/health"
@@ -57,7 +58,7 @@ in
       extraFlags = [
         "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)"
         "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$"
-        "--collector.systemd.unit-include=(authelia-main|cloudflare-ips-refresh|dynacat|grafana|llama-swap|omniroute|podman|postgresql|prometheus|redis|tailscaled|technitium-dns-server|traefik)\\.(service|socket|timer)"
+        "--collector.systemd.unit-include=(authelia-main|cloudflare-ips-refresh|dynacat|grafana|llama-swap|omniroute|podman|postgresql|prometheus|redis|tailscaled|traefik)\\.(service|socket|timer)"
       ];
     };
 
@@ -86,6 +87,16 @@ in
           {
             targets = [ "127.0.0.1:${toString homolab.ports.traefikMetrics}" ];
             labels.instance = homolab.hostName;
+          }
+        ];
+      }
+      {
+        job_name = "blocky";
+        metrics_path = "/metrics";
+        static_configs = [
+          {
+            targets = [ blockyMetricsTarget ];
+            labels.instance = "gce-dns";
           }
         ];
       }

@@ -20,7 +20,6 @@ let
     "postgresql.service"
     "redis.service"
     "tailscaled.service"
-    "technitium-dns-server.service"
     "prometheus.service"
     "grafana.service"
     "llama-swap.service"
