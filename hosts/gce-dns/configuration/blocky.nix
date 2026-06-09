@@ -1,24 +1,27 @@
-{ dotfiles, ... }:
+{ dotfiles, pkgs, ... }:
 
 let
   blockyMetricsPort = 4000;
   homolab = import (dotfiles + /lib/homolab.nix);
+  publicResolvers = [
+    "https://dns.quad9.net/dns-query"
+    "https://cloudflare-dns.com/dns-query"
+    "tcp-tls:9.9.9.9:853"
+    "tcp-tls:1.1.1.1:853"
+  ];
+  publicResolverEndpoints = builtins.concatStringsSep "," publicResolvers;
   tailnetAddress = "100.126.249.103";
 in
 {
   services.blocky = {
     enable = true;
+    package = pkgs.blocky-bin;
     settings = {
       upstreams = {
         init.strategy = "failOnError";
         strategy = "parallel_best";
         timeout = "2s";
-        groups.default = [
-          "https://dns.quad9.net/dns-query"
-          "https://cloudflare-dns.com/dns-query"
-          "tcp-tls:9.9.9.9:853"
-          "tcp-tls:1.1.1.1:853"
-        ];
+        groups.default = publicResolvers;
       };
 
       ports = {
@@ -42,7 +45,19 @@ in
 
       customDNS = {
         customTTL = "5m";
+        filterUnmappedTypes = false;
         mapping.${homolab.domains.root} = homolab.network.tailnet.address;
+        zone = ''
+          inm.${homolab.domains.root}. 5m IN SRV 0 0 0 .
+          miaq.${homolab.domains.root}. 5m IN SRV 0 0 0 .
+        '';
+      };
+
+      # SRV-only entries send normal record types to conditional forwarding
+      # instead of the root mapping.
+      conditional.mapping = {
+        "inm.${homolab.domains.root}" = publicResolverEndpoints;
+        "miaq.${homolab.domains.root}" = publicResolverEndpoints;
       };
 
       caching = {

@@ -1,6 +1,7 @@
 { dotfiles, inputs }:
 
 final: prev: {
+  blocky-bin = final.callPackage (dotfiles + /pkgs/blocky-bin) { };
   claude-code-bin = final.callPackage (dotfiles + /pkgs/claude-code-bin) { };
   codex-cli-bin = final.callPackage (dotfiles + /pkgs/codex-cli-bin) { };
   default-browser = final.callPackage (dotfiles + /pkgs/default-browser) { };
