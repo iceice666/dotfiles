@@ -3,9 +3,9 @@ export const meta = {
   name: 'update-pkgs',
   description: 'Fetch latest GitHub releases and update pkgs/ Nix derivations',
   phases: [
-    { title: 'Scout', detail: 'Check latest GitHub releases for each package' },
-    { title: 'Update', detail: 'Compute hashes and patch nix files for outdated packages' },
-    { title: 'Direct', detail: 'Re-hash packages with no versioned releases' },
+    { title: 'Scout', detail: 'Check latest GitHub releases for each package', model: 'haiku' },
+    { title: 'Update', detail: 'Compute hashes and patch nix files for outdated packages', model: 'sonnet' },
+    { title: 'Direct', detail: 'Re-hash packages with no versioned releases', model: 'sonnet' },
   ],
 }
 
@@ -55,7 +55,7 @@ Steps:
 3. Compare currentVersion with latestVersion. Set needsUpdate=true if they differ.
 
 Return all four fields plus latestTag (full tag_name string).`,
-    { label: `scout:${pkg.name}`, phase: 'Scout', schema: SCOUT_SCHEMA }
+    { label: `scout:${pkg.name}`, phase: 'Scout', schema: SCOUT_SCHEMA, model: 'haiku' }
   )
 ))
 
@@ -120,7 +120,7 @@ STEPS:
 5. Return success=true if the file was updated. Include notes for any hash that could not be computed.
 
 Return name="${scout.name}", oldVersion="${scout.currentVersion}", newVersion="${scout.latestVersion}".`,
-      { label: `update:${scout.name}`, phase: 'Update', schema: UPDATE_SCHEMA }
+      { label: `update:${scout.name}`, phase: 'Update', schema: UPDATE_SCHEMA, model: 'sonnet' }
     )
   ))
 }
@@ -156,7 +156,7 @@ Steps:
    - Update the hash in the file
    - Update the version field to today's date in YYYY-MM-DD format (use the date command: date +%Y-%m-%d)
 4. Return changed=true/false, oldHash, newHash.`,
-  { label: 'direct:rime-octagram', phase: 'Direct', schema: DIRECT_SCHEMA }
+  { label: 'direct:rime-octagram', phase: 'Direct', schema: DIRECT_SCHEMA, model: 'sonnet' }
 )
 
 // Summarize
