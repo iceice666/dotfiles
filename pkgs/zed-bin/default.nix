@@ -7,27 +7,27 @@
 
 let
   pname = "zed-bin";
-  version = "1.4.4";
+  version = "1.5.4";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/Zed-aarch64.dmg";
-      hash = "sha256-I44HdnTPc4WGIaZKGn+guv4CqLzEr2yMDtwigQJ2y0Y=";
+      hash = "sha256-WdTiVWmN/f14VJ4NFzFY7fhoi3RAVTvDeHDuTH91buc=";
     };
 
     "x86_64-darwin" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/Zed-x86_64.dmg";
-      hash = "sha256-G7Z3o9an2cKHDJm7s27yWJxH/7skNkSl28eSpU/2Ppc=";
+      hash = "sha256-5jLI2YD8abWGXMWYC9572MXYN8T3GXNHnnNw+JCF9x4=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/zed-linux-x86_64.tar.gz";
-      hash = "sha256-5cgGWIJMR/HPKO1zRBzyal0dYoB7r8wDhc8jkpjjnPA=";
+      hash = "sha256-zbfmeCtc693FVgxs2XbCvDjjSucdm5sXAzxJNU+3wxs=";
     };
 
     "aarch64-linux" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/zed-linux-aarch64.tar.gz";
-      hash = "sha256-yqoxakzCvW5yO/OpWfs0bcFmiRSNVKNdwWYYD1SOiyM=";
+      hash = "sha256-MD3y7HMlUXAOnTZ6V4Ueoi5kGtC/AK/8hU+41JvwRb0=";
     };
   };
 
