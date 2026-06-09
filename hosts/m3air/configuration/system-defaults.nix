@@ -50,6 +50,13 @@ in
     DragLock = true;
     TrackpadThreeFingerDrag = false;
   };
+
+  # Scroll direction: natural for trackpad, traditional for mouse
+  system.defaults.NSGlobalDomain."com.apple.swipescrolldirection" = true;
+
+  # Cursor tracking speeds (0.0–3.0)
+  system.defaults.NSGlobalDomain."com.apple.trackpad.scaling" = 1.5;
+
   system.defaults.NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
   system.defaults.NSGlobalDomain.NSWindowShouldDragOnGesture = true;
   # system.defaults.NSGlobalDomain._HIHideMenuBar = true;
@@ -80,6 +87,12 @@ in
       DragLock = true;
       TrackpadThreeFingerDrag = false;
     };
+
+    # Mouse cursor tracking speed via global domain (untyped, uses defaults write)
+    "NSGlobalDomain"."com.apple.mouse.scaling" = 2.5;
+
+    # USB mouse: traditional (non-natural) scroll direction
+    "com.apple.driver.AppleHIDMouse"."Natural Scroll Direction" = 0;
   };
 
   # Touch ID for sudo
