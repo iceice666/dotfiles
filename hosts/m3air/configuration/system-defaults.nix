@@ -70,6 +70,8 @@ in
     if [ -n "$uid" ]; then
       launchctl kickstart -k "gui/$uid/com.iceice666.default-apps" || true
       launchctl kickstart -k "gui/$uid/com.iceice666.wallpaper-refresh" || true
+      # Mouse cursor tracking speed (not a typed nix-darwin option)
+      launchctl asuser "$uid" defaults write NSGlobalDomain com.apple.mouse.scaling -float 2.5
     fi
   '';
 
@@ -81,6 +83,16 @@ in
       AppleSelectedInputSources = squirrelTraditionalInputSources;
     };
 
+    # Mos: reverse mouse scroll so trackpad=natural, mouse=traditional
+    "com.caldis.Mos" = {
+      reverse = true;
+      smooth = true;
+      autoLaunch = true;
+      hideStatusBar = false;
+      speed = 1;
+      gap = 50;
+    };
+
     "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
       Clicking = true;
       Dragging = true;
@@ -88,11 +100,6 @@ in
       TrackpadThreeFingerDrag = false;
     };
 
-    # Mouse cursor tracking speed via global domain (untyped, uses defaults write)
-    "NSGlobalDomain"."com.apple.mouse.scaling" = 2.5;
-
-    # USB mouse: traditional (non-natural) scroll direction
-    "com.apple.driver.AppleHIDMouse"."Natural Scroll Direction" = 0;
   };
 
   # Touch ID for sudo
