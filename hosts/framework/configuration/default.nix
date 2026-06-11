@@ -198,6 +198,7 @@ in
   };
 
   programs = {
+    nix-ld.enable = true;
     dconf.enable = true;
     regreet = {
       enable = true;
