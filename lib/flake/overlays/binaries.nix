@@ -1,6 +1,7 @@
 { dotfiles, inputs }:
 
 final: prev: {
+  appearance-scheduler = final.callPackage (dotfiles + /pkgs/appearance-scheduler) { };
   blocky-bin = final.callPackage (dotfiles + /pkgs/blocky-bin) { };
   claude-code-bin = final.callPackage (dotfiles + /pkgs/claude-code-bin) { };
   codex-cli-bin = final.callPackage (dotfiles + /pkgs/codex-cli-bin) { };
