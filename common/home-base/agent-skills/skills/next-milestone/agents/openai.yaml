@@ -1,4 +1,4 @@
 interface:
   display_name: "Next Milestone"
   short_description: "Implement the next milestone, audit, fix, and verify."
-  default_prompt: "Use $next-milestone to find the next uncompleted milestone, implement it, run a lifecycle/contract/build-mode/env-race review, apply all fixes, verify build+test+lint+fmt, and present only the final diff and bug summary."
+  default_prompt: "Use $next-milestone to find the next uncompleted milestone, implement it, run a structured review for bugs and project-convention violations, apply all fixes, verify build+test+lint+fmt, and present only the final diff and bug summary."

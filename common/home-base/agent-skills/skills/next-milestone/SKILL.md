@@ -1,6 +1,6 @@
 ---
 name: next-milestone
-description: Implement the next milestone in plans/ROADMAP.md/any progress file, then run a structured review subagent that audits lifecycle/contract violations, build-mode correctness, and env-var test races. Apply all flagged fixes, re-run build+test+lint+fmt, and present only the final verified diff with a bug summary.
+description: Implement the next milestone in plans/ROADMAP.md/any progress file, then run a structured review subagent that audits for bugs and project-convention violations. Apply all flagged fixes, re-run build+test+lint+fmt, and present only the final verified diff with a bug summary.
 trigger: /next-milestone
 ---
 
@@ -75,39 +75,53 @@ For each finding, output a structured entry. At the end, output a machine-readab
 Changed files:
 CHANGED_FILES
 
+First, read the project's CLAUDE.md (repo root) and any contributing or coding-guidelines files. Extract the project's required conventions, forbidden patterns, naming rules, and test standards — these become the basis for category 5 below.
+
+Use `rg` for any text searches; do not use `grep` or shell glob expansion.
+
 Read each file in full. Then audit for every category:
 
-## 1. Lifecycle and contract violations
-- Objects or resources used before initialization completes.
-- Init order dependencies: B initializes using A, but A is initialized after B.
-- Resources (file handles, sockets, locks, allocations) not released on all exit paths — including early returns and error branches.
-- Functions called after a resource is released (use-after-free, use-after-close).
-- Null/nil/zero dereferences after a fallible call whose error is checked but the value is still used.
-- Missing postcondition enforcement: a function promises to return a valid value but has a path that returns a zero/null/default silently.
-- Input contract violations: a function documents or implies a non-empty slice, positive integer, or non-nil pointer but accepts the invalid input without erroring.
+## 1. Logic and correctness
+- Off-by-one errors in loops, slices, indices, or range checks.
+- Wrong boolean condition (e.g. `<` vs `<=`, `&&` vs `||`, negated predicate).
+- Incorrect algorithm or formula — produces wrong output on valid inputs.
+- Missing case in a switch/match/if-chain that silently falls through to a default.
+- Early return or break that skips required side-effects (state update, cleanup, notification).
+- Silent data truncation or precision loss (integer overflow, float rounding, string cut).
 
-## 2. Build-mode correctness
-- Optimization mode mismatch: production code built with debug/safe mode (e.g. Zig `Debug` or `ReleaseSafe` where `ReleaseFast` is required; Rust `dev` profile where `release` is required; C `-O0` where `-O2`/`-O3` is required).
-- Assert-only or debug-only code paths that are accidentally included in release builds.
-- Compile-time flags or feature gates that disable safety checks unintentionally in non-debug builds.
-- Build scripts or Makefiles that hardcode a development-only mode.
+## 2. Safety and resource management
+- Resources (file handles, sockets, locks, memory, DB connections) not released on all exit paths — including early returns and error branches.
+- Use of an object or handle after it has been released, closed, or moved.
+- Null/nil/zero dereference after a fallible call whose error is checked but whose value is still used.
+- Missing postcondition: a function promises a valid return value but has a path that silently returns zero/null/empty.
+- Input not validated at a trust boundary: function implies a non-empty slice, positive integer, or non-nil pointer but accepts the invalid input without erroring.
+- Initialization order hazard: component B uses component A, but A is constructed after B.
 
-## 3. Env-var test races
-- Tests that call `os.Setenv`, `std::env::set_var`, `os.environ[...]`, or equivalent without per-test isolation (e.g. `t.Setenv` in Go, `temp_env::with_var` in Rust).
-- Parallel tests (e.g. `t.Parallel()` in Go, `#[tokio::test]` with default multi-thread) that mutate or read the same env var.
-- Tests that read an env var and assume its value without resetting it between runs (order-dependent test suite).
-- TOCTOU on env vars: check then use with a possible mutation in between.
+## 3. Concurrency and shared state
+- Shared mutable state (globals, caches, singletons, env vars) mutated in tests without per-test isolation or cleanup — causes order-dependent or parallel-test failures.
+- Data races: two threads/goroutines read and write the same location with no synchronization.
+- Deadlock potential: locks acquired in inconsistent order across call sites.
+- TOCTOU: a check is separated from its use by a window where the state can change.
+- Async/await or promise mis-chaining that drops errors or resolves in the wrong order.
 
-## 4. Slot and argument ordering bugs
-- Constructor or function call arguments passed in wrong positional order (e.g. width/height swapped, src/dst swapped).
-- Struct literal fields initialized in a different order than the struct definition, where order matters (e.g. C bitfields, packed structs, protocol frames).
-- Protocol or interface method implementation that fulfills the wrong slot (method B implements what method A should, or vice versa).
+## 4. Interface and API misuse
+- Arguments passed in wrong positional order (e.g. width/height swapped, src/dst swapped, key/value swapped).
+- Method implements the wrong interface slot (method B fulfills what method A should, or vice versa).
+- Caller ignores a required return value or error.
+- Configuration or build flags applied at the wrong scope (dev-only flag leaking into release; release optimization missing in a production path).
+- Dependency injected into the wrong consumer, or two wired-up components with swapped roles.
+
+## 5. Project-convention violations
+- Any pattern explicitly forbidden by the project's CLAUDE.md or contributor guidelines.
+- Naming convention violations: function, type, module, or test names that contradict the project's stated rules.
+- Missing required metadata: doc comments, spec references, formal-backing links, or file-level annotations the project mandates.
+- Test names that don't follow the project's stated convention.
 
 For each finding, produce one entry:
 
 ---
 FINDING #N
-Category: <Lifecycle | BuildMode | EnvRace | SlotOrder>
+Category: <Logic | Safety | Concurrency | Interface | Convention>
 Severity: <Critical | High | Medium | Low>
 File: <path>:<line>
 Description: <one sentence — what is wrong>
@@ -121,7 +135,7 @@ After all findings, output this JSON block (even if empty):
   "findings": [
     {
       "id": 1,
-      "category": "Lifecycle",
+      "category": "Logic",
       "severity": "High",
       "file": "src/foo.rs",
       "line": 42,
@@ -185,7 +199,7 @@ Output **only** this structure — nothing else:
 
 | # | Category | Severity | Location | Bug | Fix applied |
 |---|----------|----------|----------|-----|-------------|
-| 1 | Lifecycle | High | src/foo.rs:42 | ... | ... |
+| 1 | Safety | High | src/foo.rs:42 | ... | ... |
 ...
 
 (If no bugs were found: "Review found no issues.")
