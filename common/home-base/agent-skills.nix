@@ -2,13 +2,13 @@
 
 let
   managedSkills = [
-    "make-commit"
+    "commit"
     "next-milestone"
   ];
 
   managedSkillFiles = [
-    "make-commit/SKILL.md"
-    "make-commit/agents/openai.yaml"
+    "commit/SKILL.md"
+    "commit/agents/openai.yaml"
     "next-milestone/SKILL.md"
     "next-milestone/agents/openai.yaml"
   ];

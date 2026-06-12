@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "Commit Agent-authored changes by scope."
+  default_prompt: "Use $commit to group staged Agent-authored changes into logical scoped commits, add a required project devlog entry, and follow Conventional Commit format."
