@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./agent-instructions.nix
     ./agent-skills.nix
     ./claude.nix
     ./fish

@@ -23,6 +23,7 @@ common/              # shared modules injected by mk-host into every host
     packages-cli.nix # shared CLI package list
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
+    agent-instructions.nix # shared Claude/Codex global instructions
     agent-skills.nix # shared agent-agnostic personal skills
     claude.nix       # Claude Code config symlinks
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
@@ -509,6 +510,8 @@ Canonical module shape:
   agent-neutral source of truth, and do not manage generated system skills,
   sessions, memory data, auth state, plugin caches, or screen recordings from
   this repo.
+- `common/home-base/agent-instructions.nix` installs the same repo-owned global
+  instructions at `$HOME/.claude/CLAUDE.md` and `$HOME/.codex/AGENTS.md`.
 - `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
 - `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
 - `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
