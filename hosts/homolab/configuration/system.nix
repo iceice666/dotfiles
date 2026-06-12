@@ -14,9 +14,10 @@
   boot.loader = {
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
+    timeout = 10;
   };
 
-  boot.kernelPackages = pkgs.linuxPackages_6_18;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Kernel surface hardening: keep ESP/RxRPC blocked until the shared-frag
   # fix status is explicit, and block unused Bluetooth and kernel SMB modules.

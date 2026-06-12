@@ -6,6 +6,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./filesystems.nix
     ./system.nix
     ./networking.nix
     ./sensitive
