@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   self,
@@ -9,6 +10,14 @@
   ...
 }:
 
+let
+  homebrewTrustFile = pkgs.writeText "homebrew-trust.json" (
+    builtins.toJSON {
+      trustedtaps = [ "pear-devs/pear" ];
+    }
+  );
+  homebrewBrewfile = pkgs.writeText "Brewfile" config.homebrew.brewfile;
+in
 {
   imports = [
     ./system-defaults.nix
@@ -26,8 +35,7 @@
     enable = true;
     onActivation = {
       autoUpdate = true;
-      cleanup = "zap";
-      extraFlags = [ "--force-cleanup" ];
+      cleanup = "none";
     };
     taps = [
       "pear-devs/pear"
@@ -50,6 +58,29 @@
       "pearcleaner"
       "mos" # per-device scroll direction (reverse mouse, keep trackpad natural)
     ];
+  };
+
+  system.activationScripts = {
+    preActivation.text = ''
+      trust_dir="${homeDirectory}/.homebrew"
+      ${pkgs.coreutils}/bin/install -d -m 0700 -o ${username} -g staff "$trust_dir"
+      ${pkgs.coreutils}/bin/install -m 0600 -o ${username} -g staff ${homebrewTrustFile} "$trust_dir/trust.json"
+    '';
+
+    postActivation.text = ''
+      if [ -x /opt/homebrew/bin/brew ]; then
+        PATH="/opt/homebrew/bin:${pkgs.mas}/bin:$PATH" \
+          /usr/bin/sudo \
+            --preserve-env=PATH \
+            --user=${username} \
+            --set-home \
+            ${pkgs.coreutils}/bin/env HOMEBREW_NO_AUTO_UPDATE=1 \
+            /opt/homebrew/bin/brew bundle cleanup \
+              --file=${homebrewBrewfile} \
+              --force \
+              --zap
+      fi
+    '';
   };
 
   # macOS-only system packages (desktop apps, macOS-specific tools)
