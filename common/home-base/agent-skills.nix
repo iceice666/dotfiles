@@ -3,11 +3,14 @@
 let
   managedSkills = [
     "make-commit"
+    "next-milestone"
   ];
 
   managedSkillFiles = [
     "make-commit/SKILL.md"
     "make-commit/agents/openai.yaml"
+    "next-milestone/SKILL.md"
+    "next-milestone/agents/openai.yaml"
   ];
 
   canonicalSkillFile = path: {
