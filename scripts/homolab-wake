@@ -33,11 +33,11 @@ echo "==> waking homolab ($MAC)"
 # Check if we're on the home LAN by probing the local gateway.
 if ping -c1 "$LAN_GW" >/dev/null 2>&1; then
     echo "==> on home LAN, sending magic packet directly"
-    wakeonlan -a "$LAN_BROADCAST" "$MAC"
+    wakeonlan -i "$LAN_BROADCAST" "$MAC"
 else
     echo "==> off home LAN, relaying via gateway ($GATEWAY_TAILNET)"
-    ssh -o ConnectTimeout=10 root@"$GATEWAY_TAILNET" homolab-wake ||
-        die "gateway relay failed; ensure gateway is reachable on the tailnet"
+    ssh -o ConnectTimeout=10 root@"$GATEWAY_TAILNET" /root/.local/bin/homolab-wake ||
+        die "gateway relay failed; ensure /root/.local/bin/homolab-wake is deployed and gateway is reachable"
 fi
 
 # Poll for SSH availability on the tailnet IP (host-up signal).

@@ -10,7 +10,7 @@
     text = ''
       #!/bin/sh
       exec ${pkgs.wakeonlan}/bin/wakeonlan \
-          -a ${homolab.network.lan.broadcast} \
+          -i ${homolab.network.lan.broadcast} \
           ${homolab.hosts.homolab.mac}
     '';
   };
