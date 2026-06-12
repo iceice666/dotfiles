@@ -46,7 +46,7 @@ in
       customDNS = {
         customTTL = "5m";
         filterUnmappedTypes = false;
-        mapping.${homolab.domains.root} = homolab.network.tailnet.address;
+        mapping.${homolab.domains.root} = homolab.hosts.gateway.tailnet;
         zone = ''
           inm.${homolab.domains.root}. 5m IN SRV 0 0 0 .
           miaq.${homolab.domains.root}. 5m IN SRV 0 0 0 .
@@ -79,5 +79,12 @@ in
         privacy = true;
       };
     };
+  };
+
+  services.prometheus.exporters.node = {
+    enable = true;
+    listenAddress = "0.0.0.0";
+    port = 19100;
+    openFirewall = false;
   };
 }

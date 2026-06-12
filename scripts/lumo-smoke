@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-lumo}"
+
+ssh "root@${target}" sh -s <<'REMOTE'
+set -eu
+
+services="
+lumo-postgresql
+lumo-valkey
+lumo-podman
+lumo-node-exporter
+lumo-blackbox-exporter
+lumo-prometheus
+lumo-grafana
+lumo-dynacat
+lumo-dev-port-proxy
+"
+
+for service in $services; do
+  rc-service "$service" status
+done
+
+curl --fail --silent --show-error http://127.0.0.1:18083/-/ready >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:18084/api/health >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:18075/ >/dev/null
+curl --silent --show-error --output /dev/null http://127.0.0.1:18076/
+
+test -S /run/postgresql/.s.PGSQL.25432
+test -S /run/podman/podman.sock
+test -d /srv/git
+
+echo "lumo smoke checks passed"
+REMOTE

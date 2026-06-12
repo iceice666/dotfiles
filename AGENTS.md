@@ -55,14 +55,20 @@ hosts/               # per-host entrypoints
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/Eww Home Manager modules
     wallpaper.png    # symlink → assets/mzen.png
-  homolab/           # NixOS server, deployed from m3air over SSH
+  homolab/           # NixOS server (x86_64), AI/GPU plane — deployed from m3air over SSH
     host.nix         # feature manifest
     configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
-    services/        # edge/ (Traefik, Authelia, DNS, SSH, Tailscale), dev/ (Postgres, Valkey, Podman), ai/ (Shimmy, OmniRoute), audit.nix
+    services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, OmniRoute)
     home/            # homolab-specific home additions (fish-pj.nix, user.nix, mise)
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
+  lumo/              # Alpine 3.24 server (aarch64, Raspberry Pi 5), data+apps plane
+    host.nix         # standalone root Home Manager + deploy-rs metadata
+    home/services/   # Nix binaries, generated configs, OpenRC activation
+  gateway/           # Alpine 3.24 edge appliance (aarch64, Raspberry Pi 5)
+    host.nix         # standalone root Home Manager + deploy-rs metadata
+    home/            # shared CLI baseline; host services are bootstrapped through Alpine
   gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
     host.nix         # feature manifest
     configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
@@ -135,8 +141,10 @@ cache.
 | `darwinConfigurations.m3air` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
+| `homeConfigurations.lumo` | Alpine root Home Manager data+apps configuration |
+| `homeConfigurations.gateway` | Alpine root Home Manager edge configuration |
 | `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
-| `deploy` | deploy-rs node definitions for `framework`, `homolab`, and `gce-dns` |
+| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, `gateway`, and `gce-dns` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -150,7 +158,7 @@ Standalone packages are available for all systems: `nix build .#themegen` works 
 split by output responsibility:
 
 - `lib/flake/hosts.nix` **auto-discovers** `hosts/*/host.nix` via `builtins.readDir` — no hand-maintained list.
-- `lib/flake/mk-host.nix` builds `nixosSystem` or `darwinSystem` from a spec. It reads `host.features` to inject `common/system*` system modules and `common/home-base`/`common/home-gui` HM modules, then appends the HM wiring module.
+- `lib/flake/mk-host.nix` builds `nixosSystem`, `darwinSystem`, or standalone `homeManagerConfiguration` outputs. It reads `host.features` to inject the matching shared modules.
 - `lib/flake/home-manager.nix` generates the `home-manager = { … };` module from host features and home imports — no per-host duplication.
 - `lib/flake/overlays/` registers custom packages split by purpose: `lix.nix`, `binaries.nix`, `linux-gui.nix` (Linux-only, no throw on Darwin), `global-patches.nix`.
 - `lib/flake/pkgs.nix` defines `unstablePkgsFor`.
@@ -158,12 +166,12 @@ split by output responsibility:
 - `lib/flake/deploy.nix` generates deploy-rs nodes from host deploy metadata.
 - `lib/flake/dev-shells.nix` and `lib/flake/formatters.nix` consume `systems.nix`.
 
-Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, `modules`, `homeModules`, `features`, `extraSpecialArgs`, optional `deploy`. The `features` attrset controls which common modules are injected:
+Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional `modules`, `homeModules`, `features`, `extraSpecialArgs`, and optional `deploy`. `kind` may be `nixos`, `darwin`, or `home-manager`.
 
 | Feature flag | What it injects |
 |---|---|
-| `homeManager` | `home-manager.<kind>Modules.home-manager` + wiring module |
-| `sops` | `sops-nix.<kind>Modules.sops` + `home-manager.sharedModules` sops-nix |
+| `homeManager` | system-module Home Manager wiring for NixOS/nix-darwin |
+| `sops` | system sops module plus HM sharing, or standalone HM sops module |
 | `gui` | `common/home-gui` |
 | `themegen` | `common/home-gui/themegen` |
 | `rime` | `common/home-gui/rime` |
@@ -293,12 +301,15 @@ Which build to run for a given change:
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | `framework` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
+| `hosts/lumo/**` | `lumo` (via `just lumo-build`) |
+| `hosts/gateway/**` | `gateway` (via `just gateway-build`) |
 | `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
-| `lib/homolab.nix` | `homolab` |
+| `lib/homolab.nix` | `homolab` + `lumo` + `gateway` |
 | `common/system/**` | `m3air` + `framework` + `homolab` + `gce-dns` |
 | `common/system-darwin/**` | `m3air` |
 | `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
-| `common/home-base/**` | `m3air` + `framework` + `homolab` (all HM-enabled hosts) |
+| `common/home-base/**` | all Home Manager-enabled hosts |
+| `common/home-alpine/**` | `lumo` + `gateway` |
 | `common/home-gui/**` | `m3air` + `framework` |
 | `pkgs/<name>` | `nix build .#<name>` (standalone) or any host that uses it |
 
@@ -327,11 +338,41 @@ just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab
 just gce-dns-build           # dry-build the gce-dns NixOS system toplevel
 just gce-dns-image           # build the gce-dns Google Compute Engine image
 just gce-dns-switch          # deploy gce-dns over Tailscale after first boot
+
+just gateway-bootstrap       # prepare an official Alpine 3.24 gateway installation
+just gateway-build           # dry-activate gateway root Home Manager
+just gateway-switch          # deploy gateway root Home Manager
+
+just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installation
+just lumo-build              # dry-activate lumo root Home Manager
+just lumo-switch             # deploy lumo root Home Manager
+just lumo-smoke              # verify lumo OpenRC services and local endpoints
 ```
 
 Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs on
 the server itself over SSH and avoids cross-compilation. The deploy user must have
 passwordless sudo for the deploy-rs activation script.
+
+`lumo` and `gateway` run Alpine Linux 3.24 with root-only Lix installed using
+`--init none`. deploy-rs activates standalone root Home Manager profiles and
+builds each aarch64 closure on its target. Alpine/APK owns boot, the kernel,
+networking, OpenSSH, Tailscale, cgroups, and the nftables launcher. Home Manager
+owns root tooling and Nix-provided application services supervised by OpenRC.
+
+`lumo` is the data+apps plane: Postgres, Valkey, git-server, Podman, Prometheus,
+Grafana, Dynacat, dev-port-proxy, and the daily audit. Traefik on `homolab`
+proxies Grafana/Dynacat/dev-port-proxy to `lumo`'s LAN IP (`192.168.1.128`).
+Inter-host metrics scraping (Prometheus on lumo
+→ node-exporter/traefik-metrics on homolab) goes over the tailnet. Grafana's
+`auth.proxy.whitelist` is set to `homolab`'s LAN IP — never widen this without
+adjusting the firewall rule that scopes the Grafana port to `homolab` only.
+
+After provisioning either Alpine board:
+1. Run `just <host>-bootstrap`; it installs host primitives and prints the age recipient.
+2. Add the recipient anchor and host rule entry to `.sops.yaml`.
+3. Re-encrypt host secrets with `just secret-refresh sensitive/hosts/<host>`.
+4. Run `just <host>-build`, then `just <host>-switch`.
+5. Reboot and run `just lumo-smoke` for lumo.
 
 `gce-dns` is a GCE image host for Blocky DoH. Blocky serves `/dns-query` and
 Prometheus metrics on TCP port 4000 over Tailscale; classic UDP DNS is not
@@ -347,10 +388,12 @@ Touch these with care; misconfiguration affects the server's reachability or
 trust boundary:
 
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
-- `lib/homolab.nix` — hostnames, ports, domains, IP ranges. A change here can ripple through every service.
-- `hosts/homolab/services/dev/podman.nix` — container runtime trust boundary.
+- `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
 - `hosts/homolab/services/ai/omniroute.nix` — OpenAI-compatible proxy; touches auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
+- `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
+- `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.
+- `hosts/lumo/home/services/podman.nix` — rootful container runtime trust boundary.
 
 ### Secrets helpers
 
@@ -455,9 +498,10 @@ Canonical module shape:
 
 ## Repository Conventions
 
-- `common/system/` is always injected by `mk-host` for every host (darwin and NixOS). Do not put OS-specific settings here.
+- `common/system/` is injected for NixOS and nix-darwin hosts. Standalone Home Manager hosts do not import system modules.
 - `common/system-darwin/` is injected for darwin hosts only; `common/system-nixos/` for NixOS hosts only.
 - `common/home-base/` is the CLI baseline, injected for every `features.homeManager = true` host.
+- `common/home-alpine/` adds root-only Lix, direct sops activation, and Alpine root-shell wiring for standalone Home Manager hosts.
 - `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (ghostty, vscodium, zed, rime, themegen, zen-bin, etc.) live here and are not imported by server hosts.
 - `common/home-base/agent-skills.nix` installs curated reusable skills into
   `$HOME/.skills`, then exposes Codex-compatible adapters under

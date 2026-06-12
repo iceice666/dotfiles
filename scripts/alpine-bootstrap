@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  printf 'usage: %s <gateway|lumo> [ssh-target]\n' "$0" >&2
+  exit 2
+}
+
+host="${1:-}"
+target="${2:-$host}"
+
+case "$host" in
+  gateway)
+    lan_address="192.168.1.129"
+    ;;
+  lumo)
+    lan_address="192.168.1.128"
+    ;;
+  *)
+    usage
+    ;;
+esac
+
+ssh_target="root@${target}"
+
+ssh -o BatchMode=yes "$ssh_target" \
+  "DOTFILES_HOST=$(printf %q "$host") DOTFILES_LAN_ADDRESS=$(printf %q "$lan_address") sh -s" <<'REMOTE'
+set -eu
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "bootstrap must run as root" >&2
+  exit 1
+fi
+
+. /etc/os-release
+if [ "$ID" != "alpine" ]; then
+  echo "expected Alpine Linux, found ${PRETTY_NAME:-unknown}" >&2
+  exit 1
+fi
+case "$VERSION_ID" in
+  3.24*)
+    ;;
+  *)
+    echo "expected Alpine Linux 3.24, found ${PRETTY_NAME:-unknown}" >&2
+    exit 1
+    ;;
+esac
+
+if [ ! -s /root/.ssh/authorized_keys ]; then
+  echo "root SSH authorized_keys must exist before bootstrap" >&2
+  exit 1
+fi
+
+if [ "$(uname -m)" != "aarch64" ]; then
+  echo "expected aarch64, found $(uname -m)" >&2
+  exit 1
+fi
+
+apk add --no-cache \
+  age \
+  bash \
+  cgroup-tools \
+  coreutils \
+  curl \
+  findutils \
+  git \
+  grep \
+  iproute2 \
+  nftables \
+  openssh \
+  shadow \
+  tailscale \
+  tzdata \
+  util-linux \
+  xz
+
+install -d -m 0755 /etc/ssh/sshd_config.d /etc/modprobe.d /etc/nftables.d
+cat > /etc/ssh/sshd_config.d/10-dotfiles.conf <<EOF
+Port 22
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+EOF
+if [ "$DOTFILES_HOST" = "lumo" ]; then
+  printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+else
+  printf 'AllowUsers root\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+fi
+
+cat > /etc/modprobe.d/dotfiles-blacklist.conf <<'EOF'
+blacklist esp4
+blacklist esp6
+blacklist rxrpc
+blacklist ksmbd
+blacklist bluetooth
+blacklist btusb
+EOF
+
+cat > /etc/network/interfaces <<EOF
+auto lo
+iface lo inet loopback
+iface lo inet6 loopback
+
+auto eth0
+iface eth0 inet static
+  address ${DOTFILES_LAN_ADDRESS}/24
+  gateway 192.168.1.1
+iface eth0 inet6 auto
+EOF
+
+if [ "$DOTFILES_HOST" = "lumo" ]; then
+  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
+table inet dotfiles {
+  chain input {
+    type filter hook input priority filter; policy drop;
+    ct state established,related accept
+    iifname "lo" accept
+    iifname "tailscale0" accept
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+    udp dport 41641 accept
+    ip saddr 192.168.1.0/24 tcp dport 22 accept
+    # gateway (192.168.1.129) proxies dynacat/devPortProxy/grafana to lumo
+    ip saddr { 192.168.1.127, 192.168.1.129 } tcp dport { 18075, 18076, 18084 } accept
+  }
+
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+  }
+
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}
+EOF
+else
+  # gateway: edge appliance — accepts HTTP/HTTPS from Cloudflare IPs and LAN
+  # Named sets cloudflare_v4/v6 are populated at runtime by the cloudflare-ips service.
+  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
+table inet dotfiles {
+  set cloudflare_v4 {
+    type ipv4_addr
+    flags interval
+    auto-merge
+  }
+  set cloudflare_v6 {
+    type ipv6_addr
+    flags interval
+    auto-merge
+  }
+
+  chain input {
+    type filter hook input priority filter; policy drop;
+    ct state established,related accept
+    iifname "lo" accept
+    iifname "tailscale0" accept
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+    udp dport 41641 accept
+    ip saddr 192.168.1.0/24 tcp dport 22 accept
+    ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
+    ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept
+    ip saddr 192.168.1.0/24 tcp dport { 80, 443 } accept
+    # traefikPing (18081) and traefikMetrics (18082): LAN only for monitoring
+    ip saddr 192.168.1.0/24 tcp dport { 18081, 18082 } accept
+  }
+
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+  }
+
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}
+EOF
+fi
+
+cat > /etc/init.d/dotfiles-firewall <<'EOF'
+#!/sbin/openrc-run
+description="Dotfiles nftables firewall"
+
+depend() {
+  need net
+  after tailscale
+}
+
+start() {
+  ebegin "Loading dotfiles firewall"
+  nft delete table inet dotfiles 2>/dev/null || true
+  nft -f /etc/nftables.d/dotfiles.nft
+  eend $?
+}
+
+stop() {
+  ebegin "Removing dotfiles firewall"
+  nft delete table inet dotfiles 2>/dev/null || true
+  eend $?
+}
+EOF
+chmod 0755 /etc/init.d/dotfiles-firewall
+
+printf '%s\n' "$DOTFILES_HOST" > /etc/hostname
+ln -sfn /usr/share/zoneinfo/Asia/Taipei /etc/localtime
+printf 'Asia/Taipei\n' > /etc/timezone
+
+rc-update add cgroups default
+rc-update del nftables default 2>/dev/null || true
+rc-update add dotfiles-firewall default
+rc-update add sshd default
+rc-update add tailscale default
+rc-service cgroups start || rc-service cgroups restart
+rc-service sshd restart
+rc-service tailscale start || true
+rc-service dotfiles-firewall restart
+if tailscale status >/dev/null 2>&1; then
+  tailscale set --ssh=true
+fi
+
+if ! command -v nix >/dev/null 2>&1; then
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.lix.systems/lix |
+    sh -s -- install linux --init none --no-confirm
+elif ! nix --version | grep -q Lix; then
+  echo "A non-Lix Nix installation already exists; refusing to replace it automatically." >&2
+  exit 1
+fi
+
+for command in nix nix-daemon nix-env nix-store; do
+  source="/nix/var/nix/profiles/default/bin/$command"
+  if [ -x "$source" ]; then
+    ln -sfn "$source" "/usr/local/bin/$command"
+  fi
+done
+
+cat > /etc/profile.d/lix.sh <<'EOF'
+export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+EOF
+
+cat > /etc/nix/nix.custom.conf <<'EOF'
+# Keep cache traffic within the Raspberry Pi and home uplink's practical limits.
+http-connections = 1
+http2 = false
+initial-connect-timeout = 30
+max-connect-timeout = 60
+download-attempts = 5
+max-substitution-jobs = 1
+EOF
+
+install -d -m 0700 /var/lib/sops-nix
+if [ ! -s /var/lib/sops-nix/key.txt ]; then
+  age-keygen -o /var/lib/sops-nix/key.txt
+  chmod 0600 /var/lib/sops-nix/key.txt
+fi
+
+echo
+echo "Bootstrap complete for $DOTFILES_HOST."
+echo "LAN configuration: $DOTFILES_LAN_ADDRESS/24 (applies after networking restart or reboot)."
+echo "SOPS recipient:"
+age-keygen -y /var/lib/sops-nix/key.txt
+
+if ! tailscale status >/dev/null 2>&1; then
+  echo
+  echo "Tailscale is not authenticated. Run: tailscale up --ssh"
+fi
+REMOTE

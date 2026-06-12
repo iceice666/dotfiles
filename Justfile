@@ -61,30 +61,45 @@ kaguya:
 kaguya-sync:
     {{ scripts }}/kaguya-cache sync
 
+# Wake homolab via Wake-on-LAN and wait for the LLM endpoint to be ready
+[group('host')]
+homolab-wake:
+    {{ scripts }}/homolab-wake
+
+# Suspend homolab immediately (return to off state)
+[group('host')]
+homolab-sleep:
+    ssh iceice666@homolab systemctl suspend
+
 # Apply the homolab NixOS configuration over SSH
 [group('host')]
 homolab-switch:
+    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
     nix develop --command deploy .#homolab --skip-checks
 
 # Stage the homolab NixOS configuration for next boot over SSH
 [group('host')]
 homolab-boot:
+    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
     nix develop --command deploy .#homolab --boot --skip-checks
 
 # Dry-build the homolab NixOS configuration on the server
 [group('host')]
 homolab-build:
+    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
     nix develop --command deploy .#homolab --dry-activate --skip-checks
 
 # Refresh hardware-configuration.nix from the live homolab server
 [group('host')]
 homolab-gen-hardware:
+    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
     ssh iceice666@homolab sudo nixos-generate-config --show-hardware-config \
         > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
 
 # Smoke-check the homolab OpenAI-compatible LLM endpoint
 [group('host')]
 homolab-llama-smoke:
+    {{ scripts }}/homolab-wake
     LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
         {{ scripts }}/llama-swap-smoke
 
@@ -98,10 +113,45 @@ gce-dns-build:
 gce-dns-image:
     nix build {{ gce_dns_image }}
 
+# Bootstrap an official Alpine 3.24 installation for gateway
+[group('host')]
+gateway-bootstrap target='gateway':
+    {{ scripts }}/alpine-bootstrap gateway {{ target }}
+
+# Dry-activate the gateway root Home Manager profile
+[group('host')]
+gateway-build:
+    nix develop --command deploy .#gateway --dry-activate --skip-checks
+
+# Apply the gateway root Home Manager profile
+[group('host')]
+gateway-switch:
+    nix develop --command deploy .#gateway --skip-checks
+
 # Apply the gce-dns NixOS configuration over Tailscale SSH
 [group('host')]
 gce-dns-switch:
     nix develop --command deploy .#gce-dns --skip-checks
+
+# Bootstrap the existing Alpine 3.24 installation for lumo
+[group('host')]
+lumo-bootstrap target='lumo':
+    {{ scripts }}/alpine-bootstrap lumo {{ target }}
+
+# Dry-activate the lumo root Home Manager profile
+[group('host')]
+lumo-build:
+    nix develop --command deploy .#lumo --dry-activate --skip-checks
+
+# Apply the lumo root Home Manager profile
+[group('host')]
+lumo-switch:
+    nix develop --command deploy .#lumo --skip-checks
+
+# Smoke-check lumo services after deployment
+[group('host')]
+lumo-smoke target='lumo':
+    {{ scripts }}/lumo-smoke {{ target }}
 
 # Install Homebrew on M3 Air
 [group('host')]

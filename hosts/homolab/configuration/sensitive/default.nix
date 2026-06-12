@@ -2,9 +2,7 @@
 
 {
   imports = [
-    ./audit.nix
     ./edge.nix
-    ./dev.nix
     ./ai.nix
   ];
 

@@ -7,14 +7,7 @@
 {
   sops = {
     secrets = {
-      "valkey-requirepass" = {
-        sopsFile = dotfiles + /sensitive/hosts/homolab/valkey.yaml;
-        key = "requirepass";
-        owner = "redis";
-        group = "redis";
-        mode = "0400";
-        restartUnits = [ "redis.service" ];
-      };
+      # valkey-requirepass moved to lumo's root Home Manager service configuration.
 
       "omniroute-jwt-secret" = {
         sopsFile = dotfiles + /sensitive/hosts/homolab/omniroute.yaml;

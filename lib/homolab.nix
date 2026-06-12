@@ -2,6 +2,25 @@ let
   baseDomain = "justaslime.dev";
   lanAddress = "192.168.1.127";
 
+  hosts = {
+    # LAN addresses are stable; tailnet IPs filled in after board provision.
+    gateway = {
+      lan = "192.168.1.129";
+      tailnet = "100.119.84.114";
+      role = "edge";
+    };
+    lumo = {
+      lan = "192.168.1.128";
+      role = "apps";
+    };
+    homolab = {
+      lan = lanAddress;
+      tailnet = "100.90.20.64";
+      mac = "24:4b:fe:df:2d:45";
+      role = "ai";
+    };
+  };
+
   ports = {
     ssh = 2222;
     traefikPing = 18081;
@@ -31,6 +50,7 @@ rec {
     interface = "enp7s0";
     lan = {
       address = lanAddress;
+      broadcast = "192.168.1.255";
       cidr = "192.168.1.0/24";
       gateway = "192.168.1.1";
       prefixLength = 24;
@@ -75,12 +95,16 @@ rec {
 
   inherit ports;
   inherit portRanges;
+  inherit hosts;
 
   ai = rec {
     host = "127.0.0.1";
+    tailnetHost = hosts.homolab.tailnet;
     port = ports.shimmy;
     baseUrl = "http://${host}:${toString port}";
+    tailnetBaseUrl = "http://${tailnetHost}:${toString port}";
     openaiBaseUrl = "${baseUrl}/v1";
+    tailnetOpenaiBaseUrl = "${tailnetBaseUrl}/v1";
     model = "qwen3.6-35b-a3b";
   };
 }

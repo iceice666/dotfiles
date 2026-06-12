@@ -2,6 +2,7 @@
   inputs,
   dotfiles,
   name,
+  ...
 }:
 
 {
@@ -24,6 +25,10 @@
     pi = true;
     kaguya = true;
     nirinit = true;
+  };
+
+  extraSpecialArgs = {
+    homolab = import (dotfiles + /lib/homolab.nix);
   };
 
   deploy = {

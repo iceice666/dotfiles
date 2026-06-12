@@ -1,0 +1,34 @@
+{ dotfiles, name, ... }:
+
+{
+  inherit name;
+  kind = "home-manager";
+  system = "aarch64-linux";
+  username = "root";
+  homeDirectory = "/root";
+  homeModules = [ ./home ];
+
+  features = {
+    homeManager = true;
+    sops = true;
+    gui = false;
+    devEnv = false;
+    pi = false;
+  };
+
+  extraSpecialArgs = {
+    homolab = import (dotfiles + /lib/homolab.nix);
+  };
+
+  deploy = {
+    enable = true;
+    hostname = "gateway";
+    sshUser = "root";
+    sshOpts = [
+      "-o"
+      "StrictHostKeyChecking=accept-new"
+    ];
+    remoteBuild = true;
+    profileUser = "root";
+  };
+}

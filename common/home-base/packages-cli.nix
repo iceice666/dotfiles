@@ -4,6 +4,7 @@ let
   stablePackages = with pkgs; [
     fzf
     ripgrep
+    wakeonlan
     fd
     bat
     eza

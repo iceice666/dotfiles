@@ -4,7 +4,12 @@
   nix.settings = {
     substituters = [ "https://cache.nixos-cuda.org" ];
     trusted-public-keys = [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ];
+    # Allow iceice666 to submit remote builds from m3air.
+    trusted-users = [ "iceice666" ];
   };
+
+  # Keep aarch64 emulation available for ad-hoc package debugging.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   boot.loader = {
     systemd-boot.enable = true;

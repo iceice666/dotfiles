@@ -2,6 +2,7 @@
   inputs,
   dotfiles,
   name,
+  ...
 }:
 
 {
@@ -22,5 +23,9 @@
     rime = true;
     devEnv = true;
     pi = true;
+  };
+
+  extraSpecialArgs = {
+    homolab = import (dotfiles + /lib/homolab.nix);
   };
 }

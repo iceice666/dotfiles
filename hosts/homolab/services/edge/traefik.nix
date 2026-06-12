@@ -105,11 +105,14 @@ in
 
       entryPoints = {
         ping = {
-          address = "127.0.0.1:${toString homolab.ports.traefikPing}";
+          # Bind to all interfaces so lumo can probe via tailnet.
+          # The LAN DROP rule in networking.nix blocks non-tailnet LAN access.
+          address = "0.0.0.0:${toString homolab.ports.traefikPing}";
         };
 
         metrics = {
-          address = "127.0.0.1:${toString homolab.ports.traefikMetrics}";
+          # Same rationale as ping above.
+          address = "0.0.0.0:${toString homolab.ports.traefikMetrics}";
         };
 
         web = {
@@ -296,15 +299,17 @@ in
         omniroute.loadBalancer.servers = [
           { url = "http://127.0.0.1:${toString homolab.ports.omnirouteDashboard}"; }
         ];
-        grafana.loadBalancer.servers = [ { url = "http://127.0.0.1:${toString homolab.ports.grafana}"; } ];
+        grafana.loadBalancer.servers = [
+          { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }
+        ];
         blocky.loadBalancer.servers = [
           { url = "http://gce-dns:4000"; }
         ];
         dynacat.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.dynacat}"; }
+          { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.dynacat}"; }
         ];
         dev-port-proxy.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.devPortProxy}"; }
+          { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.devPortProxy}"; }
         ];
       };
     };

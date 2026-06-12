@@ -30,18 +30,11 @@ let
     nixpkgs.overlays = [ overlay ];
   };
 
-  systemBase = [
-    (dotfiles + /common/system)
-  ]
-  ++ (
-    if kind == "darwin" then
-      [ (dotfiles + /common/system-darwin) ]
-    else if kind == "nixos" then
-      [ (dotfiles + /common/system-nixos) ]
-    else
-      [ ]
-  )
-  ++ lib.optional (feat.nirinit or false) inputs.nirinit.nixosModules.nirinit;
+  systemBase =
+    lib.optionals (kind == "nixos" || kind == "darwin") [ (dotfiles + /common/system) ]
+    ++ lib.optional (kind == "darwin") (dotfiles + /common/system-darwin)
+    ++ lib.optional (kind == "nixos") (dotfiles + /common/system-nixos)
+    ++ lib.optional (kind == "nixos" && (feat.nirinit or false)) inputs.nirinit.nixosModules.nirinit;
 
   homeBase = dotfiles + /common/home-base;
 
@@ -82,11 +75,29 @@ let
 
   modules =
     systemBase
-    ++ host.modules
+    ++ (host.modules or [ ])
     ++ lib.optional (feat.sops or false) sopsModule
     ++ lib.optional (feat.homeManager or false) hmSystemModule
     ++ lib.optional (feat.homeManager or false) hmModule
     ++ [ overlayModule ];
+
+  standalonePkgs = import nixpkgs {
+    inherit (host) system;
+    config.allowUnfree = true;
+    overlays = [ overlay ];
+  };
+
+  standaloneModules =
+    homeImports
+    ++ lib.optional (feat.sops or false) sops-nix.homeManagerModules.sops
+    ++ [
+      {
+        nixpkgs = {
+          config.allowUnfree = true;
+          overlays = [ overlay ];
+        };
+      }
+    ];
 in
 if kind == "nixos" then
   nixpkgs.lib.nixosSystem {
@@ -99,6 +110,12 @@ else if kind == "darwin" then
     inherit specialArgs;
     inherit (host) system;
     inherit modules;
+  }
+else if kind == "home-manager" then
+  home-manager.lib.homeManagerConfiguration {
+    pkgs = standalonePkgs;
+    extraSpecialArgs = specialArgs;
+    modules = standaloneModules;
   }
 else
   throw "Unsupported host kind: ${kind}"

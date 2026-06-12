@@ -60,6 +60,13 @@ let
     }) (builtins.filter (host: host.kind == "darwin") hosts)
   );
 
+  homeConfigurations = builtins.listToAttrs (
+    map (host: {
+      name = host.name;
+      value = hostConfigurations.${host.name};
+    }) (builtins.filter (host: host.kind == "home-manager") hosts)
+  );
+
   packages = builtins.listToAttrs (
     map (system: {
       name = system;
@@ -95,7 +102,11 @@ let
 in
 {
   deploy = import ./deploy.nix {
-    inherit inputs nixosConfigurations hosts;
+    inherit
+      inputs
+      hostConfigurations
+      hosts
+      ;
   };
 
   checks = {
@@ -113,5 +124,10 @@ in
       ;
   };
 
-  inherit darwinConfigurations nixosConfigurations packages;
+  inherit
+    darwinConfigurations
+    homeConfigurations
+    nixosConfigurations
+    packages
+    ;
 }

@@ -64,11 +64,9 @@
         ];
       };
 
-      storage.postgres = {
-        address = "unix:///run/postgresql/.s.PGSQL.${toString homolab.ports.postgresql}";
-        database = "authelia";
-        username = "authelia";
-      };
+      # Postgres moved to lumo; Authelia uses a local SQLite database so that
+      # authentication has no dependency on the apps plane.
+      storage.local.path = "/var/lib/authelia-main/db.sqlite3";
 
       notifier = {
         # Resend reachability can flap briefly during switch; don't fail the service

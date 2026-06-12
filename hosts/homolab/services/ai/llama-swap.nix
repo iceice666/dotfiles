@@ -46,6 +46,10 @@ in
     enable = true;
     package = pkgs.llama-swap;
     port = homolab.ai.port;
+    # Bind to all interfaces so lumo's blackbox exporter can probe via tailnet.
+    # The existing LAN DROP rule in networking.nix blocks non-tailnet LAN access,
+    # and tailscale0 is trusted via networking.firewall.trustedInterfaces.
+    listenAddress = "0.0.0.0";
 
     settings = {
       healthCheckTimeout = 300;
