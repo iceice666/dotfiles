@@ -29,7 +29,7 @@
 
   deploy = {
     enable = true;
-    hostname = name;
+    hostname = "homolab-linux";
     sshUser = "iceice666";
     sshOpts = [ ];
     remoteBuild = true;
