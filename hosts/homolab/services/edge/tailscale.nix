@@ -12,7 +12,11 @@
     permitCertUid = "traefik";
 
     # Keep any previously advertised subnet routes cleared declaratively.
-    extraSetFlags = [ "--advertise-routes=" ];
+    # Enable Tailscale SSH in place of the regular OpenSSH daemon.
+    extraSetFlags = [
+      "--advertise-routes="
+      "--ssh"
+    ];
   };
 
   # Treat the tailnet as a LAN-equivalent management network. The lower-level

@@ -62,10 +62,6 @@ in
       allowedTCPPorts = [ ];
 
       extraCommands = ''
-        # SSH: LAN only
-        ${mkIpv4AcceptRule homolab.ports.ssh lanCidr}
-        iptables -A INPUT -i ${interface} -p tcp --dport ${toString homolab.ports.ssh} -j DROP
-
         # OmniRoute API: LAN only
         ${mkIpv4AcceptRule homolab.ports.omnirouteApi lanCidr}
         ${mkDropRule homolab.ports.omnirouteApi}
@@ -79,9 +75,6 @@ in
       '';
 
       extraStopCommands = ''
-        ${mkIpv4DeleteRule homolab.ports.ssh lanCidr}
-        iptables -D INPUT -i ${interface} -p tcp --dport ${toString homolab.ports.ssh} -j DROP || true
-
         ${mkIpv4DeleteRule homolab.ports.omnirouteApi lanCidr}
         ${mkDeleteDropRule homolab.ports.omnirouteApi}
 
