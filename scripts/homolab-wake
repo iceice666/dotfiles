@@ -16,7 +16,8 @@ set -euo pipefail
 #   HOMOLAB_WAKE_TIMEOUT     seconds before giving up (default 120)
 
 MAC="${HOMOLAB_MAC:-24:4b:fe:df:2d:45}"
-TAILNET_IP="${HOMOLAB_TAILNET_IP:-100.90.20.64}"
+TAILNET_HOST="${HOMOLAB_TAILNET_HOST:-homolab-linux}"
+TAILNET_IP="${HOMOLAB_TAILNET_IP:-100.110.95.111}"
 GATEWAY_TAILNET="${HOMOLAB_GATEWAY_TAILNET:-100.119.84.114}"
 LAN_GW="${HOMOLAB_LAN_GW:-192.168.1.1}"
 LAN_BROADCAST="${HOMOLAB_LAN_BROADCAST:-192.168.1.255}"
@@ -41,7 +42,7 @@ fi
 # Poll for tailnet reachability (host-up signal).
 echo "==> waiting for homolab on tailnet (timeout ${WAKE_TIMEOUT}s)"
 deadline=$((SECONDS + WAKE_TIMEOUT))
-until tailscale ping --timeout=3s "$TAILNET_IP" >/dev/null 2>&1; do
+until tailscale ping --timeout=3s "$TAILNET_HOST" >/dev/null 2>&1; do
     [ "$SECONDS" -lt "$deadline" ] || die "timed out waiting for homolab on tailnet after ${WAKE_TIMEOUT}s"
     sleep 2
 done

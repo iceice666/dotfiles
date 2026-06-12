@@ -15,7 +15,7 @@ let
     };
     homolab = {
       lan = lanAddress;
-      tailnet = "100.90.20.64";
+      tailnet = "100.110.95.111";
       mac = "24:4b:fe:df:2d:45";
       role = "ai";
     };
@@ -57,8 +57,8 @@ rec {
     };
 
     tailnet = {
-      address = "100.90.20.64";
-      dnsName = "homolab.skate-kanyu.ts.net";
+      address = "100.110.95.111";
+      dnsName = "homolab-linux.skate-kanyu.ts.net";
     };
 
     docker.bridgeAddress = "172.17.0.1";
