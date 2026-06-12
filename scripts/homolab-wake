@@ -11,9 +11,8 @@ set -euo pipefail
 #   HOMOLAB_GATEWAY_TAILNET  gateway tailnet IP (for off-LAN relay)
 #   HOMOLAB_LAN_GW           home LAN gateway (used for on-LAN detection)
 #   HOMOLAB_LAN_BROADCAST    LAN broadcast address
-#   HOMOLAB_SSH_PORT         homolab SSH port
 #   HOMOLAB_LLM_PORT         llama-swap port
-#   HOMOLAB_WAKE_MODE        "ssh" = wait for SSH only; "llm" = also wait for /health
+#   HOMOLAB_WAKE_MODE        "ssh" = wait for tailnet only; "llm" = also wait for /health
 #   HOMOLAB_WAKE_TIMEOUT     seconds before giving up (default 120)
 
 MAC="${HOMOLAB_MAC:-24:4b:fe:df:2d:45}"
@@ -21,7 +20,6 @@ TAILNET_IP="${HOMOLAB_TAILNET_IP:-100.90.20.64}"
 GATEWAY_TAILNET="${HOMOLAB_GATEWAY_TAILNET:-100.119.84.114}"
 LAN_GW="${HOMOLAB_LAN_GW:-192.168.1.1}"
 LAN_BROADCAST="${HOMOLAB_LAN_BROADCAST:-192.168.1.255}"
-SSH_PORT="${HOMOLAB_SSH_PORT:-2222}"
 LLM_PORT="${HOMOLAB_LLM_PORT:-11434}"
 MODE="${HOMOLAB_WAKE_MODE:-llm}"
 WAKE_TIMEOUT="${HOMOLAB_WAKE_TIMEOUT:-120}"
@@ -40,14 +38,14 @@ else
         die "gateway relay failed; ensure /root/.local/bin/homolab-wake is deployed and gateway is reachable"
 fi
 
-# Poll for SSH availability on the tailnet IP (host-up signal).
-echo "==> waiting for SSH at $TAILNET_IP:$SSH_PORT (timeout ${WAKE_TIMEOUT}s)"
+# Poll for tailnet reachability (host-up signal).
+echo "==> waiting for homolab on tailnet (timeout ${WAKE_TIMEOUT}s)"
 deadline=$((SECONDS + WAKE_TIMEOUT))
-until nc -z -w2 "$TAILNET_IP" "$SSH_PORT" 2>/dev/null; do
-    [ "$SECONDS" -lt "$deadline" ] || die "timed out waiting for SSH after ${WAKE_TIMEOUT}s"
+until tailscale ping --timeout=3s "$TAILNET_IP" >/dev/null 2>&1; do
+    [ "$SECONDS" -lt "$deadline" ] || die "timed out waiting for homolab on tailnet after ${WAKE_TIMEOUT}s"
     sleep 2
 done
-echo "==> SSH reachable"
+echo "==> homolab reachable on tailnet"
 
 # Optionally wait for the LLM /health endpoint.
 if [ "$MODE" = "llm" ]; then

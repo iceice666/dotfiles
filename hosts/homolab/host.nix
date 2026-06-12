@@ -31,10 +31,7 @@
     enable = true;
     hostname = name;
     sshUser = "iceice666";
-    sshOpts = [
-      "-p"
-      "2222"
-    ];
+    sshOpts = [ ];
     remoteBuild = true;
   };
 }

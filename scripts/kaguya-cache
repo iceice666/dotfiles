@@ -3,8 +3,8 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
-remote="${KAGUYA_REMOTE:-iceice666@homolab}"
-port="${KAGUYA_REMOTE_PORT:-2222}"
+remote="${KAGUYA_REMOTE:-iceice666@homolab-linux}"
+port="${KAGUYA_REMOTE_PORT:-22}"
 root_override="${KAGUYA_REMOTE_ROOT:-}"
 cache_dir="$repo_root/.cache/kaguya/framework"
 state_dir="$repo_root/.cache/kaguya/.state"
