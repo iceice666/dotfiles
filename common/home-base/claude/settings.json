@@ -15,6 +15,7 @@
       "mcp__plugin_discord_discord__download_attachment"
     ],
     "deny": [
+      "Bash(grep *)",
       "Read(//**/.env)",
       "Read(//**/.env.*)",
       "Read(//**/secrets/**)",
