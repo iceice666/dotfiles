@@ -19,6 +19,7 @@ creation_rules:
       - *m3air
       - *framework
       - *homolab
+      - *lumo
       # - *recovery
 
   # Per-host secrets
