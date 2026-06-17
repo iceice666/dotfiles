@@ -1,6 +1,6 @@
 ## Shell & Search Conventions
 
-Use ripgrep (rg) for all searches; avoid bash/fish glob-based grep which produces false negatives under fish shell word-splitting.
+Use ripgrep (rg) for all searches; avoid bash/fish glob-based grep which produces false negatives under fish shell word-splitting. Use ast-grep (sg) for AST-level searching (structural patterns, refactors, syntax-aware queries).
 
 ## Codebase interop
 

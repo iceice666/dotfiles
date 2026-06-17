@@ -33,6 +33,7 @@ let
     python3
     uv
     yq
+    ast-grep
   ];
 
   unstablePackages = with unstablePkgs; [
