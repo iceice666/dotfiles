@@ -15,7 +15,6 @@
       "mcp__plugin_discord_discord__download_attachment"
     ],
     "deny": [
-      "Bash(grep *)",
       "Read(//**/.env)",
       "Read(//**/.env.*)",
       "Read(//**/secrets/**)",
@@ -63,6 +62,10 @@
           {
             "type": "command",
             "command": "timeout 300 true || echo 'long-running cmd: add --timeout'"
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' | rg -q '\\bgrep\\b' && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"grep is banned: use rg for text search or sg for AST/structural search\"}}' || true"
           }
         ]
       }
