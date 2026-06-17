@@ -40,7 +40,11 @@ in
     taps = [
       "pear-devs/pear"
     ];
-    brews = [ ];
+    brews = [
+      "odin"
+      "ols"
+      "odinfmt"
+    ];
     casks = [
       "termius" # nixpkgs has Linux-only build
       "android-studio"
