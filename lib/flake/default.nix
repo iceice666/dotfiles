@@ -79,7 +79,6 @@ let
           inherit (p)
             themegen
             equibop-bin
-            claude-code-bin
             codex-cli-bin
             oh-my-pi-bin
             zed-bin

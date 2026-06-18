@@ -75,9 +75,9 @@ For each finding, output a structured entry. At the end, output a machine-readab
 Changed files:
 CHANGED_FILES
 
-First, read the project's CLAUDE.md (repo root) and any contributing or coding-guidelines files. Extract the project's required conventions, forbidden patterns, naming rules, and test standards — these become the basis for category 5 below.
+First, read the project's `AGENTS.md` and any contributing or coding-guidelines files. Extract the project's required conventions, forbidden patterns, naming rules, and test standards — these become the basis for category 5 below.
 
-Use `rg` for any text searches; do not use `grep` or shell glob expansion.
+Use native harness tools for file lookup and content search. Do not use shell `grep`, `rg`, `find`, or shell glob expansion when `search`/`find` tools are available.
 
 Read each file in full. Then audit for every category:
 
@@ -112,7 +112,7 @@ Read each file in full. Then audit for every category:
 - Dependency injected into the wrong consumer, or two wired-up components with swapped roles.
 
 ## 5. Project-convention violations
-- Any pattern explicitly forbidden by the project's CLAUDE.md or contributor guidelines.
+- Any pattern explicitly forbidden by the project's `AGENTS.md` or contributor guidelines.
 - Naming convention violations: function, type, module, or test names that contradict the project's stated rules.
 - Missing required metadata: doc comments, spec references, formal-backing links, or file-level annotations the project mandates.
 - Test names that don't follow the project's stated convention.

@@ -23,14 +23,13 @@ common/              # shared modules injected by mk-host into every host
     packages-cli.nix # shared CLI package list
     user.nix
     fish/            # fish config + auto-imported function modules (12 functions)
-    agent-instructions.nix # shared Claude/Codex global instructions
+    agent-instructions.nix # shared OMP/Codex global instructions
     agent-skills.nix # shared agent-agnostic personal skills
-    claude.nix       # Claude Code config symlinks
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
     omp.nix          # oh-my-pi (omp) coding-agent: CLIProxyAPI provider + Exa web search (features.omp)
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
-    packages-gui.nix # GUI binaries: claude-code-bin, equibop-bin, zen-bin, …
+    packages-gui.nix # GUI binaries: codex-cli-bin, oh-my-pi-bin, equibop-bin, zen-bin, …
     app-defaults.nix # XDG MIME associations
     ghostty.nix      # Ghostty config
     vscodium.nix     # VSCodium config + marketplace wiring
@@ -80,7 +79,6 @@ lib/                 # shared nix helpers and local flake framework
 
 pkgs/                # overlay packages
   blocky-bin/        # official prebuilt Blocky DNS proxy releases
-  claude-code-bin/   # official prebuilt Anthropic Claude Code CLI releases
   codex-cli-bin/     # official prebuilt OpenAI Codex CLI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
@@ -148,7 +146,7 @@ cache.
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
-| `packages.<system>.*` | standalone overlay packages (themegen, oh-my-pi-bin, claude-code-bin, cliproxyapi-bin, …) |
+| `packages.<system>.*` | standalone overlay packages (themegen, oh-my-pi-bin, cliproxyapi-bin, codex-cli-bin, …) |
 
 Standalone packages are available for all systems: `nix build .#themegen` works without going through a host build.
 
@@ -187,7 +185,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
@@ -485,7 +483,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -512,8 +510,8 @@ Canonical module shape:
   agent-neutral source of truth, and do not manage generated system skills,
   sessions, memory data, auth state, plugin caches, or screen recordings from
   this repo.
-- `common/home-base/agent-instructions.nix` installs the same repo-owned global
-  instructions at `$HOME/.claude/CLAUDE.md` and `$HOME/.codex/AGENTS.md`.
+- `common/home-base/agent-instructions.nix` installs the repo-owned global
+  instructions at `$HOME/.agents/AGENTS.md` and `$HOME/.codex/AGENTS.md`.
 - `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
 - `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
 - `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.

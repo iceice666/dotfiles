@@ -13,25 +13,25 @@ description: Group staged Agent-authored changes into logical scoped commits, wr
 2. Commit only Agent-authored changes. Never include pre-existing changes,
    even when they are already staged. Preserve unrelated dirty work and avoid
    reverting or modifying changes the Agent did not author.
-3. Identify the developer-facing or user-visible intent of each Agent-authored
-   change. Group staged changes into logical scoped commits by purpose. Detect
-   spec framework artifacts and associate them with their corresponding
-   implementation changes.
-4. Check whether the project requires a devlog entry through repository
-   instructions, contributor documentation, templates, or established
-   conventions. Write and stage the required devlog entry with its related
-   logical commit.
-5. Run the relevant validation before committing. Prefer the repository's own
-   test, lint, format-check, typecheck, or CI commands. Use nearby package
-   scripts, task runners, README instructions, or existing CI config to infer
-   what should pass. If full validation is impractical, run the most relevant
-   targeted checks and mention the limitation only outside the commit message.
-6. Stage only Agent-authored files or hunks for one commit candidate at a
-   time. Use path-based or hunk-based staging so unrelated or pre-existing
-   changes are not mixed. Include related spec and devlog files with the
-   implementation they describe.
-7. Write and create each commit with a concise Conventional Commit message.
-8. When reporting back to the user, return only the commit message or messages
+3. Run the relevant validation before committing. Prefer the repository's own
+   test, lint, format-check, typecheck, or CI commands. If full validation is
+   impractical, run the most relevant targeted checks and mention the limitation
+   only outside the commit message.
+4. Prefer OMP's native commit command when available:
+
+   ```sh
+   omp commit --dry-run
+   omp commit
+   ```
+
+   Use it only when its proposed scope matches the Agent-authored changes. If
+   it would include unrelated files or hunks, stage the Agent-authored files or
+   hunks manually and commit with `git commit` instead.
+5. Group changes by developer-facing or user-visible intent. Create multiple
+   commits for unrelated purposes; keep one commit for one tight intent.
+6. Write and create each commit with this repository's Conventional Commit
+   shape: `type(machine/scope): subject`.
+7. When reporting back to the user, return only the commit message or messages
    created, with no Markdown, raw diff, changed-file list, or extra commentary.
 
 ## Commit Splitting
@@ -52,7 +52,7 @@ if they touch several files.
 Use this exact shape:
 
 ```text
-<type>(optional-scope): <summary>
+<type>(<machine>/<scope>): <subject>
 
 (optional-body)
 ```
@@ -70,7 +70,8 @@ Subject rules:
 - Use imperative mood.
 - Do not end with punctuation.
 - Prefer the most specific allowed type.
-- Include a scope only when it clarifies the changed area.
+- Use a scope such as `common/home`, `framework/niri`, `m3air/home`, `pkgs/omp`,
+  or `repo/agents`.
 - Do not mention file names unless essential.
 
 Body rules:
@@ -97,23 +98,6 @@ Choose the type by intent:
 - `ci`: change CI configuration or automation.
 - `chore`: maintain repository housekeeping that fits no more specific type.
 - `revert`: undo an earlier commit.
-
-## Spec Frameworks
-
-When the repository uses a spec framework (e.g., OpenSpec, changesets, or
-similar), treat spec files as part of the same logical change as the
-implementation they describe.
-
-- Detect spec artifacts (`openspec/`, `.changes/`, `docs/specs/`,
-  `docs/references/`, `.agents/skills/*/SKILL.md`, etc.) during repository
-  inspection.
-- Stage spec changes together with their corresponding implementation files
-  in the same commit. Do not split a single logical change across a
-  "spec-only" and an "implementation-only" commit.
-- If a spec change stands alone (e.g., creating a new spec before
-  implementation, archiving completed specs, or updating reference docs
-  without code changes), commit it independently using `docs`, `chore`, or
-  the type that best matches the spec's intent.
 
 ## Final Output
 

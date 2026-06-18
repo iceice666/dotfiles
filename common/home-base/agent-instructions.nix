@@ -1,6 +1,6 @@
 {
   home.file = {
-    ".claude/CLAUDE.md" = {
+    ".agents/AGENTS.md" = {
       source = ./agent-instructions.md;
       force = true;
     };

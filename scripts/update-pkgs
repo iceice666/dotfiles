@@ -104,12 +104,6 @@ class Package:
 
 
 PACKAGES: list[Package] = [
-    Package("claude-code-bin", "anthropics/claude-code", platforms={
-        "aarch64-darwin": "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-darwin-arm64.tar.gz",
-        "x86_64-darwin":  "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-darwin-x64.tar.gz",
-        "aarch64-linux":  "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-linux-arm64.tar.gz",
-        "x86_64-linux":   "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-linux-x64.tar.gz",
-    }),
     Package("codex-cli-bin", "openai/codex", tag_prefix="rust-v", platforms={
         "aarch64-darwin": "https://github.com/openai/codex/releases/download/{tag}/codex-aarch64-apple-darwin.tar.gz",
         "x86_64-darwin":  "https://github.com/openai/codex/releases/download/{tag}/codex-x86_64-apple-darwin.tar.gz",
