@@ -3,7 +3,6 @@
   stdenv,
   stdenvNoCC,
   fetchurl,
-  autoPatchelfHook,
 }:
 
 let
@@ -43,14 +42,13 @@ stdenv.mkDerivation {
   dontUnpack = true;
   dontConfigure = true;
   dontBuild = true;
+  dontStrip = true;
 
-  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [
-    autoPatchelfHook
-  ];
-
-  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
-    stdenv.cc.cc.lib
-  ];
+  # Any ELF rewriting (patchelf --set-interpreter, --shrink-rpath) or strip
+  # operation corrupts Bun's standalone executable by zeroing the BUN_COMPILED
+  # section header that points to the embedded module graph. The binary works
+  # unpatched because nix-ld provides /lib64/ld-linux-x86-64.so.2.
+  dontPatchELF = true;
 
   installPhase = ''
     runHook preInstall
