@@ -77,7 +77,6 @@
     "padding": 1,
     "hideVimModeIndicator": true
   },
-  "viewMode": "focus",
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": false,
@@ -123,7 +122,6 @@
   "prefersReducedMotion": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
-  "editorMode": "vim",
   "verbose": true,
   "preferredNotifChannel": "notifications_disabled",
   "showTurnDuration": false,

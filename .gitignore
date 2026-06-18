@@ -2,6 +2,7 @@
 .direnv/
 .claude/*
 !.claude/workflows/
+!.claude/settings.json
 __pycache__
 target
 .cache/

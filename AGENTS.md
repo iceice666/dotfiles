@@ -285,6 +285,8 @@ just check
 
 ### Dry builds / targeted validation
 
+Before building any Nix configuration, run `git add` on new or untracked files so Nix's flake evaluation can see them. Verify with `git status` that no required `.nix` files remain untracked.
+
 There is no unit-test suite. The closest equivalent is the narrowest host build that covers the change.
 
 ```sh
