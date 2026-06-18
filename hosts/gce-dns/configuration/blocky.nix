@@ -45,7 +45,7 @@ in
 
       customDNS = {
         customTTL = "5m";
-        filterUnmappedTypes = false;
+        filterUnmappedTypes = true;
         mapping.${homolab.domains.root} = homolab.hosts.gateway.tailnet;
         zone = ''
           inm.${homolab.domains.root}. 5m IN SRV 0 0 0 .
