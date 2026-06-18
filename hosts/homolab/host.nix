@@ -19,7 +19,7 @@
     sops = true;
     gui = false;
     devEnv = false;
-    pi = true;
+    omp = true;
   };
 
   extraSpecialArgs = {

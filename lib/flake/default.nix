@@ -78,11 +78,10 @@ let
         {
           inherit (p)
             themegen
-            ketch
             equibop-bin
             claude-code-bin
             codex-cli-bin
-            pi-coding-agent-bin
+            oh-my-pi-bin
             zed-bin
             rime-frost
             rime-octagram-zh-hant-essay-bgw

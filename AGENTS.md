@@ -27,7 +27,7 @@ common/              # shared modules injected by mk-host into every host
     agent-skills.nix # shared agent-agnostic personal skills
     claude.nix       # Claude Code config symlinks
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
-    pi.nix           # Pi coding-agent: ketch extension + CLIProxyAPI provider (features.pi)
+    omp.nix          # oh-my-pi (omp) coding-agent: CLIProxyAPI provider + Exa web search (features.omp)
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
     packages-gui.nix # GUI binaries: claude-code-bin, equibop-bin, zen-bin, …
@@ -86,8 +86,7 @@ pkgs/                # overlay packages
   equibop-bin/       # Equibop binary
   framework-eww-state/ # Rust state daemon/action helper for Framework Eww
   kaguya-bin/        # Framework Kaguya browser binary wrapper fed by kaguya-cache
-  ketch/             # web/code/docs search and scraping CLI for Pi tools
-  pi-coding-agent-bin/ # official prebuilt Pi Coding Agent releases
+  oh-my-pi-bin/      # prebuilt oh-my-pi (omp) coding agent releases
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
   themegen/          # Rust-based theme generator (Cargo project)
@@ -149,7 +148,7 @@ cache.
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
-| `packages.<system>.*` | standalone overlay packages (themegen, ketch, claude-code-bin, cliproxyapi-bin, …) |
+| `packages.<system>.*` | standalone overlay packages (themegen, oh-my-pi-bin, claude-code-bin, cliproxyapi-bin, …) |
 
 Standalone packages are available for all systems: `nix build .#themegen` works without going through a host build.
 
@@ -177,7 +176,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 | `themegen` | `common/home-gui/themegen` |
 | `rime` | `common/home-gui/rime` |
 | `devEnv` | `common/home-base/dev-env.nix` |
-| `pi` | `common/home-base/pi.nix` |
+| `omp` | `common/home-base/omp.nix` |
 | `nirinit` | `inputs.nirinit.nixosModules.nirinit` |
 | `kaguya` | (signals framework-local overlay; no module) |
 
@@ -188,7 +187,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
@@ -206,8 +205,8 @@ A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` an
 
 ## Web, Code, and Docs Research
 
-Pi is configured through `common/home-base/pi.nix` to install `ketch` and the `pi-coding-agent-bin` binary, expose ketch tools (`ketch_search`, `ketch_scrape`, `ketch_code`, `ketch_docs`), and wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions.
-Use Pi tools for external web research, URL fetching, OSS code examples, and library docs when repository-local information is insufficient.
+omp (oh-my-pi) is configured through `common/home-base/omp.nix` to install the `oh-my-pi-bin` binary, wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions, and supply an `EXA_API_KEY` (via `~/.omp/agent/.env`) for omp's builtin `web_search` tool.
+Use omp's builtin `web_search` and `browser` tools for external web research and URL fetching when repository-local information is insufficient.
 The `cliproxyapi` provider is enabled on homolab, lumo, m3air, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
 
 ## Build, Format, and Validation Commands
@@ -486,7 +485,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

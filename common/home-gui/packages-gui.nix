@@ -10,9 +10,8 @@ let
     [
       claude-code-bin
       codex-cli-bin
-      pi-coding-agent-bin
+      oh-my-pi-bin
       equibop-bin
-      ketch
     ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ zen-bin ];
 in

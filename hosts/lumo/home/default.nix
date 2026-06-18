@@ -13,8 +13,7 @@
 
   home.packages = with pkgs; [
     claude-code-bin
-    pi-coding-agent-bin
-    ketch
+    oh-my-pi-bin
   ];
 
   home.activation.claudeLocalBin = lib.hm.dag.entryAfter [ "claude-remove-self-install-shim" ] ''
