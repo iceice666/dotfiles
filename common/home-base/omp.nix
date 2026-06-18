@@ -23,8 +23,8 @@ let
       api = "openai-completions";
       apiKey = apiKeySentinel;
       compat = {
-        supportsDeveloperRole = false;
-        supportsReasoningEffort = false;
+        supportsDeveloperRole = true;
+        supportsReasoningEffort = true;
       };
       models = [
         (mkModel "claude-opus-4-8" 200000 32000 false)
