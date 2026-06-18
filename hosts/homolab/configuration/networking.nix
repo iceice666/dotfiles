@@ -34,7 +34,7 @@ in
       "127.0.0.1" = [
         homolab.domains.auth
         homolab.domains.dns
-        homolab.domains.omniroute
+        homolab.domains.cliproxyapi
         homolab.domains.home
         homolab.domains.traefik
         homolab.domains.npu
@@ -62,25 +62,23 @@ in
       allowedTCPPorts = [ ];
 
       extraCommands = ''
-        # OmniRoute API: LAN only
-        ${mkIpv4AcceptRule homolab.ports.omnirouteApi lanCidr}
-        ${mkDropRule homolab.ports.omnirouteApi}
+        # CLIProxyAPI: LAN only
+        ${mkIpv4AcceptRule homolab.ports.cliproxyapi lanCidr}
+        ${mkDropRule homolab.ports.cliproxyapi}
 
         # Development ports are blocked; routing goes through gateway Traefik.
         ${mkRangeDropRule devPortRange}
 
         # Explicit LAN DROP for loopback-only services.
-        ${mkDropRule homolab.ports.omnirouteDashboard}
         ${mkDropRule homolab.ports.shimmy}
       '';
 
       extraStopCommands = ''
-        ${mkIpv4DeleteRule homolab.ports.omnirouteApi lanCidr}
-        ${mkDeleteDropRule homolab.ports.omnirouteApi}
+        ${mkIpv4DeleteRule homolab.ports.cliproxyapi lanCidr}
+        ${mkDeleteDropRule homolab.ports.cliproxyapi}
 
         ${mkDeleteRangeDropRule devPortRange}
 
-        ${mkDeleteDropRule homolab.ports.omnirouteDashboard}
         ${mkDeleteDropRule homolab.ports.shimmy}
       '';
     };

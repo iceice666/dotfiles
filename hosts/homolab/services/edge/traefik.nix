@@ -195,28 +195,19 @@ in
           tls.certResolver = "letsencrypt";
         };
 
-        omniroute-http = {
-          rule = mkHostRule homolab.domains.omniroute;
+        cliproxyapi-http = {
+          rule = mkHostRule homolab.domains.cliproxyapi;
           entryPoints = [ "web" ];
 
           middlewares = [ "redirect-to-https@file" ];
           service = "noop@internal";
         };
 
-        omniroute-api = {
-          rule = mkHostPathRule homolab.domains.omniroute "PathPrefix(`/v1`)";
-          entryPoints = [ "websecure" ];
-          priority = 1000;
-
-          service = "omniroute-api";
-          tls.certResolver = "letsencrypt";
-        };
-
-        omniroute = {
-          rule = mkHostRule homolab.domains.omniroute;
+        cliproxyapi = {
+          rule = mkHostRule homolab.domains.cliproxyapi;
           entryPoints = [ "websecure" ];
 
-          service = "omniroute";
+          service = "cliproxyapi";
           tls.certResolver = "letsencrypt";
         };
 
@@ -293,11 +284,8 @@ in
         authelia.loadBalancer.servers = [
           { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
         ];
-        omniroute-api.loadBalancer.servers = [
-          { url = "http://${homolab.network.lan.address}:${toString homolab.ports.omnirouteApi}"; }
-        ];
-        omniroute.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.omnirouteDashboard}"; }
+        cliproxyapi.loadBalancer.servers = [
+          { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}"; }
         ];
         grafana.loadBalancer.servers = [
           { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }

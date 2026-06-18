@@ -59,7 +59,7 @@ hosts/               # per-host entrypoints
   homolab/           # NixOS server (x86_64), AI/GPU plane — deployed from m3air over SSH
     host.nix         # feature manifest
     configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
-    services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, OmniRoute)
+    services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, CLIProxyAPI)
     home/            # homolab-specific home additions (fish-pj.nix, user.nix, mise)
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
@@ -149,7 +149,7 @@ cache.
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
-| `packages.<system>.*` | standalone overlay packages (themegen, ketch, claude-code-bin, …) |
+| `packages.<system>.*` | standalone overlay packages (themegen, ketch, claude-code-bin, cliproxyapi-bin, …) |
 
 Standalone packages are available for all systems: `nix build .#themegen` works without going through a host build.
 
@@ -392,7 +392,7 @@ trust boundary:
 
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
-- `hosts/homolab/services/ai/omniroute.nix` — OpenAI-compatible proxy; touches auth and routing.
+- `hosts/homolab/services/ai/cliproxyapi.nix` — OpenAI-compatible proxy; touches auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.
@@ -485,7 +485,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `claude-code-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `ketch`, `pi-coding-agent-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

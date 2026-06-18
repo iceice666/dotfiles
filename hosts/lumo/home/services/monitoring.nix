@@ -11,6 +11,12 @@ let
   blackboxPort = 19115;
   nodeExporterPort = 19100;
 
+  grafanaPlugins = pkgs.buildEnv {
+    name = "lumo-grafana-plugins";
+    paths = [ pkgs.grafanaPlugins.yesoreyeram-infinity-datasource ];
+    pathsToLink = [ "/share/grafana/plugins" ];
+  };
+
   blackboxConfig = (pkgs.formats.yaml { }).generate "blackbox.yml" {
     modules.http_2xx = {
       prober = "http";
@@ -115,6 +121,36 @@ let
           {
             targets = [ "gce-dns:4000" ];
             labels.instance = "gce-dns";
+          }
+        ];
+      }
+      {
+        job_name = "cliproxyapi-blackbox";
+        metrics_path = "/probe";
+        params.module = [ "http_2xx" ];
+        static_configs = [
+          {
+            targets = [
+              "http://${homolab.network.lan.address}:${toString homolab.ports.cliproxyapi}/healthz"
+            ];
+            labels = {
+              instance = homolab.hostName;
+              service = "cliproxyapi";
+            };
+          }
+        ];
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "target";
+          }
+          {
+            target_label = "__address__";
+            replacement = "127.0.0.1:${toString blackboxPort}";
           }
         ];
       }
@@ -255,6 +291,7 @@ let
       headers = "Name:Remote-Name Email:Remote-Email Groups:Remote-Groups";
     };
     paths.provisioning = "/etc/lumo-grafana/provisioning";
+    plugins.allow_loading_unsigned_plugins = "";
   };
 
   grafanaDatasource = (pkgs.formats.yaml { }).generate "datasources.yml" {
@@ -267,6 +304,13 @@ let
         type = "prometheus";
         url = "http://127.0.0.1:${toString homolab.ports.prometheus}";
         isDefault = true;
+        editable = false;
+      }
+      {
+        name = "Infinity";
+        uid = "infinity";
+        type = "yesoreyeram-infinity-datasource";
+        access = "proxy";
         editable = false;
       }
     ];
@@ -301,7 +345,7 @@ let
     respawn_max=0
     export GF_PATHS_DATA="/var/lib/grafana"
     export GF_PATHS_LOGS="/var/log/grafana"
-    export GF_PATHS_PLUGINS="/var/lib/grafana/plugins"
+    export GF_PATHS_PLUGINS="${grafanaPlugins}/share/grafana/plugins"
 
     depend() {
       need net
@@ -311,7 +355,7 @@ let
     start_pre() {
       checkpath -f -m 0640 -o grafana:grafana /var/log/lumo/grafana.log
       checkpath -d -m 0750 -o grafana:grafana /run/lumo-grafana
-      checkpath -d -m 0750 -o grafana:grafana /var/lib/grafana /var/lib/grafana/plugins
+      checkpath -d -m 0750 -o grafana:grafana /var/lib/grafana
       checkpath -d -m 0750 -o grafana:grafana /var/log/grafana
       cp ${grafanaSecret} /run/lumo-grafana/secret-key
       chown grafana:grafana /run/lumo-grafana/secret-key

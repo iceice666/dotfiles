@@ -23,7 +23,7 @@ let
     "prometheus.service"
     "grafana.service"
     "llama-swap.service"
-    "omniroute.service"
+    "cliproxyapi.service"
     "multica-backend.service"
     "multica-frontend.service"
     "dynacat.service"

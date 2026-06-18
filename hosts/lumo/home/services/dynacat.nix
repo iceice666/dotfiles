@@ -113,8 +113,8 @@ let
 
   serviceIcons = {
     authelia = "si:authelia";
+    cliproxyapi = "si:openai";
     grafana = "si:grafana";
-    omniroute = "https://raw.githubusercontent.com/diegosouzapw/OmniRoute/main/electron/assets/icon.png";
     proxy = "si:traefikproxy";
     shimmy = "si:openai";
   };
@@ -199,8 +199,8 @@ let
                 "max-columns" = 3;
                 widgets = [
                   (mkMonitorWidget "Public" [
-                    (mkMonitorSite "OmniRoute" serviceIcons.omniroute homolab.urls.omniroute (
-                      mkHomolabUrl homolab.ports.omnirouteDashboard ""
+                    (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${homolab.urls.cliproxyapi}/management.html" (
+                      mkHomolabUrl homolab.ports.cliproxyapi "/healthz"
                     ))
                   ])
                   (mkMonitorWidget "Infra" [

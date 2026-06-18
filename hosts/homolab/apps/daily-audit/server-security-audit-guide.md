@@ -10,7 +10,7 @@ reports. It intentionally avoids decrypted secret content.
 | `:80`, `:443` | LAN and Cloudflare on `enp7s0`; tailnet if explicitly trusted | Traefik terminates TLS and forwards to protected services. |
 | `:2222` | LAN host SSH | Password auth disabled, root login disabled. |
 | `:53` | LAN DNS only | Technitium may listen broadly; firewall is the boundary. |
-| `:20129` | Direct LAN OmniRoute API only | Public OmniRoute access should go through Traefik on `:443`; API key should be required. |
+| `:20129` | Direct LAN CLIProxyAPI only | Public CLIProxyAPI access should go through Traefik on `:443`; API key should be required. |
 | Internal service ports | Loopback only or dropped on `enp7s0` | Authelia, Multica, Shimmy, Grafana, Prometheus, Traefik metrics. |
 
 ## Priority Checks
@@ -21,7 +21,7 @@ reports. It intentionally avoids decrypted secret content.
   `configuration/networking.nix`.
 - Flag stale firewall rules for removed services.
 - Confirm Cloudflare ipsets are present and non-empty.
-- Confirm private Traefik routes remain Authelia-protected or source-restricted, and public OmniRoute routes still require app-level credentials/API keys.
+- Confirm private Traefik routes remain Authelia-protected or source-restricted, and public CLIProxyAPI routes still require app-level credentials/API keys.
 - Treat rootful Podman socket access as host-root equivalent.
 - Treat rootful container image tags as trust-boundary sensitive.
 - Flag failed services, failed timers, suspicious 24-hour auth logs, model load

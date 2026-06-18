@@ -29,8 +29,7 @@ let
     grafana = 18084;
     postgresql = 25432;
     authelia = 18091;
-    omnirouteDashboard = 20128;
-    omnirouteApi = 20129;
+    cliproxyapi = 20129;
     shimmy = 11434;
     dynacat = 18075;
     devPortProxy = 18076;
@@ -69,7 +68,7 @@ rec {
     auth = "auth.${root}";
     dns = "dns.${root}";
     grafana = "grafana.${root}";
-    omniroute = "omniroute.${root}";
+    cliproxyapi = "cliproxyapi.${root}";
     traefik = "traefik.${root}";
     home = "home.${root}";
     dev = "dev.${root}";
@@ -80,7 +79,7 @@ rec {
     auth = "https://${domains.auth}";
     grafana = "https://${domains.grafana}";
     dns = "https://${domains.dns}/dns-query";
-    omniroute = "https://${domains.omniroute}";
+    cliproxyapi = "https://${domains.cliproxyapi}";
     traefik = "https://${domains.traefik}";
     home = "https://${domains.home}";
     dev = "https://${domains.dev}";

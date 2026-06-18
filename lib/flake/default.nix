@@ -95,7 +95,11 @@ let
             ;
         }
         // nixpkgs.lib.optionalAttrs isLinux {
-          inherit (p) blocky-bin framework-eww-state;
+          inherit (p)
+            blocky-bin
+            cliproxyapi-bin
+            framework-eww-state
+            ;
         };
     }) systems
   );

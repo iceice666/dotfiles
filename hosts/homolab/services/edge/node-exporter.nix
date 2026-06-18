@@ -21,7 +21,7 @@ in
     extraFlags = [
       "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)"
       "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$"
-      "--collector.systemd.unit-include=(authelia-main|cloudflare-ips-refresh|llama-swap|omniroute|tailscaled|traefik)\\.(service|socket|timer)"
+      "--collector.systemd.unit-include=(authelia-main|cliproxyapi|cloudflare-ips-refresh|llama-swap|tailscaled|traefik)\\.(service|socket|timer)"
     ];
   };
 }
