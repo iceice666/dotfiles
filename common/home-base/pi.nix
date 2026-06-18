@@ -1,6 +1,7 @@
 {
   config,
   dotfiles,
+  homolab,
   pkgs,
   ...
 }:
@@ -17,6 +18,165 @@ in
     sopsFile = dotfiles + /sensitive/shared/ketch.yaml;
     mode = "0400";
   };
+
+  sops.secrets.cliproxyapi_api_key = {
+    sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
+    key = "apiKey";
+    mode = "0400";
+  };
+
+  sops.templates."pi-models".path = ".pi/agent/models.json";
+  sops.templates."pi-models".mode = "0600";
+  sops.templates."pi-models".content = builtins.toJSON {
+    providers.cliproxyapi = {
+      baseUrl = "${homolab.urls.cliproxyapi}/v1";
+      api = "openai-completions";
+      apiKey = config.sops.placeholder.cliproxyapi_api_key;
+      compat = {
+        supportsDeveloperRole = false;
+        supportsReasoningEffort = false;
+      };
+      models = [
+        {
+          id = "claude-opus-4-8";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-opus-4-7";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-fable-5";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-sonnet-4-6";
+          contextWindow = 200000;
+          maxTokens = 64000;
+        }
+        {
+          id = "claude-sonnet-4-5-20250929";
+          contextWindow = 200000;
+          maxTokens = 64000;
+        }
+        {
+          id = "claude-sonnet-4-20250514";
+          contextWindow = 200000;
+          maxTokens = 64000;
+        }
+        {
+          id = "claude-haiku-4-5-20251001";
+          contextWindow = 200000;
+          maxTokens = 16000;
+        }
+        {
+          id = "claude-opus-4-20250514";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-opus-4-5-20251101";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-opus-4-1-20250805";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-opus-4-6";
+          contextWindow = 200000;
+          maxTokens = 32000;
+        }
+        {
+          id = "claude-opus-4-6-thinking";
+          contextWindow = 200000;
+          maxTokens = 32000;
+          reasoning = true;
+        }
+        {
+          id = "claude-3-7-sonnet-20250219";
+          contextWindow = 200000;
+          maxTokens = 64000;
+          reasoning = true;
+        }
+        {
+          id = "claude-3-5-haiku-20241022";
+          contextWindow = 200000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gpt-5.5";
+          contextWindow = 128000;
+          maxTokens = 16384;
+        }
+        {
+          id = "gpt-5.4";
+          contextWindow = 128000;
+          maxTokens = 16384;
+        }
+        {
+          id = "gpt-5.4-mini";
+          contextWindow = 128000;
+          maxTokens = 16384;
+        }
+        {
+          id = "gpt-5.3-codex-spark";
+          contextWindow = 128000;
+          maxTokens = 16384;
+        }
+        {
+          id = "gpt-oss-120b-medium";
+          contextWindow = 128000;
+          maxTokens = 16384;
+        }
+        {
+          id = "gemini-3-pro-high";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3-pro-low";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3.1-pro-low";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3-flash";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3.1-flash-image";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3.1-flash-lite";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+        {
+          id = "gemini-3.5-flash-low";
+          contextWindow = 1000000;
+          maxTokens = 8192;
+        }
+      ];
+    };
+  };
+
+  home.packages = with pkgs; [
+    pi-coding-agent-bin
+    ketch
+  ];
 
   sops.templates."ketch-config".path = ".config/ketch/config.json";
   sops.templates."ketch-config".mode = "0600";

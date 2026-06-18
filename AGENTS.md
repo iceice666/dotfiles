@@ -27,7 +27,7 @@ common/              # shared modules injected by mk-host into every host
     agent-skills.nix # shared agent-agnostic personal skills
     claude.nix       # Claude Code config symlinks
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
-    pi.nix           # Pi coding-agent ketch extension (features.pi)
+    pi.nix           # Pi coding-agent: ketch extension + CLIProxyAPI provider (features.pi)
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
     packages-gui.nix # GUI binaries: claude-code-bin, equibop-bin, zen-bin, …
@@ -206,8 +206,9 @@ A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` an
 
 ## Web, Code, and Docs Research
 
-Pi is configured through `common/home-base/pi.nix` to install `ketch` and expose these Pi tools: `ketch_search`, `ketch_scrape`, `ketch_code`, and `ketch_docs`.
-Use them for external web research, URL fetching, OSS code examples, and library docs when repository-local information is insufficient.
+Pi is configured through `common/home-base/pi.nix` to install `ketch` and the `pi-coding-agent-bin` binary, expose ketch tools (`ketch_search`, `ketch_scrape`, `ketch_code`, `ketch_docs`), and wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions.
+Use Pi tools for external web research, URL fetching, OSS code examples, and library docs when repository-local information is insufficient.
+The `cliproxyapi` provider is enabled on homolab, lumo, m3air, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
 
 ## Build, Format, and Validation Commands
 
@@ -392,7 +393,7 @@ trust boundary:
 
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
-- `hosts/homolab/services/ai/cliproxyapi.nix` — OpenAI-compatible proxy; touches auth and routing.
+- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo; touches auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.

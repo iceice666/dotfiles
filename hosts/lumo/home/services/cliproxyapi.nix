@@ -14,6 +14,7 @@ let
 
   apiKeyPath = config.sops.secrets.cliproxyapi-api-key.path;
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
+  sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
 
   # CLIProxyAPI is a prebuilt glibc binary; lumo is Alpine (musl).
   # Run through the Nix glibc loader so shared libraries resolve.
@@ -61,6 +62,12 @@ in
     mode = "0400";
   };
 
+  sops.secrets.cliproxyapi-shared-api-key = {
+    sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
+    key = "apiKey";
+    mode = "0400";
+  };
+
   home.activation.lumoCliproxyapi = lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" ] ''
         if ! /usr/bin/getent group cliproxyapi >/dev/null; then
           /usr/sbin/addgroup -S cliproxyapi
@@ -75,6 +82,7 @@ in
 
         api_key="$(cat '${apiKeyPath}')"
         management_key="$(cat '${managementKeyPath}')"
+        shared_api_key="$(cat '${sharedApiKeyPath}')"
 
         cat > ${configPath} << EOF
     host: "0.0.0.0"
@@ -90,6 +98,7 @@ in
 
     api-keys:
       - $api_key
+      - $shared_api_key
 
     debug: false
 
