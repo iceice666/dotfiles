@@ -24,6 +24,10 @@ switch: _kaguya-cache
     nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
     sudo ./result/bin/switch-to-configuration switch
 
+# Apply the local host plus all remote host configurations
+[group('host')]
+switch-all: switch homolab-switch gateway-switch gce-dns-switch lumo-switch
+
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
 [macos]
