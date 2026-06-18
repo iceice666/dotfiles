@@ -25,7 +25,7 @@ in
     mode = "0400";
   };
 
-  sops.templates."pi-models".path = ".pi/agent/models.json";
+  sops.templates."pi-models".path = "${config.home.homeDirectory}/.pi/agent/models.json";
   sops.templates."pi-models".mode = "0600";
   sops.templates."pi-models".content = builtins.toJSON {
     providers.cliproxyapi = {
@@ -178,7 +178,7 @@ in
     ketch
   ];
 
-  sops.templates."ketch-config".path = ".config/ketch/config.json";
+  sops.templates."ketch-config".path = "${config.home.homeDirectory}/.config/ketch/config.json";
   sops.templates."ketch-config".mode = "0600";
   sops.templates."ketch-config".content = ''
     {
