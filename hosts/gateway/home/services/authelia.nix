@@ -54,6 +54,10 @@ let
           domain = homolab.domains.traefik;
           policy = "two_factor";
         }
+        {
+          domain = homolab.domains.cliproxyapi;
+          policy = "two_factor";
+        }
       ];
     };
 

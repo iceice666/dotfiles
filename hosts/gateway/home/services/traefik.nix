@@ -193,9 +193,19 @@ let
         service = "noop@internal";
       };
 
+      # /v1/* — public API, clients authenticate with their own API key
+      cliproxyapi-api = {
+        rule = mkHostPathRule homolab.domains.cliproxyapi "PathPrefix(`/v1`)";
+        entryPoints = [ "websecure" ];
+        service = "cliproxyapi";
+        tls.certResolver = "letsencrypt";
+      };
+
+      # Dashboard — Authelia protected
       cliproxyapi = {
         rule = mkHostRule homolab.domains.cliproxyapi;
         entryPoints = [ "websecure" ];
+        middlewares = [ "authelia@file" ];
         service = "cliproxyapi";
         tls.certResolver = "letsencrypt";
       };
