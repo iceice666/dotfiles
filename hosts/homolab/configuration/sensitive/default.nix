@@ -3,7 +3,6 @@
 {
   imports = [
     ./edge.nix
-    ./ai.nix
   ];
 
   sops = {

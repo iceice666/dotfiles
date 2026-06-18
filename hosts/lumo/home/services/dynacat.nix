@@ -199,9 +199,9 @@ let
                 "max-columns" = 3;
                 widgets = [
                   (mkMonitorWidget "Public" [
-                    (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${homolab.urls.cliproxyapi}/management.html" (
-                      mkHomolabUrl homolab.ports.cliproxyapi "/healthz"
-                    ))
+                    (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${homolab.urls.cliproxyapi}/management.html"
+                      (mkLocalUrl homolab.ports.cliproxyapi "/healthz")
+                    )
                   ])
                   (mkMonitorWidget "Infra" [
                     (mkMonitorSite "Traefik" serviceIcons.proxy homolab.urls.traefik (

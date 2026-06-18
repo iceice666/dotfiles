@@ -48,6 +48,7 @@
     lumo-grafana
     lumo-dynacat
     lumo-dev-port-proxy
+    lumo-cliproxyapi
     '
 
     if [ -f "$manifest" ]; then

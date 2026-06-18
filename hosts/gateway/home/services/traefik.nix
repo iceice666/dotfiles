@@ -266,7 +266,7 @@ let
         { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
       ];
       cliproxyapi.loadBalancer.servers = [
-        { url = "http://${homolab.network.lan.address}:${toString homolab.ports.cliproxyapi}"; }
+        { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}"; }
       ];
       grafana.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }

@@ -121,8 +121,8 @@ table inet dotfiles {
     ip6 nexthdr ipv6-icmp accept
     udp dport 41641 accept
     ip saddr 192.168.1.0/24 tcp dport 22 accept
-    # gateway (192.168.1.129) proxies dynacat/devPortProxy/grafana to lumo
-    ip saddr { 192.168.1.127, 192.168.1.129 } tcp dport { 18075, 18076, 18084 } accept
+    # gateway (192.168.1.129) proxies dynacat/devPortProxy/grafana/cliproxyapi to lumo
+    ip saddr { 192.168.1.127, 192.168.1.129 } tcp dport { 18075, 18076, 18084, 20129 } accept
   }
 
   chain forward {

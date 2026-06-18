@@ -131,7 +131,7 @@ let
         static_configs = [
           {
             targets = [
-              "http://${homolab.network.lan.address}:${toString homolab.ports.cliproxyapi}/healthz"
+              "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}/healthz"
             ];
             labels = {
               instance = homolab.hostName;

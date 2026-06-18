@@ -14,7 +14,7 @@ let
 
     # Update last-active if any LLM or SSH connections are established.
     if ${pkgs.iproute2}/bin/ss -tnH state established | \
-            ${pkgs.gnugrep}/bin/grep -qE ':(${toString homolab.ports.shimmy}|${toString homolab.ports.cliproxyapi}|${toString homolab.ports.ssh})'; then
+            ${pkgs.gnugrep}/bin/grep -qE ':(${toString homolab.ports.shimmy}|${toString homolab.ports.ssh})'; then
         ${pkgs.coreutils}/bin/date +%s > "$last_active_file"
         exit 0
     fi

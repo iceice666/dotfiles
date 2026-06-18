@@ -34,7 +34,6 @@ in
       "127.0.0.1" = [
         homolab.domains.auth
         homolab.domains.dns
-        homolab.domains.cliproxyapi
         homolab.domains.home
         homolab.domains.traefik
         homolab.domains.npu
@@ -62,10 +61,6 @@ in
       allowedTCPPorts = [ ];
 
       extraCommands = ''
-        # CLIProxyAPI: LAN only
-        ${mkIpv4AcceptRule homolab.ports.cliproxyapi lanCidr}
-        ${mkDropRule homolab.ports.cliproxyapi}
-
         # Development ports are blocked; routing goes through gateway Traefik.
         ${mkRangeDropRule devPortRange}
 
@@ -74,9 +69,6 @@ in
       '';
 
       extraStopCommands = ''
-        ${mkIpv4DeleteRule homolab.ports.cliproxyapi lanCidr}
-        ${mkDeleteDropRule homolab.ports.cliproxyapi}
-
         ${mkDeleteRangeDropRule devPortRange}
 
         ${mkDeleteDropRule homolab.ports.shimmy}

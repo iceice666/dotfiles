@@ -195,22 +195,6 @@ in
           tls.certResolver = "letsencrypt";
         };
 
-        cliproxyapi-http = {
-          rule = mkHostRule homolab.domains.cliproxyapi;
-          entryPoints = [ "web" ];
-
-          middlewares = [ "redirect-to-https@file" ];
-          service = "noop@internal";
-        };
-
-        cliproxyapi = {
-          rule = mkHostRule homolab.domains.cliproxyapi;
-          entryPoints = [ "websecure" ];
-
-          service = "cliproxyapi";
-          tls.certResolver = "letsencrypt";
-        };
-
         grafana-http = {
           rule = mkPrivateHostRule homolab.domains.grafana;
           entryPoints = [ "web" ];
@@ -283,9 +267,6 @@ in
       http.services = {
         authelia.loadBalancer.servers = [
           { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
-        ];
-        cliproxyapi.loadBalancer.servers = [
-          { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}"; }
         ];
         grafana.loadBalancer.servers = [
           { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }
