@@ -19,9 +19,9 @@ in
     mode = "0400";
   };
 
-  sops.secrets.cliproxyapi_api_key = {
+  sops.secrets.cliproxyapi_homonet_api_key = {
     sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
-    key = "apiKey";
+    key = "homonetApiKey";
     mode = "0400";
   };
 
@@ -31,7 +31,7 @@ in
     providers.cliproxyapi = {
       baseUrl = "${homolab.urls.cliproxyapi}/v1";
       api = "openai-completions";
-      apiKey = config.sops.placeholder.cliproxyapi_api_key;
+      apiKey = config.sops.placeholder.cliproxyapi_homonet_api_key;
       compat = {
         supportsDeveloperRole = false;
         supportsReasoningEffort = false;

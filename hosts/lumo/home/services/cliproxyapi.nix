@@ -12,7 +12,7 @@ let
   configPath = "/var/lib/cliproxyapi/config.yaml";
   port = homolab.ports.cliproxyapi;
 
-  apiKeyPath = config.sops.secrets.cliproxyapi-api-key.path;
+  homonetApiKeyPath = config.sops.secrets.cliproxyapi-homonet-api-key.path;
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
 
@@ -50,9 +50,9 @@ let
   '';
 in
 {
-  sops.secrets.cliproxyapi-api-key = {
+  sops.secrets.cliproxyapi-homonet-api-key = {
     sopsFile = dotfiles + /sensitive/hosts/lumo/cliproxyapi.yaml;
-    key = "apiKey";
+    key = "homonetApiKey";
     mode = "0400";
   };
 
@@ -80,7 +80,7 @@ in
         install -d -m 0750 -o cliproxyapi -g cliproxyapi ${dataDir}/auths
         install -d -m 0750 -o cliproxyapi -g cliproxyapi ${dataDir}/plugins
 
-        api_key="$(cat '${apiKeyPath}')"
+        homonet_api_key="$(cat '${homonetApiKeyPath}')"
         management_key="$(cat '${managementKeyPath}')"
         shared_api_key="$(cat '${sharedApiKeyPath}')"
 
@@ -97,7 +97,7 @@ in
     auth-dir: "${dataDir}/auths"
 
     api-keys:
-      - $api_key
+      - $homonet_api_key
       - $shared_api_key
 
     debug: false
