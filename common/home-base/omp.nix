@@ -13,6 +13,27 @@ let
     id: contextWindow: maxTokens: reasoning:
     { inherit id contextWindow maxTokens; } // lib.optionalAttrs reasoning { inherit reasoning; };
 
+  # Claude models are served over CLIProxyAPI's native Anthropic /v1/messages
+  # endpoint. On the OpenAI-completions path omp routes reasoning by appending a
+  # "-thinking" suffix to the model id (e.g. claude-sonnet-4-6-thinking), which
+  # CLIProxyAPI has no provider mapping for -> "502 unknown provider". On the
+  # anthropic-messages path omp keeps the plain model id and carries reasoning in
+  # the request body (thinking.type/budget_tokens), which CLIProxyAPI accepts.
+  # Declaring an explicit thinking block also strips omp's synthesized suffix
+  # routing for the model.
+  mkClaudeThinkingModel = id: contextWindow: maxTokens: {
+    inherit id contextWindow maxTokens;
+    thinking = {
+      mode = "anthropic-budget-effort";
+      efforts = [
+        "minimal"
+        "low"
+        "medium"
+        "high"
+      ];
+    };
+  };
+
   # apiKey is injected at activation by sops; a sentinel is serialized into the
   # YAML and then replaced with the runtime placeholder string.
   apiKeySentinel = "@@CLIPROXYAPI_API_KEY@@";
@@ -27,9 +48,6 @@ let
         supportsReasoningEffort = true;
       };
       models = [
-        (mkModel "claude-opus-4-8" 200000 32000 false)
-        (mkModel "claude-sonnet-4-6" 200000 64000 false)
-        (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
         (mkModel "gpt-5.5" 128000 16384 false)
         (mkModel "gpt-5.4" 128000 16384 false)
         (mkModel "gpt-5.4-mini" 128000 16384 false)
@@ -42,6 +60,17 @@ let
         (mkModel "gemini-3.1-flash-image" 1000000 8192 false)
         (mkModel "gemini-3.1-flash-lite" 1000000 8192 false)
         (mkModel "gemini-3.5-flash-low" 1000000 8192 false)
+      ];
+    };
+    # Claude on the native Anthropic endpoint (see mkClaudeThinkingModel note).
+    providers.cliproxyapi-claude = {
+      baseUrl = homolab.urls.cliproxyapi;
+      api = "anthropic-messages";
+      apiKey = apiKeySentinel;
+      models = [
+        (mkClaudeThinkingModel "claude-opus-4-8" 200000 32000)
+        (mkClaudeThinkingModel "claude-sonnet-4-6" 200000 64000)
+        (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
       ];
     };
   };
@@ -64,20 +93,21 @@ let
     setupVersion = 1;
     modelRoles = {
       default = "cliproxyapi/gpt-5.5:medium"; # $5/$30, 128K ctx, vision
-      slow = "cliproxyapi/claude-opus-4-8:high"; # hardest problems
+      slow = "cliproxyapi-claude/claude-opus-4-8:high"; # hardest problems
       smol = "opencode-go/mimo-v2.5"; # $0.14/$0.28, 1M ctx, vision
       title = "smol";
       commit = "github-copilot/gemini-3-flash-preview";
-      task = "cliproxyapi/claude-sonnet-4-6";
+      task = "cliproxyapi-claude/claude-sonnet-4-6";
       plan = "opencode-go/glm-5.2:high"; # GLM 5.2
-      designer = "cliproxyapi/claude-sonnet-4-6";
+      designer = "cliproxyapi-claude/claude-sonnet-4-6";
       vision = "cliproxyapi/gemini-3-flash";
-      advisor = "cliproxyapi/claude-sonnet-4-6:medium";
+      advisor = "cliproxyapi-claude/claude-sonnet-4-6:medium";
     };
     # Globs keep cliproxyapi + opencode-go fully open; github-copilot is pinned
     # to included / low-multiplier models so Edu Pro premium quota is preserved.
     enabledModels = [
       "cliproxyapi/*"
+      "cliproxyapi-claude/*"
       "opencode-go/*"
       "github-copilot/gpt-4.1"
       "github-copilot/gpt-4o"
@@ -97,15 +127,15 @@ let
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
-        "cliproxyapi/claude-opus-4-8"
-        "cliproxyapi/claude-sonnet-4-6"
+        "cliproxyapi-claude/claude-opus-4-8"
+        "cliproxyapi-claude/claude-sonnet-4-6"
       ];
       slow = [
         "cliproxyapi/gpt-5.5"
-        "cliproxyapi/claude-sonnet-4-6"
+        "cliproxyapi-claude/claude-sonnet-4-6"
       ];
       task = [
-        "cliproxyapi/claude-opus-4-8"
+        "cliproxyapi-claude/claude-opus-4-8"
         "cliproxyapi/gpt-5.5"
       ];
     };
