@@ -193,15 +193,10 @@ theme-preview image='':
 update *inputs:
     nix flake update {{ inputs }}
 
-# Ask a coding agent to update custom package versions and commit the result
+# Update custom packages to their latest upstream releases
 [group('flake')]
-update-custom-pkgs agent='codex':
-    {{ scripts }}/update-custom-pkgs-agent '{{ agent }}' '{{ repo_root }}'
-
-# Update custom binary packages to their latest GitHub releases
-[group('flake')]
-update-pkgs *args:
-    {{ scripts }}/update-pkgs {{ args }}
+update-pkgs:
+    omp -p --auto-approve /skill:update-pkgs
 
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]
