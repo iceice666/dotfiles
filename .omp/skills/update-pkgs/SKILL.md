@@ -28,7 +28,9 @@ Packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `
 For each:
 1. Read `pkgs/<name>/default.nix` to extract `repo`, `version`, `tag_prefix`, and platform URLs.
 2. Query the GitHub API for the latest release: `gh api /repos/<owner>/<repo>/releases/latest` (or scan releases for non-standard tag prefixes).
-3. Download each platform archive and compute the SRI sha256 hash. Prefer `nix-prefetch-url <url>`; fallback to `curl | sha256sum | base64`.
+3. Download each platform archive and compute the SRI sha256 hash. Use `scripts/prefetch-hashes` which downloads URLs sequentially and outputs `<url> <sri-hash>` pairs with unambiguous mapping. Fallback to `nix-prefetch-url <url>` for single URLs; never run multiple `nix-prefetch-url` calls in parallel.
+   - **NEVER run parallel `nix-prefetch-url` calls**: Results arrive in completion order (fastest first), not dispatch order. Even parallel calls within a single package (across platforms) will scramble hash-to-URL mapping. Always prefetch sequentially — one URL at a time. Use timeouts of 300-600s for large files (DMGs, multi-100MB archives).
+   - **Use build errors to correct hashes**: If you suspect a hash mapping error, run `nix build .#<name>` — the error message will show the correct hash for the URL.
 4. Replace `version` and each `hash` in the `.nix` file.
 
 ### Source tarballs
@@ -61,8 +63,9 @@ Packages: `kaguya-bin`.
 
 - Run `just fmt` after editing.
 - Run the narrowest relevant build or check that validates the changed packages:
-  - Standalone packages: `nix build .#<name>`
-  - If the package has no standalone flake output, validate through an owning host build as described in `AGENTS.md`.
+  - Standalone packages: `nix build .#<name>` — works for most overlay packages on their supported platforms.
+  - Some packages are not exposed as standalone flake outputs on all platforms (e.g. `zen-bin` on darwin uses the local `pkgs/zen-bin` package through the overlay but is not in `packages.aarch64-darwin`). For these, validate through a host build: `nix build .#darwinConfigurations.m3air.config.system.build.toplevel --dry-run` or the matching `just <host>-build` recipe.
+  - Linux-only packages (`blocky-bin`, `cliproxyapi-bin`) cannot be built on darwin. Validate hashes through the build on a linux host, or accept that `nix-prefetch-url` is authoritative and document the gap.
 - If validation cannot be completed, explain the blocker in the commit body or final response.
 
 ## Commit
