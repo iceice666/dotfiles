@@ -46,15 +46,24 @@ in
       customDNS = {
         customTTL = "5m";
         filterUnmappedTypes = true;
-        mapping.${homolab.domains.root} = homolab.hosts.gateway.tailnet;
+        mapping = {
+          ${homolab.domains.auth} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.dns} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.grafana} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.cliproxyapi} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.traefik} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.home} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.dev} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.npu} = homolab.hosts.gateway.tailnet;
+        };
         zone = ''
           inm.${homolab.domains.root}. 5m IN SRV 0 0 0 .
           miaq.${homolab.domains.root}. 5m IN SRV 0 0 0 .
         '';
       };
 
-      # SRV-only entries and domains that should bypass the root mapping
-      # are resolved through public upstream DNS instead.
+      # Domains NOT listed in customDNS.mapping above resolve through
+      # conditional mapping → public upstreams instead of the gateway IP.
       conditional.mapping = {
         "inm.${homolab.domains.root}" = publicResolverEndpoints;
         "miaq.${homolab.domains.root}" = publicResolverEndpoints;
