@@ -92,10 +92,22 @@ let
     # Cross-model fallback: when a model errors or hits a usage limit and no
     # sibling credential is free, switch to the next selector in its chain
     # (zero delay), then revert once the cooldown expires. All cliproxyapi.
+    # NOTE: chains are keyed by ROLE name (default/slow/task/...), not by model
+    # selector — omp resolves each key via getModelRole(), so a model-selector
+    # key silently never matches and fallback never fires.
     retry.fallbackChains = {
-      "cliproxyapi/gpt-5.5" = [ "cliproxyapi/claude-opus-4-8" "cliproxyapi/claude-sonnet-4-6" ];
-      "cliproxyapi/claude-opus-4-8" = [ "cliproxyapi/gpt-5.5" "cliproxyapi/claude-sonnet-4-6" ];
-      "cliproxyapi/gpt-5.3-codex-spark" = [ "cliproxyapi/claude-opus-4-8" "cliproxyapi/gpt-5.5" ];
+      default = [
+        "cliproxyapi/claude-opus-4-8"
+        "cliproxyapi/claude-sonnet-4-6"
+      ];
+      slow = [
+        "cliproxyapi/gpt-5.5"
+        "cliproxyapi/claude-sonnet-4-6"
+      ];
+      task = [
+        "cliproxyapi/claude-opus-4-8"
+        "cliproxyapi/gpt-5.5"
+      ];
     };
   };
 
