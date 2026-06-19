@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Prefetch URLs in parallel and output URL → SRI hash pairs in original order.
+
+Runs `nix-prefetch-url` for each URL concurrently using threads, then prints
+results in the same order the URLs were given. Each subprocess has its own
+stdout pipe, so hash-to-URL mapping is never ambiguous — no completion-order
+pitfall.
+
+Usage:
+    scripts/prefetch-hashes URL1 URL2 URL3 ...
+    echo "URL1\nURL2" | scripts/prefetch-hashes --stdin
+    scripts/prefetch-hashes --file urls.txt
+
+Options:
+    --timeout SECONDS    Per-URL download timeout (default: 600)
+    --workers N          Concurrent downloads (default: number of URLs, max 8)
+    --stdin              Read URLs from stdin
+    --file PATH          Read URLs from file (# comments and blank lines ignored)
+
+Output format (one per line, in input order):
+    <url> <sri-hash>
+"""
+
+import concurrent.futures
+import subprocess
+import sys
+import threading
+
+
+def prefetch(url: str, timeout: int = 600) -> str:
+    """Download a URL with nix-prefetch-url and return the SRI hash."""
+    result = subprocess.run(
+        ["nix-prefetch-url", "--type", "sha256", url],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    if result.returncode != 0:
+        err = result.stderr.strip()
+        raise RuntimeError(f"nix-prefetch-url failed: {err}" if err else f"exit code {result.returncode}")
+
+    nix_hash = result.stdout.strip()
+
+    sri_result = subprocess.run(
+        ["nix", "hash", "to-sri", "--type", "sha256", nix_hash],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if sri_result.returncode != 0:
+        raise RuntimeError(f"nix hash to-sri failed: {sri_result.stderr.strip()}")
+
+    return sri_result.stdout.strip()
+
+
+def main():
+    args = sys.argv[1:]
+    urls = []
+    timeout = 600
+    workers = None
+    mode = "positional"
+    file_path = None
+
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--stdin":
+            mode = "stdin"
+        elif arg == "--file":
+            mode = "file"
+            i += 1
+            if i >= len(args):
+                print("error: --file requires a path argument", file=sys.stderr)
+                sys.exit(1)
+            file_path = args[i]
+        elif arg == "--timeout":
+            i += 1
+            if i >= len(args):
+                print("error: --timeout requires a value", file=sys.stderr)
+                sys.exit(1)
+            timeout = int(args[i])
+        elif arg == "--workers":
+            i += 1
+            if i >= len(args):
+                print("error: --workers requires a value", file=sys.stderr)
+                sys.exit(1)
+            workers = int(args[i])
+        elif arg.startswith("--"):
+            print(f"error: unknown option {arg}", file=sys.stderr)
+            sys.exit(1)
+        else:
+            urls.append(arg)
+        i += 1
+
+    if mode == "stdin":
+        urls = [line.strip() for line in sys.stdin if line.strip()]
+    elif mode == "file":
+        with open(file_path) as f:
+            urls = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+    if not urls:
+        print(__doc__.strip())
+        sys.exit(1)
+
+    if workers is None:
+        workers = min(len(urls), 8)
+
+    print(f"# Prefetching {len(urls)} URL(s) in parallel (workers={workers}, timeout={timeout}s)...",
+          file=sys.stderr, flush=True)
+
+    results = {}
+    failed = []
+    done_count = 0
+    lock = threading.Lock()
+
+    def fetch_one(idx, url):
+        nonlocal done_count
+        try:
+            sri = prefetch(url, timeout=timeout)
+            with lock:
+                results[idx] = sri
+                done_count += 1
+                print(f"[{done_count}/{len(urls)}] OK  {url}", file=sys.stderr, flush=True)
+        except Exception as e:
+            with lock:
+                failed.append((idx, url, str(e)))
+                done_count += 1
+                print(f"[{done_count}/{len(urls)}] FAIL  {url}  ({e})", file=sys.stderr, flush=True)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(fetch_one, i, url) for i, url in enumerate(urls)]
+        concurrent.futures.wait(futures)
+
+    # Print results in original URL order
+    for i, url in enumerate(urls):
+        if i in results:
+            print(f"{url} {results[i]}")
+        else:
+            print(f"{url} FAILED")
+
+    if failed:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
