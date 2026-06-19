@@ -120,9 +120,12 @@ in
     proxy-url: ""
     force-model-prefix: false
     passthrough-headers: false
-    request-retry: 3
+    streaming:
+      keepalive-seconds: 10
+      bootstrap-retries: 2
+    request-retry: 5
     max-retry-credentials: 0
-    max-retry-interval: 30
+    max-retry-interval: 60
     disable-cooling: false
     quota-exceeded:
       switch-project: true
