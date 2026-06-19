@@ -303,6 +303,7 @@ fn run_daemon(cfg: Arc<Config>) -> Result<()> {
     spawn_media_thread(cfg.clone(), tx.clone());
     spawn_network_thread(cfg.clone(), tx.clone());
     spawn_datetime_thread(tx.clone());
+    spawn_theme_thread(cfg.clone(), tx.clone());
     spawn_notifications_thread(cfg.clone(), tx);
 
     update_loop(cfg, rx)
@@ -605,6 +606,15 @@ fn spawn_datetime_thread(tx: mpsc::Sender<Vars>) {
         loop {
             send_vars(&tx, datetime_vars());
             thread::sleep(Duration::from_secs(1));
+        }
+    });
+}
+
+fn spawn_theme_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
+    thread::spawn(move || {
+        loop {
+            send_vars(&tx, theme_vars(&cfg));
+            thread::sleep(Duration::from_secs(3));
         }
     });
 }
@@ -1635,6 +1645,20 @@ fn datetime_vars() -> Vars {
     vars.insert(
         "datetime_time".to_string(),
         format!("{:02}:{:02}", now.hour(), now.minute()),
+    );
+    vars
+}
+
+fn theme_vars(cfg: &Config) -> Vars {
+    let mut vars = Vars::new();
+    vars.insert(
+        "cc_icon".to_string(),
+        theme_color(cfg, "foreground", "#e5e5e5"),
+    );
+    vars.insert("cc_accent".to_string(), theme_color(cfg, "primary", "#60a5fa"));
+    vars.insert(
+        "cc_on_accent".to_string(),
+        theme_color(cfg, "onPrimary", "#0b0f17"),
     );
     vars
 }

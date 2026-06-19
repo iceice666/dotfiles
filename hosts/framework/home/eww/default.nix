@@ -3,6 +3,7 @@
   lib,
   pkgs,
   unstablePkgs,
+  lockScreen,
   ...
 }:
 
@@ -61,6 +62,30 @@ let
     tray = pkgs.writeText "eww-tray.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M4 5h16v4H4z"/><path d="M4 11h7v8H4z"/><path d="M13 11h7v8h-7z"/></svg>
     '';
+    bluetooth = pkgs.writeText "eww-bluetooth.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M17.71 7.71 12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+    '';
+    clear = pkgs.writeText "eww-clear.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zM6 8h12l-1 13H7L6 8z"/></svg>
+    '';
+    darkMode = pkgs.writeText "eww-dark-mode.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    '';
+    lock = pkgs.writeText "eww-lock.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12 2a5 5 0 0 0-5 5v3H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>
+    '';
+    logout = pkgs.writeText "eww-logout.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm7 5-1.41 1.41L17.17 11H9v2h8.17l-1.58 1.59L17 16l4-4-4-4z"/></svg>
+    '';
+    reboot = pkgs.writeText "eww-reboot.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+    '';
+    shutdown = pkgs.writeText "eww-shutdown.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M11 2h2v10h-2V2zM7.8 5.2 6.4 6.6a7 7 0 1 0 11.2 0l-1.4-1.4a5 5 0 1 1-8.4 0z"/></svg>
+    '';
+    suspend = pkgs.writeText "eww-suspend.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
+    '';
   };
 
   stateBinary = lib.getExe pkgs.framework-eww-state;
@@ -107,10 +132,129 @@ let
     toggleSpeaker = "${stateCommand} audio toggle speaker";
   };
 
+  ccCtl = pkgs.writeShellScript "framework-cc-ctl" ''
+    set -u
+    nmcli=${pkgs.networkmanager}/bin/nmcli
+    bluetoothctl=${pkgs.bluez}/bin/bluetoothctl
+    makoctl=${unstablePkgs.mako}/bin/makoctl
+    darkman=${pkgs.darkman}/bin/darkman
+    grep=${pkgs.gnugrep}/bin/grep
+
+    state() {
+      case "$1" in
+        wifi) [ "$("$nmcli" -t radio wifi 2>/dev/null)" = enabled ] && echo on || echo off ;;
+        bt) "$bluetoothctl" show 2>/dev/null | "$grep" -q "Powered: yes" && echo on || echo off ;;
+        dnd) "$makoctl" mode 2>/dev/null | "$grep" -q "do-not-disturb" && echo on || echo off ;;
+        dark) [ "$("$darkman" get 2>/dev/null)" = dark ] && echo on || echo off ;;
+        *) echo off ;;
+      esac
+    }
+
+    toggle() {
+      case "$1" in
+        wifi) if [ "$(state wifi)" = on ]; then "$nmcli" radio wifi off; else "$nmcli" radio wifi on; fi ;;
+        bt) if [ "$(state bt)" = on ]; then "$bluetoothctl" power off; else "$bluetoothctl" power on; fi ;;
+        dnd) "$makoctl" mode -t do-not-disturb ;;
+        dark) "$darkman" toggle ;;
+      esac
+    }
+
+    case "''${1:-}" in
+      state) state "''${2:-}" ;;
+      toggle)
+        toggle "''${2:-}" >/dev/null 2>&1 || true
+        ${pkgs.coreutils}/bin/sleep 0.2
+        ${pkgs.eww}/bin/eww --config ${ewwConfigDir} update "cc_''${2:-}=$(state "''${2:-}")" >/dev/null 2>&1 || true
+        ;;
+    esac
+  '';
+
+  ccCmd = pkgs.writeShellScript "framework-cc-cmd" ''
+    set -u
+    case "''${1:-}" in
+      lock) exec ${lockScreen} lock --daemonize ;;
+      suspend) exec ${pkgs.systemd}/bin/systemctl suspend ;;
+      reboot) exec ${pkgs.systemd}/bin/systemctl reboot ;;
+      shutdown) exec ${pkgs.systemd}/bin/systemctl poweroff ;;
+      logout) exec ${unstablePkgs.niri}/bin/niri msg action quit ;;
+      clear-notifications) exec ${unstablePkgs.mako}/bin/makoctl dismiss --all ;;
+      toggle)
+        ${pkgs.eww}/bin/eww --config ${ewwConfigDir} update cc_view=home >/dev/null 2>&1 || true
+        exec ${pkgs.eww}/bin/eww --config ${ewwConfigDir} open --toggle --arg monitor="''${2:-}" control-center ;;
+      open-bluetooth) exec ${pkgs.overskride}/bin/overskride ;;
+      open-audio) exec ${pkgs.pavucontrol}/bin/pavucontrol ;;
+    esac
+  '';
+
+  ccWifi = pkgs.writeShellScript "framework-cc-wifi" ''
+    set -u
+    nmcli=${pkgs.networkmanager}/bin/nmcli
+    jq=${pkgs.jq}/bin/jq
+    awk=${pkgs.gawk}/bin/awk
+    eww="${pkgs.eww}/bin/eww --config ${ewwConfigDir}"
+
+    scan() {
+      known=$("$nmcli" -t -f NAME connection show 2>/dev/null)
+      "$nmcli" -m multiline -f ACTIVE,SIGNAL,SECURITY,SSID device wifi list 2>/dev/null \
+      | "$awk" 'function val(s){sub(/^[A-Z]*:[ \t]*/,"",s);sub(/[ \t]+$/,"",s);return s}
+          /^ACTIVE:/{a=val($0)} /^SIGNAL:/{sig=val($0)} /^SECURITY:/{sec=val($0)}
+          /^SSID:/{ssid=val($0); printf "%s\t%s\t%s\t%s\n",a,sig,sec,ssid}' \
+      | "$jq" -R -s -c --arg known "$known" '
+          ($known | split("\n") | map(select(length>0))) as $k
+          | split("\n") | map(select(length>0))
+          | map(split("\t") | {active:(.[0]=="yes"), signal:(.[1]|tonumber? // 0), security:(if (.[2]=="" or .[2]=="--") then "" else .[2] end), ssid:.[3]})
+          | map(select(.ssid != "" and .ssid != "--"))
+          | map(.known = (.ssid as $s | $k | index($s) != null))
+          | group_by(.ssid) | map(. as $g | ($g | max_by(.signal)) + {active: ($g | any(.[]; .active))})
+          | sort_by([(if .active then 0 else 1 end), (-.signal)])
+        '
+    }
+
+    wifi_iface() {
+      "$nmcli" -t -f DEVICE,TYPE device 2>/dev/null | "$awk" -F: '$2=="wifi"{print $1; exit}'
+    }
+
+    refresh() {
+      out=$(scan); [ -n "$out" ] || out="[]"
+      $eww update wifi_networks="$out" >/dev/null 2>&1 || true
+    }
+
+    case "''${1:-}" in
+      scan) out=$(scan); [ -n "$out" ] && printf '%s' "$out" || printf '[]' ;;
+      rescan)
+        "$nmcli" device wifi rescan >/dev/null 2>&1 || true
+        ${pkgs.coreutils}/bin/sleep 1
+        refresh
+        ;;
+      connect)
+        ssid="''${2:-}"
+        [ -n "$ssid" ] || exit 0
+        pw=$($eww get wifi_password 2>/dev/null || true)
+        if "$nmcli" -t -f NAME connection show 2>/dev/null | ${pkgs.gnugrep}/bin/grep -Fxq "$ssid"; then
+          "$nmcli" connection up id "$ssid" >/dev/null 2>&1 || true
+        elif [ -n "$pw" ]; then
+          "$nmcli" device wifi connect "$ssid" password "$pw" >/dev/null 2>&1 || true
+        else
+          "$nmcli" device wifi connect "$ssid" >/dev/null 2>&1 || true
+        fi
+        $eww update wifi_password= wifi_pw_target= >/dev/null 2>&1 || true
+        ${pkgs.coreutils}/bin/sleep 1
+        refresh
+        ;;
+      disconnect)
+        dev=$(wifi_iface)
+        [ -n "$dev" ] && "$nmcli" device disconnect "$dev" >/dev/null 2>&1 || true
+        ${pkgs.coreutils}/bin/sleep 1
+        refresh
+        ;;
+    esac
+  '';
+
   yuckFiles = [
     ./yuck/state.yuck
     ./yuck/bar.yuck
     ./yuck/app-strip.yuck
+    ./yuck/control-center.yuck
   ];
 
   ewwYuck =
@@ -139,6 +283,17 @@ let
         "@trayIcon@"
         "@toggleMic@"
         "@toggleSpeaker@"
+        "@ccCmd@"
+        "@ccCtl@"
+        "@ccWifi@"
+        "@iconBluetooth@"
+        "@iconClear@"
+        "@iconDarkMode@"
+        "@iconLock@"
+        "@iconLogout@"
+        "@iconReboot@"
+        "@iconShutdown@"
+        "@iconSuspend@"
       ]
       [
         (toString icons.batteryUnknown)
@@ -164,6 +319,17 @@ let
         (toString icons.tray)
         stateCommands.toggleMic
         stateCommands.toggleSpeaker
+        (toString ccCmd)
+        (toString ccCtl)
+        (toString ccWifi)
+        (toString icons.bluetooth)
+        (toString icons.clear)
+        (toString icons.darkMode)
+        (toString icons.lock)
+        (toString icons.logout)
+        (toString icons.reboot)
+        (toString icons.shutdown)
+        (toString icons.suspend)
       ]
       (builtins.concatStringsSep "\n\n" (map builtins.readFile yuckFiles));
 in

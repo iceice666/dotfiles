@@ -9,11 +9,29 @@
 
 (defwindow control-center [monitor]
   :monitor monitor
-  :geometry (geometry :x "10px" :y "42px" :width "392px" :height "720px" :anchor "top right")
-  :stacking "fg"
+  :geometry (geometry :x "0" :y "0" :width "100%" :height "100%" :anchor "top center")
+  :stacking "overlay"
   :exclusive false
+  :focusable "ondemand"
   :namespace "framework-eww-control-center"
   (control-center-content))
+
+(defwindow calendar-popup [monitor]
+  :monitor monitor
+  :geometry (geometry :x "0" :y "0" :width "100%" :height "100%" :anchor "top center")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  :namespace "framework-eww-calendar"
+  (calendar-popup-content))
+
+(defwidget calendar-popup-content []
+  (overlay
+    (eventbox :class "cc-backdrop" :onclick "${EWW_CMD} close calendar-popup"
+      (box :hexpand true :vexpand true))
+    (box :class "cc-anchor calendar-anchor" :halign "end" :valign "start"
+      (box :class "control-center-panel calendar-popup-panel" :orientation "v" :space-evenly false
+        (calendar :class "cc-calendar")))))
 
 (defwidget bar-content [monitor]
   (box :class "bar-root" :hexpand true :vexpand true
@@ -26,7 +44,8 @@
       (box :class "right" :space-evenly false :spacing 4 :halign "end" :valign "center"
         (perf-module)
         (battery-module)
-        (datetime-module)
+        (systray-module)
+        (datetime-module :monitor monitor)
         (control-center-button :monitor monitor)))))
 
 (defwidget perf-module []
@@ -57,95 +76,24 @@
       (revealer :class "battery-device-revealer" :transition "slideright" :reveal {battery_revealed} :duration "120ms"
         (label :class "battery-device-label" :text {battery_tooltip})))))
 
-(defwidget datetime-module []
-  (box :class "island datetime" :orientation "v" :space-evenly false :valign "center"
-    (label :class "datetime-date" :limit-width 16 :xalign 0.5 :text {datetime_date})
-    (label :class "datetime-time" :limit-width 8 :xalign 0.5 :text {datetime_time})))
+(defwidget systray-module []
+  (eventbox :class "island tray" :onhover "${EWW_CMD} update systray_revealed=true" :onhoverlost "${EWW_CMD} update systray_revealed=false"
+    (box :class "tray-device" :space-evenly false :spacing 0
+      (box :class "tray-slot" :space-evenly true :valign "center"
+        (image :path "@trayIcon@" :image-width 20 :image-height 20 :fill-svg {battery_color}))
+      (revealer :class "tray-revealer" :transition "slideright" :reveal {systray_revealed} :duration "120ms"
+        (box :class "tray-icons" :space-evenly false
+          (systray :spacing 2 :space-evenly false :icon-size 24 :prepend-new false))))))
+
+(defwidget datetime-module [monitor]
+  (button :class "island datetime" :onclick "${EWW_CMD} open --toggle --arg monitor=${monitor} calendar-popup"
+    (box :orientation "v" :space-evenly false :valign "center"
+      (label :class "datetime-date" :limit-width 16 :xalign 0.5 :text {datetime_date})
+      (label :class "datetime-time" :limit-width 8 :xalign 0.5 :text {datetime_time}))))
 
 (defwidget control-center-button [monitor]
-  (button :class {notifications_count > 0 ? "island control-center-button active" : "island control-center-button"} :onclick "${EWW_CMD} open --toggle --arg monitor=${monitor} control-center"
+  (button :class {notifications_count > 0 ? "island control-center-button active" : "island control-center-button"} :onclick "@ccCmd@ toggle ${monitor}"
     (overlay :class "control-center-stack"
       (box :class "control-center-icon-wrap" :space-evenly false
         (image :path "@controlCenterIcon@" :image-width 23 :image-height 23 :fill-svg {notifications_count > 0 ? notifications_color : battery_color}))
       (label :class "notification-badge" :visible {notifications_count > 0} :halign "end" :valign "start" :limit-width 4 :text {notifications_label}))))
-
-(defwidget control-center-content []
-  (box :class "control-center-panel" :orientation "v" :space-evenly false :spacing 10
-    (box :class "cc-header" :space-evenly false
-      (label :class "cc-title" :xalign 0 :hexpand true :text "Control Center")
-      (button :class "cc-close" :onclick "${EWW_CMD} close control-center"
-        (label :text "Close")))
-    (box :class "cc-grid" :space-evenly true :spacing 8
-      (box :class {network_class} :orientation "v" :space-evenly false :hexpand true
-        (box :class "cc-tile-head" :space-evenly false
-          (image :path "@networkIcon@" :image-width 24 :image-height 24 :fill-svg {battery_color})
-          (label :class "cc-tile-title" :xalign 0 :text "Wi-Fi"))
-        (label :class "cc-tile-main" :xalign 0 :limit-width 18 :text {network_label})
-        (label :class "cc-tile-sub" :xalign 0 :text {network_detail}))
-      (box :class "cc-tile battery-status" :orientation "v" :space-evenly false :hexpand true
-        (box :class "cc-tile-head" :space-evenly false
-          (image :path {battery_icon} :image-width 24 :image-height 24 :fill-svg {battery_color})
-          (label :class "cc-tile-title" :xalign 0 :text "Battery"))
-        (label :class "cc-tile-main" :xalign 0 :text "${battery_value}%")
-        (label :class "cc-tile-sub" :xalign 0 :limit-width 20 :text {battery_tooltip})))
-    (box :class "cc-section sliders" :orientation "v" :space-evenly false :spacing 8
-      (box :class "cc-slider-row" :space-evenly false :spacing 10
-        (button :class {audio_speaker_class} :tooltip {audio_speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@"
-          (image :path {audio_speaker_icon} :image-width 22 :image-height 22 :fill-svg {audio_speaker_color}))
-        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
-          (box :class "cc-slider-labels" :space-evenly false
-            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_speaker_device})
-            (label :class "cc-slider-value" :text {audio_speaker_percent}))
-          (scale :class "cc-scale" :min 0 :max 100 :value {audio_speaker_value} :onchange "@setSpeakerVolume@ {}")))
-      (box :class "cc-slider-row" :space-evenly false :spacing 10
-        (button :class {audio_mic_class} :tooltip {audio_mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@"
-          (image :path {audio_mic_icon} :image-width 22 :image-height 22 :fill-svg {audio_mic_color}))
-        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
-          (box :class "cc-slider-labels" :space-evenly false
-            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_mic_device})
-            (label :class "cc-slider-value" :text {audio_mic_percent}))
-          (scale :class "cc-scale" :min 0 :max 100 :value {audio_mic_value} :onchange "@setMicVolume@ {}")))
-      (box :class "cc-slider-row" :space-evenly false :spacing 10
-        (box :class "cc-slider-icon" :space-evenly true
-          (image :path "@brightnessIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color}))
-        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
-          (box :class "cc-slider-labels" :space-evenly false
-            (label :class "cc-slider-title" :xalign 0 :hexpand true :text "Display")
-            (label :class "cc-slider-value" :text {brightness_text}))
-          (scale :class "cc-scale" :min 1 :max 100 :value {brightness_value} :onchange "@setBrightness@ {}"))))
-    (box :class "cc-section media-panel" :orientation "v" :space-evenly false :spacing 8
-      (box :class "cc-section-head" :space-evenly false
-        (image :path "@mediaIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color})
-        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Now Playing"))
-      (label :class "cc-media-text" :xalign 0 :limit-width 44 :text {media_text == "" ? "No media" : media_text})
-      (box :class "cc-media-actions" :space-evenly true :visible {media_text != ""}
-        (button :class "cc-action-button" :onclick "@previousMedia@"
-          (label :text "Prev"))
-        (button :class "cc-action-button primary" :onclick "@playPauseMedia@"
-          (label :text "Play"))
-        (button :class "cc-action-button" :onclick "@nextMedia@"
-          (label :text "Next"))))
-    (box :class "cc-section tray-panel" :orientation "v" :space-evenly false :spacing 8
-      (box :class "cc-section-head" :space-evenly false
-        (image :path "@trayIcon@" :image-width 22 :image-height 22 :fill-svg {battery_color})
-        (label :class "cc-section-title" :xalign 0 :hexpand true :text "System Tray"))
-      (box :class "cc-tray-icons" :space-evenly false
-        (systray :spacing 6 :space-evenly false :icon-size 24 :prepend-new false)))
-    (box :class "cc-section notifications-panel" :orientation "v" :space-evenly false :spacing 8
-      (box :class "cc-section-head" :space-evenly false
-        (image :path "@notificationIcon@" :image-width 22 :image-height 22 :fill-svg {notifications_color})
-        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Notifications")
-        (label :class "cc-count" :text {notifications_history_count}))
-      (label :class "cc-empty" :visible {notifications_history_count == 0} :xalign 0 :text "No notifications")
-      (box :class "cc-notification-list" :orientation "v" :space-evenly false :spacing 6 :visible {notifications_history_count > 0}
-        (for notification in {notifications_history ?: []}
-          (box :class {notification.class} :orientation "v" :space-evenly false
-            (button :class "cc-notification-summary" :onclick "${EWW_CMD} update notification_expanded_id=${notification_expanded_id == notification.key ? "__none" : notification.key}"
-              (box :space-evenly false :spacing 8
-                (box :class "cc-notification-dot" :visible {notification.unread})
-                (box :orientation "v" :space-evenly false :hexpand true
-                  (label :class "cc-notification-title" :xalign 0 :limit-width 34 :text {notification.summary})
-                  (label :class "cc-notification-preview" :xalign 0 :limit-width 40 :wrap true :text {notification.preview}))
-                (label :class "cc-notification-source" :text {notification.source == "active" ? "Now" : "History"})))
-            (revealer :class "cc-notification-body-wrap" :transition "slidedown" :reveal {notification_expanded_id == notification.key} :duration "140ms"
-              (label :class "cc-notification-body" :xalign 0 :limit-width 46 :wrap true :text {notification.body == "" ? "No details" : notification.body}))))))))

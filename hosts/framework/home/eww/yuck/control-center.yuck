@@ -1,0 +1,177 @@
+(defwidget cc-toggle [icon label state cmd rightcmd]
+  (button :class {state == "on" ? "cc-toggle on" : "cc-toggle"} :onclick cmd :onrightclick rightcmd
+    (box :class "cc-toggle-inner" :space-evenly false :spacing 9 :valign "center"
+      (image :class "cc-toggle-icon" :path icon :image-width 20 :image-height 20 :fill-svg {state == "on" ? cc_accent : cc_icon})
+      (box :orientation "v" :space-evenly false :valign "center" :hexpand true
+        (label :class "cc-toggle-label" :xalign 0 :limit-width 12 :text label)
+        (label :class "cc-toggle-state" :xalign 0 :text {state == "on" ? "On" : "Off"})))))
+
+(defwidget cc-wifi-tile []
+  (box :class {cc_wifi == "on" ? "cc-toggle cc-toggle-split on" : "cc-toggle cc-toggle-split"} :space-evenly false :valign "center"
+    (button :class "cc-toggle-icon-btn" :onclick "@ccCtl@ toggle wifi"
+      (image :class "cc-toggle-icon" :path "@networkIcon@" :image-width 20 :image-height 20 :fill-svg {cc_wifi == "on" ? cc_accent : cc_icon}))
+    (button :class "cc-toggle-expand" :hexpand true :onclick "${EWW_CMD} update cc_view=wifi"
+      (box :space-evenly false :spacing 6 :valign "center"
+        (box :orientation "v" :space-evenly false :valign "center" :hexpand true
+          (label :class "cc-toggle-label" :xalign 0 :limit-width 12 :text "Wi-Fi")
+          (label :class "cc-toggle-state" :xalign 0 :limit-width 12 :text {network_label}))
+        (label :class "cc-chevron" :text "›")))))
+
+(defwidget cc-session-button [icon label cmd]
+  (button :class "cc-session-button" :tooltip label :onclick cmd
+    (image :path icon :image-width 22 :image-height 22 :fill-svg {cc_icon})))
+
+(defwidget cc-row [icon title sub target]
+  (button :class "cc-row" :onclick "${EWW_CMD} update cc_view=${target}"
+    (box :space-evenly false :spacing 10 :valign "center"
+      (image :class "cc-row-icon" :path icon :image-width 20 :image-height 20 :fill-svg {cc_icon})
+      (box :orientation "v" :space-evenly false :valign "center" :hexpand true
+        (label :class "cc-row-title" :xalign 0 :text title)
+        (label :class "cc-row-sub" :xalign 0 :limit-width 24 :visible {sub != ""} :text sub))
+      (label :class "cc-chevron" :text "›"))))
+
+(defwidget cc-back [label]
+  (button :class "cc-back" :onclick "${EWW_CMD} update cc_view=home"
+    (box :space-evenly false :spacing 6 :valign "center"
+      (label :class "cc-back-arrow" :text "‹")
+      (label :class "cc-back-title" :xalign 0 :hexpand true :text label))))
+
+(defwidget cc-home []
+  (box :orientation "v" :space-evenly false :spacing 10
+    (box :class "cc-toggles" :orientation "v" :space-evenly false :spacing 8
+      (box :space-evenly true :spacing 8
+        (cc-wifi-tile)
+        (cc-toggle :icon "@iconBluetooth@" :label "Bluetooth" :state {cc_bt} :cmd "@ccCtl@ toggle bt" :rightcmd "@ccCmd@ open-bluetooth"))
+      (box :space-evenly true :spacing 8
+        (cc-toggle :icon "@notificationIcon@" :label "Silence" :state {cc_dnd} :cmd "@ccCtl@ toggle dnd" :rightcmd "@ccCtl@ toggle dnd")
+        (cc-toggle :icon "@iconDarkMode@" :label "Dark" :state {cc_dark} :cmd "@ccCtl@ toggle dark" :rightcmd "@ccCtl@ toggle dark")))
+    (box :class "cc-section sliders" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (button :class {audio_speaker_class} :tooltip "Sound" :onclick "${EWW_CMD} update cc_view=sound" :onrightclick "@openPavucontrol@"
+          (image :path {audio_speaker_icon} :image-width 22 :image-height 22 :fill-svg {audio_speaker_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_speaker_device})
+            (label :class "cc-slider-value" :text {audio_speaker_percent}))
+          (scale :class "cc-scale" :min 0 :max 100 :value {audio_speaker_value} :onchange "@setSpeakerVolume@ {}")))
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (box :class "cc-slider-icon" :space-evenly true
+          (image :path "@brightnessIcon@" :image-width 22 :image-height 22 :fill-svg cc_icon))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text "Display")
+            (label :class "cc-slider-value" :text {brightness_text}))
+          (scale :class "cc-scale" :min 1 :max 100 :value {brightness_value} :onchange "@setBrightness@ {}"))))
+    (box :visible {media_text != ""} :class "cc-section media-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-section-head" :space-evenly false
+        (image :path "@mediaIcon@" :image-width 22 :image-height 22 :fill-svg cc_icon)
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Now Playing"))
+      (label :class "cc-media-text" :xalign 0 :limit-width 44 :text media_text)
+      (box :class "cc-media-actions" :space-evenly true
+        (button :class "cc-action-button" :onclick "@previousMedia@"
+          (label :text "Prev"))
+        (button :class "cc-action-button primary" :onclick "@playPauseMedia@"
+          (label :text "Play"))
+        (button :class "cc-action-button" :onclick "@nextMedia@"
+          (label :text "Next"))))
+    (box :class "cc-section cc-rows" :orientation "v" :space-evenly false :spacing 2
+      (cc-row :icon "@speakerHigh@" :title "Sound" :sub {audio_speaker_device} :target "sound")
+      (cc-row :icon "@notificationIcon@" :title "Notifications" :sub "${notifications_history_count} items" :target "notifications")
+      (cc-row :icon "@iconLock@" :title "Power" :sub "" :target "session"))))
+
+(defwidget cc-wifi-view []
+  (box :orientation "v" :space-evenly false :spacing 10
+    (cc-back :label "Wi-Fi")
+    (box :class "cc-section wifi-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-wifi-head" :space-evenly false :spacing 8 :valign "center"
+        (cc-toggle :icon "@networkIcon@" :label "Wi-Fi" :state {cc_wifi} :cmd "@ccCtl@ toggle wifi" :rightcmd "@ccCtl@ toggle wifi")
+        (button :class "cc-wifi-rescan" :onclick "@ccWifi@ rescan"
+          (label :text "Scan")))
+      (box :class "cc-wifi-current" :space-evenly false :spacing 8
+        (label :class "cc-wifi-status" :xalign 0 :hexpand true :limit-width 30 :text {network_label})
+        (button :class "cc-wifi-disconnect" :visible {network_class == "cc-tile network connected"} :onclick "@ccWifi@ disconnect"
+          (label :text "Disconnect")))
+      (box :class "cc-wifi-list" :orientation "v" :space-evenly false :spacing 4
+        (for net in {wifi_networks ?: []}
+          (box :orientation "v" :space-evenly false
+            (button :class {net.active ? "cc-wifi-row active" : "cc-wifi-row"} :onclick {net.known || net.security == "" ? "@ccWifi@ connect '" + net.ssid + "'" : (wifi_pw_target == net.ssid ? EWW_CMD + " update wifi_pw_target=" : EWW_CMD + " update wifi_pw_target='" + net.ssid + "' wifi_password=")}
+              (box :space-evenly false :spacing 8 :valign "center"
+                (image :class "cc-wifi-sig" :path "@networkIcon@" :image-width 18 :image-height 18 :fill-svg {net.active ? cc_accent : cc_icon})
+                (label :class "cc-wifi-ssid" :xalign 0 :hexpand true :limit-width 24 :text {net.ssid})
+                (image :class "cc-wifi-lock" :visible {net.security != ""} :path "@iconLock@" :image-width 14 :image-height 14 :fill-svg {cc_icon})
+                (label :class "cc-wifi-signal" :text "${net.signal}%")))
+            (revealer :transition "slidedown" :reveal {wifi_pw_target == net.ssid} :duration "140ms"
+              (box :class "cc-wifi-pw" :space-evenly false :spacing 6
+                (input :class "cc-wifi-input" :password true :hexpand true :value {wifi_password} :onchange "${EWW_CMD} update 'wifi_password={}'" :onaccept "@ccWifi@ connect '${net.ssid}'")
+                (button :class "cc-wifi-join" :onclick "@ccWifi@ connect '${net.ssid}'"
+                  (label :text "Join"))))))))))
+
+(defwidget cc-sound-view []
+  (box :orientation "v" :space-evenly false :spacing 10
+    (cc-back :label "Sound")
+    (box :class "cc-section sliders" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (button :class {audio_speaker_class} :tooltip {audio_speaker_text} :onclick "@toggleSpeaker@" :onrightclick "@openPavucontrol@"
+          (image :path {audio_speaker_icon} :image-width 22 :image-height 22 :fill-svg {audio_speaker_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_speaker_device})
+            (label :class "cc-slider-value" :text {audio_speaker_percent}))
+          (scale :class "cc-scale" :min 0 :max 100 :value {audio_speaker_value} :onchange "@setSpeakerVolume@ {}")))
+      (box :class "cc-slider-row" :space-evenly false :spacing 10
+        (button :class {audio_mic_class} :tooltip {audio_mic_text} :onclick "@toggleMic@" :onrightclick "@openPavucontrol@"
+          (image :path {audio_mic_icon} :image-width 22 :image-height 22 :fill-svg {audio_mic_color}))
+        (box :class "cc-slider-stack" :orientation "v" :space-evenly false :hexpand true
+          (box :class "cc-slider-labels" :space-evenly false
+            (label :class "cc-slider-title" :xalign 0 :hexpand true :text {audio_mic_device})
+            (label :class "cc-slider-value" :text {audio_mic_percent}))
+          (scale :class "cc-scale" :min 0 :max 100 :value {audio_mic_value} :onchange "@setMicVolume@ {}"))))
+    (button :class "cc-action-button" :onclick "@openPavucontrol@"
+      (label :text "Audio Settings"))))
+
+(defwidget cc-notifications-view []
+  (box :orientation "v" :space-evenly false :spacing 10
+    (cc-back :label "Notifications")
+    (box :class "cc-section notifications-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-section-head" :space-evenly false
+        (label :class "cc-section-title" :xalign 0 :hexpand true :text "Recent")
+        (button :class "cc-clear" :visible {notifications_history_count > 0} :onclick "@ccCmd@ clear-notifications"
+          (label :text "Clear"))
+        (label :class "cc-count" :text {notifications_history_count}))
+      (label :class "cc-empty" :visible {notifications_history_count == 0} :xalign 0 :text "No notifications")
+      (box :class "cc-notification-list" :orientation "v" :space-evenly false :spacing 6 :visible {notifications_history_count > 0}
+        (for notification in {notifications_history ?: []}
+          (box :class {notification.class} :orientation "v" :space-evenly false
+            (button :class "cc-notification-summary" :onclick "${EWW_CMD} update notification_expanded_id=${notification_expanded_id == notification.key ? "__none" : notification.key}"
+              (box :space-evenly false :spacing 8
+                (box :class "cc-notification-dot" :visible {notification.unread})
+                (box :orientation "v" :space-evenly false :hexpand true
+                  (label :class "cc-notification-title" :xalign 0 :limit-width 34 :text {notification.summary})
+                  (label :class "cc-notification-preview" :xalign 0 :limit-width 40 :wrap true :text {notification.preview}))
+                (label :class "cc-notification-source" :text {notification.source == "active" ? "Now" : "History"})))
+            (revealer :class "cc-notification-body-wrap" :transition "slidedown" :reveal {notification_expanded_id == notification.key} :duration "140ms"
+              (label :class "cc-notification-body" :xalign 0 :limit-width 46 :wrap true :text {notification.body == "" ? "No details" : notification.body}))))))))
+
+(defwidget cc-session-view []
+  (box :orientation "v" :space-evenly false :spacing 10
+    (cc-back :label "Power")
+    (box :class "cc-section session-panel" :orientation "v" :space-evenly false :spacing 8
+      (box :class "cc-session" :space-evenly true :spacing 8
+        (cc-session-button :icon "@iconLock@" :label "Lock" :cmd "@ccCmd@ lock")
+        (cc-session-button :icon "@iconSuspend@" :label "Suspend" :cmd "@ccCmd@ suspend")
+        (cc-session-button :icon "@iconReboot@" :label "Restart" :cmd "@ccCmd@ reboot")
+        (cc-session-button :icon "@iconShutdown@" :label "Shut Down" :cmd "@ccCmd@ shutdown")
+        (cc-session-button :icon "@iconLogout@" :label "Log Out" :cmd "@ccCmd@ logout")))))
+
+(defwidget control-center-content []
+  (overlay
+    (eventbox :class "cc-backdrop" :onclick "${EWW_CMD} close control-center"
+      (box :hexpand true :vexpand true))
+    (box :class "cc-anchor" :halign "end" :valign "start"
+      (box :class "control-center-panel" :orientation "v" :space-evenly false
+        (box :class "cc-views" :orientation "v" :space-evenly false
+          (box :visible {cc_view == "home"} (cc-home))
+          (box :visible {cc_view == "wifi"} (cc-wifi-view))
+          (box :visible {cc_view == "sound"} (cc-sound-view))
+          (box :visible {cc_view == "notifications"} (cc-notifications-view))
+          (box :visible {cc_view == "session"} (cc-session-view)))))))

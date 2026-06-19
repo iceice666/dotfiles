@@ -516,7 +516,7 @@ let
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-theme ${lib.escapeShellArg cursorThemeName}
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-size ${toString cursorThemeSize}
 
-      ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service network-manager-applet.service >/dev/null 2>&1 || true
+      ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service >/dev/null 2>&1 || true
       ${ewwReload}
     '';
 
@@ -610,6 +610,8 @@ let
 in
 {
   imports = [ ./eww ];
+
+  _module.args.lockScreen = lockScreen;
 
   systemd.user.services.swaybg = {
     Unit = {
@@ -921,7 +923,6 @@ in
       };
     };
     gnome-keyring.enable = true;
-    network-manager-applet.enable = true;
 
     mako = {
       enable = true;
@@ -946,6 +947,9 @@ in
         on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
         on-notify = "exec ${ewwNotificationMarkUnread} \"$id\"";
         on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
+        "mode=do-not-disturb" = {
+          invisible = true;
+        };
       };
     };
 
