@@ -53,11 +53,12 @@ in
         '';
       };
 
-      # SRV-only entries send normal record types to conditional forwarding
-      # instead of the root mapping.
+      # SRV-only entries and domains that should bypass the root mapping
+      # are resolved through public upstream DNS instead.
       conditional.mapping = {
         "inm.${homolab.domains.root}" = publicResolverEndpoints;
         "miaq.${homolab.domains.root}" = publicResolverEndpoints;
+        "ourbreak.${homolab.domains.root}" = publicResolverEndpoints;
       };
 
       caching = {
