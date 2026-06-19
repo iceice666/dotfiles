@@ -198,7 +198,7 @@ let
       cmark-gfm
       gnused
       jq
-      pkgs.codex-cli-bin
+      pkgs.oh-my-pi-bin
     ];
     text = ''
       set -euo pipefail
@@ -217,7 +217,7 @@ let
       manifest="$run_dir/manifest.json"
       report_file="$run_dir/daily-report.md"
       prompt_file="$run_dir/report-prompt.md"
-      codex_log="$run_dir/codex-output.log"
+      omp_log="$run_dir/omp-output.log"
 
       if [ ! -s "$manifest" ]; then
         printf 'Audit manifest is missing or empty: %s\n' "$manifest" >&2
@@ -372,32 +372,31 @@ let
       PROMPT
       chmod 0640 "$prompt_file"
 
-      codex_status=0
-      codex --ask-for-approval never exec \
-        --skip-git-repo-check \
-        --ephemeral \
-        --sandbox read-only \
-        --color never \
-        -C "$run_dir" \
-        --output-last-message "$report_file" \
-        - < "$prompt_file" > "$codex_log" 2>&1 || codex_status="$?"
-      chmod 0640 "$codex_log" || true
+      omp_status=0
+      omp --print \
+        --no-session \
+        --approval-mode yolo \
+        --cwd "$run_dir" \
+        @"$prompt_file" \
+        > "$report_file" \
+        2> "$omp_log" || omp_status="$?"
+      chmod 0640 "$omp_log" || true
 
-      if [ "$codex_status" -ne 0 ] || [ ! -s "$report_file" ]; then
-        if [ "$codex_status" -eq 0 ]; then
-          codex_status=1
+      if [ "$omp_status" -ne 0 ] || [ ! -s "$report_file" ]; then
+        if [ "$omp_status" -eq 0 ]; then
+          omp_status=1
         fi
 
         failure_file="$run_dir/report-failure.txt"
         {
           printf 'Homolab daily audit report generation failed.\n\n'
           printf 'Bundle: %s\n' "$run_dir"
-          printf 'Codex exit status: %s\n' "$codex_status"
-          printf 'Codex log: %s\n' "$codex_log"
+          printf 'OMP exit status: %s\n' "$omp_status"
+          printf 'OMP log: %s\n' "$omp_log"
         } > "$failure_file"
         chmod 0640 "$failure_file"
         send_text_file "Homolab audit report generation failed" "$failure_file" "$run_dir/resend-failure-response.json" || true
-        exit "$codex_status"
+        exit "$omp_status"
       fi
 
       chmod 0640 "$report_file"
@@ -471,9 +470,9 @@ in
     wants = [ "network-online.target" ];
 
     environment = {
-      CODEX_HOME = "/home/${username}/.codex";
       HOME = "/home/${username}";
       NO_COLOR = "1";
+      PI_CODING_AGENT_DIR = "/home/${username}/.omp/agent";
     };
 
     serviceConfig = {

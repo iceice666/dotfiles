@@ -130,7 +130,7 @@ let
       coreutils
       curl
       jq
-      pkgs.codex-cli-bin
+      pkgs.oh-my-pi-bin
       sops
     ];
     text = ''
@@ -147,7 +147,7 @@ let
       manifest="$run_dir/manifest.json"
       report_file="$run_dir/daily-report.md"
       prompt_file="$run_dir/report-prompt.md"
-      codex_log="$run_dir/codex-output.log"
+      omp_log="$run_dir/omp-output.log"
 
       if [ ! -s "$manifest" ]; then
         echo "Audit manifest is missing: $manifest" >&2
@@ -175,18 +175,18 @@ let
       filenames when useful.
       PROMPT
 
-      export CODEX_HOME=/root/.codex
       export HOME=/root
       export NO_COLOR=1
+      export PI_CODING_AGENT_DIR=/root/.omp/agent
 
-      codex --ask-for-approval never exec \
-        --skip-git-repo-check \
-        --ephemeral \
-        --sandbox read-only \
-        --color never \
-        -C "$run_dir" \
-        --output-last-message "$report_file" \
-        - < "$prompt_file" > "$codex_log" 2>&1
+      omp --print \
+        --no-session \
+        --approval-mode yolo \
+        --cwd "$run_dir" \
+        @"$prompt_file" \
+        > "$report_file" \
+        2> "$omp_log"
+      chmod 0640 "$omp_log" || true
 
       html_file="$run_dir/report-email.html"
       {
@@ -221,7 +221,7 @@ in
   home.packages = [
     collector
     reporter
-    pkgs.codex-cli-bin
+    pkgs.oh-my-pi-bin
   ];
 
   sops.secrets.homolab-audit-resend-api-key = {

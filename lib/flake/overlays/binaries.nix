@@ -4,7 +4,6 @@ final: prev: {
   appearance-scheduler = final.callPackage (dotfiles + /pkgs/appearance-scheduler) { };
   blocky-bin = final.callPackage (dotfiles + /pkgs/blocky-bin) { };
   cliproxyapi-bin = final.callPackage (dotfiles + /pkgs/cliproxyapi-bin) { };
-  codex-cli-bin = final.callPackage (dotfiles + /pkgs/codex-cli-bin) { };
   default-browser = final.callPackage (dotfiles + /pkgs/default-browser) { };
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
   framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };

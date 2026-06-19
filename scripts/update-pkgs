@@ -104,12 +104,6 @@ class Package:
 
 
 PACKAGES: list[Package] = [
-    Package("codex-cli-bin", "openai/codex", tag_prefix="rust-v", platforms={
-        "aarch64-darwin": "https://github.com/openai/codex/releases/download/{tag}/codex-aarch64-apple-darwin.tar.gz",
-        "x86_64-darwin":  "https://github.com/openai/codex/releases/download/{tag}/codex-x86_64-apple-darwin.tar.gz",
-        "aarch64-linux":  "https://github.com/openai/codex/releases/download/{tag}/codex-aarch64-unknown-linux-musl.tar.gz",
-        "x86_64-linux":   "https://github.com/openai/codex/releases/download/{tag}/codex-x86_64-unknown-linux-musl.tar.gz",
-    }),
     Package("zed-bin", "zed-industries/zed", platforms={
         "aarch64-darwin": "https://github.com/zed-industries/zed/releases/download/{tag}/Zed-aarch64.dmg",
         "x86_64-darwin":  "https://github.com/zed-industries/zed/releases/download/{tag}/Zed-x86_64.dmg",
