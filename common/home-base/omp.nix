@@ -30,6 +30,7 @@ let
         "low"
         "medium"
         "high"
+        "max"
       ];
     };
   };
@@ -98,10 +99,10 @@ let
       title = "smol";
       commit = "github-copilot/gemini-3-flash-preview";
       task = "cliproxyapi-claude/claude-sonnet-4-6";
-      plan = "opencode-go/glm-5.2:high"; # GLM 5.2
+      plan = "cliproxyapi/gpt-5.5:xhigh"; # final plans need stronger reasoning
       designer = "cliproxyapi-claude/claude-sonnet-4-6";
       vision = "cliproxyapi/gemini-3-flash";
-      advisor = "cliproxyapi-claude/claude-sonnet-4-6:medium";
+      advisor = "opencode-go/glm-5.2:high"; # cheap second opinion; not final planning
     };
     # Globs keep cliproxyapi + opencode-go fully open; github-copilot is pinned
     # to included / low-multiplier models so Edu Pro premium quota is preserved.
@@ -138,6 +139,10 @@ let
         "cliproxyapi-claude/claude-opus-4-8"
         "cliproxyapi/gpt-5.5"
       ];
+      plan = [
+        "cliproxyapi-claude/claude-opus-4-8:max"
+      ];
+
     };
   };
 
