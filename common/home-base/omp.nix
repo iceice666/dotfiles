@@ -2,12 +2,12 @@
   config,
   dotfiles,
   homolab,
+  lib,
   pkgs,
   ...
 }:
 
 let
-  inherit (pkgs) lib;
 
   mkModel =
     id: contextWindow: maxTokens: reasoning:
@@ -49,6 +49,57 @@ let
   modelsYaml =
     lib.replaceStrings [ apiKeySentinel ] [ config.sops.placeholder.cliproxyapi_homonet_api_key ]
       (lib.generators.toYAML { } modelsConfig);
+
+  # config.yml holds model-role assignments and the model allow-list (no secret),
+  # so it is seeded as a mutable file on each switch. Live edits via
+  # `omp config set` / `/settings` persist until the next home-manager rebuild,
+  # which restores the values declared here.
+  configConfig = {
+    providers.webSearch = "auto";
+    symbolPreset = "nerd";
+    theme = {
+      dark = "titanium";
+      light = "light";
+    };
+    setupVersion = 1;
+    modelRoles = {
+      default = "cliproxyapi/gpt-5.5:medium"; # $5/$30, 128K ctx, vision
+      slow = "cliproxyapi/claude-opus-4-8:high"; # hardest problems
+      smol = "opencode-go/mimo-v2.5"; # $0.14/$0.28, 1M ctx, vision
+      title = "smol";
+      commit = "github-copilot/gemini-3-flash-preview";
+      task = "cliproxyapi/claude-sonnet-4-6";
+      plan = "opencode-go/glm-5.2:high"; # GLM 5.2
+      designer = "cliproxyapi/claude-sonnet-4-6";
+      vision = "cliproxyapi/gemini-3-flash";
+      advisor = "cliproxyapi/claude-sonnet-4-6:medium";
+    };
+    # Globs keep cliproxyapi + opencode-go fully open; github-copilot is pinned
+    # to included / low-multiplier models so Edu Pro premium quota is preserved.
+    enabledModels = [
+      "cliproxyapi/*"
+      "opencode-go/*"
+      "github-copilot/gpt-4.1"
+      "github-copilot/gpt-4o"
+      "github-copilot/gpt-4o-mini"
+      "github-copilot/gpt-5-mini"
+      "github-copilot/gpt-5.4-mini"
+      "github-copilot/gpt-5.4-nano"
+      "github-copilot/raptor-mini"
+      "github-copilot/grok-code-fast-1"
+      "github-copilot/gemini-3-flash-preview"
+    ];
+    # Cross-model fallback: when a model errors or hits a usage limit and no
+    # sibling credential is free, switch to the next selector in its chain
+    # (zero delay), then revert once the cooldown expires. All cliproxyapi.
+    retry.fallbackChains = {
+      "cliproxyapi/gpt-5.5" = [ "cliproxyapi/claude-opus-4-8" "cliproxyapi/claude-sonnet-4-6" ];
+      "cliproxyapi/claude-opus-4-8" = [ "cliproxyapi/gpt-5.5" "cliproxyapi/claude-sonnet-4-6" ];
+      "cliproxyapi/gpt-5.3-codex-spark" = [ "cliproxyapi/claude-opus-4-8" "cliproxyapi/gpt-5.5" ];
+    };
+  };
+
+  configFile = pkgs.writeText "omp-config.yml" (lib.generators.toYAML { } configConfig);
 in
 {
   sops.secrets.exa_api_key = {
@@ -65,6 +116,13 @@ in
   sops.templates."omp-models".path = "${config.home.homeDirectory}/.omp/agent/models.yml";
   sops.templates."omp-models".mode = "0600";
   sops.templates."omp-models".content = modelsYaml;
+
+  # Seed the global config.yml mutably (it carries no secret). Overwritten on
+  # every switch, so the repo stays the source of truth for roles + allow-list.
+  home.activation.omp-config-seed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    install -d -m 0700 "${config.home.homeDirectory}/.omp/agent"
+    install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
+  '';
 
   home.packages = with pkgs; [
     oh-my-pi-bin
