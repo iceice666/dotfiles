@@ -8,6 +8,10 @@
     trusted-users = [ "iceice666" ];
   };
 
+  # oh-my-pi (omp) ships a Bun standalone executable left unpatched (see
+  # pkgs/oh-my-pi-bin); it needs nix-ld to provide the generic glibc loader.
+  programs.nix-ld.enable = true;
+
   # Keep aarch64 emulation available for ad-hoc package debugging.
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
