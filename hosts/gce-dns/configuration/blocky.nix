@@ -56,14 +56,11 @@ in
           ${homolab.domains.dev} = homolab.hosts.gateway.tailnet;
           ${homolab.domains.npu} = homolab.hosts.gateway.tailnet;
         };
-        zone = ''
-          inm.${homolab.domains.root}. 5m IN SRV 0 0 0 .
-          miaq.${homolab.domains.root}. 5m IN SRV 0 0 0 .
-        '';
+        zone = "";
       };
 
-      # Domains NOT listed in customDNS.mapping above resolve through
-      # conditional mapping → public upstreams instead of the gateway IP.
+      # CF Pages applications: resolve through public upstreams (Cloudflare).
+      # Not in customDNS.mapping, so they bypass internal DNS entirely.
       conditional.mapping = {
         "inm.${homolab.domains.root}" = publicResolverEndpoints;
         "miaq.${homolab.domains.root}" = publicResolverEndpoints;
