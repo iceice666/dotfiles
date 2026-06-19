@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Group staged Agent-authored changes into logical scoped commits, write a devlog entry when the project requires one, and create commits using Conventional Commit format. Use when the user asks Codex to commit its changes, write commit messages, identify changed scopes, split unrelated changes into multiple commits, or validate changes before committing. Commit only changes authored by the Agent during the current task.
+description: Group staged Agent-authored changes into logical scoped commits, write a devlog entry when the project requires one, and create commits using Conventional Commit format. Use when the user asks agent to commit its changes, write commit messages, identify changed scopes, split unrelated changes into multiple commits, or validate changes before committing. Commit only changes authored by the Agent during the current task.
 ---
 
 # Commit
