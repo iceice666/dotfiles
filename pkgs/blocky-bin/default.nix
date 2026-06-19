@@ -6,12 +6,12 @@
 
 let
   pname = "blocky-bin";
-  version = "0.31.0";
+  version = "0.32.0";
 
   srcs = {
     "x86_64-linux" = fetchurl {
       url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_x86_64.tar.gz";
-      hash = "sha256-CThrM7usQ7CcKvEvcQH3y3fIxinDD+GqYiB/3A5+JUU=";
+      hash = "sha256-ev99PjA5VZ3trirkTEJvYu+5xcghKZ1SkJ0AM5BalPA=";
     };
   };
 
