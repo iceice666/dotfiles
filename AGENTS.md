@@ -81,7 +81,7 @@ pkgs/                # overlay packages
   blocky-bin/        # official prebuilt Blocky DNS proxy releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
-  framework-eww-state/ # Rust state daemon/action helper for Framework Eww
+  framework-bar/     # Native Framework status bar and action helper
   kaguya-bin/        # Framework Kaguya browser binary wrapper fed by kaguya-cache
   oh-my-pi-bin/      # prebuilt oh-my-pi (omp) coding agent releases
   rime-frost/        # Rime Frost schema data
@@ -184,7 +184,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
@@ -482,7 +482,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
+- Current overlay packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-bar`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`, `zen-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -517,7 +517,7 @@ Canonical module shape:
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
-- `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
+- `hosts/framework/home/bar/` runs the Framework bar; theme files come from `themegen/framework/.config/eww/`.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
 - `hosts/m3air/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.

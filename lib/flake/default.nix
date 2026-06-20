@@ -95,7 +95,7 @@ let
           inherit (p)
             blocky-bin
             cliproxyapi-bin
-            framework-eww-state
+            framework-bar
             ;
         };
     }) systems

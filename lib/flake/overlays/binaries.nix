@@ -6,7 +6,7 @@ final: prev: {
   cliproxyapi-bin = final.callPackage (dotfiles + /pkgs/cliproxyapi-bin) { };
   default-browser = final.callPackage (dotfiles + /pkgs/default-browser) { };
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
-  framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };
+  framework-bar = final.callPackage (dotfiles + /pkgs/framework-bar) { };
   oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
   rime-frost = final.callPackage (dotfiles + /pkgs/rime-frost) { };
   rime-octagram-zh-hant-essay-bgw = final.callPackage (

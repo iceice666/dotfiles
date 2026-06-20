@@ -6,11 +6,11 @@
   unstablePkgs,
   avatarImage ? null,
   desktopWallpaper,
-  ewwNotificationMarkRead,
-  ewwNotificationMarkUnread,
-  ewwReload,
-  ewwState,
-  ewwStateConfig,
+  barNotificationMarkRead,
+  barNotificationMarkUnread,
+  barReload,
+  barState,
+  barStateConfig,
   ...
 }:
 
@@ -517,7 +517,7 @@ let
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-size ${toString cursorThemeSize}
 
       ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service >/dev/null 2>&1 || true
-      ${ewwReload}
+      ${barReload}
     '';
 
   frameworkPostSwitch = pkgs.writeShellApplication {
@@ -574,8 +574,8 @@ let
         "@brightnessctl@"
         "@clipboardManager@"
         "@equibop@"
-        "@ewwState@"
-        "@ewwStateConfig@"
+        "@barState@"
+        "@barStateConfig@"
         "@fuzzel@"
         "@ghostty@"
         "@grim@"
@@ -592,8 +592,8 @@ let
         "${pkgs.brightnessctl}/bin/brightnessctl"
         (toString clipboardManager)
         (lib.getExe pkgs.equibop-bin)
-        ewwState
-        (toString ewwStateConfig)
+        barState
+        (toString barStateConfig)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${openGhostty}/bin/open-niri-ghostty"
         "${pkgs.grim}/bin/grim"
@@ -609,7 +609,7 @@ let
       (builtins.readFile ./niri-config.kdl);
 in
 {
-  imports = [ ./eww ];
+  imports = [ ./bar ];
 
   _module.args.lockScreen = lockScreen;
 
@@ -666,12 +666,12 @@ in
       ConditionEnvironment = [ "WAYLAND_DISPLAY" ];
       PartOf = [ "graphical-session.target" ];
       After = [
-        "framework-eww.service"
+        "framework-bar.service"
         "niri.service"
         "graphical-session.target"
       ];
       Wants = [
-        "framework-eww.service"
+        "framework-bar.service"
         "graphical-session.target"
       ];
     };
@@ -823,7 +823,7 @@ in
         ;;
     esac
 
-    ${ewwReload}
+    ${barReload}
   '';
 
   xdg = {
@@ -943,10 +943,10 @@ in
         max-history = 50;
         icons = true;
         max-icon-size = 24;
-        on-button-left = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
-        on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
-        on-notify = "exec ${ewwNotificationMarkUnread} \"$id\"";
-        on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-button-left = "exec ${barNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
+        on-button-right = "exec ${barNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-notify = "exec ${barNotificationMarkUnread} \"$id\"";
+        on-touch = "exec ${barNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
         "mode=do-not-disturb" = {
           invisible = true;
         };
