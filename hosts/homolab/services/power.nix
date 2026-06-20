@@ -28,6 +28,7 @@ let
     "mold"
     "ninja"
     "nix"
+    "omp"
     "nix-build"
     "nix-env"
     "nix-instantiate"
@@ -66,7 +67,7 @@ let
         exit 0
     fi
 
-    # Keep compile and deploy work awake even when no client connection remains.
+    # Keep compile, deploy, and OMP agent work awake even when no client connection remains.
     if ${pkgs.procps}/bin/pgrep -x '${buildProcessPattern}' > /dev/null; then
         mark_active
         exit 0
@@ -141,7 +142,7 @@ in
   '';
 
   # Rolling idle-check: runs every 5 minutes, suspends only after no SSH,
-  # LLM, build-process, or sustained CPU activity for >= ${toString idleWindow}s.
+  # LLM, build/agent process, or sustained CPU activity for >= ${toString idleWindow}s.
   systemd.services.homolab-idle-suspend = {
     description = "Suspend homolab when idle";
     serviceConfig = {
