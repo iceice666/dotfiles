@@ -70,19 +70,55 @@ let
     };
   };
 
-  # Nix's lib.generators.toYAML is just toJSON (single-line JSON), which omp v16
-  # silently rejects for models.yml. Convert JSON to proper YAML with yq-go instead.
-  modelsJson = lib.generators.toJSON { } modelsConfig;
-  modelsJsonFile = pkgs.writeText "models.json" modelsJson;
+  # omp requires block-style YAML for models.yml. Keep this generator pure:
+  # deploy-rs evaluates lumo from Darwin before remoteBuild can take over, so
+  # import-from-derivation would try to build aarch64-linux text files locally.
+  toYaml =
+    let
+      indent = level: lib.concatStrings (builtins.genList (_: "  ") level);
+      isScalar =
+        value: value == null || builtins.isBool value || builtins.isInt value || builtins.isString value;
+      renderScalar =
+        value:
+        if value == null then
+          "null"
+        else if builtins.isBool value then
+          if value then "true" else "false"
+        else if builtins.isInt value then
+          toString value
+        else if builtins.isString value then
+          builtins.toJSON value
+        else
+          throw "Unsupported YAML scalar";
+      render =
+        level: value:
+        if builtins.isAttrs value then
+          lib.concatMapStrings (
+            name:
+            let
+              item = value.${name};
+            in
+            if isScalar item then
+              "${indent level}${builtins.toJSON name}: ${renderScalar item}\n"
+            else
+              "${indent level}${builtins.toJSON name}:\n${render (level + 1) item}"
+          ) (builtins.attrNames value)
+        else if builtins.isList value then
+          lib.concatMapStrings (
+            item:
+            if isScalar item then
+              "${indent level}- ${renderScalar item}\n"
+            else
+              "${indent level}-\n${render (level + 1) item}"
+          ) value
+        else
+          throw "Unsupported YAML value";
+    in
+    render 0;
+
   modelsYaml =
     lib.replaceStrings [ apiKeySentinel ] [ config.sops.placeholder.cliproxyapi_homonet_api_key ]
-      (
-        builtins.readFile (
-          pkgs.runCommandLocal "models-yaml" { nativeBuildInputs = [ pkgs.yq-go ]; } ''
-            yq -pjson -oyaml < ${modelsJsonFile} > $out
-          ''
-        )
-      );
+      (toYaml modelsConfig);
 
   # config.yml holds model-role assignments and the model allow-list (no secret),
   # so it is seeded as a mutable file on each switch. Live edits via
