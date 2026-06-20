@@ -256,16 +256,78 @@ let
   };
 
   configFile = pkgs.writeText "omp-config.yml" (lib.generators.toYAML { } configConfig);
-  pluginsPackageJson = pkgs.writeText "omp-plugins-package.json" (
-    builtins.toJSON {
-      name = "omp-plugins";
-      private = true;
-      dependencies = {
-        "@earendil-works/pi-coding-agent" = "^0.79.8";
-        "@diegopetrucci/pi-openai-fast" = "^0.1.4";
-      };
+  ompFastModeExtension = pkgs.fetchFromGitHub {
+    owner = "iceice666";
+    repo = "omp-fast-mode";
+    rev = "6733208d25ce0bb45a287e7cb486c3b5cb49d24b";
+    hash = "sha256-6cymcCeeTpjNwwfV7KXd5JhchBIlimKgH3o9TaBjnOU=";
+  };
+  cleanupOldFastPlugin = pkgs.writeText "omp-fast-mode-plugin-cleanup.js" ''
+    const fs = require("fs");
+    const path = require("path");
+
+    const dir = process.argv[2];
+    const managed = [
+      "@diegopetrucci/pi-openai-fast",
+      "@earendil-works/pi-coding-agent",
+      "omp-fast-mode",
+    ];
+
+    function readJson(file) {
+      try {
+        return JSON.parse(fs.readFileSync(file, "utf8"));
+      } catch {
+        return undefined;
+      }
     }
-  );
+
+    function writeJson(file, value) {
+      fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n");
+    }
+
+    const packagePath = path.join(dir, "package.json");
+    const pkg = readJson(packagePath);
+    if (pkg && pkg.dependencies) {
+      let changed = false;
+      for (const name of managed) {
+        if (Object.prototype.hasOwnProperty.call(pkg.dependencies, name)) {
+          delete pkg.dependencies[name];
+          changed = true;
+        }
+      }
+      if (changed) writeJson(packagePath, pkg);
+    }
+
+    const lockPath = path.join(dir, "omp-plugins.lock.json");
+    const lock = readJson(lockPath);
+    if (lock) {
+      let changed = false;
+      for (const section of ["plugins", "settings"]) {
+        if (!lock[section]) continue;
+        for (const name of managed) {
+          if (Object.prototype.hasOwnProperty.call(lock[section], name)) {
+            delete lock[section][name];
+            changed = true;
+          }
+        }
+      }
+      if (changed) writeJson(lockPath, lock);
+    }
+
+    for (const name of managed) {
+      fs.rmSync(path.join(dir, "node_modules", ...name.split("/")), {
+        recursive: true,
+        force: true,
+      });
+    }
+
+    const hasPackageDependencies =
+      pkg?.dependencies && Object.keys(pkg.dependencies).length > 0;
+    const hasRuntimePlugins = lock?.plugins && Object.keys(lock.plugins).length > 0;
+    if (!hasPackageDependencies && !hasRuntimePlugins) {
+      fs.rmSync(path.join(dir, "node_modules"), { recursive: true, force: true });
+    }
+  '';
 in
 {
   sops.secrets.exa_api_key = {
@@ -289,18 +351,23 @@ in
     install -d -m 0700 "${config.home.homeDirectory}/.omp/agent"
     install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
   '';
-  # Seed the plugin directory declaratively. omp's plugin installer cannot resolve
-  # peer dependencies during its validation step, so we write package.json and run
-  # bun install ourselves. Overwritten on every switch.
-  home.activation.omp-plugins-seed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    install -d -m 0700 "${config.home.homeDirectory}/.omp/plugins"
-    install -m 0600 "${pluginsPackageJson}" "${config.home.homeDirectory}/.omp/plugins/package.json"
-    cd "${config.home.homeDirectory}/.omp/plugins" && ${unstablePkgs.bun}/bin/bun install
+  # Native OMP extensions are discovered from ~/.omp/agent/extensions. Clean up
+  # the previous npm-plugin workaround without touching unrelated user plugins.
+  home.activation.omp-fast-mode-plugin-cleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    plugin_dir="${config.home.homeDirectory}/.omp/plugins"
+    if [ -d "$plugin_dir" ]; then
+      ${unstablePkgs.bun}/bin/bun "${cleanupOldFastPlugin}" "$plugin_dir"
+    fi
   '';
 
   home.packages = with pkgs; [
     oh-my-pi-bin
   ];
+
+  home.file.".omp/agent/extensions/omp-fast-mode" = {
+    source = ompFastModeExtension;
+    force = true;
+  };
 
   # omp's builtin web_search tool prefers Exa; the key is read from the
   # process environment (resolved via the agent .env file at startup).
