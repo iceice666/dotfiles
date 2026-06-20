@@ -259,8 +259,8 @@ let
   ompFastModeExtension = pkgs.fetchFromGitHub {
     owner = "iceice666";
     repo = "omp-fast-mode";
-    rev = "6733208d25ce0bb45a287e7cb486c3b5cb49d24b";
-    hash = "sha256-6cymcCeeTpjNwwfV7KXd5JhchBIlimKgH3o9TaBjnOU=";
+    rev = "79c19bc98a9afa22de73a71623cabdeac16c1551";
+    hash = "sha256-sJo7iHsQzu3GsKSflEvXBbvxaIL5W9XBTYvZha5bmNY=";
   };
   cleanupOldFastPlugin = pkgs.writeText "omp-fast-mode-plugin-cleanup.js" ''
     const fs = require("fs");
