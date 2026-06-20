@@ -10,6 +10,7 @@
 let
   blackboxPort = 19115;
   nodeExporterPort = 19100;
+  gceDnsScrapeInterval = "60s";
 
   grafanaPlugins = pkgs.buildEnv {
     name = "lumo-grafana-plugins";
@@ -97,6 +98,18 @@ let
             ];
             labels.instance = "gateway";
           }
+        ];
+      }
+      {
+        job_name = "node-gce-dns";
+        scrape_interval = gceDnsScrapeInterval;
+        relabel_configs = [
+          {
+            target_label = "job";
+            replacement = "node";
+          }
+        ];
+        static_configs = [
           {
             targets = [ "gce-dns:${toString nodeExporterPort}" ];
             labels.instance = "gce-dns";
@@ -116,6 +129,7 @@ let
       }
       {
         job_name = "blocky";
+        scrape_interval = gceDnsScrapeInterval;
         metrics_path = "/metrics";
         static_configs = [
           {
