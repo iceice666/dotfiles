@@ -4,6 +4,7 @@
   homolab,
   lib,
   pkgs,
+  unstablePkgs,
   ...
 }:
 
@@ -19,20 +20,13 @@ let
   # CLIProxyAPI has no provider mapping for -> "502 unknown provider". On the
   # anthropic-messages path omp keeps the plain model id and carries reasoning in
   # the request body (thinking.type/budget_tokens), which CLIProxyAPI accepts.
-  # Declaring an explicit thinking block also strips omp's synthesized suffix
-  # routing for the model.
+  # Marking reasoning=true ensures omp advertises thinking effort levels and
+  # routes /thinking selectors through the Anthropic budget-effort protocol
+  # instead of suffix-based routing.
   mkClaudeThinkingModel = id: contextWindow: maxTokens: {
     inherit id contextWindow maxTokens;
-    thinking = {
-      mode = "anthropic-budget-effort";
-      efforts = [
-        "minimal"
-        "low"
-        "medium"
-        "high"
-        "max"
-      ];
-    };
+    reasoning = true;
+    input = [ "text" ];
   };
 
   # apiKey is injected at activation by sops; a sentinel is serialized into the
@@ -76,9 +70,19 @@ let
     };
   };
 
+  # Nix's lib.generators.toYAML is just toJSON (single-line JSON), which omp v16
+  # silently rejects for models.yml. Convert JSON to proper YAML with yq-go instead.
+  modelsJson = lib.generators.toJSON { } modelsConfig;
+  modelsJsonFile = pkgs.writeText "models.json" modelsJson;
   modelsYaml =
     lib.replaceStrings [ apiKeySentinel ] [ config.sops.placeholder.cliproxyapi_homonet_api_key ]
-      (lib.generators.toYAML { } modelsConfig);
+      (
+        builtins.readFile (
+          pkgs.runCommandLocal "models-yaml" { nativeBuildInputs = [ pkgs.yq-go ]; } ''
+            yq -pjson -oyaml < ${modelsJsonFile} > $out
+          ''
+        )
+      );
 
   # config.yml holds model-role assignments and the model allow-list (no secret),
   # so it is seeded as a mutable file on each switch. Live edits via
@@ -93,16 +97,16 @@ let
     };
     setupVersion = 1;
     modelRoles = {
-      default = "cliproxyapi/gpt-5.5:medium"; # $5/$30, 128K ctx, vision
-      slow = "cliproxyapi-claude/claude-opus-4-8:high"; # hardest problems
-      smol = "opencode-go/mimo-v2.5"; # $0.14/$0.28, 1M ctx, vision
+      default = "cliproxyapi/gpt-5.5:xhigh"; # main interactive agent: quality over latency
+      slow = "cliproxyapi-claude/claude-opus-4-8:high"; # hardest problems, cross-family
+      smol = "cliproxyapi/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
       title = "smol";
-      commit = "github-copilot/gemini-3-flash-preview";
-      task = "cliproxyapi-claude/claude-sonnet-4-6";
-      plan = "cliproxyapi/gpt-5.5:xhigh"; # final plans need stronger reasoning
-      designer = "cliproxyapi-claude/claude-sonnet-4-6";
-      vision = "cliproxyapi/gemini-3-flash";
-      advisor = "opencode-go/glm-5.2:high"; # cheap second opinion; not final planning
+      commit = "cliproxyapi/gpt-5.3-codex-spark:medium";
+      task = "cliproxyapi/gpt-5.3-codex-spark:high"; # workhorse subagents
+      plan = "cliproxyapi/gpt-5.5:xhigh"; # final plans need strongest reasoning
+      designer = "cliproxyapi-claude/claude-sonnet-4-6:high";
+      vision = "cliproxyapi/gemini-3-pro-high";
+      advisor = "cliproxyapi-claude/claude-opus-4-8:high"; # high-quality second opinion
     };
     # Globs keep cliproxyapi + opencode-go fully open; github-copilot is pinned
     # to included / low-multiplier models so Edu Pro premium quota is preserved.
@@ -128,25 +132,58 @@ let
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
-        "cliproxyapi-claude/claude-opus-4-8"
-        "cliproxyapi-claude/claude-sonnet-4-6"
+        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
       ];
       slow = [
-        "cliproxyapi/gpt-5.5"
-        "cliproxyapi-claude/claude-sonnet-4-6"
+        "cliproxyapi/gpt-5.5:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       task = [
-        "cliproxyapi-claude/claude-opus-4-8"
-        "cliproxyapi/gpt-5.5"
+        "cliproxyapi/gpt-5.5:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "cliproxyapi-claude/claude-opus-4-8:xhigh"
       ];
       plan = [
-        "cliproxyapi-claude/claude-opus-4-8:max"
+        "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
-
+      smol = [
+        "cliproxyapi/gpt-5.5:medium"
+        "cliproxyapi-claude/claude-sonnet-4-6:medium"
+      ];
+      title = [ "cliproxyapi/gpt-5.5:medium" ];
+      commit = [
+        "cliproxyapi/gpt-5.5:medium"
+        "cliproxyapi-claude/claude-sonnet-4-6:medium"
+      ];
+      designer = [
+        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi/gpt-5.5:xhigh"
+      ];
+      advisor = [
+        "cliproxyapi/gpt-5.5:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
+      ];
+      vision = [
+        "cliproxyapi/gemini-3.1-flash-image"
+        "cliproxyapi/gpt-5.5:xhigh"
+        "cliproxyapi/gemini-3-flash"
+      ];
     };
   };
 
   configFile = pkgs.writeText "omp-config.yml" (lib.generators.toYAML { } configConfig);
+  pluginsPackageJson = pkgs.writeText "omp-plugins-package.json" (
+    builtins.toJSON {
+      name = "omp-plugins";
+      private = true;
+      dependencies = {
+        "@earendil-works/pi-coding-agent" = "^0.79.8";
+        "@diegopetrucci/pi-openai-fast" = "^0.1.4";
+      };
+    }
+  );
 in
 {
   sops.secrets.exa_api_key = {
@@ -169,6 +206,14 @@ in
   home.activation.omp-config-seed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     install -d -m 0700 "${config.home.homeDirectory}/.omp/agent"
     install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
+  '';
+  # Seed the plugin directory declaratively. omp's plugin installer cannot resolve
+  # peer dependencies during its validation step, so we write package.json and run
+  # bun install ourselves. Overwritten on every switch.
+  home.activation.omp-plugins-seed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    install -d -m 0700 "${config.home.homeDirectory}/.omp/plugins"
+    install -m 0600 "${pluginsPackageJson}" "${config.home.homeDirectory}/.omp/plugins/package.json"
+    cd "${config.home.homeDirectory}/.omp/plugins" && ${unstablePkgs.bun}/bin/bun install
   '';
 
   home.packages = with pkgs; [
