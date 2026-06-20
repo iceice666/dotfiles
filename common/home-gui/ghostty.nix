@@ -11,6 +11,7 @@
     "background-blur = true" # implies background-blur = true on non-macOS platforms.
     "theme = light:themegen-light,dark:themegen-dark"
     "keybind = super+c=copy_to_clipboard:mixed"
+    "macos-option-as-alt = true"
     "keybind = super+v=paste_from_clipboard"
   ];
 }
