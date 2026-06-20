@@ -132,13 +132,18 @@ let
       light = "light";
     };
     setupVersion = 1;
-    # Globs keep subscription OAuth and CLIProxyAPI fully open, with OAuth
-    # listed first so canonical/scoped resolution tries local subscriptions
-    # before the homelab proxy. github-copilot is pinned to included /
+    # Native OAuth providers are explicitly allow-listed here instead of
+    # filtered in CLIProxyAPI's server config. Keep OAuth first so
+    # canonical/scoped resolution tries local subscriptions before the homelab
+    # proxy. CLIProxyAPI stays globbed because its concrete models are declared
+    # in models.yml above. github-copilot is pinned to included /
     # low-multiplier models so Edu Pro premium quota is preserved.
     enabledModels = [
-      "openai-codex/*"
-      "anthropic/*"
+      "openai-codex/gpt-5.5"
+      "openai-codex/gpt-5.3-codex-spark"
+      "anthropic/claude-opus-4-8"
+      "anthropic/claude-sonnet-4-6"
+      "anthropic/claude-haiku-4-5-20251001"
       "cliproxyapi/*"
       "cliproxyapi-claude/*"
       "opencode-go/*"
@@ -215,6 +220,7 @@ let
       ];
       smol = [
         "cliproxyapi/gpt-5.3-codex-spark:medium"
+        "github-copilot/grok-code-fast-1"
         "openai-codex/gpt-5.5:medium"
         "cliproxyapi/gpt-5.5:medium"
         "anthropic/claude-sonnet-4-6:medium"
@@ -222,6 +228,7 @@ let
       ];
       title = [
         "cliproxyapi/gpt-5.3-codex-spark:medium"
+        "github-copilot/grok-code-fast-1"
         "openai-codex/gpt-5.5:medium"
         "cliproxyapi/gpt-5.5:medium"
       ];
