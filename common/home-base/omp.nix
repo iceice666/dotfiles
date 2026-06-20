@@ -256,12 +256,6 @@ let
   };
 
   configFile = pkgs.writeText "omp-config.yml" (lib.generators.toYAML { } configConfig);
-  ompFastModeExtension = pkgs.fetchFromGitHub {
-    owner = "iceice666";
-    repo = "omp-fast-mode";
-    rev = "79c19bc98a9afa22de73a71623cabdeac16c1551";
-    hash = "sha256-sJo7iHsQzu3GsKSflEvXBbvxaIL5W9XBTYvZha5bmNY=";
-  };
   cleanupOldFastPlugin = pkgs.writeText "omp-fast-mode-plugin-cleanup.js" ''
     const fs = require("fs");
     const path = require("path");
@@ -351,8 +345,8 @@ in
     install -d -m 0700 "${config.home.homeDirectory}/.omp/agent"
     install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
   '';
-  # Native OMP extensions are discovered from ~/.omp/agent/extensions. Clean up
-  # the previous npm-plugin workaround without touching unrelated user plugins.
+  # Clean up the previous fast-mode npm-plugin workaround without touching
+  # unrelated user plugins.
   home.activation.omp-fast-mode-plugin-cleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     plugin_dir="${config.home.homeDirectory}/.omp/plugins"
     if [ -d "$plugin_dir" ]; then
@@ -363,11 +357,6 @@ in
   home.packages = with pkgs; [
     oh-my-pi-bin
   ];
-
-  home.file.".omp/agent/extensions/omp-fast-mode" = {
-    source = ompFastModeExtension;
-    force = true;
-  };
 
   # omp's builtin web_search tool prefers Exa; the key is read from the
   # process environment (resolved via the agent .env file at startup).
