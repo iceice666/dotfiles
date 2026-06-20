@@ -132,21 +132,13 @@ let
       light = "light";
     };
     setupVersion = 1;
-    modelRoles = {
-      default = "cliproxyapi/gpt-5.5:xhigh"; # main interactive agent: quality over latency
-      slow = "cliproxyapi-claude/claude-opus-4-8:high"; # hardest problems, cross-family
-      smol = "cliproxyapi/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
-      title = "smol";
-      commit = "cliproxyapi/gpt-5.3-codex-spark:medium";
-      task = "cliproxyapi/gpt-5.3-codex-spark:high"; # workhorse subagents
-      plan = "cliproxyapi/gpt-5.5:xhigh"; # final plans need strongest reasoning
-      designer = "cliproxyapi-claude/claude-sonnet-4-6:high";
-      vision = "cliproxyapi/gemini-3-pro-high";
-      advisor = "cliproxyapi-claude/claude-opus-4-8:high"; # high-quality second opinion
-    };
-    # Globs keep cliproxyapi + opencode-go fully open; github-copilot is pinned
-    # to included / low-multiplier models so Edu Pro premium quota is preserved.
+    # Globs keep subscription OAuth and CLIProxyAPI fully open, with OAuth
+    # listed first so canonical/scoped resolution tries local subscriptions
+    # before the homelab proxy. github-copilot is pinned to included /
+    # low-multiplier models so Edu Pro premium quota is preserved.
     enabledModels = [
+      "openai-codex/*"
+      "anthropic/*"
       "cliproxyapi/*"
       "cliproxyapi-claude/*"
       "opencode-go/*"
@@ -160,49 +152,103 @@ let
       "github-copilot/grok-code-fast-1"
       "github-copilot/gemini-3-flash-preview"
     ];
-    # Cross-model fallback: when a model errors or hits a usage limit and no
-    # sibling credential is free, switch to the next selector in its chain
-    # (zero delay), then revert once the cooldown expires. All cliproxyapi.
+    # Canonical selectors and /model should prefer subscription OAuth before
+    # the CLIProxyAPI mirrors when both concrete variants are available.
+    modelProviderOrder = [
+      "openai-codex"
+      "anthropic"
+      "cliproxyapi"
+      "cliproxyapi-claude"
+      "opencode-go"
+      "github-copilot"
+    ];
+    modelRoles = {
+      default = "openai-codex/gpt-5.5:xhigh"; # main interactive agent: OAuth first, quality over latency
+      slow = "anthropic/claude-opus-4-8:high"; # hardest problems, cross-family
+      smol = "openai-codex/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
+      title = "smol";
+      commit = "openai-codex/gpt-5.3-codex-spark:medium";
+      task = "openai-codex/gpt-5.3-codex-spark:high"; # workhorse subagents
+      plan = "openai-codex/gpt-5.5:xhigh"; # final plans need strongest reasoning
+      designer = "anthropic/claude-sonnet-4-6:high";
+      vision = "cliproxyapi/gemini-3-pro-high";
+      advisor = "anthropic/claude-opus-4-8:high"; # high-quality second opinion
+    };
+    # GPT/Claude role primaries use OAuth selectors. Their fallback chains keep
+    # matching CLIProxyAPI selectors as the first same-model fallback, then add
+    # cross-model OAuth/proxy pairs. When a model errors or hits a usage limit,
+    # omp switches to the next selector in the role chain, then reverts once the
+    # cooldown expires.
     # NOTE: chains are keyed by ROLE name (default/slow/task/...), not by model
     # selector — omp resolves each key via getModelRole(), so a model-selector
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
+        "cliproxyapi/gpt-5.5:xhigh"
+        "anthropic/claude-opus-4-8:high"
         "cliproxyapi-claude/claude-opus-4-8:high"
+        "anthropic/claude-sonnet-4-6:high"
         "cliproxyapi-claude/claude-sonnet-4-6:high"
       ];
       slow = [
+        "cliproxyapi-claude/claude-opus-4-8:high"
+        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
+        "anthropic/claude-sonnet-4-6:xhigh"
         "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       task = [
+        "cliproxyapi/gpt-5.3-codex-spark:high"
+        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
+        "anthropic/claude-sonnet-4-6:high"
         "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "anthropic/claude-opus-4-8:xhigh"
         "cliproxyapi-claude/claude-opus-4-8:xhigh"
       ];
       plan = [
+        "cliproxyapi/gpt-5.5:xhigh"
+        "anthropic/claude-opus-4-8:xhigh"
         "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "anthropic/claude-sonnet-4-6:xhigh"
         "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       smol = [
+        "cliproxyapi/gpt-5.3-codex-spark:medium"
+        "openai-codex/gpt-5.5:medium"
         "cliproxyapi/gpt-5.5:medium"
+        "anthropic/claude-sonnet-4-6:medium"
         "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
-      title = [ "cliproxyapi/gpt-5.5:medium" ];
-      commit = [
+      title = [
+        "cliproxyapi/gpt-5.3-codex-spark:medium"
+        "openai-codex/gpt-5.5:medium"
         "cliproxyapi/gpt-5.5:medium"
+      ];
+      commit = [
+        "cliproxyapi/gpt-5.3-codex-spark:medium"
+        "openai-codex/gpt-5.5:medium"
+        "cliproxyapi/gpt-5.5:medium"
+        "anthropic/claude-sonnet-4-6:medium"
         "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
       designer = [
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "anthropic/claude-opus-4-8:high"
         "cliproxyapi-claude/claude-opus-4-8:high"
+        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
       ];
       advisor = [
+        "cliproxyapi-claude/claude-opus-4-8:high"
+        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
+        "anthropic/claude-sonnet-4-6:xhigh"
         "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       vision = [
         "cliproxyapi/gemini-3.1-flash-image"
+        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
         "cliproxyapi/gemini-3-flash"
       ];
