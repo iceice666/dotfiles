@@ -147,15 +147,8 @@ let
       "cliproxyapi/*"
       "cliproxyapi-claude/*"
       "opencode-go/*"
-      "github-copilot/gpt-4.1"
-      "github-copilot/gpt-4o"
-      "github-copilot/gpt-4o-mini"
       "github-copilot/gpt-5-mini"
       "github-copilot/gpt-5.4-mini"
-      "github-copilot/gpt-5.4-nano"
-      "github-copilot/raptor-mini"
-      "github-copilot/grok-code-fast-1"
-      "github-copilot/gemini-3-flash-preview"
     ];
     # Canonical selectors and /model should prefer subscription OAuth before
     # the CLIProxyAPI mirrors when both concrete variants are available.
@@ -168,16 +161,16 @@ let
       "github-copilot"
     ];
     modelRoles = {
-      default = "openai-codex/gpt-5.5:xhigh"; # main interactive agent: OAuth first, quality over latency
+      default = "openai-codex/gpt-5.5:medium"; # main interactive agent: OAuth first, quality over latency
       slow = "anthropic/claude-opus-4-8:high"; # hardest problems, cross-family
       smol = "openai-codex/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
-      title = "smol";
-      commit = "openai-codex/gpt-5.3-codex-spark:medium";
+      title = "anthropic/claude-haiku-4-5-20251001";
+      commit = "anthropic/claude-haiku-4-5-20251001";
       task = "openai-codex/gpt-5.3-codex-spark:high"; # workhorse subagents
-      plan = "openai-codex/gpt-5.5:xhigh"; # final plans need strongest reasoning
+      plan = "anthropic/claude-sonnet-4-6:xhigh"; # final plans need strongest reasoning
       designer = "anthropic/claude-sonnet-4-6:high";
       vision = "cliproxyapi/gemini-3-pro-high";
-      advisor = "anthropic/claude-opus-4-8:high"; # high-quality second opinion
+      advisor = "opencode-go/glm-5-2"; # high-quality second opinion
     };
     # GPT/Claude role primaries use OAuth selectors. Their fallback chains keep
     # matching CLIProxyAPI selectors as the first same-model fallback, then add
@@ -189,73 +182,50 @@ let
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
-        "cliproxyapi/gpt-5.5:xhigh"
-        "anthropic/claude-opus-4-8:high"
+        "cliproxyapi/gpt-5.5:medium"
         "cliproxyapi-claude/claude-opus-4-8:high"
-        "anthropic/claude-sonnet-4-6:high"
         "cliproxyapi-claude/claude-sonnet-4-6:high"
       ];
       slow = [
         "cliproxyapi-claude/claude-opus-4-8:high"
-        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
-        "anthropic/claude-sonnet-4-6:xhigh"
         "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       task = [
         "cliproxyapi/gpt-5.3-codex-spark:high"
-        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
-        "anthropic/claude-sonnet-4-6:high"
         "cliproxyapi-claude/claude-sonnet-4-6:high"
-        "anthropic/claude-opus-4-8:xhigh"
         "cliproxyapi-claude/claude-opus-4-8:xhigh"
       ];
       plan = [
         "cliproxyapi/gpt-5.5:xhigh"
-        "anthropic/claude-opus-4-8:xhigh"
         "cliproxyapi-claude/claude-opus-4-8:xhigh"
-        "anthropic/claude-sonnet-4-6:xhigh"
-        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       smol = [
-        "cliproxyapi/gpt-5.3-codex-spark:medium"
-        "github-copilot/grok-code-fast-1"
-        "openai-codex/gpt-5.5:medium"
+        "anthropic/claude-haiku-4-5-20251001"
         "cliproxyapi/gpt-5.5:medium"
-        "anthropic/claude-sonnet-4-6:medium"
         "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
       title = [
-        "cliproxyapi/gpt-5.3-codex-spark:medium"
-        "github-copilot/grok-code-fast-1"
-        "openai-codex/gpt-5.5:medium"
+        "anthropic/claude-haiku-4-5-20251001"
         "cliproxyapi/gpt-5.5:medium"
       ];
       commit = [
-        "cliproxyapi/gpt-5.3-codex-spark:medium"
-        "openai-codex/gpt-5.5:medium"
         "cliproxyapi/gpt-5.5:medium"
-        "anthropic/claude-sonnet-4-6:medium"
         "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
       designer = [
         "cliproxyapi-claude/claude-sonnet-4-6:high"
-        "anthropic/claude-opus-4-8:high"
         "cliproxyapi-claude/claude-opus-4-8:high"
-        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
       ];
       advisor = [
         "cliproxyapi-claude/claude-opus-4-8:high"
-        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
-        "anthropic/claude-sonnet-4-6:xhigh"
         "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       vision = [
         "cliproxyapi/gemini-3.1-flash-image"
-        "openai-codex/gpt-5.5:xhigh"
         "cliproxyapi/gpt-5.5:xhigh"
         "cliproxyapi/gemini-3-flash"
       ];
