@@ -35,6 +35,7 @@ let
     devPortProxy = 18076;
     hermesGateway = 8642;
     hermesDashboard = 9119;
+    honcho = 18077;
   };
 
   portRanges = {

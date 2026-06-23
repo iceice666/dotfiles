@@ -8,6 +8,7 @@
 }:
 
 let
+  postgresPackage = pkgs.postgresql_17.withPackages (ps: [ ps.pgvector ]);
   postgresData = "/var/lib/postgresql/17/data";
   postgresConfig = pkgs.writeText "postgresql.conf" ''
     listen_addresses = '''
@@ -20,7 +21,7 @@ let
     name="lumo-postgresql"
     description="Lumo PostgreSQL 17"
     supervisor=supervise-daemon
-    command="${pkgs.postgresql_17}/bin/postgres"
+    command="${postgresPackage}/bin/postgres"
     command_args="-D ${postgresData} -c config_file=${postgresConfig}"
     command_user="postgres:postgres"
     directory="${postgresData}"
@@ -43,7 +44,7 @@ let
       checkpath -d -m 0700 -o postgres:postgres ${postgresData}
       if [ ! -s ${postgresData}/PG_VERSION ]; then
         ${pkgs.util-linux}/bin/runuser -u postgres -- \
-          ${pkgs.postgresql_17}/bin/initdb -D ${postgresData} \
+          ${postgresPackage}/bin/initdb -D ${postgresData} \
           --locale=C --encoding=UTF8 \
           --auth-local=peer --auth-host=scram-sha-256
       fi
@@ -97,7 +98,7 @@ let
 in
 {
   home.packages = [
-    pkgs.postgresql_17
+    postgresPackage
     pkgs.valkey
   ];
 

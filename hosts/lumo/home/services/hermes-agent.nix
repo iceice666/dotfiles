@@ -25,6 +25,50 @@ let
   # LLM traffic goes through the lumo cliproxyapi service on the same host,
   # which already routes to the configured upstream providers.
   cliproxyapiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
+  honchoBaseUrl = "http://127.0.0.1:${toString homolab.ports.honcho}";
+
+  honchoConfig = pkgs.writeText "hermes-honcho.json" (
+    builtins.toJSON {
+      baseUrl = honchoBaseUrl;
+      workspace = "tempest-miku";
+      peerName = "brian";
+      hosts.hermes = {
+        enabled = true;
+        aiPeer = "tempest-miku";
+        workspace = "tempest-miku";
+        peerName = "brian";
+        recallMode = "hybrid";
+        writeFrequency = "async";
+        sessionStrategy = "per-session";
+        pinUserPeer = true;
+        contextTokens = 1600;
+        contextCadence = 1;
+        dialecticCadence = 3;
+        dialecticDepth = 2;
+        dialecticReasoningLevel = "low";
+        reasoningLevelCap = "high";
+        dialecticMaxChars = 800;
+        saveMessages = true;
+        observationMode = "directional";
+      };
+    }
+  );
+
+  containerEntrypoint = pkgs.writeText "hermes-honcho-entrypoint" ''
+    #!/bin/sh
+    set -eu
+
+    if ! /opt/hermes/.venv/bin/python -c "import honcho" >/dev/null 2>&1; then
+      restore_perms() { chmod -R a-w /opt/hermes/.venv; }
+      trap restore_perms EXIT
+      chmod -R u+w /opt/hermes/.venv
+      /usr/local/bin/uv pip install --python /opt/hermes/.venv/bin/python honcho-ai==2.0.1
+      trap - EXIT
+      restore_perms
+    fi
+
+    exec /init /opt/hermes/docker/main-wrapper.sh gateway run
+  '';
 
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
   exaApiKeyPath = config.sops.secrets.exa-api-key.path;
@@ -44,7 +88,7 @@ let
     description="Lumo Hermes Agent (Nous Research) gateway container"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --network=host --env=HERMES_HOME=/opt/data --name=lumo-hermes-agent -v ${dataDir}:/opt/data -v ${workDir}:${workDir} ${image} gateway run"
+    command_args="run --replace --rm --network=host --env=HERMES_HOME=/opt/data --env=HERMES_DISABLE_LAZY_INSTALLS=0 --entrypoint=/bin/sh --name=lumo-hermes-agent -v ${dataDir}:/opt/data -v ${workDir}:${workDir} -v ${containerEntrypoint}:/usr/local/bin/hermes-honcho-entrypoint:ro ${image} /usr/local/bin/hermes-honcho-entrypoint"
     command_user="root"
     output_log="/var/log/lumo/hermes-agent.log"
     error_log="/var/log/lumo/hermes-agent.log"
@@ -52,7 +96,7 @@ let
     respawn_max=0
 
     depend() {
-      need lumo-podman lumo-cliproxyapi
+      need lumo-podman lumo-cliproxyapi lumo-honcho-api
       after networking
     }
 
@@ -141,37 +185,69 @@ in
         # Guarded by a marker file; delete /var/lib/hermes/.hermes-config-seeded
         # and re-apply to regenerate the config with updated defaults.
         if [ ! -f ${dataDir}/.hermes-config-seeded ]; then
+
           cat > ${dataDir}/config.yaml << 'CONFIGEOF'
     model:
       provider: "custom"
       default: "gpt-5.5"
       base_url: "${cliproxyapiBaseUrl}"
 
-    # Short aliases for /model quick-switch (tab-completable).
-    # Customise model names if cliproxyapi expects different slugs.
-    model_aliases:
-      qwen:
-        model: "qwen3.6-35b-a3b"
-        provider: custom
-        base_url: "${cliproxyapiBaseUrl}"
-      claude:
-        model: "anthropic/claude-sonnet-4-20250514"
-        provider: custom
-        base_url: "${cliproxyapiBaseUrl}"
-      gpt:
-        model: "gpt-5.5"
-        provider: custom
-        base_url: "${cliproxyapiBaseUrl}"
+    skills:
+      guard_agent_created: true
 
     terminal:
       backend: "local"
       cwd: "/home/hermes"
       timeout: 180
+
+    memory:
+      provider: "honcho"
+      memory_enabled: true
+      user_profile_enabled: true
+      write_approval: true
+
+    approvals:
+      mode: manual
+      timeout: 60
+      cron_mode: deny
+      mcp_reload_confirm: true
+      destructive_slash_confirm: true
     CONFIGEOF
+
           chown hermes:hermes ${dataDir}/config.yaml
           chmod 0600 ${dataDir}/config.yaml
           touch ${dataDir}/.hermes-config-seeded
         fi
+
+        # Keep Honcho selected even after Hermes rewrites config.yaml. Existing
+        # memory-provider subkeys are replaced deliberately: Honcho's detailed
+        # state lives in honcho.json, not under config.yaml.
+        if [ -f ${dataDir}/config.yaml ]; then
+          /usr/bin/awk '
+            BEGIN { wrote=0; skipping=0 }
+            /^memory:/ {
+              print "memory:"
+              print "  provider: \"honcho\""
+              wrote=1
+              skipping=1
+              next
+            }
+            skipping && /^[^[:space:]]/ { skipping=0 }
+            skipping { next }
+            { print }
+            END {
+              if (!wrote) {
+                print ""
+                print "memory:"
+                print "  provider: \"honcho\""
+              }
+            }
+          ' ${dataDir}/config.yaml > ${dataDir}/config.yaml.new
+          install -m 0600 -o hermes -g hermes ${dataDir}/config.yaml.new ${dataDir}/config.yaml
+          rm -f ${dataDir}/config.yaml.new
+        fi
+
+        install -m 0600 -o hermes -g hermes ${honchoConfig} ${dataDir}/honcho.json
 
         # The hermes "custom" provider authenticates with model.api_key from
         # config.yaml; it does not read OPENAI_API_KEY from the environment.
