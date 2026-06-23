@@ -121,7 +121,6 @@ approvals:
   timeout: 60
   cron_mode: deny
   mcp_reload_confirm: true
-  destructive_slash_confirm: true
 
 goals:
   max_turns: 8
