@@ -1,0 +1,26 @@
+{
+  "baseUrl": "@honchoBaseUrl@",
+  "workspace": "tempest-miku",
+  "peerName": "brian",
+  "hosts": {
+    "hermes": {
+      "enabled": true,
+      "aiPeer": "tempest-miku",
+      "workspace": "tempest-miku",
+      "peerName": "brian",
+      "recallMode": "hybrid",
+      "writeFrequency": "async",
+      "sessionStrategy": "per-session",
+      "pinUserPeer": true,
+      "contextTokens": 1600,
+      "contextCadence": 1,
+      "dialecticCadence": 3,
+      "dialecticDepth": 2,
+      "dialecticReasoningLevel": "low",
+      "reasoningLevelCap": "high",
+      "dialecticMaxChars": 800,
+      "saveMessages": true,
+      "observationMode": "directional"
+    }
+  }
+}

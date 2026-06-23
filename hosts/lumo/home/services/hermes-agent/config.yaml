@@ -1,0 +1,25 @@
+model:
+  provider: "custom"
+  default: "gpt-5.5"
+  base_url: "@cliproxyapiBaseUrl@"
+
+skills:
+  guard_agent_created: true
+
+terminal:
+  backend: "local"
+  cwd: "/home/hermes"
+  timeout: 180
+
+memory:
+  provider: "honcho"
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: true
+
+approvals:
+  mode: manual
+  timeout: 60
+  cron_mode: deny
+  mcp_reload_confirm: true
+  destructive_slash_confirm: true

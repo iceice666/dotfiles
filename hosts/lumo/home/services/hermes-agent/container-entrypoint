@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+if ! /opt/hermes/.venv/bin/python -c "import honcho" >/dev/null 2>&1; then
+  restore_perms() { chmod -R a-w /opt/hermes/.venv; }
+  trap restore_perms EXIT
+  chmod -R u+w /opt/hermes/.venv
+  /usr/local/bin/uv pip install --python /opt/hermes/.venv/bin/python honcho-ai==2.0.1
+  trap - EXIT
+  restore_perms
+fi
+
+exec /init /opt/hermes/docker/main-wrapper.sh gateway run

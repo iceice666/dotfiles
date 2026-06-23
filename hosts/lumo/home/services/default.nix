@@ -9,7 +9,7 @@
     ./dynacat.nix
     ./git-server.nix
     ./honcho.nix
-    ./hermes-agent.nix
+    ./hermes-agent
     ./monitoring.nix
     ./podman.nix
   ];
