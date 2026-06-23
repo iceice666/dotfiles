@@ -48,6 +48,7 @@
     lumo-dynacat
     lumo-dev-port-proxy
     lumo-cliproxyapi
+    lumo-hermes-agent
     '
 
     if [ -f "$manifest" ]; then

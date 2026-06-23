@@ -33,6 +33,8 @@ let
     shimmy = 11434;
     dynacat = 18075;
     devPortProxy = 18076;
+    hermesGateway = 8642;
+    hermesDashboard = 9119;
   };
 
   portRanges = {

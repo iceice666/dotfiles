@@ -360,8 +360,9 @@ networking, OpenSSH, Tailscale, cgroups, and the nftables launcher. Home Manager
 owns root tooling and Nix-provided application services supervised by OpenRC.
 
 `lumo` is the data+apps plane: Postgres, Valkey, git-server, Podman, Prometheus,
-Grafana, Dynacat, dev-port-proxy, and the daily audit. Traefik on `homolab`
-proxies Grafana/Dynacat/dev-port-proxy to `lumo`'s LAN IP (`192.168.1.128`).
+Grafana, Dynacat, dev-port-proxy, the Hermes Agent gateway, and the daily audit.
+Traefik on `homolab` proxies Grafana/Dynacat/dev-port-proxy to `lumo`'s LAN IP
+(`192.168.1.128`).
 Inter-host metrics scraping (Prometheus on lumo
 → node-exporter/traefik-metrics on homolab) goes over the tailnet. Grafana's
 `auth.proxy.whitelist` is set to `homolab`'s LAN IP — never widen this without
@@ -394,6 +395,7 @@ trust boundary:
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.
 - `hosts/lumo/home/services/podman.nix` — rootful container runtime trust boundary.
+- `hosts/lumo/home/services/hermes-agent.nix` — Nous Research `hermes-agent` gateway runs in `--network=host` with config/state at `/var/lib/hermes` bind-mounted to `/opt/data` (`HERMES_HOME`) and the working dir `/home/hermes` bind-mounted at the same path (`terminal.cwd`). Telegram/Exa and the cliproxyapi key are merged into the agent's `.env`: editable Telegram vars (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`, `TELEGRAM_HOME_CHANNEL`) live in the sops dotenv `sensitive/hosts/lumo/hermes-agent.env`; the LLM key and Exa key come from `sensitive/shared/`. The `custom` provider authenticates with `model.api_key` injected into `config.yaml`, not the env. Any change to `OPENAI_BASE_URL` redirects the agent's LLM calls; any leak of the Telegram bot token permits anyone to talk to the agent.
 
 ### Secrets helpers
 
@@ -439,11 +441,23 @@ None are present. `AGENTS.md` is the canonical instruction file in this repo.
 ### Imports and module shape
 
 - Returned attrsets start with `imports` when imports exist.
-- Import shared modules with `(dotfiles + /path)`.
-- Import directories by path, not by `/default.nix`.
-- Keep host differences structural through separate files and explicit imports.
-- Do not introduce `options`, `mkOption`, `mkEnableOption`, `mkIf`, or `mkMerge` unless explicitly requested.
+```text
+topic(machine/scope): subject
+```
 
+- `topic` is the Conventional Commit type, such as `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, or `chore`.
+- `machine` is the affected host or layer, such as `m3air`, `framework`, `common`, `pkgs`, or `repo`.
+- `scope` is the focused area, package, or module, such as `home`, `niri`, `themegen`, `rime`, or `flake`.
+- Keep `subject` short, imperative, and lowercase unless it contains proper nouns.
+
+Examples:
+
+```text
+feat(framework/niri): add workspace keybindings
+fix(m3air/default-apps): update browser associations
+docs(repo/agents): document commit message format
+feat(lumo/hermes-agent): deploy hermes-agent gateway via podman
+```
 Canonical module shape:
 
 ```nix
