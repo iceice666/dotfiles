@@ -117,6 +117,7 @@ table inet dotfiles {
     ct state established,related accept
     iifname "lo" accept
     iifname "tailscale0" accept
+    iifname "podman*" accept
     ip protocol icmp accept
     ip6 nexthdr ipv6-icmp accept
     udp dport 41641 accept
@@ -127,6 +128,8 @@ table inet dotfiles {
 
   chain forward {
     type filter hook forward priority filter; policy drop;
+    iifname "podman*" accept
+    oifname "podman*" accept
   }
 
   chain output {

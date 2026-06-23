@@ -9,7 +9,7 @@
 
 let
   dataDir = "/var/lib/honcho";
-  envPath = "/run/lumo-honcho/env";
+  envPath = "/var/lib/honcho/honcho.env";
   network = "lumo-honcho";
   image = "localhost/honcho:e8ef1a06e53bc3f69c3f2c7621cfe9abf66839bc";
 
@@ -56,7 +56,7 @@ let
 
     start_pre() {
       checkpath -f -m 0640 -o root:root /var/log/lumo/honcho-postgres.log
-      checkpath -d -m 0700 -o root:root ${dataDir}/postgres
+      mkdir -p ${dataDir}/postgres && chmod 0700 ${dataDir}/postgres && chown 999:999 ${dataDir}/postgres
       ${ensureNetwork}
       if ! ${pkgs.podman}/bin/podman image exists docker.io/pgvector/pgvector:pg15; then
         ${pkgs.podman}/bin/podman pull docker.io/pgvector/pgvector:pg15 >&2
@@ -155,7 +155,7 @@ in
     lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ]
       ''
             install -d -m 0755 /var/log/lumo
-            install -d -m 0700 -o root -g root ${dataDir} /run/lumo-honcho
+            install -d -m 0700 -o root -g root ${dataDir}
 
             shared_api_key="$(cat '${sharedApiKeyPath}')"
             cat > ${envPath} << EOF
