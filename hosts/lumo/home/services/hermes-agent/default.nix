@@ -68,6 +68,11 @@ let
     lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./skills)
   );
 
+  # Bundled upstream skills to hide from this deployment. Hermes reads
+  # .curator_suppressed before syncing bundled skills, so entries here stay
+  # pruned across image updates while user-created skills remain untouched.
+  prunedBundledSkillNames = [ "yuanbao" ];
+
   installManagedSkills = lib.concatMapStringsSep "\n" (
     name:
     let
@@ -81,6 +86,19 @@ let
       ${pkgs.coreutils}/bin/chmod -R u=rwX,go=rX ${lib.escapeShellArg target}
     ''
   ) managedSkillNames;
+
+  pruneBundledSkills = lib.concatMapStringsSep "\n" (
+    name:
+    let
+      target = "${dataDir}/skills/${name}";
+    in
+    ''
+      ${pkgs.coreutils}/bin/rm -rf ${lib.escapeShellArg target}
+      if ! ${pkgs.gnugrep}/bin/grep -qxF ${lib.escapeShellArg name} ${dataDir}/skills/.curator_suppressed 2>/dev/null; then
+        printf '%s\n' ${lib.escapeShellArg name} >> ${dataDir}/skills/.curator_suppressed
+      fi
+    ''
+  ) prunedBundledSkillNames;
 
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
   exaApiKeyPath = config.sops.secrets.exa-api-key.path;
@@ -161,9 +179,13 @@ in
 
             # Install repo-managed Hermes skills into HERMES_HOME. Only the skill
             # directories shipped by this module are replaced; user-created skills stay
-            # untouched.
+            # untouched. Listed upstream bundled skills are suppressed and removed.
             install -d -m 0755 -o hermes -g hermes ${dataDir}/skills
         ${installManagedSkills}
+            touch ${dataDir}/skills/.curator_suppressed
+            chown hermes:hermes ${dataDir}/skills/.curator_suppressed
+            chmod 0644 ${dataDir}/skills/.curator_suppressed
+        ${pruneBundledSkills}
 
             # Install the managed config on every activation so model routing,
             # Honcho memory, and gateway defaults stay consistent with this repo.
