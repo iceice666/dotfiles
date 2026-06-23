@@ -33,6 +33,11 @@ let
   # Edit with: just secret-edit sensitive/hosts/lumo/hermes-agent.env
   hermesEnvPath = config.sops.secrets.hermes-env.path;
 
+  # Durable agent identity (SOUL.md), installed into HERMES_HOME. Hermes reads
+  # it as slot #1 of the system prompt and never rewrites it, so the repo file
+  # is the source of truth: edit hermes-soul.md and redeploy to change persona.
+  soulFile = ./hermes-soul.md;
+
   openrcService = pkgs.writeText "lumo-hermes-agent" ''
     #!/sbin/openrc-run
     name="lumo-hermes-agent"
@@ -125,6 +130,11 @@ in
         } > ${dataDir}/.env.new
         install -m 0600 -o hermes -g hermes ${dataDir}/.env.new ${dataDir}/.env
         rm -f ${dataDir}/.env.new
+
+        # Install the durable agent identity (HERMES_HOME/SOUL.md, slot #1 of
+        # the system prompt). Hermes only reads it, so sync it from the repo on
+        # every activation rather than seeding once.
+        install -m 0644 -o hermes -g hermes ${soulFile} ${dataDir}/SOUL.md
 
         # Pave a minimal config.yaml on first activation so the agent uses
         # cliproxyapi immediately — no interactive 'hermes model' needed.
