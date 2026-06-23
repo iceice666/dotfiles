@@ -1,29 +1,26 @@
 model:
   provider: "custom"
-  default: "claude-sonnet-4-6"
+  default: "gpt-5.5"
   base_url: "@cliproxyapiBaseUrl@"
   api_mode: "chat_completions"
 
 fallback_providers:
   - provider: "custom"
-    model: "gpt-5.5"
-    base_url: "@cliproxyapiBaseUrl@"
-  - provider: "custom"
-    model: "claude-opus-4-8"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
 
 model_aliases:
   daily:
     provider: "custom"
-    model: "claude-sonnet-4-6"
+    model: "gpt-5.5"
     base_url: "@cliproxyapiBaseUrl@"
   heavy:
     provider: "custom"
-    model: "claude-opus-4-8"
+    model: "gpt-5.5"
     base_url: "@cliproxyapiBaseUrl@"
   cheap:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
   openai-heavy:
     provider: "custom"
@@ -41,7 +38,7 @@ model_aliases:
 auxiliary:
   compression:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 120
@@ -51,56 +48,56 @@ auxiliary:
         base_url: "@cliproxyapiBaseUrl@"
   web_extract:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 360
   title_generation:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 30
     language: ""
   approval:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 30
   skills_hub:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 30
   mcp:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 30
   triage_specifier:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 120
   kanban_decomposer:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 120
   profile_describer:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 30
   curator:
     provider: "custom"
-    model: "claude-haiku-4-5-20251001"
+    model: "gpt-5.4-mini"
     base_url: "@cliproxyapiBaseUrl@"
     api_key: "${OPENAI_API_KEY}"
     timeout: 120
