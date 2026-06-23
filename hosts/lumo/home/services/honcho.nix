@@ -23,6 +23,7 @@ let
   cliproxyapiBaseUrl = "http://host.containers.internal:${toString homolab.ports.cliproxyapi}/v1";
   honchoPort = homolab.ports.honcho;
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
+  postgresPasswordPath = config.sops.secrets.honcho-postgres-password.path;
 
   ensureImage = ''
     if ! ${pkgs.podman}/bin/podman image exists ${image}; then
@@ -42,7 +43,7 @@ let
     description="Lumo Honcho PostgreSQL/pgvector container"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --name=lumo-honcho-postgres --network=${network} --env=POSTGRES_DB=postgres --env=POSTGRES_USER=postgres --env=POSTGRES_PASSWORD=postgres --env=PGDATA=/var/lib/postgresql/data/pgdata -v ${dataDir}/postgres:/var/lib/postgresql/data -v ${honchoSource}/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro docker.io/pgvector/pgvector:pg15 postgres -c max_connections=200"
+    command_args="run --replace --rm --name=lumo-honcho-postgres --network=${network} --env=POSTGRES_DB=postgres --env=POSTGRES_USER=postgres --env-file=/run/lumo-honcho-postgres.env --env=PGDATA=/var/lib/postgresql/data/pgdata -v ${dataDir}/postgres:/var/lib/postgresql/data -v ${honchoSource}/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro docker.io/pgvector/pgvector:pg15 postgres -c max_connections=200"
     command_user="root"
     output_log="/var/log/lumo/honcho-postgres.log"
     error_log="/var/log/lumo/honcho-postgres.log"
@@ -57,6 +58,8 @@ let
     start_pre() {
       checkpath -f -m 0640 -o root:root /var/log/lumo/honcho-postgres.log
       mkdir -p ${dataDir}/postgres && chmod 0700 ${dataDir}/postgres && chown 999:999 ${dataDir}/postgres
+      printf 'POSTGRES_PASSWORD=%s\n' "$(cat '${postgresPasswordPath}')" > /run/lumo-honcho-postgres.env
+      chmod 0400 /run/lumo-honcho-postgres.env
       ${ensureNetwork}
       if ! ${pkgs.podman}/bin/podman image exists docker.io/pgvector/pgvector:pg15; then
         ${pkgs.podman}/bin/podman pull docker.io/pgvector/pgvector:pg15 >&2
@@ -150,6 +153,11 @@ in
     key = "apiKey";
     mode = "0400";
   };
+  sops.secrets.honcho-postgres-password = {
+    sopsFile = dotfiles + /sensitive/hosts/lumo/honcho-postgres.yaml;
+    key = "password";
+    mode = "0400";
+  };
 
   home.activation.lumoHoncho =
     lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ]
@@ -157,11 +165,12 @@ in
             install -d -m 0755 /var/log/lumo
             install -d -m 0700 -o root -g root ${dataDir}
 
+            pg_pass="$(cat '${postgresPasswordPath}')"
             shared_api_key="$(cat '${sharedApiKeyPath}')"
             cat > ${envPath} << EOF
         LOG_LEVEL=INFO
         AUTH_USE_AUTH=false
-        DB_CONNECTION_URI=postgresql+psycopg://postgres:postgres@lumo-honcho-postgres:5432/postgres
+        DB_CONNECTION_URI=postgresql+psycopg://postgres:$pg_pass@lumo-honcho-postgres:5432/postgres
         CACHE_ENABLED=true
         CACHE_URL=redis://lumo-honcho-redis:6379/0?suppress=true
         LLM_OPENAI_API_KEY=$shared_api_key
@@ -207,6 +216,13 @@ in
             # --nodeps: each restart is self-contained and ordered by deps
             # (postgres, redis, api, deriver). Letting OpenRC stop/schedule
             # dependents here races the lock against the other service steps.
+            # Migrate existing DB password if the container is already running.
+            # POSTGRES_PASSWORD is only used at initdb time; running containers
+            # need an explicit ALTER ROLE to pick up the new credential.
+            if ${pkgs.podman}/bin/podman ps -q --filter name=lumo-honcho-postgres | grep -q .; then
+              ${pkgs.podman}/bin/podman exec lumo-honcho-postgres \
+                psql -U postgres -c "ALTER ROLE postgres WITH PASSWORD '$pg_pass';" || true
+            fi
             /sbin/rc-service --nodeps lumo-honcho-postgres restart
             /sbin/rc-service --nodeps lumo-honcho-redis restart
             /sbin/rc-service --nodeps lumo-honcho-api restart
