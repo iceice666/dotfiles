@@ -14,8 +14,9 @@ let
 
   # Agent working directory (terminal.cwd): where the agent runs shell commands
   # and creates files during tasks. Bind-mounted at the same path so the host
-  # sees exactly what the agent works on.
-  workDir = "/home/hermes";
+  # sees exactly what the agent works on. Must NOT be under /home/ — hermes'
+  # write_file tool flags /home/ paths as protected credential files.
+  workDir = "/opt/workspace";
 
   # The `latest` tag tracks the main branch (auto-updated on every push to
   # main). To pin a specific release, change to a tag like `vX.Y.Z` when
