@@ -64,6 +64,24 @@ let
     }
   );
 
+  managedSkillNames = builtins.attrNames (
+    lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./skills)
+  );
+
+  installManagedSkills = lib.concatMapStringsSep "\n" (
+    name:
+    let
+      source = "${./skills}/${name}";
+      target = "${dataDir}/skills/${name}";
+    in
+    ''
+      ${pkgs.coreutils}/bin/rm -rf ${lib.escapeShellArg target}
+      ${pkgs.coreutils}/bin/cp -R ${lib.escapeShellArg source} ${lib.escapeShellArg target}
+      ${pkgs.coreutils}/bin/chown -R hermes:hermes ${lib.escapeShellArg target}
+      ${pkgs.coreutils}/bin/chmod -R u=rwX,go=rX ${lib.escapeShellArg target}
+    ''
+  ) managedSkillNames;
+
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
   exaApiKeyPath = config.sops.secrets.exa-api-key.path;
   # User-editable agent secrets as a sops dotenv file: TELEGRAM_BOT_TOKEN,
@@ -96,91 +114,94 @@ in
     mode = "0400";
   };
 
-  home.activation.lumoHermesAgent = lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" ] ''
-    if ! /usr/bin/getent group hermes >/dev/null; then
-      /usr/sbin/addgroup -g 10000 -S hermes
-    fi
-    if ! /usr/bin/id hermes >/dev/null 2>&1; then
-      /usr/sbin/adduser -S -D -h ${workDir} -s /bin/sh -G hermes -u 10000 hermes
-    fi
+  home.activation.lumoHermesAgent =
+    lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoHoncho" ]
+      ''
+            if ! /usr/bin/getent group hermes >/dev/null; then
+              /usr/sbin/addgroup -g 10000 -S hermes
+            fi
+            if ! /usr/bin/id hermes >/dev/null 2>&1; then
+              /usr/sbin/adduser -S -D -h ${workDir} -s /bin/sh -G hermes -u 10000 hermes
+            fi
 
-    # Home directory doubles as the agent working directory (terminal.cwd),
-    # bind-mounted into the container at the same path. Created by adduser for
-    # new users; ensure it exists with skeleton files for existing users.
-    if [ ! -d ${workDir} ]; then
-      install -d -m 0750 -o hermes -g hermes ${workDir}
-      cp -r /etc/skel/. ${workDir}/ 2>/dev/null || true
-      chown -R hermes:hermes ${workDir}
-    fi
-    if [ "$(/usr/bin/getent passwd hermes | cut -d: -f6)" != "${workDir}" ]; then
-      /usr/sbin/usermod -d ${workDir} hermes
-    fi
+            # Home directory doubles as the agent working directory (terminal.cwd),
+            # bind-mounted into the container at the same path. Created by adduser for
+            # new users; ensure it exists with skeleton files for existing users.
+            if [ ! -d ${workDir} ]; then
+              install -d -m 0750 -o hermes -g hermes ${workDir}
+              cp -r /etc/skel/. ${workDir}/ 2>/dev/null || true
+              chown -R hermes:hermes ${workDir}
+            fi
+            if [ "$(/usr/bin/getent passwd hermes | cut -d: -f6)" != "${workDir}" ]; then
+              /usr/sbin/usermod -d ${workDir} hermes
+            fi
 
-    # Config + internal state directory (HERMES_HOME), mounted to /opt/data.
-    install -d -m 0750 -o hermes -g hermes ${dataDir}
+            # Config + internal state directory (HERMES_HOME), mounted to /opt/data.
+            install -d -m 0750 -o hermes -g hermes ${dataDir}
 
-    # The agent reads HERMES_HOME/.env (${dataDir} -> /opt/data) at startup.
-    # Compose it from derived vars, shared API keys, and the user-editable
-    # sops dotenv (Telegram + any extra vars the user adds). Re-rendered on
-    # every activation so updated secrets propagate on the next switch.
-    {
-      printf '%s\n' "HERMES_UID=10000"
-      printf '%s\n' "HERMES_GID=10000"
-      printf '%s\n' "OPENAI_BASE_URL=${cliproxyapiBaseUrl}"
-      printf 'OPENAI_API_KEY=%s\n' "$(cat '${sharedApiKeyPath}')"
-      printf 'EXA_API_KEY=%s\n' "$(cat '${exaApiKeyPath}')"
-      cat '${hermesEnvPath}'
-    } > ${dataDir}/.env.new
-    install -m 0600 -o hermes -g hermes ${dataDir}/.env.new ${dataDir}/.env
-    rm -f ${dataDir}/.env.new
+            # The agent reads HERMES_HOME/.env (${dataDir} -> /opt/data) at startup.
+            # Compose it from derived vars, shared API keys, and the user-editable
+            # sops dotenv (Telegram + any extra vars the user adds). Re-rendered on
+            # every activation so updated secrets propagate on the next switch.
+            {
+              printf '%s\n' "HERMES_UID=10000"
+              printf '%s\n' "HERMES_GID=10000"
+              printf '%s\n' "OPENAI_BASE_URL=${cliproxyapiBaseUrl}"
+              printf 'OPENAI_API_KEY=%s\n' "$(cat '${sharedApiKeyPath}')"
+              printf 'EXA_API_KEY=%s\n' "$(cat '${exaApiKeyPath}')"
+              cat '${hermesEnvPath}'
+            } > ${dataDir}/.env.new
+            install -m 0600 -o hermes -g hermes ${dataDir}/.env.new ${dataDir}/.env
+            rm -f ${dataDir}/.env.new
 
-    # Install the durable agent identity (HERMES_HOME/SOUL.md, slot #1 of
-    # the system prompt). Hermes only reads it, so sync it from the repo on
-    # every activation rather than seeding once.
-    install -m 0644 -o hermes -g hermes ${./SOUL.md} ${dataDir}/SOUL.md
+            # Install the durable agent identity (HERMES_HOME/SOUL.md, slot #1 of
+            # the system prompt). Hermes only reads it, so sync it from the repo on
+            # every activation rather than seeding once.
+            install -m 0644 -o hermes -g hermes ${./SOUL.md} ${dataDir}/SOUL.md
 
-    # Pave a minimal config.yaml on first activation so the agent uses
-    # cliproxyapi immediately — no interactive 'hermes model' needed.
-    # Guarded by a marker file; delete /var/lib/hermes/.hermes-config-seeded
-    # and re-apply to regenerate the config with updated defaults.
-    if [ ! -f ${dataDir}/.hermes-config-seeded ]; then
-      install -m 0600 -o hermes -g hermes ${initialConfig} ${dataDir}/config.yaml
-      touch ${dataDir}/.hermes-config-seeded
-    fi
+            # Install repo-managed Hermes skills into HERMES_HOME. Only the skill
+            # directories shipped by this module are replaced; user-created skills stay
+            # untouched.
+            install -d -m 0755 -o hermes -g hermes ${dataDir}/skills
+        ${installManagedSkills}
 
-    # Keep Honcho selected even after Hermes rewrites config.yaml. Existing
-    # memory-provider subkeys are replaced deliberately: Honcho's detailed
-    # state lives in honcho.json, not under config.yaml.
-    if [ -f ${dataDir}/config.yaml ]; then
-      /usr/bin/awk -f ${./ensure-memory-provider.awk} ${dataDir}/config.yaml > ${dataDir}/config.yaml.new
-      install -m 0600 -o hermes -g hermes ${dataDir}/config.yaml.new ${dataDir}/config.yaml
-      rm -f ${dataDir}/config.yaml.new
-    fi
+            # Install the managed config on every activation so model routing,
+            # Honcho memory, and gateway defaults stay consistent with this repo.
+            install -m 0600 -o hermes -g hermes ${initialConfig} ${dataDir}/config.yaml
 
-    install -m 0600 -o hermes -g hermes ${honchoConfig} ${dataDir}/honcho.json
+            # Keep Honcho selected even after Hermes rewrites config.yaml. Existing
+            # memory-provider subkeys are replaced deliberately: Honcho's detailed
+            # state lives in honcho.json, not under config.yaml.
+            if [ -f ${dataDir}/config.yaml ]; then
+              /usr/bin/awk -f ${./ensure-memory-provider.awk} ${dataDir}/config.yaml > ${dataDir}/config.yaml.new
+              install -m 0600 -o hermes -g hermes ${dataDir}/config.yaml.new ${dataDir}/config.yaml
+              rm -f ${dataDir}/config.yaml.new
+            fi
 
-    # The hermes "custom" provider authenticates with model.api_key from
-    # config.yaml; it does not read OPENAI_API_KEY from the environment.
-    # Inject the shared cliproxyapi key into the model section on every
-    # activation so it survives hermes' config rewrites and key rotation.
-    if [ -f ${dataDir}/config.yaml ]; then
-      apikey="$(cat '${sharedApiKeyPath}')"
-      /usr/bin/awk -v key="$apikey" -f ${./inject-model-api-key.awk} ${dataDir}/config.yaml > ${dataDir}/config.yaml.new
-      install -m 0600 -o hermes -g hermes ${dataDir}/config.yaml.new ${dataDir}/config.yaml
-      rm -f ${dataDir}/config.yaml.new
-    fi
+            install -m 0600 -o hermes -g hermes ${honchoConfig} ${dataDir}/honcho.json
 
-    # nixpkgs podman on Alpine requires an explicit signature policy.
-    # Without this, every `podman pull` fails with "no policy.json file found".
-    # "insecureAcceptAnything" matches Docker's default — acceptable for
-    # the official nousresearch/hermes-agent image pulled from Docker Hub.
-    install -d -m 0755 /etc/containers
-    if [ ! -f /etc/containers/policy.json ]; then
-      install -m 0644 ${./containers-policy.json} /etc/containers/policy.json
-    fi
+            # The hermes "custom" provider authenticates with model.api_key from
+            # config.yaml; it does not read OPENAI_API_KEY from the environment.
+            # Inject the shared cliproxyapi key into the model section on every
+            # activation so it survives hermes' config rewrites and key rotation.
+            if [ -f ${dataDir}/config.yaml ]; then
+              apikey="$(cat '${sharedApiKeyPath}')"
+              /usr/bin/awk -v key="$apikey" -f ${./inject-model-api-key.awk} ${dataDir}/config.yaml > ${dataDir}/config.yaml.new
+              install -m 0600 -o hermes -g hermes ${dataDir}/config.yaml.new ${dataDir}/config.yaml
+              rm -f ${dataDir}/config.yaml.new
+            fi
 
-    install -Dm755 ${openrcService} /etc/init.d/lumo-hermes-agent
-    /sbin/rc-update add lumo-hermes-agent default
-    /sbin/rc-service lumo-hermes-agent restart
-  '';
+            # nixpkgs podman on Alpine requires an explicit signature policy.
+            # Without this, every `podman pull` fails with "no policy.json file found".
+            # "insecureAcceptAnything" matches Docker's default — acceptable for
+            # the official nousresearch/hermes-agent image pulled from Docker Hub.
+            install -d -m 0755 /etc/containers
+            if [ ! -f /etc/containers/policy.json ]; then
+              install -m 0644 ${./containers-policy.json} /etc/containers/policy.json
+            fi
+
+            install -Dm755 ${openrcService} /etc/init.d/lumo-hermes-agent
+            /sbin/rc-update add lumo-hermes-agent default
+            /sbin/rc-service lumo-hermes-agent restart
+      '';
 }

@@ -12,6 +12,13 @@ let
     runroot = "/run/containers/storage"
   '';
 
+  registriesConfig = pkgs.writeText "registries.conf" ''
+    unqualified-search-registries = ["docker.io"]
+
+    [[registry]]
+    location = "docker.io"
+  '';
+
   podmanService = pkgs.writeText "lumo-podman" ''
     #!/sbin/openrc-run
     name="lumo-podman"
@@ -44,6 +51,7 @@ in
   home.activation.lumoPodman = lib.hm.dag.entryAfter [ "lumoDirectories" ] ''
     install -d -m 0755 /etc/containers
     install -Dm644 ${storageConfig} /etc/containers/storage.conf
+    install -Dm644 ${registriesConfig} /etc/containers/registries.conf
     install -Dm755 ${podmanService} /etc/init.d/lumo-podman
     /sbin/rc-update add lumo-podman default
     /sbin/rc-service lumo-podman restart
