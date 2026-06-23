@@ -73,7 +73,14 @@ let
   # Bundled upstream skills to hide from this deployment. Hermes reads
   # .curator_suppressed before syncing bundled skills, so entries here stay
   # pruned across image updates while user-created skills remain untouched.
-  prunedBundledSkillNames = [ "yuanbao" ];
+  prunedBundledSkillNames = [
+    "yuanbao"
+    "openhue"
+    "notion"
+    "obsidian"
+    "ascii-art"
+    "ascii-video"
+  ];
 
   installManagedSkills = lib.concatMapStringsSep "\n" (
     name:
