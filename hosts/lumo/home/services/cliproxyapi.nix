@@ -138,6 +138,9 @@ in
 
         install -Dm755 ${cliproxyapiService} /etc/init.d/lumo-cliproxyapi
         /sbin/rc-update add lumo-cliproxyapi default
-        /sbin/rc-service lumo-cliproxyapi restart
+        # --nodeps: do not stop the honcho/hermes services that `need
+        # lumo-cliproxyapi`. They reconnect on the next request and are
+        # restarted by their own steps; cascading races the OpenRC lock.
+        /sbin/rc-service --nodeps lumo-cliproxyapi restart
   '';
 }

@@ -54,6 +54,9 @@ in
     install -Dm644 ${registriesConfig} /etc/containers/registries.conf
     install -Dm755 ${podmanService} /etc/init.d/lumo-podman
     /sbin/rc-update add lumo-podman default
-    /sbin/rc-service lumo-podman restart
+    # --nodeps: restarting only the API socket must not stop the container
+    # services that `need lumo-podman`. They are bounced by their own
+    # activation steps; cascading here races those on the OpenRC lock.
+    /sbin/rc-service --nodeps lumo-podman restart
   '';
 }

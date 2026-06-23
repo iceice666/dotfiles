@@ -204,9 +204,12 @@ in
             /sbin/rc-update add lumo-honcho-redis default
             /sbin/rc-update add lumo-honcho-api default
             /sbin/rc-update add lumo-honcho-deriver default
-            /sbin/rc-service lumo-honcho-postgres restart
-            /sbin/rc-service lumo-honcho-redis restart
-            /sbin/rc-service lumo-honcho-api restart
-            /sbin/rc-service lumo-honcho-deriver restart
+            # --nodeps: each restart is self-contained and ordered by deps
+            # (postgres, redis, api, deriver). Letting OpenRC stop/schedule
+            # dependents here races the lock against the other service steps.
+            /sbin/rc-service --nodeps lumo-honcho-postgres restart
+            /sbin/rc-service --nodeps lumo-honcho-redis restart
+            /sbin/rc-service --nodeps lumo-honcho-api restart
+            /sbin/rc-service --nodeps lumo-honcho-deriver restart
       '';
 }
