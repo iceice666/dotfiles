@@ -3,7 +3,7 @@ name="lumo-hermes-agent"
 description="Lumo Hermes Agent (Nous Research) gateway container"
 supervisor=supervise-daemon
 command="@podman@"
-command_args="run --replace --rm --network=host --env=HERMES_HOME=/opt/data --env=HERMES_DISABLE_LAZY_INSTALLS=0 --entrypoint=/bin/sh --name=lumo-hermes-agent -v @dataDir@:/opt/data -v @workDir@:@workDir@ -v @containerEntrypoint@:/usr/local/bin/hermes-honcho-entrypoint:ro @image@ /usr/local/bin/hermes-honcho-entrypoint"
+command_args="run --replace --rm --network=host --env=HERMES_HOME=/opt/data --env=HERMES_DISABLE_LAZY_INSTALLS=0 --entrypoint=/bin/sh --name=lumo-hermes-agent -v @dataDir@:/opt/data -v @hostWorkDir@:@containerWorkDir@ -v @containerEntrypoint@:/usr/local/bin/hermes-honcho-entrypoint:ro @image@ /usr/local/bin/hermes-honcho-entrypoint"
 command_user="root"
 output_log="/var/log/lumo/hermes-agent.log"
 error_log="/var/log/lumo/hermes-agent.log"

@@ -12,11 +12,11 @@ let
   # skills, memories, kanban, etc. Mounted to the container's /opt/data.
   dataDir = "/var/lib/hermes";
 
-  # Agent working directory (terminal.cwd): where the agent runs shell commands
-  # and creates files during tasks. Bind-mounted at the same path so the host
-  # sees exactly what the agent works on. Must NOT be under /home/ — hermes'
-  # write_file tool flags /home/ paths as protected credential files.
-  workDir = "/opt/workspace";
+  # Host-side working directory — bind-mounted into the container at containerWorkDir.
+  # Keep it outside /home/ inside the container: hermes' write_file tool flags
+  # /home/ paths as protected credential files.
+  hostWorkDir = "/home/hermes";
+  containerWorkDir = "/opt/workspace";
 
   # The `latest` tag tracks the main branch (auto-updated on every push to
   # main). To pin a specific release, change to a tag like `vX.Y.Z` when
@@ -58,7 +58,8 @@ let
       inherit
         dataDir
         image
-        workDir
+        hostWorkDir
+        containerWorkDir
         ;
       containerEntrypoint = toString containerEntrypoint;
       podman = "${pkgs.podman}/bin/podman";
@@ -140,19 +141,18 @@ in
               /usr/sbin/addgroup -g 10000 -S hermes
             fi
             if ! /usr/bin/id hermes >/dev/null 2>&1; then
-              /usr/sbin/adduser -S -D -h ${workDir} -s /bin/sh -G hermes -u 10000 hermes
+              /usr/sbin/adduser -S -D -h ${hostWorkDir} -s /bin/sh -G hermes -u 10000 hermes
             fi
 
-            # Home directory doubles as the agent working directory (terminal.cwd),
-            # bind-mounted into the container at the same path. Created by adduser for
-            # new users; ensure it exists with skeleton files for existing users.
-            if [ ! -d ${workDir} ]; then
-              install -d -m 0750 -o hermes -g hermes ${workDir}
-              cp -r /etc/skel/. ${workDir}/ 2>/dev/null || true
-              chown -R hermes:hermes ${workDir}
+            # Host working directory — bind-mounted into the container at ${containerWorkDir}.
+            # Created by adduser for new users; ensure it exists for existing users.
+            if [ ! -d ${hostWorkDir} ]; then
+              install -d -m 0750 -o hermes -g hermes ${hostWorkDir}
+              cp -r /etc/skel/. ${hostWorkDir}/ 2>/dev/null || true
+              chown -R hermes:hermes ${hostWorkDir}
             fi
-            if [ "$(/usr/bin/getent passwd hermes | cut -d: -f6)" != "${workDir}" ]; then
-              /usr/sbin/usermod -d ${workDir} hermes
+            if [ "$(/usr/bin/getent passwd hermes | cut -d: -f6)" != "${hostWorkDir}" ]; then
+              /usr/sbin/usermod -d ${hostWorkDir} hermes
             fi
 
             # Config + internal state directory (HERMES_HOME), mounted to /opt/data.
