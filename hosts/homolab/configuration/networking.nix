@@ -61,7 +61,7 @@ in
       allowedTCPPorts = [ ];
 
       extraCommands = ''
-        # Development ports are blocked; routing goes through gateway Traefik.
+        # Development ports are blocked; routing goes through lumo's edge Traefik.
         ${mkRangeDropRule devPortRange}
 
         # Explicit LAN DROP for loopback-only services.

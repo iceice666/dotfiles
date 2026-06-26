@@ -47,14 +47,14 @@ in
         customTTL = "5m";
         filterUnmappedTypes = true;
         mapping = {
-          ${homolab.domains.auth} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.dns} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.grafana} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.cliproxyapi} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.traefik} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.home} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.dev} = homolab.hosts.gateway.tailnet;
-          ${homolab.domains.npu} = homolab.hosts.gateway.tailnet;
+          ${homolab.domains.auth} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.dns} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.grafana} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.cliproxyapi} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.traefik} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.home} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.dev} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.npu} = homolab.hosts.lumo.tailnet;
         };
         zone = "";
       };

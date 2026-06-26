@@ -8,7 +8,6 @@ keys:
   - &homolab       age1r80n348lhctp82j7vuj6fe6hs6sup7lz7x66nh80xunrsrg2sqrqh98zpu
   - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   - &lumo          age1eqr9wgdsa2tfkck96guuxclu8vr0la62sju6yjkzvd9667uxrugs9kyync
-  - &gateway       age1x0mt4vls79prv4u3fqtlqr6ep8aludq0726upfcxeq2t849rz96qzceyy0
   # Optional recovery recipient (public)
   # - &recovery    age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
@@ -41,14 +40,6 @@ creation_rules:
     age:
       - *m3air
       - *homolab
-
-  - path_regex: ^sensitive/hosts/gateway/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age:
-      - *m3air
-      - *gateway
-      # TEMPORARY: lumo runs gateway's edge services while the gateway host is
-      # down. Remove and re-run `sops updatekeys` once the gateway is restored.
-      - *lumo
 
   - path_regex: ^sensitive/hosts/lumo/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:

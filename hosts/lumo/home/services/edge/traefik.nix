@@ -293,28 +293,28 @@ let
     };
   };
 
-  traefikService = pkgs.writeText "gateway-traefik" ''
+  traefikService = pkgs.writeText "lumo-traefik" ''
     #!/sbin/openrc-run
-    name="gateway-traefik"
-    description="Gateway Traefik reverse proxy"
+    name="lumo-traefik"
+    description="Lumo Traefik reverse proxy"
     supervisor=supervise-daemon
     command="${traefikPackage}/bin/traefik"
     command_args="--configFile=${staticConfig}"
     directory="/var/lib/traefik"
-    output_log="/var/log/gateway/traefik.log"
-    error_log="/var/log/gateway/traefik.log"
+    output_log="/var/log/lumo/traefik.log"
+    error_log="/var/log/lumo/traefik.log"
     respawn_delay=5
     respawn_max=0
 
     depend() {
       need net
-      after gateway-authelia gateway-cloudflare-ips
+      after lumo-authelia lumo-cloudflare-ips
     }
 
     start_pre() {
-      checkpath -d -m 0755 -o root:root /var/log/gateway
+      checkpath -d -m 0755 -o root:root /var/log/lumo
       checkpath -d -m 0700 -o root:root /var/lib/traefik
-      checkpath -f -m 0640 -o root:root /var/log/gateway/traefik.log
+      checkpath -f -m 0640 -o root:root /var/log/lumo/traefik.log
 
       token="$(tr -d '\r\n' < '${cfKeyPath}')"
       if [ -z "$token" ]; then
@@ -328,14 +328,14 @@ let
 in
 {
   sops.secrets.cloudflare-traefik-key = {
-    sopsFile = dotfiles + /sensitive/hosts/gateway/cloudflare-ddns.key;
+    sopsFile = dotfiles + /sensitive/hosts/lumo/cloudflare-ddns.key;
     format = "binary";
     mode = "0400";
   };
 
-  home.activation.gatewayTraefik = lib.hm.dag.entryAfter [ "sopsAlpine" "gatewayAuthelia" ] ''
-    install -Dm755 ${traefikService} /etc/init.d/gateway-traefik
-    /sbin/rc-update add gateway-traefik default
-    /sbin/rc-service gateway-traefik restart
+  home.activation.lumoTraefik = lib.hm.dag.entryAfter [ "sopsAlpine" "lumoAuthelia" ] ''
+    install -Dm755 ${traefikService} /etc/init.d/lumo-traefik
+    /sbin/rc-update add lumo-traefik default
+    /sbin/rc-service lumo-traefik restart
   '';
 }

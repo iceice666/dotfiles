@@ -92,12 +92,6 @@ let
             ];
             labels.instance = homolab.hostName;
           }
-          {
-            targets = [
-              "${homolab.hosts.gateway.tailnet}:${toString nodeExporterPort}"
-            ];
-            labels.instance = "gateway";
-          }
         ];
       }
       {
@@ -121,9 +115,9 @@ let
         static_configs = [
           {
             targets = [
-              "${homolab.hosts.gateway.tailnet}:${toString homolab.ports.traefikMetrics}"
+              "127.0.0.1:${toString homolab.ports.traefikMetrics}"
             ];
-            labels.instance = "gateway";
+            labels.instance = "lumo";
           }
         ];
       }
@@ -301,7 +295,7 @@ let
       header_property = "username";
       auto_sign_up = true;
       sync_ttl = 15;
-      whitelist = homolab.hosts.gateway.lan;
+      whitelist = homolab.hosts.lumo.lan;
       headers = "Name:Remote-Name Email:Remote-Email Groups:Remote-Groups";
     };
     paths.provisioning = "/etc/lumo-grafana/provisioning";

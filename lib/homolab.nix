@@ -4,13 +4,11 @@ let
 
   hosts = {
     # LAN addresses are stable; tailnet IPs filled in after board provision.
-    gateway = {
-      lan = "192.168.1.129";
-      tailnet = "100.119.84.114";
-      role = "edge";
-    };
+    # lumo also carries the edge role (Traefik/Authelia/Cloudflare) that the
+    # retired gateway Pi used to host.
     lumo = {
       lan = "192.168.1.128";
+      tailnet = "100.120.152.7";
       role = "apps";
     };
     homolab = {

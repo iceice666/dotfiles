@@ -1,7 +1,7 @@
 # dotfiles
 
 Multi-host Nix configuration for `m3air`, `framework`, `homolab`, `lumo`,
-`gateway`, and `gce-dns`.
+and `gce-dns`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
@@ -14,8 +14,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | `m3air` | `.#m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
 | `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, deployed from `m3air` over SSH |
-| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps Pi via root Home Manager + OpenRC |
-| `gateway` | `.#homeConfigurations.gateway` | `aarch64-linux` | Alpine edge Pi via root Home Manager + OpenRC |
+| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi via root Home Manager + OpenRC |
 | `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 
 ## Layout
@@ -39,8 +38,7 @@ hosts/               # per-host entrypoints
   m3air/             # macOS; host.nix declares features, configuration/, home/, wallpaper.jpg
   framework/         # NixOS system + Home Manager modules; wallpaper.png
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
-  lumo/              # Alpine root Home Manager + OpenRC data/apps services
-  gateway/           # Alpine root Home Manager edge host
+  lumo/              # Alpine root Home Manager + OpenRC data/apps + edge services
   gce-dns/           # Google Compute Engine image host for Blocky DoH
 
 lib/                 # shared nix helpers and local flake framework
@@ -93,17 +91,14 @@ just homolab-gen-hardware    # refresh hardware-configuration.nix from the serve
 just homolab-llama-smoke     # OpenAI-compatible smoke check against homolab's LLM stack
 ```
 
-Gateway and lumo use the official Alpine Linux 3.24 Raspberry Pi image with
-root-only Lix (`--init none`). Their root Home Manager closures are built on the
-target and activated through deploy-rs. Alpine owns boot, networking, OpenSSH,
-Tailscale, cgroups, and the nftables launcher; Home Manager owns root tooling,
-Nix-built service binaries, generated configuration, and lumo's OpenRC jobs.
+Lumo uses the official Alpine Linux 3.24 Raspberry Pi image with root-only Lix
+(`--init none`). Its root Home Manager closure is built on the target and
+activated through deploy-rs. Alpine owns boot, networking, OpenSSH, Tailscale,
+cgroups, and the nftables launcher; Home Manager owns root tooling, Nix-built
+service binaries, generated configuration, and lumo's OpenRC jobs (data/apps
+plus the edge stack: Traefik, Authelia, Cloudflare DDNS).
 
 ```sh
-just gateway-bootstrap gateway  # prepare a freshly installed Alpine gateway
-just gateway-build              # dry-activate root Home Manager
-just gateway-switch             # deploy root Home Manager
-
 just lumo-bootstrap lumo        # converge the existing Alpine/NVMe lumo host
 just lumo-build                 # dry-activate root Home Manager
 just lumo-switch                # deploy root Home Manager

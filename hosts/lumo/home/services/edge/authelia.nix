@@ -28,8 +28,8 @@ let
       format = "text";
     };
 
-    # Users database is staged to /run/gateway-authelia/ in start_pre.
-    authentication_backend.file.path = "/run/gateway-authelia/users-database.yml";
+    # Users database is staged to /run/lumo-authelia/ in start_pre.
+    authentication_backend.file.path = "/run/lumo-authelia/users-database.yml";
 
     access_control = {
       default_policy = "deny";
@@ -94,16 +94,16 @@ let
   };
 
   # Authelia supports *_FILE env var variants for all secrets.
-  autheliaService = pkgs.writeText "gateway-authelia" ''
+  autheliaService = pkgs.writeText "lumo-authelia" ''
     #!/sbin/openrc-run
-    name="gateway-authelia"
-    description="Gateway Authelia SSO"
+    name="lumo-authelia"
+    description="Lumo Authelia SSO"
     supervisor=supervise-daemon
     command="${autheliaPackage}/bin/authelia"
     command_args="--config ${autheliaConfig}"
     directory="/var/lib/authelia"
-    output_log="/var/log/gateway/authelia.log"
-    error_log="/var/log/gateway/authelia.log"
+    output_log="/var/log/lumo/authelia.log"
+    error_log="/var/log/lumo/authelia.log"
     respawn_delay=5
     respawn_max=0
     supervise_daemon_args="-e AUTHELIA_JWT_SECRET_FILE=${jwtSecretPath} -e AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=${storageKeyPath} -e AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=${smtpPasswordPath}"
@@ -113,49 +113,49 @@ let
     }
 
     start_pre() {
-      checkpath -d -m 0755 -o root:root /var/log/gateway
+      checkpath -d -m 0755 -o root:root /var/log/lumo
       checkpath -d -m 0700 -o root:root /var/lib/authelia
-      checkpath -f -m 0640 -o root:root /var/log/gateway/authelia.log
-      checkpath -d -m 0755 -o root:root /run/gateway-authelia
+      checkpath -f -m 0640 -o root:root /var/log/lumo/authelia.log
+      checkpath -d -m 0755 -o root:root /run/lumo-authelia
 
       # Render users database with the hashed password from the sops secret.
       user_hash="$(cat '${userHashPath}')"
       printf 'users:\n  iceice666:\n    disabled: false\n    displayname: iceice666\n    password: '"'"'%s'"'"'\n    email: %s\n    groups:\n      - admins\n' \
-        "$user_hash" "${homolab.contact.adminEmail}" > /run/gateway-authelia/users-database.yml
-      chmod 0600 /run/gateway-authelia/users-database.yml
+        "$user_hash" "${homolab.contact.adminEmail}" > /run/lumo-authelia/users-database.yml
+      chmod 0600 /run/lumo-authelia/users-database.yml
     }
   '';
 in
 {
   sops.secrets = {
     authelia-jwt-secret = {
-      sopsFile = dotfiles + /sensitive/hosts/gateway/authelia.yaml;
+      sopsFile = dotfiles + /sensitive/hosts/lumo/authelia.yaml;
       key = "jwtSecret";
       mode = "0400";
     };
 
     authelia-storage-encryption-key = {
-      sopsFile = dotfiles + /sensitive/hosts/gateway/authelia.yaml;
+      sopsFile = dotfiles + /sensitive/hosts/lumo/authelia.yaml;
       key = "storageEncryptionKey";
       mode = "0400";
     };
 
     authelia-user-password-hash = {
-      sopsFile = dotfiles + /sensitive/hosts/gateway/authelia.yaml;
+      sopsFile = dotfiles + /sensitive/hosts/lumo/authelia.yaml;
       key = "userPasswordHash";
       mode = "0400";
     };
 
     authelia-smtp-password = {
-      sopsFile = dotfiles + /sensitive/hosts/gateway/resend.yaml;
+      sopsFile = dotfiles + /sensitive/hosts/lumo/resend.yaml;
       key = "apiKey";
       mode = "0400";
     };
   };
 
-  home.activation.gatewayAuthelia = lib.hm.dag.entryAfter [ "sopsAlpine" ] ''
-    install -Dm755 ${autheliaService} /etc/init.d/gateway-authelia
-    /sbin/rc-update add gateway-authelia default
-    /sbin/rc-service gateway-authelia restart
+  home.activation.lumoAuthelia = lib.hm.dag.entryAfter [ "sopsAlpine" ] ''
+    install -Dm755 ${autheliaService} /etc/init.d/lumo-authelia
+    /sbin/rc-update add lumo-authelia default
+    /sbin/rc-service lumo-authelia restart
   '';
 }

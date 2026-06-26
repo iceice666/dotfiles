@@ -2,7 +2,7 @@
 
 let
   refreshScript = pkgs.writeShellApplication {
-    name = "gateway-cloudflare-ips-refresh";
+    name = "lumo-cloudflare-ips-refresh";
     runtimeInputs = [
       pkgs.curl
       pkgs.nftables
@@ -51,9 +51,9 @@ let
     '';
   };
 
-  ipsService = pkgs.writeText "gateway-cloudflare-ips" ''
+  ipsService = pkgs.writeText "lumo-cloudflare-ips" ''
     #!/sbin/openrc-run
-    name="gateway-cloudflare-ips"
+    name="lumo-cloudflare-ips"
     description="Refresh Cloudflare IP sets in nftables"
 
     depend() {
@@ -62,7 +62,7 @@ let
 
     start() {
       ebegin "Refreshing Cloudflare IP sets"
-      ${refreshScript}/bin/gateway-cloudflare-ips-refresh
+      ${refreshScript}/bin/lumo-cloudflare-ips-refresh
       eend $?
     }
   '';
@@ -70,10 +70,10 @@ in
 {
   home.packages = [ refreshScript ];
 
-  home.activation.gatewayCloudflareIps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    install -Dm755 ${ipsService} /etc/init.d/gateway-cloudflare-ips
-    /sbin/rc-update add gateway-cloudflare-ips default
+  home.activation.lumoCloudflareIps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    install -Dm755 ${ipsService} /etc/init.d/lumo-cloudflare-ips
+    /sbin/rc-update add lumo-cloudflare-ips default
     /sbin/rc-service dotfiles-firewall restart
-    /sbin/rc-service gateway-cloudflare-ips start || true
+    /sbin/rc-service lumo-cloudflare-ips start || true
   '';
 }

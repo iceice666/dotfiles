@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  printf 'usage: %s <gateway|lumo> [ssh-target]\n' "$0" >&2
+  printf 'usage: %s <lumo> [ssh-target]\n' "$0" >&2
   exit 2
 }
 
@@ -10,9 +10,6 @@ host="${1:-}"
 target="${2:-$host}"
 
 case "$host" in
-  gateway)
-    lan_address="192.168.1.129"
-    ;;
   lumo)
     lan_address="192.168.1.128"
     ;;
@@ -82,11 +79,7 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 EOF
-if [ "$DOTFILES_HOST" = "lumo" ]; then
-  printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
-else
-  printf 'AllowUsers root\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
-fi
+printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
 
 cat > /etc/modprobe.d/dotfiles-blacklist.conf <<'EOF'
 blacklist esp4
@@ -109,38 +102,11 @@ iface eth0 inet static
 iface eth0 inet6 auto
 EOF
 
-if [ "$DOTFILES_HOST" = "lumo" ]; then
-  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
-table inet dotfiles {
-  chain input {
-    type filter hook input priority filter; policy drop;
-    ct state established,related accept
-    iifname "lo" accept
-    iifname "tailscale0" accept
-    iifname "podman*" accept
-    ip protocol icmp accept
-    ip6 nexthdr ipv6-icmp accept
-    udp dport 41641 accept
-    ip saddr 192.168.1.0/24 tcp dport 22 accept
-    # gateway (192.168.1.129) proxies dynacat/devPortProxy/grafana/cliproxyapi to lumo
-    ip saddr { 192.168.1.127, 192.168.1.129 } tcp dport { 18075, 18076, 18084, 20129 } accept
-  }
-
-  chain forward {
-    type filter hook forward priority filter; policy drop;
-    iifname "podman*" accept
-    oifname "podman*" accept
-  }
-
-  chain output {
-    type filter hook output priority filter; policy accept;
-  }
-}
-EOF
-else
-  # gateway: edge appliance — accepts HTTP/HTTPS from Cloudflare IPs and LAN
-  # Named sets cloudflare_v4/v6 are populated at runtime by the cloudflare-ips service.
-  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
+# lumo runs both the app workloads and the edge role (Traefik/Authelia/
+# Cloudflare) that the retired gateway Pi used to host. The named sets
+# cloudflare_v4/v6 are populated at runtime by the lumo-cloudflare-ips service.
+# Keep this in sync with hosts/lumo/home/services/edge/nftables.nix.
+cat > /etc/nftables.d/dotfiles.nft <<'EOF'
 table inet dotfiles {
   set cloudflare_v4 {
     type ipv4_addr
@@ -158,10 +124,14 @@ table inet dotfiles {
     ct state established,related accept
     iifname "lo" accept
     iifname "tailscale0" accept
+    iifname "podman*" accept
     ip protocol icmp accept
     ip6 nexthdr ipv6-icmp accept
     udp dport 41641 accept
     ip saddr 192.168.1.0/24 tcp dport 22 accept
+    # app ports proxied from homolab and lumo itself (Traefik backends)
+    ip saddr { 192.168.1.127, 192.168.1.128 } tcp dport { 18075, 18076, 18084, 20129 } accept
+    # edge: HTTP/HTTPS from Cloudflare IP sets and the LAN
     ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
     ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept
     ip saddr 192.168.1.0/24 tcp dport { 80, 443 } accept
@@ -171,6 +141,8 @@ table inet dotfiles {
 
   chain forward {
     type filter hook forward priority filter; policy drop;
+    iifname "podman*" accept
+    oifname "podman*" accept
   }
 
   chain output {
@@ -178,7 +150,6 @@ table inet dotfiles {
   }
 }
 EOF
-fi
 
 cat > /etc/init.d/dotfiles-firewall <<'EOF'
 #!/sbin/openrc-run

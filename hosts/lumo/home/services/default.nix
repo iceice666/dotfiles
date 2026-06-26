@@ -7,7 +7,7 @@
     ./database.nix
     ./dev-port-proxy.nix
     ./dynacat.nix
-    ./gateway-failover.nix
+    ./edge
     ./git-server.nix
     ./honcho.nix
     ./hermes-agent

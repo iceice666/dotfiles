@@ -26,7 +26,7 @@ switch: _kaguya-cache
 
 # Apply the local host plus all remote host configurations
 [group('host')]
-switch-all: switch homolab-switch gateway-switch gce-dns-switch lumo-switch
+switch-all: switch homolab-switch gce-dns-switch lumo-switch
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -116,21 +116,6 @@ gce-dns-build:
 [group('host')]
 gce-dns-image:
     nix build {{ gce_dns_image }}
-
-# Bootstrap an official Alpine 3.24 installation for gateway
-[group('host')]
-gateway-bootstrap target='gateway':
-    {{ scripts }}/alpine-bootstrap gateway {{ target }}
-
-# Dry-activate the gateway root Home Manager profile
-[group('host')]
-gateway-build:
-    nix develop --command deploy .#gateway --dry-activate --skip-checks
-
-# Apply the gateway root Home Manager profile
-[group('host')]
-gateway-switch:
-    nix develop --command deploy .#gateway --skip-checks
 
 # Apply the gce-dns NixOS configuration over Tailscale SSH
 [group('host')]

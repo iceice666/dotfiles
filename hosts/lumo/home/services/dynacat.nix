@@ -28,7 +28,6 @@ let
   yamlFormat = pkgs.formats.yaml { };
   mkLocalUrl = port: path: "http://127.0.0.1:${toString port}${path}";
   mkHomolabUrl = port: path: "http://${homolab.hosts.homolab.tailnet}:${toString port}${path}";
-  mkGatewayUrl = port: path: "http://${homolab.hosts.gateway.tailnet}:${toString port}${path}";
 
   # Prometheus instant-query helpers
   promUrl = "http://127.0.0.1:${toString homolab.ports.prometheus}/api/v1/query";
@@ -93,10 +92,10 @@ let
       }
       ''<li class="flex justify-between"><span>Targets</span><span class="color-highlight">{{ printf "%.0f" ((.Subrequest "targets").JSON.Float "data.result.0.value.1") }} up</span></li>'';
 
-  gatewayPanel =
-    mkHostPanel "gateway"
+  edgePanel =
+    mkHostPanel "edge"
       {
-        traefik = mkPromReq ''sum(rate(traefik_entrypoint_requests_total{instance="gateway"}[5m]))'';
+        traefik = mkPromReq ''sum(rate(traefik_entrypoint_requests_total{instance="lumo"}[5m]))'';
       }
       ''<li class="flex justify-between"><span>Req/s</span><span class="color-highlight">{{ printf "%.1f" ((.Subrequest "traefik").JSON.Float "data.result.0.value.1") }}</span></li>'';
 
@@ -179,7 +178,7 @@ let
                 widgets = [
                   homolabPanel
                   lumoPanel
-                  gatewayPanel
+                  edgePanel
                   gceDnsPanel
                 ];
               }
@@ -205,10 +204,10 @@ let
                   ])
                   (mkMonitorWidget "Infra" [
                     (mkMonitorSite "Traefik" serviceIcons.proxy homolab.urls.traefik (
-                      mkGatewayUrl homolab.ports.traefikPing "/ping"
+                      mkLocalUrl homolab.ports.traefikPing "/ping"
                     ))
                     (mkMonitorSite "Authelia" serviceIcons.authelia homolab.urls.auth (
-                      mkGatewayUrl homolab.ports.authelia ""
+                      mkLocalUrl homolab.ports.authelia ""
                     ))
                     (mkMonitorSite "Shimmy (on-demand)" serviceIcons.shimmy "${homolab.ai.tailnetBaseUrl}/health" (
                       "${homolab.ai.tailnetBaseUrl}/health"

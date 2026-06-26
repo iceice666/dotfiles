@@ -3,7 +3,7 @@
 {
   home.packages = [ pkgs.wakeonlan ];
 
-  # Any tailnet client can ssh root@gateway homolab-wake to have gateway
+  # Any tailnet client can ssh root@lumo homolab-wake to have lumo
   # broadcast the magic packet on the home LAN.
   home.file.".local/bin/homolab-wake" = {
     executable = true;

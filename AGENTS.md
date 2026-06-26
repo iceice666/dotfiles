@@ -63,12 +63,10 @@ hosts/               # per-host entrypoints
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
-  lumo/              # Alpine 3.24 server (aarch64, Raspberry Pi 5), data+apps plane
+  lumo/              # Alpine 3.24 server (aarch64, Raspberry Pi 5), data+apps + edge plane
     host.nix         # standalone root Home Manager + deploy-rs metadata
     home/services/   # Nix binaries, generated configs, OpenRC activation
-  gateway/           # Alpine 3.24 edge appliance (aarch64, Raspberry Pi 5)
-    host.nix         # standalone root Home Manager + deploy-rs metadata
-    home/            # shared CLI baseline; host services are bootstrapped through Alpine
+    home/services/edge/ # edge stack (Traefik/Authelia/Cloudflare) moved from the retired gateway Pi
   gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
     host.nix         # feature manifest
     configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
@@ -138,10 +136,9 @@ cache.
 | `darwinConfigurations.m3air` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
-| `homeConfigurations.lumo` | Alpine root Home Manager data+apps configuration |
-| `homeConfigurations.gateway` | Alpine root Home Manager edge configuration |
+| `homeConfigurations.lumo` | Alpine root Home Manager data+apps + edge configuration |
 | `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
-| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, `gateway`, and `gce-dns` |
+| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, and `gce-dns` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -302,14 +299,13 @@ Which build to run for a given change:
 | `hosts/framework/configuration/**` | `framework` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
 | `hosts/lumo/**` | `lumo` (via `just lumo-build`) |
-| `hosts/gateway/**` | `gateway` (via `just gateway-build`) |
 | `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
-| `lib/homolab.nix` | `homolab` + `lumo` + `gateway` |
+| `lib/homolab.nix` | `homolab` + `lumo` |
 | `common/system/**` | `m3air` + `framework` + `homolab` + `gce-dns` |
 | `common/system-darwin/**` | `m3air` |
 | `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
 | `common/home-base/**` | all Home Manager-enabled hosts |
-| `common/home-alpine/**` | `lumo` + `gateway` |
+| `common/home-alpine/**` | `lumo` |
 | `common/home-gui/**` | `m3air` + `framework` |
 | `pkgs/<name>` | `nix build .#<name>` (standalone) or any host that uses it |
 
@@ -339,10 +335,6 @@ just gce-dns-build           # dry-build the gce-dns NixOS system toplevel
 just gce-dns-image           # build the gce-dns Google Compute Engine image
 just gce-dns-switch          # deploy gce-dns over Tailscale after first boot
 
-just gateway-bootstrap       # prepare an official Alpine 3.24 gateway installation
-just gateway-build           # dry-activate gateway root Home Manager
-just gateway-switch          # deploy gateway root Home Manager
-
 just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installation
 just lumo-build              # dry-activate lumo root Home Manager
 just lumo-switch             # deploy lumo root Home Manager
@@ -353,11 +345,13 @@ Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs o
 the server itself over SSH and avoids cross-compilation. The deploy user must have
 passwordless sudo for the deploy-rs activation script.
 
-`lumo` and `gateway` run Alpine Linux 3.24 with root-only Lix installed using
-`--init none`. deploy-rs activates standalone root Home Manager profiles and
-builds each aarch64 closure on its target. Alpine/APK owns boot, the kernel,
-networking, OpenSSH, Tailscale, cgroups, and the nftables launcher. Home Manager
-owns root tooling and Nix-provided application services supervised by OpenRC.
+`lumo` runs Alpine Linux 3.24 with root-only Lix installed using `--init none`.
+deploy-rs activates the standalone root Home Manager profile and builds the
+aarch64 closure on its target. Alpine/APK owns boot, the kernel, networking,
+OpenSSH, Tailscale, cgroups, and the nftables launcher. Home Manager owns root
+tooling and Nix-provided application services supervised by OpenRC — including
+the edge stack (Traefik/Authelia/Cloudflare DDNS) that moved off the retired
+gateway Pi.
 
 `lumo` is the data+apps plane: Postgres, Valkey, git-server, Podman, Prometheus,
 Grafana, Dynacat, dev-port-proxy, the Hermes Agent gateway, and the daily audit.

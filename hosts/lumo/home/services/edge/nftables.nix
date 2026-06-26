@@ -1,3 +1,9 @@
+# Edge firewall ruleset for lumo.
+#
+# Merges lumo's host rules (podman + app ports proxied from homolab/self) with
+# the edge rules (Cloudflare IP sets + 80/443 + traefik ping/metrics) that
+# moved here from the retired gateway Pi. Mirror any change in
+# scripts/alpine-bootstrap's lumo branch so a fresh bootstrap matches.
 { lib, pkgs, ... }:
 
 let
@@ -19,18 +25,25 @@ let
         ct state established,related accept
         iifname "lo" accept
         iifname "tailscale0" accept
+        iifname "podman*" accept
         ip protocol icmp accept
         ip6 nexthdr ipv6-icmp accept
         udp dport 41641 accept
         ip saddr 192.168.1.0/24 tcp dport 22 accept
+        # app ports proxied from homolab and lumo itself (Traefik backends)
+        ip saddr { 192.168.1.127, 192.168.1.128 } tcp dport { 18075, 18076, 18084, 20129 } accept
+        # edge: HTTP/HTTPS from Cloudflare IP sets and the LAN
         ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
         ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept
         ip saddr 192.168.1.0/24 tcp dport { 80, 443 } accept
+        # traefikPing (18081) and traefikMetrics (18082): LAN only
         ip saddr 192.168.1.0/24 tcp dport { 18081, 18082 } accept
       }
 
       chain forward {
         type filter hook forward priority filter; policy drop;
+        iifname "podman*" accept
+        oifname "podman*" accept
       }
 
       chain output {
@@ -40,10 +53,8 @@ let
   '';
 in
 {
-  # Keep the gateway nftables file in sync with scripts/alpine-bootstrap.
-  # This activation updates the file so that the cloudflare named sets exist
-  # before gateway-cloudflare-ips attempts to populate them.
-  home.activation.gatewayNftables = lib.hm.dag.entryBefore [ "gatewayCloudflareIps" ] ''
+  # The Cloudflare named sets must exist before lumo-cloudflare-ips populates them.
+  home.activation.lumoEdgeNftables = lib.hm.dag.entryBefore [ "lumoCloudflareIps" ] ''
     install -Dm644 ${nftablesFile} /etc/nftables.d/dotfiles.nft
   '';
 }
