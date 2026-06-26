@@ -53,6 +53,10 @@
     lumo-honcho-api
     lumo-honcho-deriver
     lumo-hermes-agent
+    gateway-authelia
+    gateway-cloudflare-ddns
+    gateway-cloudflare-ips
+    gateway-traefik
     '
 
     if [ -f "$manifest" ]; then

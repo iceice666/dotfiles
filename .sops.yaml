@@ -46,6 +46,9 @@ creation_rules:
     age:
       - *m3air
       - *gateway
+      # TEMPORARY: lumo runs gateway's edge services while the gateway host is
+      # down. Remove and re-run `sops updatekeys` once the gateway is restored.
+      - *lumo
 
   - path_regex: ^sensitive/hosts/lumo/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
