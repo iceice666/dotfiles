@@ -1,7 +1,7 @@
 # dotfiles
 
 Multi-host Nix configuration for `m3air`, `framework`, `homolab`, `lumo`,
-and `gce-dns`.
+`worker`, and `gce-dns`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
@@ -15,6 +15,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
 | `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, deployed from `m3air` over SSH |
 | `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi via root Home Manager + OpenRC |
+| `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
 | `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 
 ## Layout
@@ -39,6 +40,7 @@ hosts/               # per-host entrypoints
   framework/         # NixOS system + Home Manager modules; wallpaper.png
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
   lumo/              # Alpine root Home Manager + OpenRC data/apps + edge services
+  worker/            # Alpine root Home Manager disposable-work / agent-runtime host (ex-gateway)
   gce-dns/           # Google Compute Engine image host for Blocky DoH
 
 lib/                 # shared nix helpers and local flake framework

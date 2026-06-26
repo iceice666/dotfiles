@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  printf 'usage: %s <lumo> [ssh-target]\n' "$0" >&2
+  printf 'usage: %s <lumo|worker> [ssh-target]\n' "$0" >&2
   exit 2
 }
 
@@ -12,6 +12,9 @@ target="${2:-$host}"
 case "$host" in
   lumo)
     lan_address="192.168.1.128"
+    ;;
+  worker)
+    lan_address="192.168.1.129"
     ;;
   *)
     usage
@@ -79,7 +82,11 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 EOF
-printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+if [ "$DOTFILES_HOST" = "lumo" ]; then
+  printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+else
+  printf 'AllowUsers root\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+fi
 
 cat > /etc/modprobe.d/dotfiles-blacklist.conf <<'EOF'
 blacklist esp4
@@ -102,11 +109,12 @@ iface eth0 inet static
 iface eth0 inet6 auto
 EOF
 
-# lumo runs both the app workloads and the edge role (Traefik/Authelia/
-# Cloudflare) that the retired gateway Pi used to host. The named sets
-# cloudflare_v4/v6 are populated at runtime by the lumo-cloudflare-ips service.
-# Keep this in sync with hosts/lumo/home/services/edge/nftables.nix.
-cat > /etc/nftables.d/dotfiles.nft <<'EOF'
+if [ "$DOTFILES_HOST" = "lumo" ]; then
+  # lumo runs both the app workloads and the edge role (Traefik/Authelia/
+  # Cloudflare) that the retired gateway Pi used to host. The named sets
+  # cloudflare_v4/v6 are populated at runtime by the lumo-cloudflare-ips service.
+  # Keep this in sync with hosts/lumo/home/services/edge/nftables.nix.
+  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
 table inet dotfiles {
   set cloudflare_v4 {
     type ipv4_addr
@@ -150,6 +158,36 @@ table inet dotfiles {
   }
 }
 EOF
+else
+  # worker: disposable-work / agent-runtime box — SSH from the LAN, Tailscale,
+  # podman, nothing inbound from the internet.
+  # Keep in sync with hosts/worker/home/services/nftables.nix.
+  cat > /etc/nftables.d/dotfiles.nft <<'EOF'
+table inet dotfiles {
+  chain input {
+    type filter hook input priority filter; policy drop;
+    ct state established,related accept
+    iifname "lo" accept
+    iifname "tailscale0" accept
+    iifname "podman*" accept
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+    udp dport 41641 accept
+    ip saddr 192.168.1.0/24 tcp dport 22 accept
+  }
+
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+    iifname "podman*" accept
+    oifname "podman*" accept
+  }
+
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}
+EOF
+fi
 
 cat > /etc/init.d/dotfiles-firewall <<'EOF'
 #!/sbin/openrc-run
@@ -189,7 +227,7 @@ rc-service sshd restart
 rc-service tailscale start || true
 rc-service dotfiles-firewall restart
 if tailscale status >/dev/null 2>&1; then
-  tailscale set --ssh=true
+  tailscale set --ssh=true --hostname "$DOTFILES_HOST"
 fi
 
 if ! command -v nix >/dev/null 2>&1; then

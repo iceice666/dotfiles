@@ -26,7 +26,7 @@ switch: _kaguya-cache
 
 # Apply the local host plus all remote host configurations
 [group('host')]
-switch-all: switch homolab-switch gce-dns-switch lumo-switch
+switch-all: switch homolab-switch gce-dns-switch lumo-switch worker-switch
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -141,6 +141,21 @@ lumo-switch:
 [group('host')]
 lumo-smoke target='lumo':
     {{ scripts }}/lumo-smoke {{ target }}
+
+# Bootstrap the existing Alpine 3.24 installation for worker (ex-gateway Pi)
+[group('host')]
+worker-bootstrap target='worker':
+    {{ scripts }}/alpine-bootstrap worker {{ target }}
+
+# Dry-activate the worker root Home Manager profile
+[group('host')]
+worker-build:
+    nix develop --command deploy .#worker --dry-activate --skip-checks
+
+# Apply the worker root Home Manager profile
+[group('host')]
+worker-switch:
+    nix develop --command deploy .#worker --skip-checks
 
 # Install Homebrew on M3 Air
 [group('host')]

@@ -11,6 +11,13 @@ let
       tailnet = "100.120.152.7";
       role = "apps";
     };
+    # worker: the ex-gateway Pi, repurposed for disposable work / agent
+    # runtimes. Stateless — persistent data lives on lumo.
+    worker = {
+      lan = "192.168.1.129";
+      tailnet = "100.119.84.114";
+      role = "worker";
+    };
     homolab = {
       lan = lanAddress;
       tailnet = "100.110.95.111";

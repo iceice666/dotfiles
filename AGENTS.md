@@ -67,6 +67,9 @@ hosts/               # per-host entrypoints
     host.nix         # standalone root Home Manager + deploy-rs metadata
     home/services/   # Nix binaries, generated configs, OpenRC activation
     home/services/edge/ # edge stack (Traefik/Authelia/Cloudflare) moved from the retired gateway Pi
+  worker/            # Alpine 3.24 (aarch64, ex-gateway Pi): disposable work / agent runtime, state on lumo
+    host.nix         # standalone root Home Manager + deploy-rs metadata
+    home/services/   # podman runtime + minimal firewall
   gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
     host.nix         # feature manifest
     configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
@@ -137,8 +140,9 @@ cache.
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
 | `homeConfigurations.lumo` | Alpine root Home Manager data+apps + edge configuration |
+| `homeConfigurations.worker` | Alpine root Home Manager disposable-work / agent-runtime host |
 | `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
-| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, and `gce-dns` |
+| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, `worker`, and `gce-dns` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -299,13 +303,14 @@ Which build to run for a given change:
 | `hosts/framework/configuration/**` | `framework` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
 | `hosts/lumo/**` | `lumo` (via `just lumo-build`) |
+| `hosts/worker/**` | `worker` (via `just worker-build`) |
 | `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
-| `lib/homolab.nix` | `homolab` + `lumo` |
+| `lib/homolab.nix` | `homolab` + `lumo` + `worker` |
 | `common/system/**` | `m3air` + `framework` + `homolab` + `gce-dns` |
 | `common/system-darwin/**` | `m3air` |
 | `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
 | `common/home-base/**` | all Home Manager-enabled hosts |
-| `common/home-alpine/**` | `lumo` |
+| `common/home-alpine/**` | `lumo` + `worker` |
 | `common/home-gui/**` | `m3air` + `framework` |
 | `pkgs/<name>` | `nix build .#<name>` (standalone) or any host that uses it |
 
@@ -339,6 +344,10 @@ just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installati
 just lumo-build              # dry-activate lumo root Home Manager
 just lumo-switch             # deploy lumo root Home Manager
 just lumo-smoke              # verify lumo OpenRC services and local endpoints
+
+just worker-bootstrap 192.168.1.129  # converge the ex-gateway Pi as worker (pass a reachable target)
+just worker-build            # dry-activate worker root Home Manager
+just worker-switch           # deploy worker root Home Manager
 ```
 
 Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs on

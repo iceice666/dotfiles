@@ -8,6 +8,7 @@ keys:
   - &homolab       age1r80n348lhctp82j7vuj6fe6hs6sup7lz7x66nh80xunrsrg2sqrqh98zpu
   - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   - &lumo          age1eqr9wgdsa2tfkck96guuxclu8vr0la62sju6yjkzvd9667uxrugs9kyync
+  - &worker        age1qfnqaz2pwlgx27ymm5wa4h4gs55nx2tt2hjjkg209t5hstdqp9yqvh2kck
   # Optional recovery recipient (public)
   # - &recovery    age1rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
@@ -45,3 +46,8 @@ creation_rules:
     age:
       - *m3air
       - *lumo
+
+  - path_regex: ^sensitive/hosts/worker/.*\.(yaml|yml|json|env|ini|key|pem)$
+    age:
+      - *m3air
+      - *worker
