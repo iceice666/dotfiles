@@ -7,27 +7,27 @@
 
 let
   pname = "oh-my-pi-bin";
-  version = "16.1.11";
+  version = "16.2.2";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-darwin-arm64";
-      hash = "sha256-7Up+lMrJx9iP4TzqWiZnd8uB/tID8ogM6ZXyxVShkGw=";
+      hash = "sha256-T+lFgCo6c+SDfGKhglviVVEKL1KePsPx9jdg8DG4X+I=";
     };
 
     "x86_64-darwin" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-darwin-x64";
-      hash = "sha256-lJtS4VdjE/qQBS+ZNFHXL5AwahfH35h4mHljWM96ouI=";
+      hash = "sha256-9h0kdlcai0FX7C25erm4YOFe6lYxCd40QxoRoAyvI0Y=";
     };
 
     "aarch64-linux" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-linux-arm64";
-      hash = "sha256-pogiLUFOUzJOW1FMiRXu44mWqzbsVmp0FRCAAQeRjxI=";
+      hash = "sha256-QLV9X06Y3047n+KeBYNKaM87014L/OUhL/qyd6J3kMI=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-linux-x64";
-      hash = "sha256-1HbVFE46D7qRgXv0/CIxF7aY2fLniaE4Kvm7A8rHADE=";
+      hash = "sha256-XP34rq0x71OVlrils/GukcKwx/aqGJ+sJPc8auN/L/s=";
     };
   };
 
