@@ -27,11 +27,4 @@
     sopsNix = inputs.sops-nix;
   };
 
-  deploy = {
-    enable = true;
-    hostname = "homolab-linux";
-    sshUser = "iceice666";
-    sshOpts = [ ];
-    remoteBuild = true;
-  };
 }

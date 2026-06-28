@@ -1,6 +1,6 @@
 # Edge services that moved onto lumo when the gateway Pi was retired:
-# Authelia SSO, Traefik reverse proxy, Cloudflare DDNS + IP-set refresh, the
-# merged firewall, and the wake-on-LAN helper.
+# Authelia SSO, Traefik reverse proxy, Cloudflare DDNS + IP-set refresh, and
+# the merged firewall.
 { ... }:
 
 {
@@ -10,6 +10,5 @@
     ./cloudflare-ips.nix
     ./nftables.nix
     ./traefik.nix
-    ./wol.nix
   ];
 }

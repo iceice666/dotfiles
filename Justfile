@@ -3,10 +3,11 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
-host := if os() == "macos" { "m3air" } else { "framework" }
+host := if os() == "macos" { "m3air" } else { `cat /etc/hostname | sed 's/-linux$//'` }
 m3air_flake := ".#m3air"
 framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
-framework_system := ".#nixosConfigurations.framework.config.system.build.toplevel"
+kaguya_override := if host == "framework" { "--override-input kaguya-cache path:" + framework_kaguya_cache } else { "" }
+system_target := if host == "m3air" { ".#darwinConfigurations.m3air.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
 gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"
 gce_dns_image := ".#nixosConfigurations.gce-dns.config.system.build.googleComputeImage"
 scripts := repo_root / "scripts"
@@ -17,16 +18,16 @@ scripts := repo_root / "scripts"
 switch:
     sudo darwin-rebuild switch --flake {{ m3air_flake }}
 
-# Apply the Framework NixOS configuration
+# Apply the current NixOS host configuration
 [group('host')]
 [linux]
-switch: _kaguya-cache
-    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+switch: _pre-build
+    nix build {{ system_target }} {{ kaguya_override }}
     sudo ./result/bin/switch-to-configuration switch
 
 # Apply the local host plus all remote host configurations
 [group('host')]
-switch-all: switch homolab-switch gce-dns-switch lumo-switch worker-switch
+switch-all: switch gce-dns-switch lumo-switch worker-switch
 
 # Dry-build the M3 Air nix-darwin configuration
 [group('host')]
@@ -34,24 +35,27 @@ switch-all: switch homolab-switch gce-dns-switch lumo-switch worker-switch
 build:
     darwin-rebuild build --flake {{ m3air_flake }}
 
-# Dry-build the Framework NixOS configuration
+# Dry-build the current NixOS host configuration
 [group('host')]
 [linux]
-build: _kaguya-cache
-    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+build: _pre-build
+    nix build {{ system_target }} {{ kaguya_override }}
 
-# Set the Framework NixOS configuration for next boot
+# Set the current NixOS host configuration for next boot
 [group('host')]
 [linux]
-boot: _kaguya-cache
-    test -e /etc/NIXOS || { echo "Framework boot activation requires NixOS." >&2; exit 1; }
-    nix build {{ framework_system }} --override-input kaguya-cache path:{{ framework_kaguya_cache }}
+boot: _pre-build
+    test -e /etc/NIXOS || { echo "Boot activation requires NixOS." >&2; exit 1; }
+    nix build {{ system_target }} {{ kaguya_override }}
     sudo ./result/bin/switch-to-configuration boot
 
-# Ensure the local Kaguya Nix path input cache exists before Framework builds
+# Pre-build hook: on Framework, ensure Kaguya cache exists
 [linux]
-_kaguya-cache:
-    {{ scripts }}/kaguya-cache ensure
+_pre-build:
+    #!/usr/bin/env bash
+    if [ "{{ host }}" = "framework" ]; then
+        {{ scripts }}/kaguya-cache ensure
+    fi
 
 # Refresh the Kaguya browser build from homolab into the local Nix path input cache
 [group('host')]
@@ -65,45 +69,35 @@ kaguya:
 kaguya-sync:
     {{ scripts }}/kaguya-cache sync
 
-# Wake homolab via Wake-on-LAN and wait for the LLM endpoint to be ready
-[group('host')]
-homolab-wake:
-    {{ scripts }}/homolab-wake
-
 # Suspend homolab immediately (return to off state)
 [group('host')]
 homolab-sleep:
     ssh iceice666@homolab systemctl suspend
 
-# Apply the homolab NixOS configuration over SSH
+# Apply the homolab NixOS configuration locally (run on homolab)
 [group('host')]
 homolab-switch:
-    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
-    nix develop --command deploy .#homolab --skip-checks
+    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
+    sudo ./result/bin/switch-to-configuration switch
 
-# Stage the homolab NixOS configuration for next boot over SSH
+# Stage the homolab NixOS configuration for next boot (run on homolab)
 [group('host')]
 homolab-boot:
-    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
-    nix develop --command deploy .#homolab --boot --skip-checks
+    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
+    sudo ./result/bin/switch-to-configuration boot
 
-# Dry-build the homolab NixOS configuration on the server
+# Dry-build the homolab NixOS configuration (run on homolab)
 [group('host')]
 homolab-build:
-    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
-    nix develop --command deploy .#homolab --dry-activate --skip-checks
+    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
 
 # Refresh hardware-configuration.nix from the live homolab server
-[group('host')]
 homolab-gen-hardware:
-    HOMOLAB_WAKE_MODE=ssh {{ scripts }}/homolab-wake
     ssh iceice666@homolab sudo nixos-generate-config --show-hardware-config \
         > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
 
 # Smoke-check the homolab OpenAI-compatible LLM endpoint
-[group('host')]
 homolab-llama-smoke:
-    {{ scripts }}/homolab-wake
     LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
         {{ scripts }}/llama-swap-smoke
 

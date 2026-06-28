@@ -13,7 +13,7 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | --- | --- | --- | --- |
 | `m3air` | `.#m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
-| `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, deployed from `m3air` over SSH |
+| `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, built and switched locally |
 | `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi via root Home Manager + OpenRC |
 | `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
 | `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
@@ -64,7 +64,7 @@ flake output automatically.
 ```sh
 just build           # dry-build current platform host
 just switch          # apply configuration to current platform host
-just boot            # set Framework for next boot, Linux only
+just boot            # set current NixOS host for next boot, Linux only
 just fmt             # format all files
 just fmt-check       # check Justfile formatting
 just check           # format, Justfile metadata, and flake checks
@@ -73,21 +73,19 @@ just kaguya          # force-refresh Framework Kaguya browser cache from homolab
 just theme-preview   # render and open this platform's wallpaper palette preview
 ```
 
-`just` recipes are platform-gated: macOS maps to `m3air`, and Linux maps to
-`framework`. The same `build` and `switch` recipe names have separate
-`[macos]` and `[linux]` implementations.
+`just` recipes are platform-gated: macOS maps to `m3air`, and Linux detects the
+hostname to pick `framework` or `homolab`. The same `build`, `switch`, and `boot`
+recipe names have separate `[macos]` and `[linux]` implementations.
 
-On Linux, `build`, `switch`, and `boot` reuse `.cache/kaguya/framework` and
+On Framework, `build`, `switch`, and `boot` reuse `.cache/kaguya/framework` and
 fetch Kaguya from homolab only when that cache is missing or invalid. Run
 `just kaguya` to force-refresh it.
 
-Homolab is built and switched on the server itself over SSH, so the recipes
-work from any host (no platform gate). `--build-host` and `--target-host`
-both point at the homolab.
+Homolab recipes run locally on the server itself (no remote deploy):
 
 ```sh
-just homolab-build           # dry-build on the server
-just homolab-switch          # build + activate via SSH (--use-remote-sudo)
+just homolab-build           # dry-build on the homolab
+just homolab-switch          # build + activate on the homolab
 just homolab-boot            # stage the closure for next boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against homolab's LLM stack

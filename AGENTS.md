@@ -55,7 +55,7 @@ hosts/               # per-host entrypoints
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/Eww Home Manager modules
     wallpaper.png    # symlink → assets/mzen.png
-  homolab/           # NixOS server (x86_64), AI/GPU plane — deployed from m3air over SSH
+  homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
     configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
     services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, CLIProxyAPI)
@@ -138,11 +138,11 @@ cache.
 |---|---|
 | `darwinConfigurations.m3air` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
-| `nixosConfigurations.homolab` | NixOS server configuration (deployed via SSH) |
+| `nixosConfigurations.homolab` | NixOS server configuration (built locally) |
 | `homeConfigurations.lumo` | Alpine root Home Manager data+apps + edge configuration |
 | `homeConfigurations.worker` | Alpine root Home Manager disposable-work / agent-runtime host |
 | `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
-| `deploy` | deploy-rs node definitions for `framework`, `homolab`, `lumo`, `worker`, and `gce-dns` |
+| `deploy` | deploy-rs node definitions for `framework`, `lumo`, `worker`, and `gce-dns` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -270,8 +270,8 @@ just fmt-check
 just check
 ```
 
-- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux maps to `framework`.
-- `just boot` is Linux-only and sets the Framework NixOS generation for next boot.
+- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux detects the hostname to pick `framework` or `homolab`.
+- `just boot` is Linux-only and sets the current NixOS host generation for next boot.
 - Theme files are generated inside the host build by a Nix derivation.
 - `just theme` generates a local concrete theme cache for inspection only.
 - Framework build, switch, and boot recipes reuse `.cache/kaguya/framework` and
@@ -330,8 +330,8 @@ just store-size
 just m3air-homebrew    # install Homebrew (first-time macOS setup)
 just m3air-activate    # reapply macOS settings without a full rebuild
 
-just homolab-build           # dry-activate homolab on the server itself
-just homolab-switch          # build + activate homolab via SSH
+just homolab-build           # dry-build homolab locally
+just homolab-switch          # build + activate homolab locally
 just homolab-boot            # stage the closure for next homolab boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab LLM stack
@@ -350,9 +350,9 @@ just worker-build            # dry-activate worker root Home Manager
 just worker-switch           # deploy worker root Home Manager
 ```
 
-Homolab is deployed via deploy-rs with `remoteBuild = true`, so the build runs on
-the server itself over SSH and avoids cross-compilation. The deploy user must have
-passwordless sudo for the deploy-rs activation script.
+Homolab is built and switched directly on the server itself. Run `just build`/`just switch`/`just boot`
+from the repo root on homolab, or use the `homolab-*` recipe aliases. The build runs
+locally and does not require SSH or deploy-rs.
 
 `lumo` runs Alpine Linux 3.24 with root-only Lix installed using `--init none`.
 deploy-rs activates the standalone root Home Manager profile and builds the
