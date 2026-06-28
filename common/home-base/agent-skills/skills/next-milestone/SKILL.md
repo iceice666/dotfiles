@@ -1,11 +1,11 @@
 ---
 name: next-milestone
-description: Implement the next uncompleted milestone from plans/, ROADMAP.md, or any progress file, then audit it with the bundled reviewer agent, apply the fixes it reports, re-run the project's build/test/lint/fmt stack, mark the milestone done, and present only the final verified diff stat plus a findings table. Use when asked to advance a roadmap, knock out the next TODO/milestone, or "do the next item."
+description: Implement the next uncompleted milestone from plans/, ROADMAP.md, or any progress file, then audit it with the bundled reviewer agent, apply the fixes it reports, re-run the project's build/test/lint/fmt stack, mark the milestone done, commit the finished work, and present only the final verified diff stat plus a findings table. Use when asked to advance a roadmap, knock out the next TODO/milestone, or "do the next item."
 ---
 
 # next-milestone
 
-Implement the next uncompleted milestone, then review → fix → verify → present a clean final diff.
+Implement the next uncompleted milestone, then review → fix → verify → mark done → commit → present a clean final diff.
 
 Invoke as `/skill:next-milestone` (interactive) or let the model pick it up by description. To run it across a whole roadmap in one shot, see **Iterating over many milestones** at the bottom.
 
@@ -25,7 +25,7 @@ todo init, phases:
   Build    → [Understand codebase, Implement milestone]
   Review   → [Run reviewer agent, Apply findings]
   Verify   → [Run build/test/lint/fmt]
-  Finish   → [Mark milestone done, Present final diff]
+  Finish   → [Mark milestone done, Commit final state]
 ```
 
 Mark each `done` as you go; the next task auto-promotes.
@@ -41,6 +41,8 @@ Find the progress file with `find`, in this preference order:
 "Uncompleted" = an unchecked `- [ ]`, an unmarked heading, or `TODO`/`PENDING` status. Use `search` for `- \[ \]|TODO|PENDING` inside candidates to jump straight to it.
 
 Extract the **first** uncompleted milestone only (top of file): its title, acceptance criteria/sub-tasks, and any prerequisites already marked done. Implement exactly one.
+
+If the documented milestone is ambiguous — missing acceptance criteria, underspecified behavior, conflicting requirements, or multiple materially different implementations — **stop before editing**. Ask the user targeted questions and continue the discussion until all behavior, scope, non-goals, and verification details are settled. Do not implement by inference.
 
 If no progress file exists, tell the user and stop.
 
@@ -150,13 +152,20 @@ Run the full validation stack from Step 2 with `bash`. Every command must pass. 
 
 In the Step 1 file, flip `- [ ]` → `- [x]` (or set `Status: done` if the file uses that style). Use `edit` for the single-line change; touch nothing else.
 
-## Step 7 — Present (only this)
+## Step 7 — Commit final state
+
+Use the `commit` skill as the last workflow step. Commit only after Step 6 is complete and the working tree contains the milestone implementation, reviewer fixes, validation updates, and progress-file completion mark. Follow the project's commit-message conventions; if the commit skill reports that no safe agent-authored commit can be made, stop and report the exact blocker.
+
+After the commit succeeds, print only this final block:
 
 ```
 ## Milestone: <title>
 
+### Commit
+<commit hash and subject>
+
 ### Changes
-<output of: git diff --stat>
+<output of: git show --stat --oneline --no-renames HEAD>
 
 ### Review findings
 | # | Priority | Conf | Location | Issue | Resolution |
@@ -168,7 +177,7 @@ In the Step 1 file, flip `- [ ]` → `- [x]` (or set `Status: done` if the file 
 Build ✓  Tests ✓  Lint ✓  Fmt ✓
 ```
 
-Do not print build logs, the full diff, step narration, or the reviewer's raw transcript. The user can run `git diff HEAD` for the full diff; the reviewer transcript is at `history://<reviewer-id>`.
+Do not print build logs, the full diff, step narration, or the reviewer's raw transcript. The user can run `git show --stat HEAD` for the committed diff; the reviewer transcript is at `history://<reviewer-id>`.
 
 ---
 
