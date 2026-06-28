@@ -131,6 +131,21 @@ in
       switch-project: true
       switch-preview-model: true
       antigravity-credits: true
+    oauth-excluded-models:
+      claude:
+        - "claude-3-5-haiku-20241022"
+        - "claude-3-7-sonnet-20250219"
+        - "claude-fable-5"
+        - "claude-opus-4-1-20250805"
+        - "claude-opus-4-20250514"
+        - "claude-opus-4-5-20251101"
+        - "claude-opus-4-6"
+        - "claude-opus-4-7"
+        - "claude-sonnet-4-20250514"
+        - "claude-sonnet-4-5-20250929"
+      codex:
+        - "gpt-5.4"
+        - "gpt-image-1.5"
     EOF
 
         chown cliproxyapi:cliproxyapi ${configPath}

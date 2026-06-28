@@ -14,14 +14,20 @@ let
     id: contextWindow: maxTokens: reasoning:
     { inherit id contextWindow maxTokens; } // lib.optionalAttrs reasoning { inherit reasoning; };
 
-  # Claude models are disabled for now. Keep the provider helper documented so
-  # the native Anthropic path can be restored without rediscovering CLIProxyAPI's
-  # reasoning-routing details.
-  # mkClaudeThinkingModel = id: contextWindow: maxTokens: {
-  #   inherit id contextWindow maxTokens;
-  #   reasoning = true;
-  #   input = [ "text" ];
-  # };
+  # Claude models are served over CLIProxyAPI's native Anthropic /v1/messages
+  # endpoint. On the OpenAI-completions path omp routes reasoning by appending a
+  # "-thinking" suffix to the model id (e.g. claude-sonnet-4-6-thinking), which
+  # CLIProxyAPI has no provider mapping for -> "502 unknown provider". On the
+  # anthropic-messages path omp keeps the plain model id and carries reasoning in
+  # the request body (thinking.type/budget_tokens), which CLIProxyAPI accepts.
+  # Marking reasoning=true ensures omp advertises thinking effort levels and
+  # routes /thinking selectors through the Anthropic budget-effort protocol
+  # instead of suffix-based routing.
+  mkClaudeThinkingModel = id: contextWindow: maxTokens: {
+    inherit id contextWindow maxTokens;
+    reasoning = true;
+    input = [ "text" ];
+  };
 
   # apiKey is injected at activation by sops; a sentinel is serialized into the
   # YAML and then replaced with the runtime placeholder string.
@@ -51,17 +57,17 @@ let
         (mkModel "gemini-3.5-flash-low" 1000000 8192 false)
       ];
     };
-    # Claude on the native Anthropic endpoint is disabled for now.
-    # providers.cliproxyapi-claude = {
-    #   baseUrl = homolab.urls.cliproxyapi;
-    #   api = "anthropic-messages";
-    #   apiKey = apiKeySentinel;
-    #   models = [
-    #     (mkClaudeThinkingModel "claude-opus-4-8" 200000 32000)
-    #     (mkClaudeThinkingModel "claude-sonnet-4-6" 200000 64000)
-    #     (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
-    #   ];
-    # };
+    # Claude on the native Anthropic endpoint (see mkClaudeThinkingModel note).
+    providers.cliproxyapi-claude = {
+      baseUrl = homolab.urls.cliproxyapi;
+      api = "anthropic-messages";
+      apiKey = apiKeySentinel;
+      models = [
+        (mkClaudeThinkingModel "claude-opus-4-8" 200000 32000)
+        (mkClaudeThinkingModel "claude-sonnet-4-6" 200000 64000)
+        (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
+      ];
+    };
   };
 
   # omp requires block-style YAML for models.yml. Keep this generator pure:
@@ -135,11 +141,11 @@ let
     enabledModels = [
       "openai-codex/gpt-5.5"
       "openai-codex/gpt-5.3-codex-spark"
-      # "anthropic/claude-opus-4-8"
-      # "anthropic/claude-sonnet-4-6"
-      # "anthropic/claude-haiku-4-5-20251001"
+      "anthropic/claude-opus-4-8"
+      "anthropic/claude-sonnet-4-6"
+      "anthropic/claude-haiku-4-5-20251001"
       "cliproxyapi/*"
-      # "cliproxyapi-claude/*"
+      "cliproxyapi-claude/*"
       "opencode-go/*"
       "github-copilot/gpt-5-mini"
       "github-copilot/gpt-5.4-mini"
@@ -148,74 +154,75 @@ let
     # the CLIProxyAPI mirrors when both concrete variants are available.
     modelProviderOrder = [
       "openai-codex"
-      # "anthropic"
+      "anthropic"
       "cliproxyapi"
-      # "cliproxyapi-claude"
+      "cliproxyapi-claude"
       "opencode-go"
       "github-copilot"
     ];
     modelRoles = {
       default = "openai-codex/gpt-5.5:medium"; # main interactive agent: OAuth first, quality over latency
-      slow = "cliproxyapi/gpt-5.5:xhigh"; # hardest problems, non-Claude path
+      slow = "anthropic/claude-opus-4-8:high"; # hardest problems, cross-family
       smol = "openai-codex/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
-      title = "openai-codex/gpt-5.3-codex-spark:medium";
-      commit = "openai-codex/gpt-5.3-codex-spark:medium";
+      title = "anthropic/claude-haiku-4-5-20251001";
+      commit = "anthropic/claude-haiku-4-5-20251001";
       task = "openai-codex/gpt-5.3-codex-spark:high"; # workhorse subagents
-      plan = "cliproxyapi/gpt-5.5:xhigh"; # final plans need strongest reasoning
-      designer = "cliproxyapi/gpt-5.5:high";
+      plan = "anthropic/claude-sonnet-4-6:xhigh"; # final plans need strongest reasoning
+      designer = "anthropic/claude-sonnet-4-6:high";
       vision = "cliproxyapi/gemini-3-pro-high";
       advisor = "opencode-go/glm-5-2"; # high-quality second opinion
     };
-    # Role primaries use enabled OAuth/proxy selectors. Fallback chains keep a
-    # same-family fallback first, then add cross-provider alternatives. When a
-    # model errors or hits a usage limit, omp switches to the next selector in
-    # the role chain, then reverts once the cooldown expires.
+    # GPT/Claude role primaries use OAuth selectors. Their fallback chains keep
+    # matching CLIProxyAPI selectors as the first same-model fallback, then add
+    # cross-model OAuth/proxy pairs. When a model errors or hits a usage limit,
+    # omp switches to the next selector in the role chain, then reverts once the
+    # cooldown expires.
     # NOTE: chains are keyed by ROLE name (default/slow/task/...), not by model
     # selector — omp resolves each key via getModelRole(), so a model-selector
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
         "cliproxyapi/gpt-5.5:medium"
-        # "cliproxyapi-claude/claude-opus-4-8:high"
-        # "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
       ];
       slow = [
-        # "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-4-8:high"
         "cliproxyapi/gpt-5.5:xhigh"
-        # "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       task = [
         "cliproxyapi/gpt-5.3-codex-spark:high"
         "cliproxyapi/gpt-5.5:xhigh"
-        # "cliproxyapi-claude/claude-sonnet-4-6:high"
-        # "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "cliproxyapi-claude/claude-opus-4-8:xhigh"
       ];
       plan = [
         "cliproxyapi/gpt-5.5:xhigh"
-        # "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "cliproxyapi-claude/claude-opus-4-8:xhigh"
       ];
       smol = [
-        # "anthropic/claude-haiku-4-5-20251001"
+        "anthropic/claude-haiku-4-5-20251001"
         "cliproxyapi/gpt-5.5:medium"
-        # "cliproxyapi-claude/claude-sonnet-4-6:medium"
+        "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
       title = [
-        # "anthropic/claude-haiku-4-5-20251001"
+        "anthropic/claude-haiku-4-5-20251001"
         "cliproxyapi/gpt-5.5:medium"
       ];
       commit = [
         "cliproxyapi/gpt-5.5:medium"
-        # "cliproxyapi-claude/claude-sonnet-4-6:medium"
+        "cliproxyapi-claude/claude-sonnet-4-6:medium"
       ];
       designer = [
-        # "cliproxyapi-claude/claude-sonnet-4-6:high"
-        # "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-sonnet-4-6:high"
+        "cliproxyapi-claude/claude-opus-4-8:high"
         "cliproxyapi/gpt-5.5:xhigh"
       ];
       advisor = [
-        # "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-4-8:high"
         "cliproxyapi/gpt-5.5:xhigh"
-        # "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
+        "cliproxyapi-claude/claude-sonnet-4-6:xhigh"
       ];
       vision = [
         "cliproxyapi/gemini-3.1-flash-image"
