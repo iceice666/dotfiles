@@ -57,7 +57,7 @@ _pre-build:
         {{ scripts }}/kaguya-cache ensure
     fi
 
-# Refresh the Kaguya browser build from homolab into the local Nix path input cache
+# Refresh the Kaguya browser build from the local Framework build tree into the Nix path input cache
 [group('host')]
 [linux]
 kaguya:

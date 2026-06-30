@@ -127,9 +127,9 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 `kaguya-browser` is the local flake under `pkgs/kaguya-bin` that exposes the
 Framework-only Kaguya browser package. Its `kaguya-cache` input is a placeholder
 for the copied binary runtime. Linux build, boot, and switch recipes ensure
-`.cache/kaguya/framework` exists, fetching from homolab only when missing or
-invalid, then replace the root `kaguya-cache` input in-memory with
-`path:$PWD/.cache/kaguya/framework`. Run `just kaguya` to force-refresh the
+`.cache/kaguya/framework` exists, copying from the local Framework build tree
+when missing or invalid, then replace the root `kaguya-cache` input in-memory
+with `path:$PWD/.cache/kaguya/framework`. Run `just kaguya` to force-refresh the
 cache.
 
 ### Outputs

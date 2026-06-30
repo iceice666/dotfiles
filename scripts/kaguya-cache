@@ -3,9 +3,7 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
-remote="${KAGUYA_REMOTE:-iceice666@homolab-linux}"
-port="${KAGUYA_REMOTE_PORT:-22}"
-root_override="${KAGUYA_REMOTE_ROOT:-}"
+root_override="${KAGUYA_ROOT:-${KAGUYA_LOCAL_ROOT:-${KAGUYA_REMOTE_ROOT:-}}}"
 cache_dir="$repo_root/.cache/kaguya/framework"
 state_dir="$repo_root/.cache/kaguya/.state"
 mode="${1:-ensure}"
@@ -14,9 +12,12 @@ usage() {
   cat <<'EOF'
 Usage: kaguya-cache [ensure|refresh|sync]
 
-ensure   Reuse an existing local Kaguya cache, fetching only when it is missing or invalid.
-refresh  Always fetch a fresh Kaguya runtime from the remote build tree.
-sync     Incrementally sync the cache from the remote with rsync.
+ensure   Reuse an existing local Kaguya cache, copying only when it is missing or invalid.
+refresh  Always copy a fresh Kaguya runtime from the local Framework build tree.
+sync     Incrementally sync the cache from the local Framework build tree with rsync.
+
+Set KAGUYA_ROOT to the Kaguya checkout containing build/src/out/Default.
+KAGUYA_LOCAL_ROOT and KAGUYA_REMOTE_ROOT are accepted as compatibility aliases.
 EOF
 }
 
@@ -60,56 +61,92 @@ cache_valid() {
   [[ -n "$binary" && "$binary" != */* && -x "$cache_dir/app/$binary" ]]
 }
 
+find_kaguya_build() {
+  local candidates=()
+  local base found root out
+
+  if [[ -n "$root_override" ]]; then
+    candidates+=("$root_override")
+  fi
+  candidates+=(
+    "$HOME/Project/kaguya-linux"
+    "$HOME/Projects/kaguya-linux"
+    "$HOME/Project/kaguya"
+    "$HOME/Projects/kaguya"
+  )
+
+  for base in "$HOME/Project" "$HOME/Projects"; do
+    if [[ -d "$base" ]]; then
+      while IFS= read -r found; do
+        candidates+=("$found")
+      done < <(
+        find "$base" -maxdepth 3 -type d \( -name 'kaguya-linux' -o -name 'kaguya' \) 2>/dev/null | sort
+      )
+    fi
+  done
+
+  for root in "${candidates[@]}"; do
+    [[ -n "$root" ]] || continue
+    out="$root/build/src/out/Default"
+    if [[ -x "$out/kaguya" ]]; then
+      printf '%s\n%s\n' "$root" kaguya
+      return 0
+    fi
+    if [[ -x "$out/helium" ]]; then
+      printf '%s\n%s\n' "$root" helium
+      return 0
+    fi
+  done
+
+  echo "No Kaguya build found. Set KAGUYA_ROOT to the checkout containing build/src/out/Default." >&2
+  return 1
+}
+
+runtime_entries() {
+  local binary="$1"
+
+  printf '%s\n' \
+    "$binary" \
+    "${binary}_crashpad_handler" \
+    chromedriver \
+    chrome_100_percent.pak \
+    chrome_200_percent.pak \
+    icudtl.dat \
+    locales \
+    product_logo_256.png \
+    resources \
+    resources.pak \
+    snapshot_blob.bin \
+    v8_build_config.json \
+    v8_context_snapshot.bin \
+    vk_swiftshader_icd.json \
+    xdg-mime \
+    xdg-settings
+}
+
 collect_runtime_file_list() {
   local out="$1"
   local binary="$2"
   local list_file="$3"
+  local entry
 
   : > "$list_file"
-  ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_OUT="$out" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' >"$list_file"
-set -euo pipefail
+  while IFS= read -r entry; do
+    if [[ -e "$out/$entry" ]]; then
+      printf '%s\n' "$entry" >> "$list_file"
+    else
+      echo "warning: missing Kaguya runtime file: $entry" >&2
+    fi
+  done < <(runtime_entries "$binary")
 
-out="$KAGUYA_REMOTE_OUT"
-binary="$KAGUYA_BINARY"
-
-entries=(
-  "$binary"
-  "${binary}_crashpad_handler"
-  chromedriver
-  chrome_100_percent.pak
-  chrome_200_percent.pak
-  icudtl.dat
-  locales
-  product_logo_256.png
-  resources
-  resources.pak
-  snapshot_blob.bin
-  v8_build_config.json
-  v8_context_snapshot.bin
-  vk_swiftshader_icd.json
-  xdg-mime
-  xdg-settings
-)
-
-for entry in "${entries[@]}"; do
-  if [ -e "$out/$entry" ]; then
-    printf '%s\n' "$entry"
-  else
-    echo "warning: missing Kaguya runtime file: $entry" >&2
-  fi
-done
-
-while IFS= read -r -d '' file; do
-  printf '%s\n' "${file#./}"
-done < <(
-  find "$out" -maxdepth 1 -type f \
-    \( -name '*.so' -o -name '*.so.[0-9]*' \) \
-    ! -name '*.TOC' \
-    -print0 \
-    | sort -z
-)
-REMOTE
+  (
+    cd "$out"
+    find . -maxdepth 1 -type f \
+      \( -name '*.so' -o -name '*.so.[0-9]*' \) \
+      ! -name '*.TOC' \
+      -printf '%P\n' \
+      | sort
+  ) >> "$list_file"
 
   if [[ ! -s "$list_file" ]]; then
     echo "No Kaguya runtime files found in $out" >&2
@@ -117,33 +154,72 @@ REMOTE
   fi
 }
 
+copy_runtime() {
+  local out="$1"
+  local binary="$2"
+  local app_dir="$3"
+  local entry file
+
+  mkdir -p "$app_dir"
+
+  while IFS= read -r entry; do
+    if [[ -e "$out/$entry" ]]; then
+      cp -a --reflink=auto "$out/$entry" "$app_dir/"
+    else
+      echo "warning: missing Kaguya runtime file: $entry" >&2
+    fi
+  done < <(runtime_entries "$binary")
+
+  while IFS= read -r -d '' file; do
+    cp -a --reflink=auto "$file" "$app_dir/"
+  done < <(
+    find "$out" -maxdepth 1 -type f \
+      \( -name '*.so' -o -name '*.so.[0-9]*' \) \
+      ! -name '*.TOC' \
+      -print0 \
+      | sort -z
+  )
+}
+
+copy_package_metadata() {
+  local root="$1"
+  local package_dir="$2"
+
+  mkdir -p "$package_dir"
+  if [[ -f "$root/package/kaguya.desktop" ]]; then
+    cp -a "$root/package/kaguya.desktop" "$package_dir/"
+  fi
+  if [[ -f "$root/package/apparmor.cfg" ]]; then
+    cp -a "$root/package/apparmor.cfg" "$package_dir/"
+  fi
+}
+
 collect_version() {
   local root="$1"
   local version_file="$2"
 
-  if ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_ROOT="$root" bash -s <<'REMOTE' > "$version_file".tmp
-set -euo pipefail
-
-root="$KAGUYA_REMOTE_ROOT"
-if python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
-  --tree "$root/kaguya-chromium" \
-  --platform-tree "$root" \
-  --print >/dev/null 2>&1; then
-  python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
+  if python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
     --tree "$root/kaguya-chromium" \
     --platform-tree "$root" \
-    --print
-else
-  printf '0-unstable\n'
-fi
-REMOTE
-  then
+    --print > "$version_file".tmp 2>/dev/null; then
     mv "$version_file".tmp "$version_file"
   else
     rm -f "$version_file".tmp
-    return 1
+    printf '0-unstable\n' > "$version_file"
   fi
+}
+
+write_manifest() {
+  local dir="$1"
+  local root="$2"
+  local binary="$3"
+
+  {
+    printf 'source=%s\n' "$root"
+    printf 'binary=%s\n' "$binary"
+    printf 'shared_libraries=%s\n' "$(find "$dir/app" -maxdepth 1 -type f -name '*.so*' -printf . | wc -c)"
+    printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  } > "$dir/manifest"
 }
 
 if [[ "$mode" == "ensure" ]] && cache_valid; then
@@ -161,11 +237,11 @@ if [[ "$mode" == "ensure" ]] && cache_valid; then
 fi
 
 if [[ "$mode" == "ensure" ]]; then
-  echo "Kaguya cache missing or invalid; fetching from $remote"
+  echo "Kaguya cache missing or invalid; copying from local build"
 elif [[ "$mode" == "refresh" ]]; then
-  echo "Refreshing Kaguya cache from $remote"
+  echo "Refreshing Kaguya cache from local build"
 else
-  echo "Synchronizing Kaguya cache from $remote"
+  echo "Synchronizing Kaguya cache from local build"
 fi
 
 mkdir -p "$(dirname "$cache_dir")" "$state_dir"
@@ -180,192 +256,45 @@ cleanup_tmp() {
 
 trap cleanup_tmp EXIT
 
-remote_info="$(
-  ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_ROOT="$root_override" bash -s <<'REMOTE'
-set -euo pipefail
+local_info="$(find_kaguya_build)"
+local_root="$(printf '%s\n' "$local_info" | sed -n '1p')"
+binary="$(printf '%s\n' "$local_info" | sed -n '2p')"
 
-candidates=()
-if [ -n "${KAGUYA_REMOTE_ROOT:-}" ]; then
-  candidates+=("$KAGUYA_REMOTE_ROOT")
-fi
-candidates+=(
-  "$HOME/Project/kaguya-linux"
-  "$HOME/Projects/kaguya-linux"
-  "$HOME/Project/kaguya"
-  "$HOME/Projects/kaguya"
-)
-
-for base in "$HOME/Project" "$HOME/Projects"; do
-  if [ -d "$base" ]; then
-    while IFS= read -r found; do
-      candidates+=("$found")
-    done < <(find "$base" -maxdepth 3 -type d \( -name 'kaguya-linux' -o -name 'kaguya' \) 2>/dev/null | sort)
-  fi
-done
-
-for root in "${candidates[@]}"; do
-  [ -n "$root" ] || continue
-  out="$root/build/src/out/Default"
-  if [ -x "$out/kaguya" ]; then
-    printf '%s\n%s\n' "$root" kaguya
-    exit 0
-  fi
-  if [ -x "$out/helium" ]; then
-    printf '%s\n%s\n' "$root" helium
-    exit 0
-  fi
-done
-
-echo "No Kaguya build found. Set KAGUYA_REMOTE_ROOT to the repository containing build/src/out/Default." >&2
-exit 1
-REMOTE
-)"
-
-remote_root="$(printf '%s\n' "$remote_info" | sed -n '1p')"
-binary="$(printf '%s\n' "$remote_info" | sed -n '2p')"
-
-if [[ -z "$remote_root" || -z "$binary" ]]; then
-  echo "Failed to locate a Kaguya browser binary on $remote" >&2
+if [[ -z "$local_root" || -z "$binary" ]]; then
+  echo "Failed to locate a local Kaguya browser binary" >&2
   exit 1
 fi
 
-echo "copying Kaguya from $remote:$remote_root ($binary)"
-remote_out="$remote_root/build/src/out/Default"
+echo "copying Kaguya from $local_root ($binary)"
+local_out="$local_root/build/src/out/Default"
 
 mkdir -p "$tmp_dir/app" "$tmp_dir/package"
 
-if [[ "$mode" == "sync" ]] && ! command -v rsync >/dev/null; then
-  echo "warning: rsync not available; falling back to full refresh" >&2
-  mode=refresh
-fi
-
 if [[ "$mode" == "sync" ]]; then
-  collect_runtime_file_list "$remote_out" "$binary" "$tmp_dir/.runtime-files"
+  if command -v rsync >/dev/null; then
+    collect_runtime_file_list "$local_out" "$binary" "$tmp_dir/.runtime-files"
 
-  rsync_opts=( -a --partial --inplace --mkpath --delete --delete-excluded --files-from="$tmp_dir/.runtime-files" )
-  if [[ -d "$cache_dir/app" ]]; then
-    rsync_opts+=(--link-dest="$cache_dir/app")
-  fi
+    rsync_opts=( -a --partial --inplace --mkpath --delete --delete-excluded --files-from="$tmp_dir/.runtime-files" )
+    if [[ -d "$cache_dir/app" ]]; then
+      rsync_opts+=(--link-dest="$cache_dir/app")
+    fi
 
-  rsync "${rsync_opts[@]}" \
-    -e "ssh -p $port -o BatchMode=yes" \
-    "$remote:$remote_out/" "$tmp_dir/app/"
-
-  if ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_ROOT="$remote_root" bash -s <<'REMOTE'
-if [ -f "$KAGUYA_REMOTE_ROOT/package/kaguya.desktop" ]; then
-  exit 0
-fi
-REMOTE
-  then
-    rsync -a -e "ssh -p $port -o BatchMode=yes" \
-      "$remote:$remote_root/package/kaguya.desktop" "$tmp_dir/package/"
-  fi
-
-  if ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_ROOT="$remote_root" bash -s <<'REMOTE'
-if [ -f "$KAGUYA_REMOTE_ROOT/package/apparmor.cfg" ]; then
-  exit 0
-fi
-REMOTE
-  then
-    rsync -a -e "ssh -p $port -o BatchMode=yes" \
-      "$remote:$remote_root/package/apparmor.cfg" "$tmp_dir/package/"
-  fi
-else
-  ssh -p "$port" -o BatchMode=yes "$remote" \
-    env KAGUYA_REMOTE_ROOT="$remote_root" KAGUYA_BINARY="$binary" bash -s <<'REMOTE' \
-      | tar -xf - -C "$tmp_dir"
-set -euo pipefail
-
-root="$KAGUYA_REMOTE_ROOT"
-binary="$KAGUYA_BINARY"
-out="$root/build/src/out/Default"
-stage="$(mktemp -d)"
-trap 'rm -rf "$stage"' EXIT
-
-mkdir -p "$stage/app" "$stage/package"
-
-copy_entry() {
-  local entry="$1"
-
-  if [ -e "$out/$entry" ]; then
-    cp -a --reflink=auto "$out/$entry" "$stage/app/"
+    rsync "${rsync_opts[@]}" "$local_out/" "$tmp_dir/app/"
+    copy_package_metadata "$local_root" "$tmp_dir/package"
   else
-    echo "warning: missing Kaguya runtime file: $entry" >&2
+    echo "warning: rsync not available; falling back to full refresh" >&2
+    mode=refresh
   fi
-}
-
-files=(
-  "$binary"
-  "${binary}_crashpad_handler"
-  chromedriver
-  chrome_100_percent.pak
-  chrome_200_percent.pak
-  icudtl.dat
-  locales
-  product_logo_256.png
-  resources
-  resources.pak
-  snapshot_blob.bin
-  v8_build_config.json
-  v8_context_snapshot.bin
-  vk_swiftshader_icd.json
-  xdg-mime
-  xdg-settings
-)
-
-for file in "${files[@]}"; do
-  copy_entry "$file"
-done
-
-while IFS= read -r -d '' file; do
-  cp -a --reflink=auto "$file" "$stage/app/"
-done < <(
-  find "$out" -maxdepth 1 -type f \
-    \( -name '*.so' -o -name '*.so.[0-9]*' \) \
-    ! -name '*.TOC' \
-    -print0 \
-    | sort -z
-)
-
-if [ -f "$root/package/kaguya.desktop" ]; then
-  cp -a "$root/package/kaguya.desktop" "$stage/package/"
-fi
-if [ -f "$root/package/apparmor.cfg" ]; then
-  cp -a "$root/package/apparmor.cfg" "$stage/package/"
 fi
 
-printf '%s\n' "$binary" > "$stage/binary-name"
-python3 "$root/kaguya-chromium/utils/kaguya_version.py" \
-  --tree "$root/kaguya-chromium" \
-  --platform-tree "$root" \
-  --print > "$stage/version" 2>/dev/null \
-  || printf '0-unstable\n' > "$stage/version"
-
-{
-  printf 'remote=%s\n' "$root"
-  printf 'binary=%s\n' "$binary"
-  printf 'shared_libraries=%s\n' "$(find "$stage/app" -maxdepth 1 -type f -name '*.so*' -printf . | wc -c)"
-  printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} > "$stage/manifest"
-
-tar -C "$stage" -cf - .
-REMOTE
+if [[ "$mode" != "sync" ]]; then
+  copy_runtime "$local_out" "$binary" "$tmp_dir/app"
+  copy_package_metadata "$local_root" "$tmp_dir/package"
 fi
 
 printf '%s\n' "$binary" > "$tmp_dir/binary-name"
-if ! collect_version "$remote_root" "$tmp_dir/version"; then
-  printf '0-unstable\n' > "$tmp_dir/version"
-fi
-
-{
-  printf 'remote=%s\n' "$remote_root"
-  printf 'binary=%s\n' "$binary"
-  printf 'shared_libraries=%s\n' "$(find "$tmp_dir/app" -maxdepth 1 -type f -name '*.so*' -printf . | wc -c)"
-  printf 'copied_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} > "$tmp_dir/manifest"
+collect_version "$local_root" "$tmp_dir/version"
+write_manifest "$tmp_dir" "$local_root" "$binary"
 
 test -x "$tmp_dir/app/$binary"
 chmod -R u+w "$tmp_dir"
