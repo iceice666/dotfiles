@@ -110,6 +110,12 @@ PACKAGES: list[Package] = [
         "x86_64-linux":   "https://github.com/zed-industries/zed/releases/download/{tag}/zed-linux-x86_64.tar.gz",
         "aarch64-linux":  "https://github.com/zed-industries/zed/releases/download/{tag}/zed-linux-aarch64.tar.gz",
     }),
+    Package("claude-code-bin", "anthropics/claude-code", platforms={
+        "aarch64-darwin": "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-darwin-arm64.tar.gz",
+        "x86_64-darwin":  "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-darwin-x64.tar.gz",
+        "aarch64-linux":  "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-linux-arm64.tar.gz",
+        "x86_64-linux":   "https://github.com/anthropics/claude-code/releases/download/{tag}/claude-linux-x64.tar.gz",
+    }),
     Package("oh-my-pi-bin", "can1357/oh-my-pi", platforms={
         "aarch64-darwin": "https://github.com/can1357/oh-my-pi/releases/download/{tag}/omp-darwin-arm64",
         "x86_64-darwin":  "https://github.com/can1357/oh-my-pi/releases/download/{tag}/omp-darwin-x64",

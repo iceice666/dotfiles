@@ -4,6 +4,7 @@
   imports = [
     ./agent-instructions.nix
     ./agent-skills.nix
+    ./claude.nix
     ./fish
     ./packages-cli.nix
     ./user.nix
