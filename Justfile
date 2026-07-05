@@ -190,7 +190,7 @@ update *inputs:
 # Update custom packages to their latest upstream releases
 [group('flake')]
 update-pkgs:
-    omp -p --auto-approve /skill:update-pkgs
+    omp /skill:update-pkgs
 
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]
