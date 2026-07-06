@@ -13,5 +13,6 @@
     ./hermes-agent
     ./monitoring.nix
     ./podman.nix
+    ./umami.nix
   ];
 }

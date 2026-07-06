@@ -209,6 +209,30 @@ let
         service = "cliproxyapi";
         tls.certResolver = "letsencrypt";
       };
+      umami-http = {
+        rule = mkHostRule homolab.domains.analytics;
+        entryPoints = [ "web" ];
+        middlewares = [ "redirect-to-https@file" ];
+        service = "noop@internal";
+      };
+
+      # Public tracking/API endpoints for browser beacons and the dynamic Worker stats proxy.
+      umami-api = {
+        rule = mkHostPathRule homolab.domains.analytics "(Path(`/script.js`) || PathPrefix(`/api`))";
+        entryPoints = [ "websecure" ];
+        priority = 1000;
+        service = "umami";
+        tls.certResolver = "letsencrypt";
+      };
+
+      # Dashboard — Authelia protected; Umami still enforces its own app login.
+      umami = {
+        rule = mkPrivateHostRule homolab.domains.analytics;
+        entryPoints = [ "websecure" ];
+        middlewares = [ "authelia@file" ];
+        service = "umami";
+        tls.certResolver = "letsencrypt";
+      };
 
       grafana-http = {
         rule = mkPrivateHostRule homolab.domains.grafana;
@@ -277,6 +301,9 @@ let
       ];
       cliproxyapi.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}"; }
+      ];
+      umami.loadBalancer.servers = [
+        { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }
       ];
       grafana.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }

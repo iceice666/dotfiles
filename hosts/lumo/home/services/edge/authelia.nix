@@ -55,6 +55,10 @@ let
           policy = "two_factor";
         }
         {
+          domain = homolab.domains.analytics;
+          policy = "two_factor";
+        }
+        {
           domain = homolab.domains.cliproxyapi;
           policy = "two_factor";
         }

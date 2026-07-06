@@ -51,6 +51,7 @@ in
           ${homolab.domains.dns} = homolab.hosts.lumo.tailnet;
           ${homolab.domains.grafana} = homolab.hosts.lumo.tailnet;
           ${homolab.domains.cliproxyapi} = homolab.hosts.lumo.tailnet;
+          ${homolab.domains.analytics} = homolab.hosts.lumo.tailnet;
           ${homolab.domains.traefik} = homolab.hosts.lumo.tailnet;
           ${homolab.domains.home} = homolab.hosts.lumo.tailnet;
           ${homolab.domains.dev} = homolab.hosts.lumo.tailnet;

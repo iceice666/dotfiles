@@ -114,6 +114,7 @@ let
     authelia = "si:authelia";
     cliproxyapi = "si:openai";
     grafana = "si:grafana";
+    umami = "si:umami";
     proxy = "si:traefikproxy";
     shimmy = "si:openai";
   };
@@ -201,6 +202,9 @@ let
                     (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${homolab.urls.cliproxyapi}/management.html"
                       (mkLocalUrl homolab.ports.cliproxyapi "/healthz")
                     )
+                    (mkMonitorSite "Umami" serviceIcons.umami homolab.urls.analytics (
+                      mkLocalUrl homolab.ports.umami "/api/heartbeat"
+                    ))
                   ])
                   (mkMonitorWidget "Infra" [
                     (mkMonitorSite "Traefik" serviceIcons.proxy homolab.urls.traefik (

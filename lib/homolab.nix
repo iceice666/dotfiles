@@ -41,6 +41,7 @@ let
     hermesGateway = 8642;
     hermesDashboard = 9119;
     honcho = 18077;
+    umami = 18078;
   };
 
   portRanges = {
@@ -81,6 +82,7 @@ rec {
     home = "home.${root}";
     dev = "dev.${root}";
     npu = "npu.${root}";
+    analytics = "analytics.${root}";
   };
 
   urls = {
@@ -92,6 +94,7 @@ rec {
     home = "https://${domains.home}";
     dev = "https://${domains.dev}";
     npu = "https://${domains.npu}";
+    analytics = "https://${domains.analytics}";
   };
 
   contact = {
