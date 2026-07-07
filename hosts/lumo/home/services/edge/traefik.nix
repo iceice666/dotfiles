@@ -216,9 +216,10 @@ let
         service = "noop@internal";
       };
 
-      # Public tracking/API endpoints for browser beacons and the dynamic Worker stats proxy.
+      # Public Umami collection endpoints plus the authenticated stats endpoints
+      # consumed by Dynamic's Cloudflare Worker-side visit counters.
       umami-api = {
-        rule = mkHostPathRule homolab.domains.analytics "(Path(`/script.js`) || PathPrefix(`/api`))";
+        rule = mkHostPathRule homolab.domains.analytics "(Path(`/script.js`) || Path(`/api/send`) || Path(`/api/auth/login`) || PathRegexp(`/api/websites/[a-zA-Z0-9-]+/(stats|pageviews)`))";
         entryPoints = [ "websecure" ];
         priority = 1000;
         service = "umami";
