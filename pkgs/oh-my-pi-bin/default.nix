@@ -7,12 +7,12 @@
 
 let
   pname = "oh-my-pi-bin";
-  version = "16.3.6";
+  version = "16.3.12";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-darwin-arm64";
-      hash = "sha256-yi9NML9iG3UJz+j938qdwNMozZ2bl1mLvphGFzVmoLs=";
+      hash = "sha256-l7x4f75QMjWQKc7fw7lspCh9FoXJXguElLZLeXmkZvc=";
     };
 
     "x86_64-darwin" = fetchurl {
@@ -27,7 +27,7 @@ let
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-linux-x64";
-      hash = "sha256-SZWIODriV6K49/sYxYkQPWCuhIRVyf0Eg+AhAdBEOno=";
+      hash = "sha256-x8sBV2xpbZa5bCHWkegpRRGb87u3MW4+ifxbF+IH27c=";
     };
   };
 
