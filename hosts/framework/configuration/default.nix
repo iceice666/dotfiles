@@ -23,6 +23,7 @@ in
 
   networking.hostName = "framework";
   networking.networkmanager.enable = true;
+  networking.firewall.allowedTCPPorts = [ 25565 ]; # Minecraft server
 
   time.timeZone = "Asia/Taipei";
   i18n.defaultLocale = "en_US.UTF-8";
