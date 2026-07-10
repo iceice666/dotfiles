@@ -118,6 +118,15 @@ let
       fi
     done
 
+    # Skip suspend if something is still hammering the CPU (e.g. a build or
+    # a server under load) even though the session has been idle. A 1-minute
+    # load average of at least 1 means a full core has been busy the whole
+    # time, so it's not just background noise.
+    load1="$(${pkgs.gawk}/bin/awk '{print $1}' /proc/loadavg)"
+    if ${pkgs.gawk}/bin/awk -v l="$load1" 'BEGIN { exit !(l >= 1.0) }'; then
+      exit 0
+    fi
+
     exec ${pkgs.systemd}/bin/systemctl --no-block suspend-then-hibernate
   '';
 
