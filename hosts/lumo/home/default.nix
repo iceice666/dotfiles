@@ -53,6 +53,7 @@
     lumo-honcho-api
     lumo-honcho-deriver
     lumo-hermes-agent
+    lumo-ntfy
     lumo-authelia
     lumo-cloudflare-ddns
     lumo-cloudflare-ips

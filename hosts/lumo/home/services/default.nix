@@ -12,6 +12,7 @@
     ./honcho.nix
     ./hermes-agent
     ./monitoring.nix
+    ./ntfy.nix
     ./podman.nix
     ./umami.nix
   ];
