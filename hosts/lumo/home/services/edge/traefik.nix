@@ -251,6 +251,22 @@ let
         tls.certResolver = "letsencrypt";
       };
 
+      tempestmiku-http = {
+        rule = mkHostRule homolab.domains.miku;
+        entryPoints = [ "web" ];
+        middlewares = [ "redirect-to-https@file" ];
+        service = "noop@internal";
+      };
+
+      # TempestMiku owns device authentication and authenticated pairing. Mobile SSE and
+      # notification actions cannot traverse an interactive Authelia redirect.
+      tempestmiku = {
+        rule = mkHostRule homolab.domains.miku;
+        entryPoints = [ "websecure" ];
+        service = "tempestmiku";
+        tls.certResolver = "letsencrypt";
+      };
+
       grafana-http = {
         rule = mkPrivateHostRule homolab.domains.grafana;
         entryPoints = [ "web" ];
@@ -324,6 +340,9 @@ let
       ];
       ntfy.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.ntfy}"; }
+      ];
+      tempestmiku.loadBalancer.servers = [
+        { url = "http://127.0.0.1:${toString homolab.ports.tempestmiku}"; }
       ];
       grafana.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }

@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+uid="$(id -u tempestmiku)"
+postgres_gid="$(getent group postgres | cut -d: -f3)"
+
+exec @podman@ run \
+  --replace \
+  --rm \
+  --name=lumo-tempestmiku \
+  --network=host \
+  --env-file=/run/lumo-tempestmiku.env \
+  --user="$uid:$postgres_gid" \
+  --cap-drop=all \
+  --security-opt=no-new-privileges \
+  --read-only \
+  --pids-limit=512 \
+  --tmpfs=/tmp:rw,nosuid,nodev,size=256m \
+  --volume=@dataDir@:/data \
+  --volume=/run/postgresql:/run/postgresql \
+  @image@

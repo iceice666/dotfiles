@@ -14,6 +14,7 @@
     ./monitoring.nix
     ./ntfy.nix
     ./podman.nix
+    ./tempestmiku
     ./umami.nix
   ];
 }

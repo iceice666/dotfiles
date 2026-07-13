@@ -54,6 +54,7 @@
     lumo-honcho-deriver
     lumo-hermes-agent
     lumo-ntfy
+    lumo-tempestmiku
     lumo-authelia
     lumo-cloudflare-ddns
     lumo-cloudflare-ips
