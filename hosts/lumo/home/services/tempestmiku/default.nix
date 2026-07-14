@@ -9,7 +9,7 @@
 
 let
   dataDir = "/var/lib/tempestmiku";
-  sourceRev = "4ade28a2da9aeb290dc82d8031f67c34681dde01";
+  sourceRev = "2cbc3119853f38945e1c6465f89fe79e70d5be81";
   image = "localhost/tempestmiku:${builtins.substring 0 12 sourceRev}";
   openaiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
 
@@ -111,6 +111,26 @@ in
 
         install -Dm755 ${openrcService} /etc/init.d/lumo-tempestmiku
         /sbin/rc-update add lumo-tempestmiku default
-        /sbin/rc-service lumo-tempestmiku restart
+
+        wait_for_tempestmiku_transition() {
+          transition_waited=0
+          while /sbin/rc-service lumo-tempestmiku status 2>&1 \
+            | ${pkgs.gnugrep}/bin/grep -Eq \
+              'starting|stopping|Call to flock failed|Resource temporarily unavailable'; do
+            if [ "$transition_waited" -ge 1800 ]; then
+              echo "timed out waiting for lumo-tempestmiku service transition" >&2
+              exit 1
+            fi
+            ${pkgs.coreutils}/bin/sleep 2
+            transition_waited=$((transition_waited + 2))
+          done
+        }
+
+        wait_for_tempestmiku_transition
+        if ! /sbin/rc-service --nodeps lumo-tempestmiku stop; then
+          /sbin/rc-service lumo-tempestmiku zap
+        fi
+        wait_for_tempestmiku_transition
+        /sbin/rc-service --nodeps lumo-tempestmiku start
       '';
 }
