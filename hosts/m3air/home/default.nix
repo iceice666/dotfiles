@@ -1,4 +1,4 @@
-{ pkgs, dotfiles, ... }:
+{ dotfiles, ... }:
 
 let
   desktopWallpaper = dotfiles + /assets/win_chan.jpg;
@@ -16,10 +16,6 @@ in
     themegenHost = "m3air";
     ghosttyFontSize = 16;
   };
-
-  home.packages = with pkgs; [
-    obsidian
-  ];
 
   programs.fish.interactiveShellInit = ''
     # macOS-specific environment variables

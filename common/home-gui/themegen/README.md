@@ -14,7 +14,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 
 ## File Map
 
-- `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
+- `themegen/common/`: shared Ghostty, fish, starship, and Zed theme templates.
 - `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and bar palette (`theme.scss`) templates. GTK templates become a standalone package on Framework.
 - `themegen/m3air/`: macOS-only Equibop template.
 - `common/home/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
