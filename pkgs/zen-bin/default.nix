@@ -9,22 +9,22 @@
 
 let
   pname = "zen-bin";
-  version = "1.21.5b";
+  version = "1.21.6b";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-universal.dmg";
-      hash = "sha256-5qs1bt5B1pc/LzwWXt+XTdBNlLSXqtATL4DRqiXUpWY=";
+      hash = "sha256-oVUjVm3RSQvEan/2DswdBWD3ZNaGm05f8szuMr+VYso=";
     };
 
     "x86_64-darwin" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-universal.dmg";
-      hash = "sha256-5qs1bt5B1pc/LzwWXt+XTdBNlLSXqtATL4DRqiXUpWY=";
+      hash = "sha256-oVUjVm3RSQvEan/2DswdBWD3ZNaGm05f8szuMr+VYso=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-x86_64.tar.xz";
-      hash = "sha256-DeoJu8X+2eHjKDnyiKYJsLIOsb7+2NT4kuIipl36oGk=";
+      hash = "sha256-7/SQFSwhuaVbhjud8CNwwwVn4QJ/44ju6TntQIK1OyA=";
     };
 
     "aarch64-linux" = fetchurl {
