@@ -12,6 +12,69 @@
 
 let
   desktopWallpaper = dotfiles + /assets/mzen.png;
+  memorySleepInhibitThresholdKiB = 4 * 1024 * 1024;
+
+  largeRssProcessCheck = pkgs.writeShellScript "framework-large-rss-process-check" ''
+    threshold_kib=${toString memorySleepInhibitThresholdKiB}
+
+    for status in /proc/[0-9]*/status; do
+      [ -r "$status" ] || continue
+
+      name=
+      rss_kib=
+      while read -r key value _; do
+        case "$key" in
+          Name:)
+            name="$value"
+            ;;
+          VmRSS:)
+            rss_kib="$value"
+            break
+            ;;
+        esac
+      done < "$status" || continue
+
+      if [ -n "$rss_kib" ] && [ "$rss_kib" -gt "$threshold_kib" ] 2>/dev/null; then
+        pid="''${status#/proc/}"
+        pid="''${pid%/status}"
+        printf '%s %s %s\n' "$pid" "$name" "$rss_kib"
+        exit 0
+      fi
+    done
+
+    exit 1
+  '';
+
+  memorySleepInhibitor = pkgs.writeShellScript "framework-memory-sleep-inhibitor" ''
+    set -u
+
+    while true; do
+      if large_process="$(${largeRssProcessCheck})"; then
+        ${pkgs.util-linux}/bin/logger -t framework-memory-sleep-inhibitor \
+          "blocking sleep while process exceeds ${toString memorySleepInhibitThresholdKiB} KiB RSS: $large_process"
+
+        ${pkgs.systemd}/bin/systemd-inhibit \
+          --what=sleep \
+          --mode=block \
+          --who=framework-memory-sleep-inhibitor \
+          --why="a process is using more than 4 GiB RSS" \
+          ${pkgs.bash}/bin/bash -c '
+            set -u
+            check=$1
+            sleep_bin=$2
+
+            while "$check" >/dev/null; do
+              "$sleep_bin" 30
+            done
+          ' -- ${largeRssProcessCheck} ${pkgs.coreutils}/bin/sleep
+
+        ${pkgs.util-linux}/bin/logger -t framework-memory-sleep-inhibitor \
+          "released sleep inhibitor; no process exceeds ${toString memorySleepInhibitThresholdKiB} KiB RSS"
+      else
+        ${pkgs.coreutils}/bin/sleep 30
+      fi
+    done
+  '';
 in
 {
   imports = [
@@ -73,6 +136,18 @@ in
   systemd.services.dbus-broker = {
     reloadIfChanged = lib.mkForce false;
     restartIfChanged = false;
+  };
+
+  systemd.services.framework-memory-sleep-inhibitor = {
+    description = "Block sleep while a process uses more than 4 GiB RSS";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = memorySleepInhibitor;
+      Restart = "always";
+      RestartSec = 5;
+    };
   };
 
   systemd.user.services.dbus-broker = {
