@@ -19,6 +19,11 @@ let
         -4 -no-6 \
         --cache-file /var/lib/cloudflare-ddns/ip.cache \
         ${homolab.domains.root} || true
+      ${pkgs.cloudflare-dyndns}/bin/cloudflare-dyndns \
+        --api-token-file '${ddnsTokenPath}' \
+        -4 -no-6 \
+        --cache-file /var/lib/cloudflare-ddns/ip-proxy.cache \
+        ${homolab.domains.proxy} || true
       sleep 3600
     done
   '';

@@ -87,6 +87,7 @@ rec {
     analytics = "analytics.${root}";
     push = "push.${root}";
     miku = "miku.${root}";
+    proxy = "proxy.${root}";
   };
 
   urls = {
