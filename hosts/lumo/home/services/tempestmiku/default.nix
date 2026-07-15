@@ -9,7 +9,7 @@
 
 let
   dataDir = "/var/lib/tempestmiku";
-  sourceRev = "2cbc3119853f38945e1c6465f89fe79e70d5be81";
+  sourceRev = "1c43b40614b3072401770ed9e806150af2605315";
   image = "localhost/tempestmiku:${builtins.substring 0 12 sourceRev}";
   openaiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
 
