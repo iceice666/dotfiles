@@ -5,7 +5,7 @@ from qwen_asr import Qwen3ASRModel
 
 MODEL_ID = "JacobLinCool/TEA-ASR-1.1-mini"
 
-model = Qwen3ASRModel.from_pretrained(MODEL_ID)
+model = Qwen3ASRModel.from_pretrained(MODEL_ID, device_map="cuda:0", dtype="bfloat16")
 
 app = FastAPI()
 
