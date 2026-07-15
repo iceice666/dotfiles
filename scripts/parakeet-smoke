@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+base_url="${PARAKEET_BASE_URL:-http://127.0.0.1:19000}"
+timeout="${PARAKEET_SMOKE_TIMEOUT:-1800}"
+deadline=$((SECONDS + timeout))
+
+echo "Waiting for $base_url/v1/health/ready"
+while true; do
+    if response="$(curl -fsS --max-time 10 "$base_url/v1/health/ready" 2>/dev/null)" \
+        && printf '%s\n' "$response" | jq -e '(.ready == true) or (.status == "ready")' >/dev/null; then
+        printf '%s\n' "$response" | jq .
+        exit 0
+    fi
+
+    if ((SECONDS >= deadline)); then
+        echo "Parakeet NIM did not become ready within ${timeout}s" >&2
+        exit 1
+    fi
+    sleep 10
+done

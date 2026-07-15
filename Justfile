@@ -23,6 +23,7 @@ switch:
 [linux]
 switch: _pre-build
     nix build {{ system_target }} {{ kaguya_override }}
+    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration switch
 
 # Apply the local host plus all remote host configurations
@@ -47,6 +48,7 @@ build: _pre-build
 boot: _pre-build
     test -e /etc/NIXOS || { echo "Boot activation requires NixOS." >&2; exit 1; }
     nix build {{ system_target }} {{ kaguya_override }}
+    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration boot
 
 # Pre-build hook: on Framework, ensure Kaguya cache exists
@@ -78,12 +80,14 @@ homolab-sleep:
 [group('host')]
 homolab-switch:
     nix build .#nixosConfigurations.homolab.config.system.build.toplevel
+    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration switch
 
 # Stage the homolab NixOS configuration for next boot (run on homolab)
 [group('host')]
 homolab-boot:
     nix build .#nixosConfigurations.homolab.config.system.build.toplevel
+    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration boot
 
 # Dry-build the homolab NixOS configuration (run on homolab)
@@ -100,6 +104,11 @@ homolab-gen-hardware:
 homolab-llama-smoke:
     LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
         {{ scripts }}/llama-swap-smoke
+
+# Smoke-check the homolab NVIDIA Parakeet zh-TW Speech NIM endpoint
+homolab-parakeet-smoke:
+    PARAKEET_BASE_URL="${PARAKEET_BASE_URL:-http://100.110.95.111:19000}" \
+        {{ scripts }}/parakeet-smoke
 
 # Build the gce-dns NixOS system toplevel
 [group('host')]

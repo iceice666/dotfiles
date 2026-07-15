@@ -23,6 +23,7 @@ let
     "prometheus.service"
     "grafana.service"
     "llama-swap.service"
+    "parakeet-ctc-zh-tw.service"
     "multica-backend.service"
     "multica-frontend.service"
     "dynacat.service"

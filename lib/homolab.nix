@@ -36,6 +36,8 @@ let
     authelia = 18091;
     cliproxyapi = 20129;
     shimmy = 11434;
+    parakeetHttp = 19000;
+    parakeetGrpc = 50051;
     dynacat = 18075;
     devPortProxy = 18076;
     hermesGateway = 8642;

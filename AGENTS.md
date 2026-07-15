@@ -58,7 +58,7 @@ hosts/               # per-host entrypoints
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
     configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
-    services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, CLIProxyAPI)
+    services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (llama-swap, Parakeet ASR NIM)
     home/            # homolab-specific home additions (fish-pj.nix, user.nix, mise)
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
@@ -335,6 +335,7 @@ just homolab-switch          # build + activate homolab locally
 just homolab-boot            # stage the closure for next homolab boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
 just homolab-llama-smoke     # OpenAI-compatible smoke check against the homolab LLM stack
+just homolab-parakeet-smoke  # readiness check for the zh-TW Parakeet Speech NIM
 
 just gce-dns-build           # dry-build the gce-dns NixOS system toplevel
 just gce-dns-image           # build the gce-dns Google Compute Engine image
@@ -393,6 +394,7 @@ trust boundary:
 
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
+- `hosts/homolab/services/ai/parakeet-ctc-zh-tw.nix` — rootful Docker plus NVIDIA CDI, NGC credentials, GPU memory, and the tailnet-only ASR ports. Keep the 8 GB GPU on the streaming profile unless hardware capacity changes.
 - `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo; touches auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
