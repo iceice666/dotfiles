@@ -10,7 +10,7 @@ respawn_delay=10
 respawn_max=0
 
 depend() {
-  need lumo-podman lumo-postgresql lumo-cliproxyapi lumo-ntfy
+  need lumo-podman lumo-postgresql lumo-cliproxyapi lumo-ntfy lumo-tempestmiku-embeddings
   after networking
 }
 
@@ -37,6 +37,14 @@ start_pre() {
     printf '%s\n' 'TM_OMP_ACP_ARTIFACT_ROOT=/data/artifacts'
     printf '%s\n' 'TM_MANAGED_SKILLS_PATH=/data/managed-skills'
     printf '%s\n' 'TM_MANAGED_MODE_ADDENDA_PATH=/data/managed-mode-addenda'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_PROVIDER=local'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_ENDPOINT=http://127.0.0.1:11434/v1/embeddings'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MODEL=bge-m3:567m'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_DIMENSIONS=1024'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_NORMALIZATION=l2'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_TIMEOUT_MS=10000'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MAX_BATCH_SIZE=16'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MAX_INPUT_BYTES=16384'
     printf '%s\n' 'TM_PUSH_PROVIDER=unifiedpush'
     printf '%s\n' 'TM_UNIFIED_PUSH_ENDPOINT_ORIGIN=@pushOrigin@'
     printf 'TM_PUSH_ENCRYPTION_KEY=%s\n' "$push_key"

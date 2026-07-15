@@ -9,7 +9,7 @@
 
 let
   dataDir = "/var/lib/tempestmiku";
-  sourceRev = "1c43b40614b3072401770ed9e806150af2605315";
+  sourceRev = "63263c8657af3c8321a894bfe3e3feb98d957465";
   image = "localhost/tempestmiku:${builtins.substring 0 12 sourceRev}";
   openaiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
 
@@ -108,6 +108,10 @@ in
             ${pkgs.postgresql_17}/bin/createdb -p ${toString homolab.ports.postgresql} \
               --owner=tempestmiku tempestmiku
         fi
+        ${pkgs.util-linux}/bin/runuser -u postgres -- \
+          ${pkgs.postgresql_17}/bin/psql -v ON_ERROR_STOP=1 \
+            -p ${toString homolab.ports.postgresql} -d tempestmiku \
+            -c 'CREATE EXTENSION IF NOT EXISTS vector'
 
         install -Dm755 ${openrcService} /etc/init.d/lumo-tempestmiku
         /sbin/rc-update add lumo-tempestmiku default
