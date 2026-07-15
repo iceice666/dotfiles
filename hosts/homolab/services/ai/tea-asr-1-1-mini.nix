@@ -8,9 +8,17 @@
 let
   containerName = "tea-asr-1-1-mini";
   image = "qwenllm/qwen3-asr:latest";
-  modelId = "JacobLinCool/TEA-ASR-1.1-mini";
   cacheDir = "/mnt/storage/models/${containerName}/hf-cache";
   docker = config.virtualisation.docker.package;
+
+  # qwenllm/qwen3-asr:latest bundles a transformers/qwen-asr version predating
+  # the qwen3_asr architecture, so `vllm serve` can't parse the checkpoint's
+  # config.json. qwen-asr's own Qwen3ASRModel loader works regardless (it
+  # doesn't go through transformers' architecture registry), so this server
+  # pins a known-good qwen-asr release and loads the model directly instead
+  # of shelling out to vllm.
+  serverScript = ./tea-asr-server.py;
+  qwenAsrVersion = "0.0.6";
 
   start = pkgs.writeShellScript "tea-asr-1-1-mini-start" ''
     set -euo pipefail
@@ -28,12 +36,9 @@ let
       --publish ${homolab.network.tailnet.address}:${toString homolab.ports.teaAsrHttp}:8000 \
       --env HF_HOME=/cache \
       --volume ${cacheDir}:/cache \
+      --volume ${serverScript}:/app/server.py:ro \
       ${image} \
-      vllm serve ${modelId} \
-        --host 0.0.0.0 \
-        --port 8000 \
-        --served-model-name tea-asr-1.1-mini \
-        --gpu-memory-utilization 0.25
+      bash -c 'pip install -q fastapi "uvicorn[standard]" python-multipart "qwen-asr==${qwenAsrVersion}" && exec python3 /app/server.py'
   '';
 in
 {

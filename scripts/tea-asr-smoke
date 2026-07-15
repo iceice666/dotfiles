@@ -7,8 +7,9 @@ deadline=$((SECONDS + timeout))
 
 echo "Waiting for $base_url/health"
 while true; do
-    if curl -fsS --max-time 10 -o /dev/null "$base_url/health" 2>/dev/null; then
-        echo "ready"
+    if response="$(curl -fsS --max-time 10 "$base_url/health" 2>/dev/null)" \
+        && printf '%s\n' "$response" | jq -e '.status == "ok"' >/dev/null; then
+        printf '%s\n' "$response" | jq .
         exit 0
     fi
 
