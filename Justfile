@@ -100,15 +100,10 @@ homolab-gen-hardware:
     ssh iceice666@homolab sudo nixos-generate-config --show-hardware-config \
         > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
 
-# Smoke-check the homolab OpenAI-compatible LLM endpoint
-homolab-llama-smoke:
-    LLAMA_SWAP_BASE_URL="${LLAMA_SWAP_BASE_URL:-http://homolab:11434}" \
-        {{ scripts }}/llama-swap-smoke
-
-# Smoke-check the homolab NVIDIA Parakeet zh-TW Speech NIM endpoint
-homolab-parakeet-smoke:
-    PARAKEET_BASE_URL="${PARAKEET_BASE_URL:-http://100.110.95.111:19000}" \
-        {{ scripts }}/parakeet-smoke
+# Smoke-check the homolab TEA-ASR 1.1 mini endpoint
+homolab-tea-asr-smoke:
+    TEA_ASR_BASE_URL="${TEA_ASR_BASE_URL:-http://100.110.95.111:19000}" \
+        {{ scripts }}/tea-asr-smoke
 
 # Build the gce-dns NixOS system toplevel
 [group('host')]

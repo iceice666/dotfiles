@@ -35,9 +35,7 @@ let
     postgresql = 25432;
     authelia = 18091;
     cliproxyapi = 20129;
-    shimmy = 11434;
-    parakeetHttp = 19000;
-    parakeetGrpc = 50051;
+    teaAsrHttp = 19000;
     dynacat = 18075;
     devPortProxy = 18076;
     hermesGateway = 8642;
@@ -115,15 +113,4 @@ rec {
   inherit ports;
   inherit portRanges;
   inherit hosts;
-
-  ai = rec {
-    host = "127.0.0.1";
-    tailnetHost = hosts.homolab.tailnet;
-    port = ports.shimmy;
-    baseUrl = "http://${host}:${toString port}";
-    tailnetBaseUrl = "http://${tailnetHost}:${toString port}";
-    openaiBaseUrl = "${baseUrl}/v1";
-    tailnetOpenaiBaseUrl = "${tailnetBaseUrl}/v1";
-    model = "qwen3.6-35b-a3b";
-  };
 }

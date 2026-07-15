@@ -13,11 +13,6 @@ let
     port: cidr:
     "iptables -D INPUT -i ${interface} -p tcp -s ${cidr} --dport ${toString port} -j ACCEPT || true";
 
-  mkDropRule = port: "iptables -A INPUT -i ${interface} -p tcp --dport ${toString port} -j DROP";
-
-  mkDeleteDropRule =
-    port: "iptables -D INPUT -i ${interface} -p tcp --dport ${toString port} -j DROP || true";
-
   mkRangeDropRule =
     range:
     "iptables -A INPUT -i ${interface} -p tcp --dport ${toString range.from}:${toString range.to} -j DROP";
@@ -63,15 +58,10 @@ in
       extraCommands = ''
         # Development ports are blocked; routing goes through lumo's edge Traefik.
         ${mkRangeDropRule devPortRange}
-
-        # Explicit LAN DROP for loopback-only services.
-        ${mkDropRule homolab.ports.shimmy}
       '';
 
       extraStopCommands = ''
         ${mkDeleteRangeDropRule devPortRange}
-
-        ${mkDeleteDropRule homolab.ports.shimmy}
       '';
     };
   };

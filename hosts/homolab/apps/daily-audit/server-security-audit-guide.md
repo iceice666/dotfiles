@@ -10,7 +10,7 @@ reports. It intentionally avoids decrypted secret content.
 | `:80`, `:443` | LAN and Cloudflare on `enp7s0`; tailnet if explicitly trusted | Traefik terminates TLS and forwards to protected services. |
 | `:2222` | LAN host SSH | Password auth disabled, root login disabled. |
 | `:53` | LAN DNS only | Technitium may listen broadly; firewall is the boundary. |
-| Internal service ports | Loopback only or dropped on `enp7s0` | Authelia, Multica, Shimmy, Grafana, Prometheus, Traefik metrics. |
+| Internal service ports | Loopback only or dropped on `enp7s0` | Authelia, Multica, Grafana, Prometheus, Traefik metrics. |
 
 ## Priority Checks
 

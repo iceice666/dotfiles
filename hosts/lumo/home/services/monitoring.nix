@@ -32,9 +32,6 @@ let
 
   prometheusRules = pkgs.writeText "lumo-alert-rules.yml" ''
     groups:
-      # llama-swap probe data is collected (see llama-swap-blackbox scrape job) but
-      # no alerts fire: homolab is an on-demand GPU worker that sleeps when idle,
-      # so a failing /health probe is the normal state, not a fault.
       - name: host-resource.rules
         rules:
           - alert: HostHighCpuUsage
@@ -144,37 +141,6 @@ let
             labels = {
               instance = homolab.hostName;
               service = "cliproxyapi";
-            };
-          }
-        ];
-        relabel_configs = [
-          {
-            source_labels = [ "__address__" ];
-            target_label = "__param_target";
-          }
-          {
-            source_labels = [ "__param_target" ];
-            target_label = "target";
-          }
-          {
-            target_label = "__address__";
-            replacement = "127.0.0.1:${toString blackboxPort}";
-          }
-        ];
-      }
-      {
-        job_name = "llama-swap-blackbox";
-        metrics_path = "/probe";
-        params.module = [ "http_2xx" ];
-        static_configs = [
-          {
-            targets = [
-              "${homolab.ai.tailnetBaseUrl}/health"
-              "${homolab.ai.tailnetOpenaiBaseUrl}/models"
-            ];
-            labels = {
-              instance = homolab.hostName;
-              service = "llama-swap";
             };
           }
         ];

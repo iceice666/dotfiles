@@ -60,9 +60,9 @@ let
         ' /proc/stat
     }
 
-    # Update last-active if any LLM or SSH connections are established.
+    # Update last-active if an SSH connection is established.
     if ${pkgs.iproute2}/bin/ss -tnH state established | \
-            ${pkgs.gnugrep}/bin/grep -qE ':(${toString homolab.ports.shimmy}|${toString homolab.ports.ssh})'; then
+            ${pkgs.gnugrep}/bin/grep -qE ':${toString homolab.ports.ssh}'; then
         mark_active
         exit 0
     fi

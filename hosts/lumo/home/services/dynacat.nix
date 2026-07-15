@@ -78,12 +78,7 @@ let
     '';
   };
 
-  homolabPanel =
-    mkHostPanel "homolab"
-      {
-        llama = mkPromReq ''min(probe_success{job="llama-swap-blackbox",instance="homolab"})'';
-      }
-      ''<li class="flex justify-between"><span>LLM</span><span class="color-highlight">{{ if gt ((.Subrequest "llama").JSON.Float "data.result.0.value.1") 0.5 }}up{{ else }}down{{ end }}</span></li>'';
+  homolabPanel = mkHostPanel "homolab" { } "";
 
   lumoPanel =
     mkHostPanel "lumo"
@@ -116,7 +111,6 @@ let
     grafana = "si:grafana";
     umami = "si:umami";
     proxy = "si:traefikproxy";
-    shimmy = "si:openai";
   };
 
   monitorSiteDefaults = {
@@ -212,9 +206,6 @@ let
                     ))
                     (mkMonitorSite "Authelia" serviceIcons.authelia homolab.urls.auth (
                       mkLocalUrl homolab.ports.authelia ""
-                    ))
-                    (mkMonitorSite "Shimmy (on-demand)" serviceIcons.shimmy "${homolab.ai.tailnetBaseUrl}/health" (
-                      "${homolab.ai.tailnetBaseUrl}/health"
                     ))
                     (mkMonitorSite "Grafana" serviceIcons.grafana homolab.urls.grafana (
                       mkLocalUrl homolab.ports.grafana "/api/health"

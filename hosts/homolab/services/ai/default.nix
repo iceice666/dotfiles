@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./llama-swap.nix
-    ./parakeet-ctc-zh-tw.nix
+    ./tea-asr-1-1-mini.nix
   ];
 }
