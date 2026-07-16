@@ -43,22 +43,14 @@ let
         supportsReasoningEffort = true;
       };
       models = [
-        (mkModel "gpt-5.6-terra" 128000 16384 false)
-        (mkModel "gpt-5.6-sol" 128000 16384 false)
-        (mkModel "gpt-5.6-luna" 128000 16384 false)
-        (mkModel "gpt-5.5" 128000 16384 false)
-        (mkModel "gpt-5.4" 128000 16384 false)
-        (mkModel "gpt-5.4-mini" 128000 16384 false)
+        (mkModel "gpt-5.6-terra" 272000 16384 false)
+        (mkModel "gpt-5.6-sol" 272000 16384 false)
+        (mkModel "gpt-5.6-luna" 272000 16384 false)
+        (mkModel "gpt-5.5" 272000 16384 false)
+        (mkModel "gpt-5.4" 1000000 16384 false)
+        (mkModel "gpt-5.4-mini" 272000 16384 false)
         (mkModel "gpt-5.3-codex-spark" 128000 16384 false)
-        (mkModel "codex-auto-review" 128000 16384 false)
-        (mkModel "gpt-oss-120b-medium" 128000 16384 false)
-        (mkModel "gemini-3-pro-high" 1000000 8192 false)
-        (mkModel "gemini-3-pro-low" 1000000 8192 false)
-        (mkModel "gemini-3.1-pro-low" 1000000 8192 false)
-        (mkModel "gemini-3-flash" 1000000 8192 false)
-        (mkModel "gemini-3.1-flash-image" 1000000 8192 false)
-        (mkModel "gemini-3.1-flash-lite" 1000000 8192 false)
-        (mkModel "gemini-3.5-flash-low" 1000000 8192 false)
+        (mkModel "codex-auto-review" 272000 16384 false)
       ];
     };
     # Claude on the native Anthropic endpoint (see mkClaudeThinkingModel note).
@@ -67,10 +59,9 @@ let
       api = "anthropic-messages";
       apiKey = apiKeySentinel;
       models = [
-        (mkClaudeThinkingModel "claude-fable-5" 200000 64000)
-        (mkClaudeThinkingModel "claude-sonnet-5" 200000 64000)
-        (mkClaudeThinkingModel "claude-opus-4-8" 200000 32000)
-        (mkClaudeThinkingModel "claude-sonnet-4-6" 200000 64000)
+        (mkClaudeThinkingModel "claude-fable-5" 1000000 64000)
+        (mkClaudeThinkingModel "claude-sonnet-5" 1000000 64000)
+        (mkClaudeThinkingModel "claude-opus-4-8" 1000000 32000)
         (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
       ];
     };
