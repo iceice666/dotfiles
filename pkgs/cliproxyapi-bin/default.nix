@@ -6,7 +6,7 @@
 
 let
   pname = "cliproxyapi-bin";
-  version = "7.2.73";
+  version = "7.2.80";
 
   srcs = {
     "aarch64-linux" = fetchurl {
@@ -16,7 +16,7 @@ let
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/router-for-me/CLIProxyAPI/releases/download/v${version}/CLIProxyAPI_${version}_linux_amd64.tar.gz";
-      hash = "sha256-fHlZsGoG/r8ftzEC0yP8BuwT8L3D1O6MPAdyoVqgIkY=";
+      hash = "sha256-bJc1YoMcSs4BawV3CMy2Upuoivk/5nhB7RCbgf4DC5o=";
     };
   };
 

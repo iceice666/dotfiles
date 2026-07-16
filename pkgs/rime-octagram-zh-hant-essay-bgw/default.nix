@@ -9,7 +9,7 @@ stdenvNoCC.mkDerivation {
   version = "2026-05-16";
 
   src = fetchurl {
-    url = "https://media.githubusercontent.com/media/rimeinn/octagram-data/master/models/essay/zh-hant-t-essay-bgw.gram";
+    url = "https://media.githubusercontent.com/media/rimeinn/octagram-data/39a77abf2ec22e2aa4b0d7e1e2888e44ad6508c1/models/essay/zh-hant-t-essay-bgw.gram";
     hash = "sha256-V0yZ0QD0InZsQzxgHtbv1kLogdaaMN+f/7bxaVvlUOM=";
   };
 
