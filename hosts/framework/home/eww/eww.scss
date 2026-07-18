@@ -1,0 +1,777 @@
+@import "theme.scss";
+
+* {
+    all: unset;
+    font-family: "Sarasa Mono TC", "Noto Sans", sans-serif;
+    font-size: 13px;
+}
+
+window,
+window.background,
+.background,
+.bar-root,
+.bar,
+button {
+    background: transparent;
+    background-color: transparent;
+    background-image: none;
+}
+
+menu {
+    background: $surfaceActive;
+    background-color: $surfaceActive;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    color: $foreground;
+    padding: 6px;
+}
+
+menuitem {
+    background: transparent;
+    background-color: transparent;
+    border-radius: 6px;
+    color: $foreground;
+    min-height: 24px;
+    padding: 4px 10px;
+}
+
+menuitem:hover,
+menuitem:selected {
+    background: $surfaceHover;
+    background-color: $surfaceHover;
+}
+
+menuitem:disabled {
+    color: $foregroundDim;
+}
+
+menu separator {
+    background: $outline;
+    background-color: $outline;
+    margin: 4px 6px;
+    min-height: 1px;
+}
+
+.left,
+.center,
+.right,
+.app-strip,
+.workspace,
+.tray {
+    min-height: 32px;
+}
+
+.left {
+    margin-right: 4px;
+}
+
+.right {
+    margin-right: 2px;
+}
+
+.bar {
+    color: $foreground;
+    padding: 0 2px;
+}
+
+.island {
+    background: $surface;
+    border: 1px solid $outline;
+    border-radius: 14px;
+    color: $foreground;
+    margin-right: 4px;
+    padding: 4px 6px;
+}
+
+.compact {
+    padding: 3px 8px 3px 2px;
+}
+
+button {
+    border: 0 solid transparent;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+button:hover {
+    background: $surfaceHover;
+}
+
+button:active {
+    background: $surfaceActive;
+}
+
+.audio-control:hover {
+    background: $surfaceHover;
+}
+
+.audio-control:active {
+    background: $surfaceActive;
+}
+
+.workspace-label {
+    color: $foreground;
+    font-size: 14px;
+    padding: 0 4px;
+}
+
+.workspace-island {
+    padding: 4px 8px;
+}
+
+.app-island {
+    padding: 4px 8px;
+}
+
+.app-island.focused {
+    background: $surfaceHover;
+    border-color: $primary;
+}
+
+.app-island-content {
+    min-width: 0;
+}
+
+.app-title {
+    color: $foreground;
+    padding-left: 6px;
+}
+
+.app-island.focused .app-title {
+    color: $primary;
+}
+
+.media {
+    color: $foreground;
+}
+
+.audio {
+    padding: 1px 2px;
+}
+
+.battery {
+    padding: 1px 4px;
+}
+
+.battery:hover {
+    background: $surfaceHover;
+}
+
+.tray:hover {
+    background: $surfaceHover;
+}
+
+.battery:active {
+    background: $surfaceActive;
+}
+
+.tray:active {
+    background: $surfaceActive;
+}
+
+.battery-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.battery-device-label {
+    background: $surfaceHover;
+    border: 0 solid transparent;
+    border-radius: 8px;
+    border-color: $outline;
+    color: $foreground;
+    font-size: 11px;
+    padding: 1px 5px;
+}
+
+.battery-ring {
+    background: $surfaceActive;
+    color: #06b6d4;
+}
+
+.ring-slot {
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.battery.critical .battery-ring {
+    color: #ef4444;
+}
+
+.battery.low .battery-ring {
+    color: #f97316;
+}
+
+.battery.medium .battery-ring {
+    color: #eab308;
+}
+
+.battery.good .battery-ring {
+    color: #22c55e;
+}
+
+.battery.full .battery-ring {
+    color: #06b6d4;
+}
+
+.battery.charging .battery-ring {
+    color: $primary;
+}
+
+.audio-control {
+    border-radius: 999px;
+    padding: 0;
+}
+
+.audio-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+}
+
+.audio-device-label {
+    background: $surfaceHover;
+    border: 0 solid transparent;
+    border-radius: 8px;
+    border-color: $outline;
+    color: $foreground;
+    font-size: 11px;
+    padding: 1px 5px;
+}
+
+.audio-control.muted .audio-device-label {
+    color: $foregroundDim;
+}
+
+.audio-ring {
+    background: $surfaceActive;
+    color: $primary;
+}
+
+.audio-control.muted .audio-ring {
+    background: $surface;
+    color: $foregroundDim;
+}
+
+.tray {
+    padding: 1px 4px;
+}
+
+.tray-device {
+    border-radius: 999px;
+    color: $foreground;
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.tray-slot {
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.tray-icons {
+    padding: 0 2px 0 4px;
+}
+
+.perf-label {
+    color: $foregroundDim;
+    font-size: 10px;
+}
+
+.perf-value,
+.net-value {
+    color: $primary;
+}
+
+.net-row {
+    min-height: 14px;
+}
+
+.datetime {
+    color: $foreground;
+    padding: 1px 6px;
+}
+
+.datetime-date {
+    color: $foreground;
+    font-size: 12px;
+}
+
+.datetime-time {
+    color: $primary;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.notifications {
+    color: $foreground;
+    margin-right: 0;
+    padding: 2px 5px;
+}
+
+.notifications.active {
+    color: $critical;
+}
+
+.notification-stack {
+    min-height: 26px;
+    min-width: 30px;
+}
+
+.notification-icon-wrap {
+    margin: 1px 4px 0 0;
+}
+
+.notification-badge {
+    background: $critical;
+    border-radius: 999px;
+    color: $onCritical;
+    font-size: 10px;
+    font-weight: 700;
+    margin: 0 0 0 14px;
+    min-height: 14px;
+    min-width: 14px;
+    padding: 0 3px;
+}
+
+.control-center-button {
+    margin-right: 0;
+    padding: 2px 5px;
+}
+
+.control-center-button:hover,
+.control-center-button.active {
+    background: $surfaceHover;
+}
+
+.control-center-stack {
+    min-height: 26px;
+    min-width: 32px;
+}
+
+.control-center-icon-wrap {
+    margin: 1px 4px 0 0;
+}
+
+.control-center-panel {
+    background: $surface;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    color: $foreground;
+    margin: 0;
+    padding: 12px;
+}
+
+.cc-section {
+    background: $surfaceHover;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.cc-section-head,
+.cc-slider-labels {
+    min-height: 24px;
+}
+
+.cc-section-title,
+.cc-slider-title {
+    color: $foreground;
+    font-weight: 700;
+    padding-left: 7px;
+}
+
+.cc-slider-value,
+.cc-media-text,
+.cc-count,
+.cc-empty,
+.cc-notification-app,
+.cc-notification-preview,
+.cc-notification-source,
+.cc-notification-body {
+    color: $foregroundDim;
+}
+
+.cc-section {
+    padding: 9px 10px;
+}
+
+.cc-slider-row {
+    min-height: 48px;
+}
+
+.cc-slider-icon,
+.cc-slider-row .audio-control {
+    background: $surfaceActive;
+    border-radius: 8px;
+    min-height: 36px;
+    min-width: 36px;
+}
+
+.cc-slider-row .audio-control:hover {
+    background: $surfaceActive;
+}
+
+.cc-slider-stack {
+    min-height: 44px;
+}
+
+.cc-scale {
+    min-width: 284px;
+}
+
+.cc-scale trough {
+    background: $surfaceActive;
+    border-radius: 999px;
+    margin: 0 8px;
+    min-height: 8px;
+}
+
+.cc-scale highlight {
+    background: $primary;
+    border-radius: 999px;
+}
+
+.cc-scale slider {
+    background: $foreground;
+    border: 1px solid $outline;
+    border-radius: 999px;
+    min-height: 16px;
+    min-width: 16px;
+}
+
+.cc-media-actions {
+    min-height: 32px;
+}
+
+.cc-action-button {
+    background: $surfaceActive;
+    border-radius: 8px;
+    color: $foreground;
+    min-width: 70px;
+    padding: 5px 10px;
+}
+
+.cc-action-button:hover,
+.cc-action-button.primary {
+    background: $primary;
+    color: $surface;
+}
+
+.cc-notification-list {
+    min-height: 0;
+}
+
+.cc-notification-row {
+    background: $surfaceActive;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+.cc-notification-row.unread {
+    border-color: $critical;
+}
+
+.cc-notification-row.critical {
+    border-color: $critical;
+}
+
+.cc-notification-summary {
+    border-radius: 8px;
+    padding: 7px 8px;
+}
+
+.cc-notification-dot {
+    background: $critical;
+    border-radius: 999px;
+    margin-top: 6px;
+    min-height: 8px;
+    min-width: 8px;
+}
+
+.cc-notification-title {
+    color: $foreground;
+    font-weight: 700;
+}
+
+.cc-notification-preview {
+    margin-top: 2px;
+}
+
+.cc-notification-source {
+    font-size: 10px;
+    min-width: 44px;
+}
+
+.cc-notification-body {
+    padding: 0 10px 9px 24px;
+}
+
+.cc-toggles {
+    min-height: 0;
+}
+
+.cc-toggle {
+    background: $surfaceHover;
+    border: 1px solid $outline;
+    border-radius: 10px;
+    min-width: 0;
+    padding: 9px 10px;
+}
+
+.cc-toggle:hover {
+    background: rgba($primary, 0.16);
+}
+
+.cc-toggle.on {
+    background: $surfaceActive;
+    border-color: $primary;
+}
+
+.cc-toggle.on:hover {
+    background: rgba($primary, 0.28);
+}
+
+.cc-toggle-label {
+    color: $foreground;
+    font-weight: 700;
+}
+
+.cc-toggle.on .cc-toggle-label {
+    color: $primary;
+}
+
+.cc-toggle-state {
+    color: $foregroundDim;
+    font-size: 10px;
+}
+
+.cc-toggle.on .cc-toggle-state {
+    color: $primary;
+}
+
+.cc-session {
+    min-height: 44px;
+}
+
+.cc-session-button {
+    background: $surfaceActive;
+    border-radius: 10px;
+    min-height: 40px;
+    min-width: 40px;
+    padding: 6px;
+}
+
+.cc-session-button:hover {
+    background: $primary;
+}
+
+.cc-clear {
+    background: $surfaceActive;
+    border-radius: 8px;
+    color: $foregroundDim;
+    font-size: 11px;
+    margin-right: 6px;
+    padding: 2px 8px;
+}
+
+.cc-clear:hover {
+    background: $critical;
+    color: $onCritical;
+}
+
+.cc-calendar {
+    color: $foreground;
+    padding: 2px;
+}
+
+.cc-calendar:selected {
+    background-color: $primary;
+    border-radius: 6px;
+    color: $onPrimary;
+}
+
+.cc-wifi-rescan,
+.cc-wifi-disconnect {
+    background: $surfaceActive;
+    border-radius: 8px;
+    color: $foregroundDim;
+    font-size: 11px;
+    padding: 2px 10px;
+}
+
+.cc-wifi-rescan:hover {
+    background: $primary;
+    color: $onPrimary;
+}
+
+.cc-wifi-disconnect:hover {
+    background: $critical;
+    color: $onCritical;
+}
+
+.cc-wifi-status {
+    color: $foreground;
+    font-weight: 700;
+}
+
+.cc-wifi-list {
+    min-height: 0;
+}
+
+.cc-wifi-row {
+    background: $surfaceActive;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.cc-wifi-row:hover {
+    background: $surfaceHover;
+}
+
+.cc-wifi-row.active {
+    border-color: $primary;
+}
+
+.cc-wifi-ssid {
+    color: $foreground;
+}
+
+.cc-wifi-row.active .cc-wifi-ssid {
+    color: $primary;
+}
+
+.cc-wifi-signal {
+    color: $foregroundDim;
+    font-size: 11px;
+}
+
+.cc-wifi-pw {
+    padding: 4px 2px 2px 2px;
+}
+
+.cc-wifi-input {
+    background: $surfaceActive;
+    border: 1px solid $outline;
+    border-radius: 8px;
+    color: $foreground;
+    padding: 5px 8px;
+}
+
+.cc-wifi-input:focus {
+    border-color: $primary;
+}
+
+.cc-wifi-join {
+    background: $primary;
+    border-radius: 8px;
+    color: $onPrimary;
+    font-weight: 700;
+    padding: 5px 12px;
+}
+
+.cc-wifi-join:hover {
+    background: $surfaceActive;
+    color: $foreground;
+}
+
+.cc-anchor {
+    margin: 42px 12px 0 0;
+}
+
+.cc-backdrop {
+    background-color: transparent;
+}
+
+.control-center-panel {
+    min-width: 360px;
+}
+
+.cc-rows {
+    padding: 4px 6px;
+}
+
+.cc-row {
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.cc-row:hover {
+    background: rgba($primary, 0.16);
+}
+
+.cc-row-title {
+    color: $foreground;
+    font-weight: 700;
+}
+
+.cc-row-sub {
+    color: $foregroundDim;
+    font-size: 11px;
+}
+
+.cc-chevron {
+    color: transparent;
+    font-size: 18px;
+}
+
+.cc-row:hover .cc-chevron,
+.cc-toggle-expand:hover .cc-chevron {
+    color: $foregroundDim;
+}
+
+.cc-back {
+    border-radius: 8px;
+    min-height: 30px;
+    padding: 4px 6px;
+}
+
+.cc-back:hover {
+    background: $surfaceHover;
+}
+
+.cc-back-arrow {
+    color: $primary;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.cc-back-title {
+    color: $foreground;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.cc-wifi-head {
+    min-height: 40px;
+}
+
+.cc-toggle-split {
+    padding: 0;
+}
+
+.cc-toggle-icon-btn {
+    border-radius: 10px;
+    padding: 9px 4px 9px 10px;
+}
+
+.cc-toggle-expand {
+    border-radius: 10px;
+    padding: 9px 10px 9px 6px;
+}
+
+.cc-toggle-icon-btn:hover,
+.cc-toggle-expand:hover {
+    background: rgba($primary, 0.16);
+}
+
+.calendar-anchor {
+    margin: 42px 56px 0 0;
+}
+
+.calendar-popup-panel {
+    min-width: 0;
+}

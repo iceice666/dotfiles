@@ -19,4 +19,13 @@ prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
         inherit (unstablePkgs) cargo rustc;
       };
     };
+  eww = prev.eww.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace crates/eww/src/app.rs \
+        --replace-fail \
+          "    window.set_visual(visual.as_ref());" \
+          "    window.set_visual(visual.as_ref());
+          window.set_app_paintable(true);"
+    '';
+  });
 }
