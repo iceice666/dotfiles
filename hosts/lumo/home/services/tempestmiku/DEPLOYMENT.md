@@ -4,14 +4,21 @@ Date: 2026-07-15
 
 ## Outcome
 
-Run the TempestMiku Rust API and worker continuously on lumo without replacing the existing
-Hermes Agent deployment. Expose it at `https://miku.justaslime.dev` and deliver Android approval
-notifications through the self-hosted `https://push.justaslime.dev` UnifiedPush distributor.
+Run the sole authoritative TempestMiku coordinator continuously on lumo without replacing the
+existing Hermes Agent deployment. Expose it at `https://miku.justaslime.dev`, deliver Android
+approval notifications through the self-hosted `https://push.justaslime.dev` UnifiedPush
+distributor, and delegate only linked-host calls to the signed `tm-worker` on homolab.
 
 ## Decisions
 
 - Pin the public TempestMiku Git revision and build a glibc container on lumo.
 - Run one `TM_SERVER_ROLE=all` process for the single-owner deployment.
+- Treat `TM_SERVER_ROLE=all` as lumo's internal durable turn/dream/cron supervision. It does not
+  create a second public server: homolab runs only `tm-worker` and has no model, session, memory,
+  client, or independent approval authority.
+- Send `fs.*`, `code.search`, `proc.run`, and `linked://` jobs to homolab's Tailnet-only worker with
+  the shared SOPS-managed HMAC key. Keep lumo approvals authoritative, persist worker job states,
+  and fail visibly with no local fallback when homolab is unavailable.
 - Reuse lumo PostgreSQL 17 over its Unix socket with peer authentication; do not expose Postgres
   over TCP or duplicate the database service. Install pgvector in the TempestMiku database.
 - Run the pinned BGE-M3 embedding model in a separate loopback-only Ollama container with cloud
@@ -42,6 +49,10 @@ notifications through the self-hosted `https://push.justaslime.dev` UnifiedPush 
 - Loopback `/health` and public HTTPS `/health` pass; `/pair` advertises the public miku origin.
 - Startup logs report the real LLM runner and `unifiedpush` configuration without exposing secrets.
 - Existing lumo smoke checks and Hermes service health remain green.
+- Homolab has exactly one `tempestmiku-m4-worker` service, no `tm-server`, a provisioned linked
+  checkout, a durable job ledger, and a Tailnet health endpoint whose worker id is `homolab-m4`.
+- A signed live read and approval-gated `proc.run` complete through homolab, and stopping the worker
+  makes the coordinator call fail without local execution.
 - The final physical Android canary proves approval request and resolution delivery while the app
   process is killed.
 

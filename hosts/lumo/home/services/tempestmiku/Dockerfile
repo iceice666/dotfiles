@@ -15,7 +15,8 @@ RUN apt-get update \
         libssl-dev \
         pkg-config \
         python3 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /etc/tempestmiku /run/secrets
 
 COPY source.tar.gz /tmp/source.tar.gz
 RUN printf '%s  %s\n' "${SOURCE_ARCHIVE_SHA256}" /tmp/source.tar.gz | sha256sum -c - \

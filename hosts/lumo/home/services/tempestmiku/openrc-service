@@ -1,6 +1,6 @@
 #!/sbin/openrc-run
 name="lumo-tempestmiku"
-description="TempestMiku API and worker container"
+description="TempestMiku authoritative coordinator container"
 supervisor=supervise-daemon
 command="@runner@"
 command_user="root"
@@ -27,7 +27,8 @@ start_pre() {
 
   push_key="$(tr -d '\r\n' < '@pushKeyPath@')"
   api_key="$(tr -d '\r\n' < '@sharedApiKeyPath@')"
-  if [ -z "$push_key" ] || [ -z "$api_key" ]; then
+  worker_key="$(tr -d '\r\n' < '@workerSigningKeyPath@')"
+  if [ -z "$push_key" ] || [ -z "$api_key" ] || [ -z "$worker_key" ]; then
     eend 1 "TempestMiku secrets are empty"
     return 1
   fi
@@ -37,6 +38,7 @@ start_pre() {
     printf '%s\n' 'RUST_LOG=tm_server=info,tower_http=info'
     printf '%s\n' 'TM_SERVER_ADDR=127.0.0.1:@port@'
     printf '%s\n' 'TM_SERVER_ROLE=all'
+    printf '%s\n' 'TM_REMOTE_WORKER_CONFIG=/etc/tempestmiku/remote-worker.json'
     printf '%s\n' 'TM_DATABASE_URL=host=/run/postgresql port=@postgresPort@ user=tempestmiku dbname=tempestmiku'
     printf '%s\n' 'TM_AUTH_MODE=device'
     printf '%s\n' 'TM_PUBLIC_BASE_URL=@publicUrl@'

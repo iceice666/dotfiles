@@ -105,6 +105,12 @@ homolab-tea-asr-smoke:
     TEA_ASR_BASE_URL="${TEA_ASR_BASE_URL:-http://100.110.95.111:19000}" \
         {{ scripts }}/tea-asr-smoke
 
+# Verify the Tailnet-only TempestMiku linked-host worker
+homolab-tempestmiku-worker-smoke:
+    ssh iceice666@homolab systemctl is-active tempestmiku-m4-worker
+    curl --fail --silent --show-error http://100.110.95.111:18787/v1/health \
+        | jq -e '.protocolVersion == 1 and .workerId == "homolab-m4" and .ready == true' >/dev/null
+
 # Build the gce-dns NixOS system toplevel
 [group('host')]
 gce-dns-build:

@@ -18,4 +18,6 @@ exec @podman@ run \
   --tmpfs=/tmp:rw,nosuid,nodev,size=256m \
   --volume=@dataDir@:/data \
   --volume=/run/postgresql:/run/postgresql \
+  --volume=@remoteWorkerConfig@:/etc/tempestmiku/remote-worker.json:ro \
+  --volume=@workerSigningKeyPath@:/run/secrets/tempestmiku-worker-signing-key:ro \
   @image@

@@ -13,8 +13,8 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | --- | --- | --- | --- |
 | `m3air` | `.#m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
-| `homolab` | `.#homolab` | `x86_64-linux` | homelab server via NixOS, built and switched locally |
-| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi via root Home Manager + OpenRC |
+| `homolab` | `.#homolab` | `x86_64-linux` | NixOS AI host plus isolated TempestMiku linked-host worker |
+| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi and sole TempestMiku coordinator |
 | `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
 | `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 

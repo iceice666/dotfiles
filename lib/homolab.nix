@@ -44,6 +44,7 @@ let
     umami = 18078;
     ntfy = 18079;
     tempestmiku = 18080;
+    tempestmikuWorker = 18787;
   };
 
   portRanges = {
