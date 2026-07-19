@@ -6,8 +6,6 @@
 }:
 
 {
-  home.packages = [ pkgs.sops ];
-
   sops.age = {
     keyFile = "/var/lib/sops-nix/key.txt";
     sshKeyPaths = lib.mkForce [ ];
