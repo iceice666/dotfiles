@@ -107,7 +107,7 @@ homolab-tea-asr-smoke:
 
 # Verify the Tailnet-only TempestMiku linked-host worker
 homolab-tempestmiku-worker-smoke:
-    ssh iceice666@homolab systemctl is-active tempestmiku-m4-worker
+    ssh iceice666@100.110.95.111 systemctl is-active tempestmiku-m4-worker
     curl --fail --silent --show-error http://100.110.95.111:18787/v1/health \
         | jq -e '.protocolVersion == 1 and .workerId == "homolab-m4" and .ready == true' >/dev/null
 
