@@ -9,9 +9,15 @@
 
 let
   dataDir = "/var/lib/tempestmiku";
-  sourceRev = "63263c8657af3c8321a894bfe3e3feb98d957465";
+  sourceRev = "417dc5e3c2ad6ee1ea8c8593c5a7aa01dc6960ee";
+  sourceArchiveSha256 = "e2d0792468833376e1452b6e570d67f5e2fa1406150785596006673b99d9606f";
+  sourceArchive = pkgs.fetchurl {
+    url = "https://github.com/mozufu/TempestMiku/archive/${sourceRev}.tar.gz";
+    hash = "sha256-4tB5JGiDM3bhRStuVw1n9eL6FAYVB4VZYAZnO5nZYG8=";
+  };
   image = "localhost/tempestmiku:${builtins.substring 0 12 sourceRev}";
   openaiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
+  selfHostedAsrEndpoint = "http://${homolab.network.tailnet.address}:${toString homolab.ports.teaAsrHttp}/transcribe";
 
   replaceTemplate =
     source: replacements:
@@ -23,9 +29,7 @@ let
     );
 
   dockerfile = pkgs.writeText "tempestmiku-Dockerfile" (builtins.readFile ./Dockerfile);
-  buildContext = pkgs.runCommand "tempestmiku-empty-build-context" { } ''
-    mkdir -p "$out"
-  '';
+  buildContext = "${dataDir}/build-context/${sourceRev}";
   pushKeyPath = config.sops.secrets.tempestmiku-push-encryption-key.path;
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
 
@@ -43,10 +47,12 @@ let
         image
         openaiBaseUrl
         pushKeyPath
+        selfHostedAsrEndpoint
         sharedApiKeyPath
+        sourceArchiveSha256
         sourceRev
         ;
-      buildContext = toString buildContext;
+      inherit buildContext;
       dockerfile = toString dockerfile;
       podman = "${pkgs.podman}/bin/podman";
       port = toString homolab.ports.tempestmiku;
@@ -94,6 +100,9 @@ in
         install -d -m 0700 -o tempestmiku -g tempestmiku ${dataDir}/artifacts
         install -d -m 0700 -o tempestmiku -g tempestmiku ${dataDir}/managed-skills
         install -d -m 0700 -o tempestmiku -g tempestmiku ${dataDir}/managed-mode-addenda
+        install -d -m 0700 -o tempestmiku -g tempestmiku ${dataDir}/managed-persona-addenda
+        install -d -m 0750 -o root -g root ${buildContext}
+        install -m 0444 -o root -g root ${sourceArchive} ${buildContext}/source.tar.gz
 
         if ! ${pkgs.util-linux}/bin/runuser -u postgres -- \
           ${pkgs.postgresql_17}/bin/psql -p ${toString homolab.ports.postgresql} -d postgres \

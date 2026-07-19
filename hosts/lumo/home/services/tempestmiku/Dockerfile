@@ -1,6 +1,9 @@
 FROM docker.io/library/rust:1.96.0-bookworm AS builder
 
-ARG REV
+ARG SOURCE_ARCHIVE_SHA256
+ARG SOURCE_REV
+
+LABEL org.opencontainers.image.revision="${SOURCE_REV}"
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
@@ -14,12 +17,15 @@ RUN apt-get update \
         python3 \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /src
-RUN git init \
-    && git remote add origin https://github.com/mozufu/TempestMiku.git \
-    && git fetch --depth=1 origin "${REV}" \
-    && git checkout --detach FETCH_HEAD
+COPY source.tar.gz /tmp/source.tar.gz
+RUN printf '%s  %s\n' "${SOURCE_ARCHIVE_SHA256}" /tmp/source.tar.gz | sha256sum -c - \
+    && mkdir -p /src \
+    && tar -xzf /tmp/source.tar.gz --no-same-owner --strip-components=1 -C /src \
+    && test -f /src/Cargo.lock \
+    && test -f /src/crates/tm-server/Cargo.toml \
+    && rm /tmp/source.tar.gz
 
+WORKDIR /src
 ENV CARGO_BUILD_JOBS=2
 RUN cargo build --locked --release --package tm-server
 
