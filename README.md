@@ -105,9 +105,11 @@ just lumo-switch                # deploy root Home Manager
 just lumo-smoke                 # verify OpenRC services and local endpoints
 ```
 
-For the ordered TempestMiku coordinator/worker release procedure, source pinning, operator-owned
-checkout provisioning, signed acceptance canaries, and rollback rules, see
+For this repository's Nix/SOPS/Tailscale reference rollout, source pinning, operator-owned checkout
+provisioning, signed acceptance canaries, and rollback rules, see
 [`hosts/lumo/home/services/tempestmiku/DEPLOYMENT.md`](hosts/lumo/home/services/tempestmiku/DEPLOYMENT.md).
+The portable TempestMiku deployment contract lives in the TempestMiku repository under
+`docs/deploy-coordinator-worker.md`.
 
 Bootstrap prints the host age recipient. Add it to `.sops.yaml`, include it in
 the matching host rule, then run `just secret-refresh sensitive/hosts/<host>`

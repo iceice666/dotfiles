@@ -1,6 +1,12 @@
-# TempestMiku coordinator/worker deployment guide
+# Reference deployment: TempestMiku on lumo and homolab
 
 Updated: 2026-07-19
+
+This runbook is intentionally specific to the project owner's Nix/SOPS/Tailscale environment. It is
+not a prerequisite for TempestMiku and should not be presented as the portable installation path.
+Users with other package managers, secret stores, private networks, TLS proxies, or supervisors
+should follow TempestMiku's environment-neutral `docs/deploy-coordinator-worker.md` first, then use
+this document only as a worked reference implementation.
 
 ## Outcome
 
