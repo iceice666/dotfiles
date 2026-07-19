@@ -41,6 +41,8 @@
       flake = false;
     };
 
+    tempestmiku.url = "github:mozufu/TempestMiku/417dc5e3c2ad6ee1ea8c8593c5a7aa01dc6960ee";
+
     reimu-on-starlit-water = {
       url = "github:iceice666/reimu_on_starlit_water";
       flake = false;
