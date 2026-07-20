@@ -7,6 +7,7 @@
   imports = [
     ./hardware-configuration.nix
     ./filesystems.nix
+    ./desktop.nix
     ./system.nix
     ./networking.nix
     ./sensitive

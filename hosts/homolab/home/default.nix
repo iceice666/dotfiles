@@ -1,5 +1,6 @@
 {
   config,
+  dotfiles,
   lib,
   pkgs,
   unstablePkgs,
@@ -8,7 +9,9 @@
 
 {
   imports = [
+    (dotfiles + /common/home-gui/zed.nix)
     ./fish-pj.nix
+    ./desktop.nix
   ];
 
   # System activation mirrors /var/lib/sops-nix/key.txt into this user-owned

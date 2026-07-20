@@ -11,7 +11,11 @@
   username = "iceice666";
   homeDirectory = "/home/iceice666";
 
-  modules = [ ./configuration ];
+  modules = [
+    inputs.xlibre-overlay.nixosModules.overlay-xlibre-xserver
+    inputs.xlibre-overlay.nixosModules.overlay-xlibre-xf86-input-libinput
+    ./configuration
+  ];
   homeModules = [ ./home ];
 
   features = {

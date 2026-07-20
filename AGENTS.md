@@ -57,9 +57,9 @@ hosts/               # per-host entrypoints
     wallpaper.png    # symlink → assets/mzen.png
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
-    configuration/   # system.nix, networking.nix, sensitive/, user.nix, hardware-configuration.nix
+    configuration/   # system, networking, XLibre/bspwm desktop, secrets, user, hardware
     services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (TEA-ASR 1.1 mini)
-    home/            # homolab-specific home additions (fish-pj.nix, user.nix, mise)
+    home/            # homolab CLI and bspwm/Polybar/sxhkd/Kitty/Neovide configuration
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
@@ -114,6 +114,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
+| `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 | `kaguya-cache` | `git+file:.?dir=pkgs/kaguya-bin/empty-cache` | no |
 | `kaguya-browser` | `git+file:.?dir=pkgs/kaguya-bin` | yes |
@@ -353,6 +354,11 @@ just worker-switch           # deploy worker root Home Manager
 Homolab is built and switched directly on the server itself. Run `just build`/`just switch`/`just boot`
 from the repo root on homolab, or use the `homolab-*` recipe aliases. The build runs
 locally and does not require SSH or deploy-rs.
+
+Homolab also has a local XLibre desktop: LightDM launches bspwm, with Polybar,
+sxhkd, Kitty, Neovim, and Neovide configured under `hosts/homolab`. The
+XLibre server and libinput driver come from the pinned `xlibre-overlay` input;
+the existing proprietary NVIDIA driver remains the display driver.
 
 `lumo` runs Alpine Linux 3.24 with root-only Lix installed using `--init none`.
 deploy-rs activates the standalone root Home Manager profile and builds the
