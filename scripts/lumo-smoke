@@ -17,6 +17,7 @@ lumo-grafana
 lumo-dynacat
 lumo-dev-port-proxy
 lumo-ntfy
+lumo-tempestmiku-embeddings
 lumo-tempestmiku
 "
 
@@ -30,6 +31,11 @@ curl --fail --silent --show-error http://127.0.0.1:18075/ >/dev/null
 curl --silent --show-error --output /dev/null http://127.0.0.1:18076/
 curl --fail --silent --show-error http://127.0.0.1:18079/v1/health >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18080/health >/dev/null
+curl --fail --silent --show-error --max-time 120 \
+  http://127.0.0.1:11434/v1/embeddings \
+  -H 'content-type: application/json' \
+  -d '{"model":"granite-embedding:278m","input":"TempestMiku deployment smoke"}' \
+  | jq -e '.data | length == 1 and (.[0].embedding | length == 768)' >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18080/ \
   | grep -Fq '<title>TempestMiku</title>'
 curl --fail --silent --show-error http://127.0.0.1:18080/flutter_bootstrap.js >/dev/null
