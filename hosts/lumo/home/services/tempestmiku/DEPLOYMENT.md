@@ -26,12 +26,13 @@ calls to the signed `tm-worker` on homolab.
   the shared SOPS-managed HMAC key. Keep lumo approvals authoritative, persist worker job states,
   and fail visibly with no local fallback when homolab is unavailable.
 - Reuse lumo PostgreSQL 17 over its Unix socket with peer authentication; do not expose Postgres
-  over TCP or duplicate the database service. Keep pgvector installed for retained historical
-  generations, while production recall runs lexical-only.
-- Disable the local BGE-M3/Ollama embedding service on lumo. Sustained inference consumed about
-  3.5 CPU cores, drove the Raspberry Pi 5 above 80°C with its fan already at maximum, and preceded
-  repeated hard outages. TempestMiku runs with `TM_MEMORY_EMBEDDING_PROVIDER=disabled` and retains
-  typed lexical recall.
+  over TCP or duplicate the database service. Keep pgvector installed for versioned dense recall.
+- Run the local Granite Embedding 278M/Ollama service on loopback only. Pin the model at 768
+  dimensions, process one request at a time, constrain the container to CPUs 0 and 1, and keep
+  TempestMiku embedding batches at four records. The previous BGE-M3 deployment was retired after
+  sustained inference consumed about 3.5 CPU cores, drove the Raspberry Pi 5 above 80°C, and
+  preceded repeated hard outages; do not remove these Granite resource bounds without a new thermal
+  canary.
 - Reuse lumo CLIProxyAPI for model requests and its existing shared API key.
 - Store the independent 32-byte push-registration encryption key in a lumo-scoped SOPS file.
 - Persist artifacts, managed skills, and mode addenda under `/var/lib/tempestmiku`.
@@ -58,6 +59,8 @@ calls to the signed `tm-worker` on homolab.
   listener, and the shared signing credential.
 - `hosts/lumo/home/services/tempestmiku/default.nix` independently pins the coordinator image
   source archive and renders `TM_REMOTE_WORKER_CONFIG`.
+- `hosts/lumo/home/services/tempestmiku-embeddings.nix` pins the loopback Ollama image, Granite
+  model, and Pi resource bounds.
 - `sensitive/shared/tempestmiku-worker.key` is the SOPS-encrypted shared HMAC key. It must decrypt to
   exactly 64 lowercase hexadecimal characters and must never be printed or committed as plaintext.
 - `lib/homolab.nix` owns the Tailnet address and port numbers.

@@ -7,15 +7,15 @@
 let
   dataDir = "/var/lib/tempestmiku-embeddings";
   image = "docker.io/ollama/ollama@sha256:57f573b47f1f71ebb445789f279fe3e596a8beab182f7cf486db9205bad87c5a";
-  model = "bge-m3:567m";
-  modelManifest = "${dataDir}/models/manifests/registry.ollama.ai/library/bge-m3/567m";
+  model = "granite-embedding:278m";
+  modelManifest = "${dataDir}/models/manifests/registry.ollama.ai/library/granite-embedding/278m";
   service = pkgs.writeText "lumo-tempestmiku-embeddings" ''
     #!/sbin/openrc-run
     name="lumo-tempestmiku-embeddings"
     description="TempestMiku local-only embedding service"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --name=lumo-tempestmiku-embeddings --network=host --env=OLLAMA_HOST=127.0.0.1:11434 --env=OLLAMA_KEEP_ALIVE=10m --env=OLLAMA_NO_CLOUD=1 --cap-drop=all --security-opt=no-new-privileges --pids-limit=512 --tmpfs=/tmp:rw,nosuid,nodev,size=256m --volume=${dataDir}:/root/.ollama ${image}"
+    command_args="run --replace --rm --name=lumo-tempestmiku-embeddings --network=host --env=OLLAMA_HOST=127.0.0.1:11434 --env=OLLAMA_KEEP_ALIVE=10m --env=OLLAMA_NO_CLOUD=1 --env=OLLAMA_NUM_PARALLEL=1 --cpuset-cpus=0,1 --cap-drop=all --security-opt=no-new-privileges --pids-limit=512 --tmpfs=/tmp:rw,nosuid,nodev,size=256m --volume=${dataDir}:/root/.ollama ${image}"
     command_user="root"
     output_log="/var/log/lumo/tempestmiku-embeddings.log"
     error_log="/var/log/lumo/tempestmiku-embeddings.log"

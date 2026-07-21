@@ -10,7 +10,7 @@ respawn_delay=10
 respawn_max=0
 
 depend() {
-  need lumo-podman lumo-postgresql lumo-cliproxyapi lumo-ntfy
+  need lumo-podman lumo-postgresql lumo-cliproxyapi lumo-ntfy lumo-tempestmiku-embeddings
   after networking
 }
 
@@ -47,7 +47,14 @@ start_pre() {
     printf '%s\n' 'TM_MANAGED_SKILLS_PATH=/data/managed-skills'
     printf '%s\n' 'TM_MANAGED_MODE_ADDENDA_PATH=/data/managed-mode-addenda'
     printf '%s\n' 'TM_MANAGED_PERSONA_ADDENDA_PATH=/data/managed-persona-addenda'
-    printf '%s\n' 'TM_MEMORY_EMBEDDING_PROVIDER=disabled'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_PROVIDER=local'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_ENDPOINT=http://127.0.0.1:11434/v1/embeddings'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MODEL=granite-embedding:278m'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_DIMENSIONS=768'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_NORMALIZATION=l2'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_TIMEOUT_MS=120000'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MAX_BATCH_SIZE=4'
+    printf '%s\n' 'TM_MEMORY_EMBEDDING_MAX_INPUT_BYTES=16384'
     printf '%s\n' 'TM_SELF_HOSTED_ASR_ENDPOINT=@selfHostedAsrEndpoint@'
     printf '%s\n' 'TM_SELF_HOSTED_ASR_LABEL=Home TEA-ASR (Taiwan Mandarin)'
     printf '%s\n' 'TM_SELF_HOSTED_ASR_MODEL_ID=JacobLinCool/TEA-ASR-1.1-mini'

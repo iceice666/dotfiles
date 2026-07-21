@@ -108,6 +108,7 @@ in
         "lumoDatabase"
         "lumoPodman"
         "lumoCliproxyapi"
+        "lumoTempestMikuEmbeddings"
         "lumoNtfy"
       ]
       ''
