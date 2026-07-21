@@ -35,14 +35,17 @@ let
       fi
       if [ ! -f ${modelManifest} ]; then
         bootstrap=lumo-tempestmiku-embeddings-bootstrap
+        ${pkgs.podman}/bin/podman rm -f "$bootstrap" >/dev/null 2>&1 || true
         ${pkgs.podman}/bin/podman run -d --replace --name="$bootstrap" \
           --network=host \
           --env=OLLAMA_HOST=127.0.0.1:11435 \
+          --env=OLLAMA_NUM_PARALLEL=1 \
+          --cpuset-cpus=0,1 \
           --volume=${dataDir}:/root/.ollama \
           ${image} >&2
         waited=0
         until ${pkgs.podman}/bin/podman exec "$bootstrap" ollama list >/dev/null 2>&1; do
-          if [ "$waited" -ge 60 ]; then
+          if [ "$waited" -ge 180 ]; then
             ${pkgs.podman}/bin/podman rm -f "$bootstrap" >/dev/null 2>&1 || true
             eend 1 "timed out starting the embedding model bootstrap"
             return 1
