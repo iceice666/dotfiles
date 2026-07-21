@@ -60,12 +60,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.kaguya-cache.follows = "kaguya-cache";
     };
-
-    zen-browser = {
-      url = "github:youwen5/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
   };
 
   outputs =

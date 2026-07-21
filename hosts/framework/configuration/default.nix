@@ -254,7 +254,7 @@ in
           "dev.iceice666.lazygit.repo86ff3035c73490ab"
           "equibop"
           "org.equicord.equibop"
-          "zen"
+          "helium"
         ];
       };
     };

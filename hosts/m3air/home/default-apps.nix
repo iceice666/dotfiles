@@ -109,33 +109,27 @@ let
           fi
         }
 
-        zen_bundle_id=""
-        if ! zen_bundle_id="$(resolve_bundle_id \
-          "/Applications/Zen.app" \
-          "/Applications/Zen Browser.app" \
-          "$HOME/Applications/Zen.app" \
-          "$HOME/Applications/Zen Browser.app")"
+        helium_bundle_id=""
+        if ! helium_bundle_id="$(resolve_bundle_id \
+          "/Applications/Helium.app" \
+          "$HOME/Applications/Helium.app")"
         then
-          zen_bundle_id=""
+          helium_bundle_id=""
         fi
 
-        if [ -z "$zen_bundle_id" ]; then
-          zen_bundle_id="$(/usr/bin/osascript -e 'id of app "Zen"' 2>/dev/null || true)"
+        if [ -z "$helium_bundle_id" ]; then
+          helium_bundle_id="$(/usr/bin/osascript -e 'id of app "Helium"' 2>/dev/null || true)"
         fi
 
-        if [ -z "$zen_bundle_id" ]; then
-          zen_bundle_id="$(/usr/bin/osascript -e 'id of app "Zen Browser"' 2>/dev/null || true)"
-        fi
-
-        if [ -n "$zen_bundle_id" ]; then
+        if [ -n "$helium_bundle_id" ]; then
           current_browser_bundle_id="$($utiluti url http --bundle-id 2>/dev/null || true)"
-          if [ "$current_browser_bundle_id" != "$zen_bundle_id" ]; then
-            if ! "$default_browser" --identifier "$zen_bundle_id"; then
-              echo "failed to set Zen as the default browser" >&2
+          if [ "$current_browser_bundle_id" != "$helium_bundle_id" ]; then
+            if ! "$default_browser" --identifier "$helium_bundle_id"; then
+              echo "failed to set Helium as the default browser" >&2
             fi
           fi
         else
-          echo "Zen app bundle identifier not found; skipping default browser update." >&2
+          echo "Helium app bundle identifier not found; skipping default browser update." >&2
         fi
 
         zed_paths="$($utiluti app for-id "$zed_bundle_id" 2>/dev/null || true)"

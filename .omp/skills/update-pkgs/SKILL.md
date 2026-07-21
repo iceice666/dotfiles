@@ -25,7 +25,7 @@ Update every custom package under `pkgs/` and any nested local package flakes to
 
 ### GitHub release binaries (most packages)
 
-Packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `oh-my-pi-bin`, `utiluti`, `zed-bin`, `zen-bin`.
+Packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `helium-bin`, `oh-my-pi-bin`, `utiluti`, `zed-bin`.
 
 For each:
 1. Read `pkgs/<name>/default.nix` to extract `repo`, `version`, `tag_prefix`, and platform URLs.
@@ -71,7 +71,7 @@ Packages: `kaguya-bin`.
 - Keep validation scoped to the selected platforms: Linux AMD64 (`x86_64-linux`) and macOS ARM64 (`aarch64-darwin`).
 - Run the narrowest relevant build or check that validates the changed packages:
   - Standalone packages: `nix build .#<name>` — works for most overlay packages on their supported platform.
-  - Some packages are not exposed as standalone flake outputs on `aarch64-darwin` (e.g. `zen-bin` uses the local `pkgs/zen-bin` package through the overlay but is not in `packages.aarch64-darwin`). For these, validate through the macOS ARM64 host build: `nix build .#darwinConfigurations.m3air.config.system.build.toplevel --dry-run` or the matching `just <host>-build` recipe.
+  - Some packages are not exposed as standalone flake outputs on `aarch64-darwin` (e.g. `helium-bin` uses the local `pkgs/helium-bin` package through the overlay but is not in `packages.aarch64-darwin`). For these, validate through the macOS ARM64 host build: `nix build .#darwinConfigurations.m3air.config.system.build.toplevel --dry-run` or the matching `just <host>-build` recipe.
   - Linux-only packages (`blocky-bin`, `cliproxyapi-bin`) cannot be built on darwin. Validate Linux AMD64 hashes through a linux host build, or accept that sequential prefetching is authoritative and document the gap.
 - If validation cannot be completed, explain the blocker in the commit body or final response.
 

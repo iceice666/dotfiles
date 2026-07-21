@@ -8,7 +8,7 @@
       oh-my-pi-bin
       equibop-bin
     ]
-    ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ zen-bin ];
+    ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ helium-bin ];
 
   home.activation.claudeLocalBin = lib.hm.dag.entryAfter [ "claude-remove-self-install-shim" ] ''
     install -dm755 "$HOME/.local/bin"

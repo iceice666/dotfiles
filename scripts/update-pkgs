@@ -142,11 +142,11 @@ PACKAGES: list[Package] = [
     Package("rime-frost", "gaboolic/rime-frost", tag_prefix="", platforms={
         "all": "https://github.com/gaboolic/rime-frost/archive/refs/tags/{version}.tar.gz",
     }),
-    Package("zen-bin", "zen-browser/desktop", tag_prefix="", platforms={
-        "aarch64-darwin": "https://github.com/zen-browser/desktop/releases/download/{tag}/zen.macos-universal.dmg",
-        "x86_64-darwin":  "https://github.com/zen-browser/desktop/releases/download/{tag}/zen.macos-universal.dmg",
-        "x86_64-linux":   "https://github.com/zen-browser/desktop/releases/download/{tag}/zen.linux-x86_64.tar.xz",
-        "aarch64-linux":  "https://github.com/zen-browser/desktop/releases/download/{tag}/zen.linux-aarch64.tar.xz",
+    Package("helium-bin", "imputnet/helium-macos", tag_prefix="", platforms={
+        "aarch64-darwin": "https://github.com/imputnet/helium-macos/releases/download/{tag}/helium_{tag}_arm64-macos.dmg",
+        "x86_64-darwin":  "https://github.com/imputnet/helium-macos/releases/download/{tag}/helium_{tag}_x86_64-macos.dmg",
+        "x86_64-linux":   "https://github.com/imputnet/helium-linux/releases/download/{tag}/helium-{tag}-x86_64.AppImage",
+        "aarch64-linux":  "https://github.com/imputnet/helium-linux/releases/download/{tag}/helium-{tag}-arm64.AppImage",
     }),
 ]
 

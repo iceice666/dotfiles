@@ -30,6 +30,9 @@
     super + n
       ${lib.getExe config.programs.zed-editor.package}
 
+    super + b
+      ${lib.getExe pkgs.helium-bin}
+
     super + Escape
       ${pkgs.procps}/bin/pkill -USR1 -x sxhkd
 

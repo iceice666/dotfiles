@@ -56,7 +56,7 @@ in
       "obs" # OBS Studio (not available in nixpkgs for aarch64-darwin)
       "squirrel-app" # Rime frontend for macOS
       "pear-devs/pear/pear-desktop"
-      "zen"
+      "helium-browser"
       "ungoogled-chromium"
       "pearcleaner"
       "mos" # per-device scroll direction (reverse mouse, keep trackpad natural)
