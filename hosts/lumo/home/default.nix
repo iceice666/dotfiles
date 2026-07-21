@@ -48,11 +48,6 @@
     lumo-dynacat
     lumo-dev-port-proxy
     lumo-cliproxyapi
-    lumo-honcho-postgres
-    lumo-honcho-redis
-    lumo-honcho-api
-    lumo-honcho-deriver
-    lumo-hermes-agent
     lumo-ntfy
     lumo-tempestmiku
     lumo-authelia

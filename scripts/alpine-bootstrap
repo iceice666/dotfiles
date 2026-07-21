@@ -66,12 +66,16 @@ apk add --no-cache \
   git \
   grep \
   iproute2 \
+  iw \
+  ifupdown-ng-wifi \
   nftables \
   openssh \
   shadow \
   tailscale \
   tzdata \
   util-linux \
+  wireless-tools \
+  wpa_supplicant \
   xz
 
 install -d -m 0755 /etc/ssh/sshd_config.d /etc/modprobe.d /etc/nftables.d
@@ -97,7 +101,21 @@ blacklist bluetooth
 blacklist btusb
 EOF
 
-cat > /etc/network/interfaces <<EOF
+if [ "$DOTFILES_HOST" = "lumo" ]; then
+  cat > /etc/network/interfaces <<EOF
+auto lo
+iface lo inet loopback
+iface lo inet6 loopback
+
+auto wlan0
+iface wlan0 inet static
+  address ${DOTFILES_LAN_ADDRESS}/24
+  gateway 192.168.1.1
+
+iface eth0 inet manual
+EOF
+else
+  cat > /etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 iface lo inet6 loopback
@@ -108,6 +126,7 @@ iface eth0 inet static
   gateway 192.168.1.1
 iface eth0 inet6 auto
 EOF
+fi
 
 if [ "$DOTFILES_HOST" = "lumo" ]; then
   # lumo runs both the app workloads and the edge role (Traefik/Authelia/

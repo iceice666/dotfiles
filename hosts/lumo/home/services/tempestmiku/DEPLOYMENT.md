@@ -10,10 +10,10 @@ this document only as a worked reference implementation.
 
 ## Outcome
 
-Run the sole authoritative TempestMiku coordinator continuously on lumo without replacing the
-existing Hermes Agent deployment. Expose it at `https://miku.justaslime.dev`, deliver Android
-approval notifications through the self-hosted `https://push.justaslime.dev` UnifiedPush
-distributor, and delegate only linked-host calls to the signed `tm-worker` on homolab.
+Run the sole authoritative TempestMiku coordinator continuously on lumo as the only companion
+runtime. Expose it at `https://miku.justaslime.dev`, deliver Android approval notifications through
+the self-hosted `https://push.justaslime.dev` UnifiedPush distributor, and delegate only linked-host
+calls to the signed `tm-worker` on homolab.
 
 ## Decisions
 
@@ -26,20 +26,25 @@ distributor, and delegate only linked-host calls to the signed `tm-worker` on ho
   the shared SOPS-managed HMAC key. Keep lumo approvals authoritative, persist worker job states,
   and fail visibly with no local fallback when homolab is unavailable.
 - Reuse lumo PostgreSQL 17 over its Unix socket with peer authentication; do not expose Postgres
-  over TCP or duplicate the database service. Install pgvector in the TempestMiku database.
-- Run the pinned BGE-M3 embedding model in a separate loopback-only Ollama container with cloud
-  access disabled. TempestMiku must fall back to typed lexical recall when it is unavailable.
+  over TCP or duplicate the database service. Keep pgvector installed for retained historical
+  generations, while production recall runs lexical-only.
+- Disable the local BGE-M3/Ollama embedding service on lumo. Sustained inference consumed about
+  3.5 CPU cores, drove the Raspberry Pi 5 above 80°C with its fan already at maximum, and preceded
+  repeated hard outages. TempestMiku runs with `TM_MEMORY_EMBEDDING_PROVIDER=disabled` and retains
+  typed lexical recall.
 - Reuse lumo CLIProxyAPI for model requests and its existing shared API key.
 - Store the independent 32-byte push-registration encryption key in a lumo-scoped SOPS file.
-- Persist artifacts, managed skills, and mode addenda under `/var/lib/tempestmiku`; persist local
-  embedding weights under `/var/lib/tempestmiku-embeddings`.
+- Persist artifacts, managed skills, and mode addenda under `/var/lib/tempestmiku`.
+- Use `Home wifi` as lumo's primary and only default-route interface. Keep `wlan0` on the canonical
+  static LAN address `192.168.1.128`; leave `eth0` configured manual/down so existing router and
+  Cloudflare forwarding continues to target the same address.
 - Keep the server loopback-only behind Traefik. TempestMiku device auth remains authoritative;
   do not insert Authelia into mobile API, SSE, pairing, or notification-action flows.
-- Keep `lumo-hermes-agent` installed, running, and independently reversible.
+- Hermes Agent and Honcho are removed from lumo. TempestMiku is the sole companion runtime.
 
 ## Non-goals
 
-- Do not migrate Hermes data or cut traffic away from Hermes.
+- Do not migrate or delete retained Hermes/Honcho data as part of the service takedown.
 - Do not run a second `tm-server`, model, memory store, or approval authority on homolab.
 - Do not automatically clone repositories, grant ambient host access, or fall back to lumo-local
   linked execution when homolab is unavailable.
@@ -273,14 +278,17 @@ remain enabled.
 ## Acceptance checks
 
 - The pinned image builds on aarch64 lumo and `lumo-tempestmiku` remains started under OpenRC.
-- `lumo-tempestmiku-embeddings` remains started, binds only `127.0.0.1:11434`, and serves the pinned
-  BGE-M3 model with Ollama cloud disabled.
+- `lumo-tempestmiku-embeddings`, Hermes Agent, and Honcho remain stopped and absent from boot
+  runlevels. No corresponding containers or supervise-daemon processes run.
+- TempestMiku starts with `TM_MEMORY_EMBEDDING_PROVIDER=disabled`; durable lexical recall remains
+  available without periodic embedding connection attempts.
+- `wlan0` remains associated with `Home wifi`, owns `192.168.1.128`, and carries the sole default
+  route. `eth0` remains manual/down. Tailnet SSH and public HTTPS health pass over Wi-Fi.
 - The `tempestmiku` role and database exist, ordered migrations pass, and restart preserves state.
-- The `vector` extension exists and the active embedding generation remains usable across restart;
-  provider loss remains an explicit lexical fallback rather than a turn failure.
+- The `vector` extension may remain installed for retained historical generations; lexical-only
+  production recall must not require it or an embedding provider.
 - Loopback `/health` and public HTTPS `/health` pass; `/pair` advertises the public miku origin.
 - Startup logs report the real LLM runner and `unifiedpush` configuration without exposing secrets.
-- Existing lumo smoke checks and Hermes service health remain green.
 - Homolab has exactly one `tempestmiku-m4-worker` service, no `tm-server`, a provisioned linked
   checkout, a durable job ledger, and a Tailnet health endpoint whose worker id is `homolab-m4`.
 - A signed live read and approval-gated `proc.run` complete through homolab, and stopping the worker
