@@ -9,11 +9,11 @@
 
 let
   dataDir = "/var/lib/tempestmiku";
-  sourceRev = "b34138f7fd302ba172dbfd7c76b893332d5f544b";
-  sourceArchiveSha256 = "f3bca3d2d7f0ccff9fb2b50f2525c9ea87cdc219ac45bd2b48b6812dec12cabe";
+  sourceRev = "3b3afaed81ac8358addc6ea09d7242a3b5b8f095";
+  sourceArchiveSha256 = "8e2b2b71fbcf36909e8c36d5371ef26000a8557038b5dd7faf3eae5c21b0d435";
   sourceArchive = pkgs.fetchurl {
     url = "https://github.com/mozufu/TempestMiku/archive/${sourceRev}.tar.gz";
-    hash = "sha256-87yj0tfwzP+fsrUPJSXJ6ofNwhmsRb0rSLaBLewSyr4=";
+    hash = "sha256-jisrcfvPNpCejDbVNx7yYACoVXA4td1/rz6uXCGw1DU=";
   };
   image = "localhost/tempestmiku:${builtins.substring 0 12 sourceRev}";
   openaiBaseUrl = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/v1";
