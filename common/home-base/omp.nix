@@ -61,7 +61,7 @@ let
       models = [
         (mkClaudeThinkingModel "claude-fable-5" 1000000 64000)
         (mkClaudeThinkingModel "claude-sonnet-5" 1000000 64000)
-        (mkClaudeThinkingModel "claude-opus-4-8" 1000000 32000)
+        (mkClaudeThinkingModel "claude-opus-5" 1000000 64000)
         (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
       ];
     };
@@ -140,7 +140,7 @@ let
       "openai-codex/gpt-5.6-terra"
       "openai-codex/gpt-5.6-luna"
       "openai-codex/gpt-5.3-codex-spark"
-      "anthropic/claude-opus-4-8"
+      "anthropic/claude-opus-5"
       "anthropic/claude-sonnet-5"
       "anthropic/claude-haiku-4-5-20251001"
       "cliproxyapi/*"
@@ -158,7 +158,7 @@ let
     ];
     modelRoles = {
       default = "openai-codex/gpt-5.6-sol:high"; # main interactive agent: OAuth first, quality over latency
-      slow = "anthropic/claude-opus-4-8:high"; # hardest problems, cross-family
+      slow = "anthropic/claude-opus-5:high"; # hardest problems, cross-family
       smol = "openai-codex/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
       title = "anthropic/claude-haiku-4-5-20251001";
       commit = "cliproxyapi/gpt-5.6-terra:medium";
@@ -179,11 +179,11 @@ let
     retry.fallbackChains = {
       default = [
         "cliproxyapi/gpt-5.6-sol:low"
-        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-5:high"
         "cliproxyapi-claude/claude-sonnet-5:high"
       ];
       slow = [
-        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-5:high"
         "cliproxyapi/gpt-5.6-sol:xhigh"
         "cliproxyapi-claude/claude-sonnet-5:xhigh"
       ];
@@ -191,11 +191,11 @@ let
         "cliproxyapi/gpt-5.3-codex-spark:high"
         "cliproxyapi/gpt-5.6-sol:xhigh"
         "cliproxyapi-claude/claude-sonnet-5:high"
-        "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "cliproxyapi-claude/claude-opus-5:xhigh"
       ];
       plan = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-opus-4-8:xhigh"
+        "cliproxyapi-claude/claude-opus-5:xhigh"
       ];
       smol = [
         "anthropic/claude-haiku-4-5-20251001"
@@ -208,12 +208,12 @@ let
       ];
       designer = [
         "cliproxyapi-claude/claude-sonnet-5:high"
-        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-5:high"
         "cliproxyapi/gpt-5.6-sol:xhigh"
       ];
       advisor = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-opus-4-8:high"
+        "cliproxyapi-claude/claude-opus-5:high"
       ];
       vision = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
