@@ -9,14 +9,14 @@
 
 let
   pname = "default-browser";
-  version = "1.0.18";
+  version = "1.1.19";
 in
 stdenvNoCC.mkDerivation {
   inherit pname version;
 
   src = fetchurl {
     url = "https://github.com/macadmins/default-browser/releases/download/v${version}/default-browser.pkg";
-    hash = "sha256-oVPAoLwHJibT3jAMe4LPLeVK49VYMJDf92wqTb4zAdg=";
+    hash = "sha256-q+lOBiuEfIHzvh8AvupPVehqpqJ759qXIdpKyQOK560=";
   };
 
   nativeBuildInputs = [
