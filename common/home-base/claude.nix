@@ -1,10 +1,21 @@
-{ config, lib, ... }:
+{
+  config,
+  dotfiles,
+  homolab,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   # Canonical source lives alongside this module under ./claude/
   # mkOutOfStoreSymlink keeps the targets writable so Claude Code can update
   # settings.json in place, and edits to dotfiles are reflected immediately.
   dotfilesHome = "${config.home.homeDirectory}/dotfiles/common/home-base/claude";
+
+  apiKeyHelper = pkgs.writeShellScript "claude-cliproxyapi-api-key" ''
+    exec ${pkgs.coreutils}/bin/cat ${config.sops.secrets.cliproxyapi_homonet_api_key.path}
+  '';
 
   managedFiles = [
     "settings.json"
@@ -20,7 +31,29 @@ let
   };
 in
 {
-  home.file = builtins.listToAttrs (map mkClaudeFile managedFiles);
+  sops.secrets.cliproxyapi_homonet_api_key = {
+    sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
+    key = "homonetApiKey";
+    mode = "0400";
+  };
+
+  home.packages = [ pkgs.claude-code-bin ];
+
+  home.file = builtins.listToAttrs (map mkClaudeFile managedFiles) // {
+    ".claude/cliproxyapi-api-key" = {
+      source = apiKeyHelper;
+      force = true;
+    };
+  };
+
+  home.sessionVariables = {
+    ANTHROPIC_BASE_URL = homolab.urls.cliproxyapi;
+    ANTHROPIC_DEFAULT_FABLE_MODEL = "claude-fable-5";
+    ANTHROPIC_DEFAULT_OPUS_MODEL = "claude-opus-5";
+    ANTHROPIC_DEFAULT_SONNET_MODEL = "claude-sonnet-5";
+    ANTHROPIC_DEFAULT_HAIKU_MODEL = "claude-haiku-4-5-20251001";
+    CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1";
+  };
 
   # Ensure statusline.sh is executable in the dotfiles source.
   home.activation.claude-statusline-executable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

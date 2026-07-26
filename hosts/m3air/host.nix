@@ -22,6 +22,7 @@
     themegen = true;
     rime = true;
     devEnv = true;
+    claude = true;
     omp = true;
   };
 

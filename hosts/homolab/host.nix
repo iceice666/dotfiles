@@ -23,6 +23,7 @@
     sops = true;
     gui = false;
     devEnv = false;
+    claude = true;
     omp = true;
   };
 

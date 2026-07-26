@@ -12,7 +12,6 @@
   ];
 
   home.packages = with pkgs; [
-    claude-code-bin
     oh-my-pi-bin
   ];
 

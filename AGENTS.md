@@ -26,6 +26,7 @@ common/              # shared modules injected by mk-host into every host
     agent-instructions.nix # shared OMP global instructions
     agent-skills.nix # shared agent-agnostic personal skills
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
+    claude.nix       # Claude Code: CLIProxyAPI gateway, model pins, shared settings (features.claude)
     omp.nix          # oh-my-pi (omp) coding-agent: CLIProxyAPI provider + Exa web search (features.omp)
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
@@ -166,6 +167,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 | `themegen` | `common/home-gui/themegen` |
 | `rime` | `common/home-gui/rime` |
 | `devEnv` | `common/home-base/dev-env.nix` |
+| `claude` | `common/home-base/claude.nix` |
 | `omp` | `common/home-base/omp.nix` |
 | `nirinit` | `inputs.nirinit.nixosModules.nirinit` |
 
@@ -176,8 +178,8 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
-- `linux-gui.nix` — Linux-only packages: `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
 The Framework-only kernel pin (`linux_zen_7_0`, `linuxPackages_zen_7_0`) lives in
@@ -193,6 +195,12 @@ Additional notes:
 A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` and `cudaSupport = true`, with the overlay applied. Used by shared Home Manager modules to pull in `bun` and `sops` from unstable.
 
 ## Web, Code, and Docs Research
+
+Claude Code is configured through `common/home-base/claude.nix` to install
+`claude-code-bin`, route Anthropic Messages API traffic through
+`https://cliproxyapi.justaslime.dev`, and read the shared homonet client key via
+a SOPS-backed `apiKeyHelper`. The module pins Claude aliases to the matching
+CLIProxyAPI model IDs and is enabled on homolab, lumo, m3air, and framework.
 
 omp (oh-my-pi) is configured through `common/home-base/omp.nix` to install the `oh-my-pi-bin` binary, wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions, and supply an `EXA_API_KEY` (via `~/.omp/agent/.env`) for omp's builtin `web_search` tool.
 Use omp's builtin `web_search` and `browser` tools for external web research and URL fetching when repository-local information is insufficient.
@@ -482,7 +490,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `kaguya-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
