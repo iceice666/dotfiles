@@ -37,6 +37,19 @@
     manifest="$state_dir/lumo-services"
     install -d -m 0700 "$state_dir"
 
+    retired_services='
+    lumo-ntfy
+    lumo-tempestmiku
+    lumo-tempestmiku-embeddings
+    lumo-tempestmiku.pre-thermal-fix
+    '
+
+    for service in $retired_services; do
+      /sbin/rc-service "$service" stop 2>/dev/null || true
+      /sbin/rc-update del "$service" default 2>/dev/null || true
+      rm -f "/etc/init.d/$service"
+    done
+
     current_services='
     lumo-postgresql
     lumo-valkey
