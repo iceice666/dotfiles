@@ -55,7 +55,7 @@ let
   srcs = {
     "aarch64-darwin" = fetchzip {
       url = "https://github.com/Equicord/Equibop/releases/download/v${version}/Equibop-${version}-universal-mac.zip";
-      hash = "sha256-RiDPR12FitdrxKiDxzipF34etr/FZHVxfTbxjVWLxSM=";
+      hash = "sha256-PIDMC/+d7Hnl0xsgwaTd+AskFV6RZ0q/EEfXPUihrA4=";
       stripRoot = false;
     };
 
