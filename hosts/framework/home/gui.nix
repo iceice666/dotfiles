@@ -108,15 +108,36 @@ let
     ExecStart=${frameworkNiri} --session
   '';
 
-  suspendThenHibernateOnBattery = pkgs.writeShellScript "suspend-then-hibernate-on-battery" ''
-    for supply in /sys/class/power_supply/*; do
+  externalPowerCheck = pkgs.writeShellScript "framework-external-power-check" ''
+    power_supply_root="''${1:-/sys/class/power_supply}"
+
+    for supply in "$power_supply_root"/*; do
       [ -d "$supply" ] || continue
 
-      if [ "$(cat "$supply/type" 2>/dev/null || true)" = "Mains" ] \
-        && [ "$(cat "$supply/online" 2>/dev/null || true)" = "1" ]; then
-        exit 0
-      fi
+      type="$(cat "$supply/type" 2>/dev/null || true)"
+      case "$type" in
+        Battery)
+          case "$(cat "$supply/status" 2>/dev/null || true)" in
+            Charging|Full|"Not charging")
+              exit 0
+              ;;
+          esac
+          ;;
+        Mains)
+          if [ "$(cat "$supply/online" 2>/dev/null || true)" = "1" ]; then
+            exit 0
+          fi
+          ;;
+      esac
     done
+
+    exit 1
+  '';
+
+  suspendThenHibernateOnBattery = pkgs.writeShellScript "suspend-then-hibernate-on-battery" ''
+    if ${externalPowerCheck}; then
+      exit 0
+    fi
 
     # Skip suspend if something is still hammering the CPU (e.g. a build or
     # a server under load) even though the session has been idle. A 1-minute
