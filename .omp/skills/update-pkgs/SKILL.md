@@ -13,7 +13,7 @@ Update every custom package under `pkgs/` and any nested local package flakes to
 
 ## Scope
 
-- Review all `pkgs/*` derivations and local flakes such as `pkgs/kaguya-bin/flake.nix`.
+- Review all custom package derivations under `pkgs/`.
 - Parallelize independent package investigation with task subagents, grouped by package or package family, while keeping each assignment scoped to exact files.
 - For binary assets, only update the Linux AMD64 and macOS ARM64 artifacts (`linux_amd64` / `x86_64-linux` and `macos_aarch64` / `aarch64-darwin`). Ignore Linux ARM64, macOS x86_64, and other platform assets unless the package has no matching Linux AMD64 or macOS ARM64 artifact.
 - Update `version`, `tag`, `rev`, `hash`, `vendorHash`, `cargoHash`, and source URLs as needed.
@@ -57,13 +57,6 @@ For each:
 2. If the package version changed, update `version` in `default.nix`.
 3. If `Cargo.lock` changed, update the `cargoLock.lockFile` reference (or `cargoHash` if applicable). Let `nix build` tell you the expected hash.
 
-### Local flakes
-
-Packages: `kaguya-bin`.
-
-1. Check `flake.nix` inputs for updates.
-2. Run `nix flake lock --update-input <input>` inside `pkgs/kaguya-bin/` if an input should advance.
-3. Verify the flake still evaluates with `nix build .#kaguya-bin` or through the framework host.
 
 ## Validation
 

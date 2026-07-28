@@ -117,49 +117,6 @@
         "type": "github"
       }
     },
-    "kaguya-browser": {
-      "inputs": {
-        "kaguya-cache": [
-          "kaguya-cache"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "dir": "pkgs/kaguya-bin",
-        "lastModified": 1780243913,
-        "narHash": "sha256-Wnf407eSUO+nuDbt/uT9dQzl9J5dCWbVvoR3GYx3KWY=",
-        "ref": "refs/heads/main",
-        "rev": "925ff62ce66ee2d5a62e9f1d3f02c134debfd67b",
-        "revCount": 375,
-        "type": "git",
-        "url": "file:."
-      },
-      "original": {
-        "dir": "pkgs/kaguya-bin",
-        "type": "git",
-        "url": "file:."
-      }
-    },
-    "kaguya-cache": {
-      "flake": false,
-      "locked": {
-        "dir": "pkgs/kaguya-bin/empty-cache",
-        "lastModified": 1780243913,
-        "narHash": "sha256-Wnf407eSUO+nuDbt/uT9dQzl9J5dCWbVvoR3GYx3KWY=",
-        "ref": "refs/heads/main",
-        "rev": "925ff62ce66ee2d5a62e9f1d3f02c134debfd67b",
-        "revCount": 375,
-        "type": "git",
-        "url": "file:."
-      },
-      "original": {
-        "dir": "pkgs/kaguya-bin/empty-cache",
-        "type": "git",
-        "url": "file:."
-      }
-    },
     "niri-scratchpad-helper": {
       "flake": false,
       "locked": {
@@ -317,8 +274,6 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "home-manager": "home-manager",
-        "kaguya-browser": "kaguya-browser",
-        "kaguya-cache": "kaguya-cache",
         "niri-scratchpad-helper": "niri-scratchpad-helper",
         "nirinit": "nirinit",
         "nix-darwin": "nix-darwin",

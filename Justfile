@@ -5,8 +5,6 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 repo_root := justfile_directory()
 host := if os() == "macos" { "m3air" } else { `cat /etc/hostname | sed 's/-linux$//'` }
 m3air_flake := ".#m3air"
-framework_kaguya_cache := repo_root / ".cache/kaguya/framework"
-kaguya_override := if host == "framework" { "--override-input kaguya-cache path:" + framework_kaguya_cache } else { "" }
 system_target := if host == "m3air" { ".#darwinConfigurations.m3air.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
 gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"
 gce_dns_image := ".#nixosConfigurations.gce-dns.config.system.build.googleComputeImage"
@@ -21,8 +19,8 @@ switch:
 # Apply the current NixOS host configuration
 [group('host')]
 [linux]
-switch: _pre-build
-    nix build {{ system_target }} {{ kaguya_override }}
+switch:
+    nix build {{ system_target }}
     sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration switch
 
@@ -39,37 +37,17 @@ build:
 # Dry-build the current NixOS host configuration
 [group('host')]
 [linux]
-build: _pre-build
-    nix build {{ system_target }} {{ kaguya_override }}
+build:
+    nix build {{ system_target }}
 
 # Set the current NixOS host configuration for next boot
 [group('host')]
 [linux]
-boot: _pre-build
+boot:
     test -e /etc/NIXOS || { echo "Boot activation requires NixOS." >&2; exit 1; }
-    nix build {{ system_target }} {{ kaguya_override }}
+    nix build {{ system_target }}
     sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration boot
-
-# Pre-build hook: on Framework, ensure Kaguya cache exists
-[linux]
-_pre-build:
-    #!/usr/bin/env bash
-    if [ "{{ host }}" = "framework" ]; then
-        {{ scripts }}/kaguya-cache ensure
-    fi
-
-# Refresh the Kaguya browser build from the local Framework build tree into the Nix path input cache
-[group('host')]
-[linux]
-kaguya:
-    {{ scripts }}/kaguya-cache refresh
-
-# Incrementally sync the Kaguya cache (faster updates)
-[group('host')]
-[linux]
-kaguya-sync:
-    {{ scripts }}/kaguya-cache sync
 
 # Suspend homolab immediately (return to off state)
 [group('host')]

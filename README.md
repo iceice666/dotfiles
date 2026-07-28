@@ -52,9 +52,8 @@ sensitive/           # sops-encrypted secrets, segregated under hosts/<name>/
 
 Host output wiring is generated automatically: `lib/flake/hosts.nix` discovers every
 `hosts/<name>/host.nix` at evaluation time — no hand-maintained list. Each spec declares
-a `features` attrset (`gui`, `themegen`, `rime`, `devEnv`, `pi`, `sops`, `homeManager`,
-`nirinit`, `kaguya`); `mk-host.nix` injects the matching `common/` modules and wires
-Home Manager accordingly.
+an attrset of feature flags; `mk-host.nix` injects the matching `common/` modules
+and wires Home Manager accordingly.
 
 **Adding a host:** create `hosts/<new>/host.nix` with feature flags. It appears as a
 flake output automatically.
@@ -69,7 +68,6 @@ just fmt             # format all files
 just fmt-check       # check Justfile formatting
 just check           # format, Justfile metadata, and flake checks
 just theme           # generate a local concrete theme cache for inspection
-just kaguya          # force-refresh Framework Kaguya browser cache from homolab
 just theme-preview   # render and open this platform's wallpaper palette preview
 ```
 
@@ -77,9 +75,6 @@ just theme-preview   # render and open this platform's wallpaper palette preview
 hostname to pick `framework` or `homolab`. The same `build`, `switch`, and `boot`
 recipe names have separate `[macos]` and `[linux]` implementations.
 
-On Framework, `build`, `switch`, and `boot` reuse `.cache/kaguya/framework` and
-fetch Kaguya from homolab only when that cache is missing or invalid. Run
-`just kaguya` to force-refresh it.
 
 Homolab recipes run locally on the server itself (no remote deploy):
 

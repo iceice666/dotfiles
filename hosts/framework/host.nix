@@ -23,7 +23,6 @@
     rime = true;
     devEnv = true;
     omp = true;
-    kaguya = true;
     nirinit = true;
   };
 

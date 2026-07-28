@@ -634,7 +634,7 @@ let
         "${pkgs.slurp}/bin/slurp"
         "${lockScreen}"
         "${pkgs.swappy}/bin/swappy"
-        (lib.getExe pkgs.kaguya-bin)
+        (lib.getExe pkgs.helium-bin)
       ]
       (builtins.readFile ./niri-config.kdl);
 in
@@ -748,7 +748,6 @@ in
     slurp
     swappy
     swaybg
-    kaguya-bin
     wev
     wf-recorder
     wl-clipboard

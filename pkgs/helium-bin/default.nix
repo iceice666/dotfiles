@@ -4,6 +4,7 @@
   fetchurl,
   makeWrapper,
   appimageTools,
+  makeDesktopItem,
 }:
 
 let
@@ -33,6 +34,25 @@ let
       url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-arm64.AppImage";
       hash = "sha256-v3XFlPgrjSLkGiTknH9GEB4n/Xck2q+RXO0isL5Spi0=";
     };
+  };
+  desktopItem = makeDesktopItem {
+    name = "helium";
+    desktopName = "Helium";
+    genericName = "Web Browser";
+    exec = "helium %U";
+    icon = "helium";
+    categories = [
+      "Network"
+      "WebBrowser"
+    ];
+    mimeTypes = [
+      "text/html"
+      "text/xml"
+      "application/xhtml+xml"
+      "application/xml"
+      "x-scheme-handler/http"
+      "x-scheme-handler/https"
+    ];
   };
 
   meta = {
@@ -125,6 +145,8 @@ let
           sed -i -E 's|^Exec=.*|Exec=helium %U|; s|^TryExec=.*|TryExec=helium|' \
             "$out"/share/applications/*.desktop
         fi
+        install -Dm444 ${desktopItem}/share/applications/helium.desktop \
+          "$out/share/applications/helium.desktop"
         if [ -d "${appimageContents}/usr/share/icons" ]; then
           cp -r "${appimageContents}/usr/share/icons" "$out/share/"
         fi
