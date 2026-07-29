@@ -98,6 +98,15 @@ task agent="reviewer"
         Report each issue via report_finding, then yield your verdict.
 ```
 
+**Wait patiently.** A reviewer run taking an hour is normal. After dispatch, do
+independent useful work if any remains; when completely blocked, use `hub wait`
+with `timeoutMs: 3600000`. If that wait window expires while the reviewer is
+still running, wait again. A wait timeout is not a reviewer failure. Never poll,
+restart, replace, or cancel a healthy reviewer merely because it has been
+running for five minutes—or for any other duration. Cancel only after an
+explicit terminal failure, a user request, or a scope change that makes the
+review result unnecessary.
+
 The reviewer is read-only and returns a structured verdict:
 - `overall_correctness`: `correct` | `incorrect`
 - `explanation`, `confidence`
