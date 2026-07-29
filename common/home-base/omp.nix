@@ -4,7 +4,6 @@
   homolab,
   lib,
   pkgs,
-  unstablePkgs,
   ...
 }:
 
@@ -136,41 +135,31 @@ let
     # in models.yml above. github-copilot is pinned to included /
     # low-multiplier models so Edu Pro premium quota is preserved.
     enabledModels = [
-      "openai-codex/gpt-5.6-sol"
-      "openai-codex/gpt-5.6-terra"
-      "openai-codex/gpt-5.6-luna"
-      "openai-codex/gpt-5.3-codex-spark"
-      "anthropic/claude-opus-5"
-      "anthropic/claude-sonnet-5"
-      "anthropic/claude-haiku-4-5-20251001"
       "cliproxyapi/*"
       "cliproxyapi-claude/*"
       "opencode-go/*"
     ];
-    # Canonical selectors and /model should prefer subscription OAuth before
-    # the CLIProxyAPI mirrors when both concrete variants are available.
+    # Canonical selectors and /model use the declared provider preference when
+    # concrete variants are available from multiple providers.
     modelProviderOrder = [
-      "openai-codex"
-      "anthropic"
       "cliproxyapi"
       "cliproxyapi-claude"
       "opencode-go"
     ];
     modelRoles = {
-      default = "openai-codex/gpt-5.6-sol:high"; # main interactive agent: OAuth first, quality over latency
-      slow = "anthropic/claude-opus-5:high"; # hardest problems, cross-family
-      smol = "openai-codex/gpt-5.3-codex-spark:medium"; # small/quick work on Spark entitlement
-      title = "anthropic/claude-haiku-4-5-20251001";
+      default = "cliproxyapi/gpt-5.6-sol:high"; # main interactive agent: OAuth first, quality over latency
+      slow = "cliproxyapi-claude/claude-opus-5:high"; # hardest problems, cross-family
+      smol = "cliproxyapi/gpt-5.6-sol:low"; # small/quick work
+      title = "cliproxyapi-claude/claude-haiku-4-5-20251001";
       commit = "cliproxyapi/gpt-5.6-terra:medium";
-      task = "openai-codex/gpt-5.6-sol:medium"; # workhorse subagents
-      plan = "anthropic/claude-sonnet-5:xhigh"; # final plans need strongest reasoning
-      designer = "anthropic/claude-sonnet-5:high";
+      task = "cliproxyapi/gpt-5.6-sol:medium"; # workhorse subagents
+      plan = "cliproxyapi-claude/claude-sonnet-5:xhigh"; # final plans need strongest reasoning
+      designer = "cliproxyapi-claude/claude-sonnet-5:high";
       vision = "cliproxyapi/gpt-5.6-sol:high";
       advisor = "opencode-go/kimi-k3"; # high-quality second opinion
     };
-    # GPT/Claude role primaries use OAuth selectors. Their fallback chains keep
-    # matching CLIProxyAPI selectors as the first same-model fallback, then add
-    # cross-model OAuth/proxy pairs. When a model errors or hits a usage limit,
+    # Role primaries use CLIProxyAPI selectors. Their fallback chains add
+    # cross-model proxy alternatives. When a model errors or hits a usage limit,
     # omp switches to the next selector in the role chain, then reverts once the
     # cooldown expires.
     # NOTE: chains are keyed by ROLE name (default/slow/task/...), not by model
@@ -178,28 +167,23 @@ let
     # key silently never matches and fallback never fires.
     retry.fallbackChains = {
       default = [
-        "cliproxyapi/gpt-5.6-sol:low"
         "cliproxyapi-claude/claude-opus-5:high"
         "cliproxyapi-claude/claude-sonnet-5:high"
       ];
       slow = [
-        "cliproxyapi-claude/claude-opus-5:high"
         "cliproxyapi/gpt-5.6-sol:xhigh"
         "cliproxyapi-claude/claude-sonnet-5:xhigh"
       ];
       task = [
         "cliproxyapi/gpt-5.3-codex-spark:high"
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-sonnet-5:high"
-        "cliproxyapi-claude/claude-opus-5:xhigh"
+        "cliproxyapi/gpt-5.6-sol:high"
+        "cliproxyapi-claude/claude-opus-5:high"
       ];
       plan = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
         "cliproxyapi-claude/claude-opus-5:xhigh"
       ];
       smol = [
-        "anthropic/claude-haiku-4-5-20251001"
-        "cliproxyapi/gpt-5.6-sol:low"
         "cliproxyapi-claude/claude-sonnet-5:medium"
       ];
       title = [
@@ -217,78 +201,11 @@ let
       ];
       vision = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi/gemini-3-flash"
       ];
     };
   };
 
   configFile = pkgs.writeText "omp-config.yml" (lib.generators.toYAML { } configConfig);
-  cleanupOldFastPlugin = pkgs.writeText "omp-fast-mode-plugin-cleanup.js" ''
-    const fs = require("fs");
-    const path = require("path");
-
-    const dir = process.argv[2];
-    const managed = [
-      "@diegopetrucci/pi-openai-fast",
-      "@earendil-works/pi-coding-agent",
-      "omp-fast-mode",
-    ];
-
-    function readJson(file) {
-      try {
-        return JSON.parse(fs.readFileSync(file, "utf8"));
-      } catch {
-        return undefined;
-      }
-    }
-
-    function writeJson(file, value) {
-      fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n");
-    }
-
-    const packagePath = path.join(dir, "package.json");
-    const pkg = readJson(packagePath);
-    if (pkg && pkg.dependencies) {
-      let changed = false;
-      for (const name of managed) {
-        if (Object.prototype.hasOwnProperty.call(pkg.dependencies, name)) {
-          delete pkg.dependencies[name];
-          changed = true;
-        }
-      }
-      if (changed) writeJson(packagePath, pkg);
-    }
-
-    const lockPath = path.join(dir, "omp-plugins.lock.json");
-    const lock = readJson(lockPath);
-    if (lock) {
-      let changed = false;
-      for (const section of ["plugins", "settings"]) {
-        if (!lock[section]) continue;
-        for (const name of managed) {
-          if (Object.prototype.hasOwnProperty.call(lock[section], name)) {
-            delete lock[section][name];
-            changed = true;
-          }
-        }
-      }
-      if (changed) writeJson(lockPath, lock);
-    }
-
-    for (const name of managed) {
-      fs.rmSync(path.join(dir, "node_modules", ...name.split("/")), {
-        recursive: true,
-        force: true,
-      });
-    }
-
-    const hasPackageDependencies =
-      pkg?.dependencies && Object.keys(pkg.dependencies).length > 0;
-    const hasRuntimePlugins = lock?.plugins && Object.keys(lock.plugins).length > 0;
-    if (!hasPackageDependencies && !hasRuntimePlugins) {
-      fs.rmSync(path.join(dir, "node_modules"), { recursive: true, force: true });
-    }
-  '';
 in
 {
   sops.secrets.exa_api_key = {
@@ -311,14 +228,6 @@ in
   home.activation.omp-config-seed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     install -d -m 0700 "${config.home.homeDirectory}/.omp/agent"
     install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
-  '';
-  # Clean up the previous fast-mode npm-plugin workaround without touching
-  # unrelated user plugins.
-  home.activation.omp-fast-mode-plugin-cleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    plugin_dir="${config.home.homeDirectory}/.omp/plugins"
-    if [ -d "$plugin_dir" ]; then
-      ${unstablePkgs.bun}/bin/bun "${cleanupOldFastPlugin}" "$plugin_dir"
-    fi
   '';
 
   home.packages = with pkgs; [
