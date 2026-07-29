@@ -80,6 +80,8 @@ lib/                 # shared nix helpers and local flake framework
 
 pkgs/                # overlay packages
   blocky-bin/        # official prebuilt Blocky DNS proxy releases
+  cliproxyapi-account-quota/ # Go plugin reserving 20% of Codex/Claude five-hour quotas
+  cliproxyapi-bin/    # official prebuilt CLIProxyAPI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
   framework-eww-state/ # Rust state daemon/action helper for Framework Eww
@@ -174,7 +176,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - `linux-gui.nix` — Linux-only packages: `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
@@ -374,7 +376,7 @@ trust boundary:
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
 - `hosts/homolab/services/ai/tea-asr-1-1-mini.nix` — the NVIDIA driver (`hardware.nvidia`, `hardware.graphics`), NVIDIA Container Toolkit CDI, rootful Docker, and the tailnet-only ASR port all live here now — it's the sole GPU consumer on homolab.
-- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo; touches auth and routing.
+- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler/usage plugin reserves the final 20% of every Codex and Claude five-hour quota per upstream `AuthID`; changes touch auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.
@@ -480,7 +482,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.

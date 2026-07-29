@@ -79,6 +79,9 @@ in
         install -d -m 0750 -o cliproxyapi -g cliproxyapi ${dataDir}
         install -d -m 0750 -o cliproxyapi -g cliproxyapi ${dataDir}/auths
         install -d -m 0750 -o cliproxyapi -g cliproxyapi ${dataDir}/plugins
+        install -Dm755 -o cliproxyapi -g cliproxyapi \
+          ${pkgs.cliproxyapi-account-quota}/lib/cliproxyapi/plugins/account-quota.so \
+          ${dataDir}/plugins/account-quota.so
 
         homonet_api_key="$(cat '${homonetApiKeyPath}')"
         management_key="$(cat '${managementKeyPath}')"
@@ -107,9 +110,14 @@ in
       addr: "127.0.0.1:8316"
 
     plugins:
-      enabled: false
+      enabled: true
       dir: "${dataDir}/plugins"
-      configs: {}
+      configs:
+        account-quota:
+          enabled: true
+          priority: 100
+          reserve_percent: 20
+          state_path: "${dataDir}/account-quota-state.json"
 
     commercial-mode: false
     logging-to-file: true
