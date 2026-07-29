@@ -11,6 +11,7 @@ let
     "commit/agents/openai.yaml"
     "next-milestone/SKILL.md"
     "next-milestone/agents/openai.yaml"
+    "next-milestone/workflows/omp.md"
   ];
 
   canonicalSkillFile = path: {
@@ -29,7 +30,11 @@ in
 {
   home.file =
     builtins.listToAttrs (map canonicalSkillFile managedSkillFiles)
-    // builtins.listToAttrs (map (skillAdapter ".agents/skills") managedSkills);
+    // builtins.listToAttrs (map (skillAdapter ".agents/skills") managedSkills)
+    // {
+      ".omp/agent/commands/next-milestone.md".source =
+        ./agent-skills/skills/next-milestone/workflows/omp.md;
+    };
 
   home.activation.cleanup-managed-skill-links = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     for skill in ${lib.concatStringsSep " " managedSkills}; do
