@@ -42,9 +42,6 @@ let
     hermesDashboard = 9119;
     honcho = 18077;
     umami = 18078;
-    ntfy = 18079;
-    tempestmiku = 18080;
-    tempestmikuWorker = 18787;
   };
 
   portRanges = {
@@ -86,8 +83,6 @@ rec {
     dev = "dev.${root}";
     npu = "npu.${root}";
     analytics = "analytics.${root}";
-    push = "push.${root}";
-    miku = "miku.${root}";
     proxy = "proxy.${root}";
   };
 
@@ -101,8 +96,6 @@ rec {
     dev = "https://${domains.dev}";
     npu = "https://${domains.npu}";
     analytics = "https://${domains.analytics}";
-    push = "https://${domains.push}";
-    miku = "https://${domains.miku}";
   };
 
   contact = {

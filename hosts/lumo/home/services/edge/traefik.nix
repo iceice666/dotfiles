@@ -235,38 +235,6 @@ let
         tls.certResolver = "letsencrypt";
       };
 
-      ntfy-http = {
-        rule = mkHostRule homolab.domains.push;
-        entryPoints = [ "web" ];
-        middlewares = [ "redirect-to-https@file" ];
-        service = "noop@internal";
-      };
-
-      # UnifiedPush endpoints are high-entropy capability URLs. The distributor must keep a
-      # long-lived WebSocket/HTTP stream, so this route cannot sit behind Authelia.
-      ntfy = {
-        rule = mkHostRule homolab.domains.push;
-        entryPoints = [ "websecure" ];
-        service = "ntfy";
-        tls.certResolver = "letsencrypt";
-      };
-
-      tempestmiku-http = {
-        rule = mkHostRule homolab.domains.miku;
-        entryPoints = [ "web" ];
-        middlewares = [ "redirect-to-https@file" ];
-        service = "noop@internal";
-      };
-
-      # TempestMiku owns device authentication and authenticated pairing. Mobile SSE and
-      # notification actions cannot traverse an interactive Authelia redirect.
-      tempestmiku = {
-        rule = mkHostRule homolab.domains.miku;
-        entryPoints = [ "websecure" ];
-        service = "tempestmiku";
-        tls.certResolver = "letsencrypt";
-      };
-
       grafana-http = {
         rule = mkPrivateHostRule homolab.domains.grafana;
         entryPoints = [ "web" ];
@@ -337,12 +305,6 @@ let
       ];
       umami.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }
-      ];
-      ntfy.loadBalancer.servers = [
-        { url = "http://127.0.0.1:${toString homolab.ports.ntfy}"; }
-      ];
-      tempestmiku.loadBalancer.servers = [
-        { url = "http://127.0.0.1:${toString homolab.ports.tempestmiku}"; }
       ];
       grafana.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }

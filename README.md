@@ -13,8 +13,8 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | --- | --- | --- | --- |
 | `m3air` | `.#m3air` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
-| `homolab` | `.#homolab` | `x86_64-linux` | NixOS AI host plus isolated TempestMiku linked-host worker |
-| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi and sole TempestMiku coordinator |
+| `homolab` | `.#homolab` | `x86_64-linux` | NixOS AI host |
+| `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi |
 | `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
 | `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 
@@ -83,7 +83,6 @@ just homolab-build           # dry-build on the homolab
 just homolab-switch          # build + activate on the homolab
 just homolab-boot            # stage the closure for next boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the server
-just homolab-tempestmiku-worker-smoke  # verify the Tailnet-only TempestMiku worker
 ```
 
 Lumo uses the official Alpine Linux 3.24 Raspberry Pi image with root-only Lix
@@ -100,11 +99,6 @@ just lumo-switch                # deploy root Home Manager
 just lumo-smoke                 # verify OpenRC services and local endpoints
 ```
 
-For this repository's Nix/SOPS/Tailscale reference rollout, source pinning, operator-owned checkout
-provisioning, signed acceptance canaries, and rollback rules, see
-[`hosts/lumo/home/services/tempestmiku/DEPLOYMENT.md`](hosts/lumo/home/services/tempestmiku/DEPLOYMENT.md).
-The portable TempestMiku deployment contract lives in the TempestMiku repository under
-`docs/deploy-coordinator-worker.md`.
 
 Bootstrap prints the host age recipient. Add it to `.sops.yaml`, include it in
 the matching host rule, then run `just secret-refresh sensitive/hosts/<host>`

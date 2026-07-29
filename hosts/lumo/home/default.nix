@@ -48,24 +48,23 @@
     lumo-dynacat
     lumo-dev-port-proxy
     lumo-cliproxyapi
-    lumo-ntfy
-    lumo-tempestmiku
+    lumo-umami-postgres
+    lumo-umami
     lumo-authelia
     lumo-cloudflare-ddns
     lumo-cloudflare-ips
     lumo-traefik
     '
 
-    if [ -f "$manifest" ]; then
-      while IFS= read -r service; do
-        [ -n "$service" ] || continue
-        if ! printf '%s\n' "$current_services" | grep -qx "[[:space:]]*$service"; then
-          /sbin/rc-service "$service" stop 2>/dev/null || true
-          /sbin/rc-update del "$service" default 2>/dev/null || true
-          rm -f "/etc/init.d/$service"
-        fi
-      done < "$manifest"
-    fi
+    for service_path in /etc/init.d/lumo-*; do
+      [ -e "$service_path" ] || continue
+      service="''${service_path##*/}"
+      if ! printf '%s\n' "$current_services" | grep -qx "[[:space:]]*$service"; then
+        /sbin/rc-service "$service" stop 2>/dev/null || true
+        /sbin/rc-update del "$service" default 2>/dev/null || true
+        rm -f "$service_path"
+      fi
+    done
 
     printf '%s\n' "$current_services" |
       sed -e 's/^[[:space:]]*//' -e '/^$/d' > "$manifest"
