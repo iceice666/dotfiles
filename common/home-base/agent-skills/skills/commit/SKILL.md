@@ -17,16 +17,10 @@ description: Group staged Agent-authored changes into logical scoped commits, wr
    test, lint, format-check, typecheck, or CI commands. If full validation is
    impractical, run the most relevant targeted checks and mention the limitation
    only outside the commit message.
-4. Prefer OMP's native commit command when available:
-
-   ```sh
-   omp commit --dry-run
-   omp commit
-   ```
-
-   Use it only when its proposed scope matches the Agent-authored changes. If
-   it would include unrelated files or hunks, stage the Agent-authored files or
-   hunks manually and commit with `git commit` instead.
+4. Stage only the Agent-authored files or hunks for one logical commit, then
+   review `git diff --cached` to confirm its exact scope. Write the final
+   repository-compliant message yourself and create the commit directly with
+   `git commit`.
 5. Group changes by developer-facing or user-visible intent. Create multiple
    commits for unrelated purposes; keep one commit for one tight intent.
 6. Write and create each commit with this repository's Conventional Commit

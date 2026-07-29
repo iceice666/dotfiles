@@ -8,7 +8,7 @@ Before broad exploration, give me a 3–5 bullet plan and list the exact files o
 
 ## Testing & Commits
 
-After implementing a feature, run the narrowest validation that covers the changed behavior, then run the repo-required formatter/check before finishing. For commits, prefer OMP's native `omp commit --dry-run`/`omp commit` flow when it can be constrained to agent-authored changes; never include pre-existing user work.
+After implementing a feature, run the narrowest validation that covers the changed behavior, then run the repo-required formatter/check before finishing. For commits, stage only agent-authored changes, review the staged diff, write the repository-compliant message yourself, and commit directly with `git commit`. Never include pre-existing user work.
 
 ## Constraints / Environment
 

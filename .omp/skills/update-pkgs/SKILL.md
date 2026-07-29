@@ -72,5 +72,5 @@ For each:
 
 - Inspect `git status` before editing and avoid including unrelated user changes.
 - Commit only the changes you made.
-- Prefer OMP's native `omp commit --dry-run` / `omp commit` flow when it can be constrained to agent-authored changes.
+- Stage and review only the changes you made, write the repository-compliant message yourself, and commit directly with `git commit`.
 - Use a Conventional Commit subject in this repository's format, for example `chore(pkgs/flake): update custom package versions`.
