@@ -376,7 +376,7 @@ trust boundary:
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
 - `hosts/homolab/services/ai/tea-asr-1-1-mini.nix` — the NVIDIA driver (`hardware.nvidia`, `hardware.graphics`), NVIDIA Container Toolkit CDI, rootful Docker, and the tailnet-only ASR port all live here now — it's the sole GPU consumer on homolab.
-- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler/usage plugin reserves the final 20% of every Codex and Claude five-hour quota per upstream `AuthID`; changes touch auth and routing.
+- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler polls each Codex/Claude OAuth usage endpoint, caches observations for 30 seconds, and fails closed when it cannot verify the final 20% reserve per upstream `AuthID`; changes touch auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.

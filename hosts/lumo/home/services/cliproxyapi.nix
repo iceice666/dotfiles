@@ -118,6 +118,9 @@ in
           priority: 100
           reserve_percent: 20
           state_path: "${dataDir}/account-quota-state.json"
+          poll_interval_seconds: 30
+          request_timeout_seconds: 5
+          fail_closed: true
 
     commercial-mode: false
     logging-to-file: true
