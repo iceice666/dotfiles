@@ -11,7 +11,7 @@ let
   srcs = {
     "aarch64-linux" = fetchurl {
       url = "https://github.com/router-for-me/CLIProxyAPI/releases/download/v${version}/CLIProxyAPI_${version}_linux_aarch64.tar.gz";
-      hash = "sha256-jfAv+1vD2Pv+JpD9WFK/QMcfrqWfXcBuVbKgS/o5ryY=";
+      hash = "sha256-cICN1x7xJIBTH8Qns8KO94p8VrF2RQQnk3OCrS+yG3o=";
     };
 
     "aarch64-darwin" = fetchurl {
