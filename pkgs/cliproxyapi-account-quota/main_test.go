@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -35,6 +36,118 @@ func TestSchedulerExcludesAccountAtReserveBoundary(t *testing.T) {
 	})
 	if !response.Handled || response.AuthID != "claude-b" {
 		t.Fatalf("expected scheduler to select claude-b, got %#v", response)
+	}
+}
+
+func TestSchedulerAppliesPerAccountReserveOverrides(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.config.ReservePercent = 20
+	quota.config.ReserveByAuthID = map[string]float64{"claude-lenient": 5}
+	quota.loadCredentials = staticCredentials(map[string]string{
+		"claude-strict":  "token-strict",
+		"claude-lenient": "token-lenient",
+	})
+	quota.fetchProviderQuota = func(_ string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		return quotaObservation{Applicable: true, UtilizedPercent: 90, ResetAt: now.Add(fiveHours)}, nil
+	}
+
+	response := pickResponse(t, quota, schedulerPickRequest{
+		Provider: "claude",
+		Candidates: []schedulerAuthCandidate{
+			{ID: "claude-strict", Provider: "claude"},
+			{ID: "claude-lenient", Provider: "claude"},
+		},
+	})
+	if !response.Handled || response.AuthID != "claude-lenient" {
+		t.Fatalf("expected the 5%% reserve account to stay eligible at 90%% usage, got %#v", response)
+	}
+}
+
+func TestSchedulerLeavesZeroReserveAccountsUnmanaged(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.config.ReservePercent = 0
+	quota.config.ReserveByAuthID = map[string]float64{"claude-a": 20}
+	quota.loadCredentials = staticCredentials(map[string]string{"claude-a": "token-a"})
+	var polled []string
+	var polledMu sync.Mutex
+	quota.fetchProviderQuota = func(provider string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		polledMu.Lock()
+		polled = append(polled, provider)
+		polledMu.Unlock()
+		return quotaObservation{Applicable: true, UtilizedPercent: 99, ResetAt: now.Add(fiveHours)}, nil
+	}
+
+	response := pickResponse(t, quota, schedulerPickRequest{
+		Provider: "codex",
+		Candidates: []schedulerAuthCandidate{
+			{ID: "codex-a", Provider: "codex"},
+			{ID: "codex-b", Provider: "codex"},
+		},
+	})
+	if response.Handled {
+		t.Fatalf("expected unreserved Codex accounts to delegate to the built-in scheduler, got %#v", response)
+	}
+	polledMu.Lock()
+	defer polledMu.Unlock()
+	if len(polled) != 0 {
+		t.Fatalf("expected no usage polling for unreserved accounts, got %v", polled)
+	}
+}
+
+func TestSchedulerOverrideKeyIgnoresJSONSuffixAndCase(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.config.ReservePercent = 0
+	quota.config.ReserveByAuthID = map[string]float64{"claude-a": 20}
+	quota.loadCredentials = staticCredentials(map[string]string{"Claude-A.json": "token-a"})
+	quota.fetchProviderQuota = func(_ string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		return quotaObservation{Applicable: true, UtilizedPercent: 85, ResetAt: now.Add(fiveHours)}, nil
+	}
+
+	env := pickEnvelope(t, quota, schedulerPickRequest{
+		Provider:   "claude",
+		Candidates: []schedulerAuthCandidate{{ID: "Claude-A.json", Provider: "claude"}},
+	})
+	if env.OK || env.Error == nil || env.Error.Code != "quota_reserved" {
+		t.Fatalf("expected the override to match the auth file name, got %#v", env)
+	}
+}
+
+func TestConfigureRejectsOutOfRangePerAccountReserve(t *testing.T) {
+	quota := newQuotaLimiter()
+	configYAML := []byte(fmt.Sprintf(
+		"state_path: %q\nreserve_percent: 0\nreserve_percent_by_auth_id:\n  claude-a: 100\n",
+		filepath.Join(t.TempDir(), "state.json"),
+	))
+	raw, errMarshal := json.Marshal(lifecycleRequest{ConfigYAML: configYAML})
+	if errMarshal != nil {
+		t.Fatal(errMarshal)
+	}
+	if errConfigure := quota.configure(raw); errConfigure == nil {
+		t.Fatal("expected a 100% per-account reserve to be rejected")
+	}
+}
+
+func TestConfigureNormalizesPerAccountReserveKeys(t *testing.T) {
+	quota := newQuotaLimiter()
+	configYAML := []byte(fmt.Sprintf(
+		"state_path: %q\nreserve_percent: 0\nreserve_percent_by_auth_id:\n  \"Claude-A.json\": 25\n",
+		filepath.Join(t.TempDir(), "state.json"),
+	))
+	raw, errMarshal := json.Marshal(lifecycleRequest{ConfigYAML: configYAML})
+	if errMarshal != nil {
+		t.Fatal(errMarshal)
+	}
+	if errConfigure := quota.configure(raw); errConfigure != nil {
+		t.Fatal(errConfigure)
+	}
+	if got := quota.config.reserveFor("claude-a.json"); got != 25 {
+		t.Fatalf("expected normalized override lookup to return 25, got %v", got)
+	}
+	if got := quota.config.reserveFor("codex-a.json"); got != 0 {
+		t.Fatalf("expected unlisted accounts to fall back to 0, got %v", got)
 	}
 }
 
@@ -108,6 +221,115 @@ func TestSchedulerCachesUsageObservations(t *testing.T) {
 	pickResponse(t, quota, request)
 	if calls.Load() != 1 {
 		t.Fatalf("expected one usage request inside cache interval, got %d", calls.Load())
+	}
+}
+
+func TestSchedulerBacksOffAfterUsageLookupFailure(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.now = func() time.Time { return now }
+	quota.loadCredentials = staticCredentials(map[string]string{"claude-a": "token-a"})
+	var calls atomic.Int32
+	quota.fetchProviderQuota = func(_ string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		calls.Add(1)
+		return quotaObservation{}, errors.New("usage endpoint returned HTTP 429")
+	}
+	request := schedulerPickRequest{
+		Provider:   "claude",
+		Candidates: []schedulerAuthCandidate{{ID: "claude-a", Provider: "claude"}},
+	}
+
+	pickEnvelope(t, quota, request)
+	now = now.Add(59 * time.Minute)
+	pickEnvelope(t, quota, request)
+	if calls.Load() != 1 {
+		t.Fatalf("expected one lookup during error backoff, got %d", calls.Load())
+	}
+	now = now.Add(time.Minute)
+	pickEnvelope(t, quota, request)
+	if calls.Load() != 2 {
+		t.Fatalf("expected lookup retry after error backoff, got %d", calls.Load())
+	}
+}
+
+func TestSchedulerKeepsValidObservationWhenRefreshFails(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.now = func() time.Time { return now }
+	quota.loadCredentials = staticCredentials(map[string]string{"claude-a": "token-a"})
+	var calls atomic.Int32
+	quota.fetchProviderQuota = func(_ string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		if calls.Add(1) == 1 {
+			return quotaObservation{Applicable: true, UtilizedPercent: 25, ResetAt: now.Add(fiveHours)}, nil
+		}
+		return quotaObservation{}, errors.New("usage endpoint returned HTTP 429")
+	}
+	request := schedulerPickRequest{
+		Provider:   "claude",
+		Candidates: []schedulerAuthCandidate{{ID: "claude-a", Provider: "claude"}},
+	}
+
+	pickResponse(t, quota, request)
+	now = now.Add(defaultPollInterval)
+	pickResponse(t, quota, request)
+	status := quota.statuses["claude-a"]
+	if !status.Known || status.State.UtilizedPercent != 25 || status.Err == "" {
+		t.Fatalf("expected cached observation with refresh error, got %#v", status)
+	}
+	now = now.Add(30 * time.Minute)
+	pickResponse(t, quota, request)
+	if calls.Load() != 2 {
+		t.Fatalf("expected no lookup during error backoff, got %d", calls.Load())
+	}
+}
+
+func TestSchedulerDoesNotPollReservedAccountBeforeReset(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	quota := configuredLimiter(t, now)
+	quota.now = func() time.Time { return now }
+	quota.loadCredentials = staticCredentials(map[string]string{"claude-a": "token-a"})
+	var calls atomic.Int32
+	quota.fetchProviderQuota = func(_ string, _ authCredential, _ time.Duration) (quotaObservation, error) {
+		calls.Add(1)
+		return quotaObservation{Applicable: true, UtilizedPercent: 85, ResetAt: now.Add(fiveHours)}, nil
+	}
+	request := schedulerPickRequest{
+		Provider:   "claude",
+		Candidates: []schedulerAuthCandidate{{ID: "claude-a", Provider: "claude"}},
+	}
+
+	pickEnvelope(t, quota, request)
+	now = now.Add(time.Hour)
+	pickEnvelope(t, quota, request)
+	if calls.Load() != 1 {
+		t.Fatalf("expected reserved account to remain cached until reset, got %d lookups", calls.Load())
+	}
+}
+
+func TestPersistedErrorBackoffSurvivesRestart(t *testing.T) {
+	now := time.Date(2026, time.July, 29, 10, 0, 0, 0, time.UTC)
+	statePath := filepath.Join(t.TempDir(), "state.json")
+	quota := configuredLimiter(t, now)
+	quota.config.StatePath = statePath
+	quota.statuses["claude-a"] = quotaStatus{
+		CheckedAt: now,
+		RetryAt:   now.Add(time.Hour),
+		Err:       "usage endpoint returned HTTP 429",
+	}
+	if errPersist := quota.persist(); errPersist != nil {
+		t.Fatal(errPersist)
+	}
+
+	reloaded, errLoad := loadPersistedState(statePath, now.Add(time.Minute))
+	if errLoad != nil {
+		t.Fatal(errLoad)
+	}
+	status, exists := reloaded["claude-a"]
+	if !exists || !status.RetryAt.Equal(now.Add(time.Hour)) || status.Err == "" {
+		t.Fatalf("expected persisted error backoff, got %#v", status)
+	}
+	if shouldRefresh(status, true, quota.config, "claude-a", now.Add(time.Minute)) {
+		t.Fatal("expected restarted plugin to retain the error backoff")
 	}
 }
 
@@ -236,7 +458,7 @@ func TestConfigureDefaultsToFailClosed(t *testing.T) {
 	if errConfigure := quota.configure(raw); errConfigure != nil {
 		t.Fatal(errConfigure)
 	}
-	if !quota.config.FailClosed || quota.config.PollIntervalSeconds != 30 || quota.config.RequestTimeoutSeconds != 5 {
+	if !quota.config.FailClosed || quota.config.PollIntervalSeconds != 900 || quota.config.ErrorRetryIntervalSeconds != 3600 || quota.config.RequestTimeoutSeconds != 5 {
 		t.Fatalf("unexpected defaults: %#v", quota.config)
 	}
 }

@@ -74,17 +74,18 @@ import (
 )
 
 const (
-	abiVersion            uint32 = 1
-	schemaVersion         uint32 = 1
-	pluginVersion                = "0.2.0"
-	fiveHours                    = 5 * time.Hour
-	defaultReservePercent        = 20.0
-	defaultPollInterval          = 30 * time.Second
-	defaultRequestTimeout        = 5 * time.Second
-	defaultStatePath             = "account-quota-state.json"
-	claudeUsageURL               = "https://api.anthropic.com/api/oauth/usage"
-	codexUsageURL                = "https://chatgpt.com/backend-api/wham/usage"
-	maxUsageResponseBytes        = 1 << 20
+	abiVersion                uint32 = 1
+	schemaVersion             uint32 = 1
+	pluginVersion                    = "0.4.0"
+	fiveHours                        = 5 * time.Hour
+	defaultReservePercent            = 20.0
+	defaultPollInterval              = 15 * time.Minute
+	defaultErrorRetryInterval        = time.Hour
+	defaultRequestTimeout            = 5 * time.Second
+	defaultStatePath                 = "account-quota-state.json"
+	claudeUsageURL                   = "https://api.anthropic.com/api/oauth/usage"
+	codexUsageURL                    = "https://chatgpt.com/backend-api/wham/usage"
+	maxUsageResponseBytes            = 1 << 20
 )
 
 const (
@@ -113,11 +114,29 @@ type lifecycleRequest struct {
 }
 
 type pluginConfig struct {
-	ReservePercent        float64 `yaml:"reserve_percent"`
-	StatePath             string  `yaml:"state_path"`
-	PollIntervalSeconds   int     `yaml:"poll_interval_seconds"`
-	RequestTimeoutSeconds int     `yaml:"request_timeout_seconds"`
-	FailClosed            bool    `yaml:"fail_closed"`
+	ReservePercent            float64            `yaml:"reserve_percent"`
+	ReserveByAuthID           map[string]float64 `yaml:"reserve_percent_by_auth_id"`
+	StatePath                 string             `yaml:"state_path"`
+	PollIntervalSeconds       int                `yaml:"poll_interval_seconds"`
+	ErrorRetryIntervalSeconds int                `yaml:"error_retry_interval_seconds"`
+	RequestTimeoutSeconds     int                `yaml:"request_timeout_seconds"`
+	FailClosed                bool               `yaml:"fail_closed"`
+}
+
+// reserveFor resolves the reserved percentage for one upstream account. A
+// reserve of 0 leaves the account entirely unmanaged: it is never polled and
+// never withheld.
+func (c pluginConfig) reserveFor(authID string) float64 {
+	if reserve, exists := c.ReserveByAuthID[normalizeAuthID(authID)]; exists {
+		return reserve
+	}
+	return c.ReservePercent
+}
+
+// normalizeAuthID accepts either the host auth file name or the same name
+// without its .json suffix, so config keys can stay readable.
+func normalizeAuthID(authID string) string {
+	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(authID)), ".json")
 }
 
 type registration struct {
@@ -173,8 +192,22 @@ type accountState struct {
 }
 
 type persistedState struct {
+	Version  int                             `json:"version"`
+	Accounts map[string]persistedQuotaStatus `json:"accounts"`
+}
+
+type persistedStateV1 struct {
 	Version  int                     `json:"version"`
 	Accounts map[string]accountState `json:"accounts"`
+}
+
+type persistedQuotaStatus struct {
+	Known      bool         `json:"known,omitempty"`
+	Applicable bool         `json:"applicable,omitempty"`
+	State      accountState `json:"state,omitempty"`
+	CheckedAt  time.Time    `json:"checked_at,omitempty"`
+	RetryAt    time.Time    `json:"retry_at,omitempty"`
+	Err        string       `json:"error,omitempty"`
 }
 
 type quotaStatus struct {
@@ -182,6 +215,7 @@ type quotaStatus struct {
 	Applicable bool
 	State      accountState
 	CheckedAt  time.Time
+	RetryAt    time.Time
 	Err        string
 }
 
@@ -221,11 +255,12 @@ func main() {}
 
 func defaultConfig() pluginConfig {
 	return pluginConfig{
-		ReservePercent:        defaultReservePercent,
-		StatePath:             defaultStatePath,
-		PollIntervalSeconds:   int(defaultPollInterval / time.Second),
-		RequestTimeoutSeconds: int(defaultRequestTimeout / time.Second),
-		FailClosed:            true,
+		ReservePercent:            defaultReservePercent,
+		StatePath:                 defaultStatePath,
+		PollIntervalSeconds:       int(defaultPollInterval / time.Second),
+		ErrorRetryIntervalSeconds: int(defaultErrorRetryInterval / time.Second),
+		RequestTimeoutSeconds:     int(defaultRequestTimeout / time.Second),
+		FailClosed:                true,
 	}
 }
 
@@ -315,7 +350,12 @@ func pluginRegistration() registration {
 				{
 					Name:        "reserve_percent",
 					Type:        "number",
-					Description: "Percentage of each Codex or Claude five-hour quota reserved from proxy traffic.",
+					Description: "Default percentage of each Codex or Claude five-hour quota reserved from proxy traffic. 0 disables the reserve.",
+				},
+				{
+					Name:        "reserve_percent_by_auth_id",
+					Type:        "object",
+					Description: "Per-account reserve overrides keyed by auth file name, with or without the .json suffix.",
 				},
 				{
 					Name:        "state_path",
@@ -326,6 +366,11 @@ func pluginRegistration() registration {
 					Name:        "poll_interval_seconds",
 					Type:        "number",
 					Description: "Maximum age of a successful or failed upstream quota observation.",
+				},
+				{
+					Name:        "error_retry_interval_seconds",
+					Type:        "number",
+					Description: "Backoff after an upstream quota lookup fails, including HTTP 429 responses.",
 				},
 				{
 					Name:        "request_timeout_seconds",
@@ -358,14 +403,29 @@ func (l *quotaLimiter) configure(raw []byte) error {
 		}
 	}
 	cfg.StatePath = strings.TrimSpace(cfg.StatePath)
-	if cfg.ReservePercent <= 0 || cfg.ReservePercent >= 100 || math.IsNaN(cfg.ReservePercent) {
-		return fmt.Errorf("reserve_percent must be greater than 0 and less than 100")
+	reserves := make(map[string]float64, len(cfg.ReserveByAuthID))
+	for authID, reserve := range cfg.ReserveByAuthID {
+		key := normalizeAuthID(authID)
+		if key == "" {
+			return errors.New("reserve_percent_by_auth_id keys must not be empty")
+		}
+		if reserve < 0 || reserve >= 100 || math.IsNaN(reserve) {
+			return fmt.Errorf("reserve_percent_by_auth_id[%q] must be at least 0 and less than 100", authID)
+		}
+		reserves[key] = reserve
+	}
+	cfg.ReserveByAuthID = reserves
+	if cfg.ReservePercent < 0 || cfg.ReservePercent >= 100 || math.IsNaN(cfg.ReservePercent) {
+		return errors.New("reserve_percent must be at least 0 and less than 100")
 	}
 	if cfg.StatePath == "" {
 		return errors.New("state_path is required")
 	}
 	if cfg.PollIntervalSeconds <= 0 {
 		return errors.New("poll_interval_seconds must be greater than 0")
+	}
+	if cfg.ErrorRetryIntervalSeconds <= 0 {
+		return errors.New("error_retry_interval_seconds must be greater than 0")
 	}
 	if cfg.RequestTimeoutSeconds <= 0 {
 		return errors.New("request_timeout_seconds must be greater than 0")
@@ -394,24 +454,58 @@ func loadPersistedState(path string, now time.Time) (map[string]quotaStatus, err
 		return nil, fmt.Errorf("read quota state: %w", errRead)
 	}
 
-	var persisted persistedState
-	if errUnmarshal := json.Unmarshal(raw, &persisted); errUnmarshal != nil {
+	var header struct {
+		Version int `json:"version"`
+	}
+	if errUnmarshal := json.Unmarshal(raw, &header); errUnmarshal != nil {
 		return nil, fmt.Errorf("decode quota state: %w", errUnmarshal)
 	}
-	if persisted.Version != 1 {
-		return nil, fmt.Errorf("unsupported quota state version %d", persisted.Version)
-	}
-	for id, state := range persisted.Accounts {
-		id = strings.TrimSpace(id)
-		if id == "" || !isTargetProvider(state.Provider) || !state.ResetAt.After(now) {
-			continue
+	switch header.Version {
+	case 1:
+		var persisted persistedStateV1
+		if errUnmarshal := json.Unmarshal(raw, &persisted); errUnmarshal != nil {
+			return nil, fmt.Errorf("decode quota state version 1: %w", errUnmarshal)
 		}
-		statuses[id] = quotaStatus{
-			Known:      true,
-			Applicable: true,
-			State:      state,
-			CheckedAt:  state.UpdatedAt,
+		for id, state := range persisted.Accounts {
+			id = strings.TrimSpace(id)
+			if id == "" || !isTargetProvider(state.Provider) || !state.ResetAt.After(now) {
+				continue
+			}
+			statuses[id] = quotaStatus{Known: true, Applicable: true, State: state, CheckedAt: state.UpdatedAt}
 		}
+	case 2:
+		var persisted persistedState
+		if errUnmarshal := json.Unmarshal(raw, &persisted); errUnmarshal != nil {
+			return nil, fmt.Errorf("decode quota state version 2: %w", errUnmarshal)
+		}
+		for id, persistedStatus := range persisted.Accounts {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			status := quotaStatus{
+				Known:      persistedStatus.Known,
+				Applicable: persistedStatus.Applicable,
+				State:      persistedStatus.State,
+				CheckedAt:  persistedStatus.CheckedAt,
+				RetryAt:    persistedStatus.RetryAt,
+				Err:        persistedStatus.Err,
+			}
+			if !status.RetryAt.After(now) {
+				status.RetryAt = time.Time{}
+				status.Err = ""
+			}
+			if status.Known && !observationStillValid(status, now) {
+				status.Known = false
+				status.Applicable = false
+				status.State = accountState{}
+			}
+			if status.Known || status.RetryAt.After(now) {
+				statuses[id] = status
+			}
+		}
+	default:
+		return nil, fmt.Errorf("unsupported quota state version %d", header.Version)
 	}
 	return statuses, nil
 }
@@ -430,12 +524,12 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	threshold := 100 - l.config.ReservePercent
 	blocked := 0
 	unknown := 0
 	eligible := make([]schedulerAuthCandidate, 0, len(req.Candidates))
 	for _, candidate := range req.Candidates {
-		if !isTargetProvider(candidate.Provider) {
+		reserve := l.config.reserveFor(candidate.ID)
+		if !isTargetProvider(candidate.Provider) || reserve <= 0 {
 			eligible = append(eligible, candidate)
 			continue
 		}
@@ -448,7 +542,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 			eligible = append(eligible, candidate)
 			continue
 		}
-		if status.Applicable && status.State.UtilizedPercent >= threshold {
+		if status.Applicable && status.State.UtilizedPercent >= 100-reserve {
 			blocked++
 			continue
 		}
@@ -468,7 +562,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 		}
 		return statusErrorEnvelope(
 			"quota_reserved",
-			fmt.Sprintf("all %d eligible accounts reached the %.1f%% five-hour usage ceiling", blocked, threshold),
+			fmt.Sprintf("all %d eligible accounts reached their five-hour usage ceiling", blocked),
 			http.StatusTooManyRequests,
 			true,
 		), nil
@@ -485,14 +579,13 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 	now := l.now()
 	l.mu.Lock()
 	cfg := l.config
-	before := blockedStates(l.statuses, 100-cfg.ReservePercent, now)
 	stale := make([]schedulerAuthCandidate, 0, len(candidates))
 	for _, candidate := range candidates {
-		if !isTargetProvider(candidate.Provider) {
+		if !isTargetProvider(candidate.Provider) || cfg.reserveFor(candidate.ID) <= 0 {
 			continue
 		}
 		status, exists := l.statuses[candidate.ID]
-		if !exists || now.Sub(status.CheckedAt) >= time.Duration(cfg.PollIntervalSeconds)*time.Second {
+		if shouldRefresh(status, exists, cfg, candidate.ID, now) {
 			stale = append(stale, candidate)
 		}
 	}
@@ -502,6 +595,12 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 	}
 
 	credentials := l.loadCredentials(stale)
+	previous := make(map[string]quotaStatus, len(stale))
+	l.mu.Lock()
+	for _, candidate := range stale {
+		previous[candidate.ID] = l.statuses[candidate.ID]
+	}
+	l.mu.Unlock()
 	results := make(map[string]quotaStatus, len(stale))
 	var resultsMu sync.Mutex
 	var wait sync.WaitGroup
@@ -535,6 +634,14 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 					}
 				}
 			}
+			if status.Err != "" {
+				status.RetryAt = now.Add(time.Duration(cfg.ErrorRetryIntervalSeconds) * time.Second)
+				if cached := previous[candidate.ID]; observationStillValid(cached, now) {
+					status.Known = cached.Known
+					status.Applicable = cached.Applicable
+					status.State = cached.State
+				}
+			}
 			resultsMu.Lock()
 			results[candidate.ID] = status
 			resultsMu.Unlock()
@@ -546,35 +653,44 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 	for id, status := range results {
 		l.statuses[id] = status
 	}
-	after := blockedStates(l.statuses, 100-l.config.ReservePercent, now)
-	stateChanged := !sameBlockedStates(before, after)
 	l.mu.Unlock()
-	if stateChanged {
-		_ = l.persist()
-	}
+	_ = l.persist()
 }
 
-func blockedStates(statuses map[string]quotaStatus, threshold float64, now time.Time) map[string]accountState {
+func shouldRefresh(status quotaStatus, exists bool, cfg pluginConfig, authID string, now time.Time) bool {
+	if !exists {
+		return true
+	}
+	if !status.RetryAt.IsZero() {
+		return !now.Before(status.RetryAt)
+	}
+	reserve := cfg.reserveFor(authID)
+	if accountReserved(status, reserve, now) {
+		return !now.Before(status.State.ResetAt)
+	}
+	return now.Sub(status.CheckedAt) >= time.Duration(cfg.PollIntervalSeconds)*time.Second
+}
+
+func observationStillValid(status quotaStatus, now time.Time) bool {
+	return status.Known && (!status.Applicable || status.State.ResetAt.IsZero() || status.State.ResetAt.After(now))
+}
+
+func accountReserved(status quotaStatus, reserve float64, now time.Time) bool {
+	return reserve > 0 && status.Known && status.Applicable && status.State.UtilizedPercent >= 100-reserve && (status.State.ResetAt.IsZero() || status.State.ResetAt.After(now))
+}
+
+func blockedStates(statuses map[string]quotaStatus, cfg pluginConfig, now time.Time) map[string]accountState {
 	blocked := make(map[string]accountState)
 	for id, status := range statuses {
-		if status.Known && status.Applicable && status.State.UtilizedPercent >= threshold && status.State.ResetAt.After(now) {
+		reserve := cfg.reserveFor(id)
+		if reserve <= 0 {
+			continue
+		}
+		if accountReserved(status, reserve, now) {
 			blocked[id] = status.State
 		}
 	}
 	return blocked
-}
-
-func sameBlockedStates(left, right map[string]accountState) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for id, leftState := range left {
-		rightState, exists := right[id]
-		if !exists || normalizeProvider(leftState.Provider) != normalizeProvider(rightState.Provider) || !leftState.ResetAt.Equal(rightState.ResetAt) {
-			return false
-		}
-	}
-	return true
 }
 
 func requestTargetsLimitedProvider(req schedulerPickRequest) bool {
@@ -911,8 +1027,21 @@ func (l *quotaLimiter) persist() error {
 }
 
 func (l *quotaLimiter) persistLocked(now time.Time) error {
-	accounts := blockedStates(l.statuses, 100-l.config.ReservePercent, now)
-	persisted := persistedState{Version: 1, Accounts: accounts}
+	accounts := make(map[string]persistedQuotaStatus, len(l.statuses))
+	for id, status := range l.statuses {
+		if !status.Known && !status.RetryAt.After(now) {
+			continue
+		}
+		accounts[id] = persistedQuotaStatus{
+			Known:      status.Known,
+			Applicable: status.Applicable,
+			State:      status.State,
+			CheckedAt:  status.CheckedAt,
+			RetryAt:    status.RetryAt,
+			Err:        status.Err,
+		}
+	}
+	persisted := persistedState{Version: 2, Accounts: accounts}
 	raw, errMarshal := json.MarshalIndent(persisted, "", "  ")
 	if errMarshal != nil {
 		return fmt.Errorf("encode quota state: %w", errMarshal)

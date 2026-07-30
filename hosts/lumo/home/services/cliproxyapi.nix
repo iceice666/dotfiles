@@ -15,6 +15,7 @@ let
   homonetApiKeyPath = config.sops.secrets.cliproxyapi-homonet-api-key.path;
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
   sharedApiKeyPath = config.sops.secrets.cliproxyapi-shared-api-key.path;
+  accountQuotaReservesPath = config.sops.secrets.cliproxyapi-account-quota-reserves.path;
 
   # CLIProxyAPI is a prebuilt glibc binary; lumo is Alpine (musl).
   # Run through the Nix glibc loader so shared libraries resolve.
@@ -68,6 +69,15 @@ in
     mode = "0400";
   };
 
+  # Per-account five-hour quota reserves, keyed by upstream OAuth auth file
+  # name. Kept out of the repo because the keys are account email addresses.
+  # Edit with: just secret-edit sensitive/hosts/lumo/account-quota.yaml
+  sops.secrets.cliproxyapi-account-quota-reserves = {
+    sopsFile = dotfiles + /sensitive/hosts/lumo/account-quota.yaml;
+    key = "reserves";
+    mode = "0400";
+  };
+
   home.activation.lumoCliproxyapi = lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" ] ''
         if ! /usr/bin/getent group cliproxyapi >/dev/null; then
           /usr/sbin/addgroup -S cliproxyapi
@@ -86,6 +96,9 @@ in
         homonet_api_key="$(cat '${homonetApiKeyPath}')"
         management_key="$(cat '${managementKeyPath}')"
         shared_api_key="$(cat '${sharedApiKeyPath}')"
+        # Re-indent the decrypted "<auth-file-name>: <percent>" lines to the
+        # nesting depth of reserve_percent_by_auth_id in the generated config.
+        account_quota_reserves="$(${pkgs.gnused}/bin/sed -e '/^[[:space:]]*$/d' -e 's/^[[:space:]]*/        /' '${accountQuotaReservesPath}')"
 
         cat > ${configPath} << EOF
     host: "0.0.0.0"
@@ -116,9 +129,14 @@ in
         account-quota:
           enabled: true
           priority: 100
-          reserve_percent: 20
+          # Codex accounts stay unreserved; the reserved Claude OAuth accounts
+          # come from sops so their email-derived IDs stay out of the repo.
+          reserve_percent: 0
+          reserve_percent_by_auth_id:
+    $account_quota_reserves
           state_path: "${dataDir}/account-quota-state.json"
-          poll_interval_seconds: 30
+          poll_interval_seconds: 900
+          error_retry_interval_seconds: 3600
           request_timeout_seconds: 5
           fail_closed: true
 
