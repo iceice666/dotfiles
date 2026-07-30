@@ -1,7 +1,6 @@
 {
   config,
   dotfiles,
-  homolab,
   lib,
   pkgs,
   ...
@@ -44,15 +43,6 @@ in
       source = apiKeyHelper;
       force = true;
     };
-  };
-
-  home.sessionVariables = {
-    ANTHROPIC_BASE_URL = homolab.urls.cliproxyapi;
-    ANTHROPIC_DEFAULT_FABLE_MODEL = "claude-fable-5";
-    ANTHROPIC_DEFAULT_OPUS_MODEL = "claude-opus-5";
-    ANTHROPIC_DEFAULT_SONNET_MODEL = "claude-sonnet-5";
-    ANTHROPIC_DEFAULT_HAIKU_MODEL = "claude-haiku-4-5-20251001";
-    CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1";
   };
 
   # Ensure statusline.sh is executable in the dotfiles source.

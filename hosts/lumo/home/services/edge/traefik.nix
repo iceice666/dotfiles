@@ -193,10 +193,13 @@ let
         service = "noop@internal";
       };
 
-      # /v1/* — public API, clients authenticate with their own API key
+      # /v1/* — public API, clients authenticate with their own API key.
+      # Explicit priority (matches umami-api) so this always wins over the
+      # broader Authelia-gated `cliproxyapi` dashboard router below.
       cliproxyapi-api = {
         rule = mkHostPathRule homolab.domains.cliproxyapi "PathPrefix(`/v1`)";
         entryPoints = [ "websecure" ];
+        priority = 1000;
         service = "cliproxyapi";
         tls.certResolver = "letsencrypt";
       };
