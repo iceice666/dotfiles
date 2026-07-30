@@ -401,10 +401,20 @@ just secret-edit sensitive/hosts/m3air/forgejo.yaml
 
 Never commit plaintext secrets. Keep secret material in `sensitive/shared/` encrypted with `sops`.
 
+`m3air` and `framework` are both admin recipients in `.sops.yaml`: every
+creation rule lists both, so any secret is readable and editable from either
+workstation. Server secrets also carry the owning host key (`lumo`, `worker`,
+`homolab`, `homolab-home`) so activation can decrypt them locally. On
+`framework` the age identity is derived from `~/.ssh/id_ed25519` through
+`SOPS_AGE_KEY_CMD` (`common/home-base/default.nix`); no separate
+`keys.txt` is required.
+
 Homolab secrets live under `sensitive/hosts/homolab/` (system secrets) and
-`sensitive/hosts/homolab/home/` (per-user secrets). They are encrypted to both
-the homolab age key *and* `m3air`, so they can be edited from `m3air` while the
-server can still decrypt them at activation. Service modules under
+`sensitive/hosts/homolab/home/` (per-user secrets). Their `.sops.yaml` rules
+still list `m3air` plus the homolab keys only — the encrypted files were not
+re-keyed for `framework`, so re-key them with
+`just secret-refresh sensitive/hosts/homolab` from `m3air` or the homolab
+itself before expecting framework access. Service modules under
 `hosts/homolab/configuration/sensitive/*.nix` and `hosts/homolab/services/**`
 reference these via `dotfiles + /sensitive/hosts/homolab/<file>`.
 
