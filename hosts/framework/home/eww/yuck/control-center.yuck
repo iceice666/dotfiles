@@ -44,7 +44,9 @@
         (cc-toggle :icon "@iconBluetooth@" :label "Bluetooth" :state {cc_bt} :cmd "@ccCtl@ toggle bt" :rightcmd "@ccCmd@ open-bluetooth"))
       (box :space-evenly true :spacing 8
         (cc-toggle :icon "@notificationIcon@" :label "Silence" :state {cc_dnd} :cmd "@ccCtl@ toggle dnd" :rightcmd "@ccCtl@ toggle dnd")
-        (cc-toggle :icon "@iconDarkMode@" :label "Dark" :state {cc_dark} :cmd "@ccCtl@ toggle dark" :rightcmd "@ccCtl@ toggle dark")))
+        (cc-toggle :icon "@iconDarkMode@" :label "Dark" :state {cc_dark} :cmd "@ccCtl@ toggle dark" :rightcmd "@ccCtl@ toggle dark"))
+      (box :space-evenly true :spacing 8
+        (cc-toggle :icon "@iconLidSleep@" :label "Lid Sleep" :state {cc_lid} :cmd "@ccCtl@ toggle lid" :rightcmd "@ccCtl@ toggle lid")))
     (box :class "cc-section sliders" :orientation "v" :space-evenly false :spacing 8
       (box :class "cc-slider-row" :space-evenly false :spacing 10
         (button :class {audio_speaker_class} :tooltip "Sound" :onclick "${EWW_CMD} update cc_view=sound" :onrightclick "@openPavucontrol@"

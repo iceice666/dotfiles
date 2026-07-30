@@ -86,6 +86,9 @@ let
     suspend = pkgs.writeText "eww-suspend.svg" ''
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
     '';
+    lidSleep = pkgs.writeText "eww-lid-sleep.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M5 4h14a1 1 0 0 1 1 1v10H4V5a1 1 0 0 1 1-1zm-3 13h20l-1.2 3.2a1 1 0 0 1-.94.8H4.14a1 1 0 0 1-.94-.8z"/></svg>
+    '';
   };
 
   stateBinary = lib.getExe pkgs.framework-eww-state;
@@ -139,6 +142,14 @@ let
     makoctl=${unstablePkgs.mako}/bin/makoctl
     darkman=${pkgs.darkman}/bin/darkman
     grep=${pkgs.gnugrep}/bin/grep
+    systemdInhibit=${pkgs.systemd}/bin/systemd-inhibit
+    sleepBin=${pkgs.coreutils}/bin/sleep
+    setsid=${pkgs.util-linux}/bin/setsid
+    lidPidFile="''${XDG_RUNTIME_DIR:-/tmp}/framework-cc-lid-inhibit.pid"
+
+    lid_inhibited() {
+      [ -f "$lidPidFile" ] && kill -0 "$(cat "$lidPidFile" 2>/dev/null)" 2>/dev/null
+    }
 
     state() {
       case "$1" in
@@ -146,6 +157,7 @@ let
         bt) "$bluetoothctl" show 2>/dev/null | "$grep" -q "Powered: yes" && echo on || echo off ;;
         dnd) "$makoctl" mode 2>/dev/null | "$grep" -q "do-not-disturb" && echo on || echo off ;;
         dark) [ "$("$darkman" get 2>/dev/null)" = dark ] && echo on || echo off ;;
+        lid) lid_inhibited && echo off || echo on ;;
         *) echo off ;;
       esac
     }
@@ -156,6 +168,16 @@ let
         bt) if [ "$(state bt)" = on ]; then "$bluetoothctl" power off; else "$bluetoothctl" power on; fi ;;
         dnd) "$makoctl" mode -t do-not-disturb ;;
         dark) "$darkman" toggle ;;
+        lid)
+          if lid_inhibited; then
+            pid=$(cat "$lidPidFile")
+            kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+            rm -f "$lidPidFile"
+          else
+            "$setsid" "$systemdInhibit" --what=handle-lid-switch --who="framework-cc" --why="Lid sleep/hibernate disabled via quick toggle" --mode=block "$sleepBin" infinity &
+            echo $! > "$lidPidFile"
+          fi
+          ;;
       esac
     }
 
@@ -289,6 +311,7 @@ let
         "@iconBluetooth@"
         "@iconClear@"
         "@iconDarkMode@"
+        "@iconLidSleep@"
         "@iconLock@"
         "@iconLogout@"
         "@iconReboot@"
@@ -325,6 +348,7 @@ let
         (toString icons.bluetooth)
         (toString icons.clear)
         (toString icons.darkMode)
+        (toString icons.lidSleep)
         (toString icons.lock)
         (toString icons.logout)
         (toString icons.reboot)
