@@ -69,8 +69,9 @@ in
     mode = "0400";
   };
 
-  # Per-account five-hour quota reserves, keyed by upstream OAuth auth file
-  # name. Kept out of the repo because the keys are account email addresses.
+  # Per-account quota reserves, keyed by upstream OAuth auth file name. Each
+  # percentage covers both the five-hour and the weekly window.
+  # Kept out of the repo because the keys are account email addresses.
   # Edit with: just secret-edit sensitive/hosts/lumo/account-quota.yaml
   sops.secrets.cliproxyapi-account-quota-reserves = {
     sopsFile = dotfiles + /sensitive/hosts/lumo/account-quota.yaml;
@@ -131,6 +132,11 @@ in
           priority: 100
           # Codex accounts stay unreserved; the reserved Claude OAuth accounts
           # come from sops so their email-derived IDs stay out of the repo.
+          # Each per-account percentage reserves that share of both the
+          # five-hour and the weekly window. To reserve a different share of
+          # the weekly window, add weekly_reserve_percent_by_auth_id — a
+          # per-account weekly override is the only setting that beats the
+          # per-account reserve below.
           reserve_percent: 0
           reserve_percent_by_auth_id:
     $account_quota_reserves

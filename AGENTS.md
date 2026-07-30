@@ -81,7 +81,7 @@ lib/                 # shared nix helpers and local flake framework
 
 pkgs/                # overlay packages
   blocky-bin/        # official prebuilt Blocky DNS proxy releases
-  cliproxyapi-account-quota/ # Go plugin reserving 20% of Codex/Claude five-hour quotas
+  cliproxyapi-account-quota/ # Go plugin reserving a share of Codex/Claude five-hour and weekly quotas
   cliproxyapi-bin/    # official prebuilt CLIProxyAPI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
@@ -384,7 +384,7 @@ trust boundary:
 - `hosts/homolab/configuration/networking.nix` — firewall, iptables, SSH exposure.
 - `lib/homolab.nix` — hostnames, ports, domains, IP ranges, and the `hosts` topology map. A change here ripples through every service on every host.
 - `hosts/homolab/services/ai/tea-asr-1-1-mini.nix` — the NVIDIA driver (`hardware.nvidia`, `hardware.graphics`), NVIDIA Container Toolkit CDI, rootful Docker, and the tailnet-only ASR port all live here now — it's the sole GPU consumer on homolab.
-- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler polls each Codex/Claude OAuth usage endpoint, caches observations for 30 seconds, and fails closed when it cannot verify the final 20% reserve per upstream `AuthID`; changes touch auth and routing.
+- `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler polls each Codex/Claude OAuth usage endpoint, caches observations for `poll_interval_seconds` (900), and fails closed when it cannot verify the reserve per upstream `AuthID`. A reserve withholds the account once *either* the five-hour or the weekly window reaches its ceiling; the per-account percentages in `sensitive/hosts/lumo/account-quota.yaml` cover both windows unless a `weekly_reserve_percent_by_auth_id` entry overrides the weekly one. Changes touch auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
 - `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.

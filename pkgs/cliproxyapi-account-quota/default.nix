@@ -5,7 +5,7 @@
 
 buildGoModule {
   pname = "cliproxyapi-account-quota";
-  version = "0.4.0";
+  version = "0.5.0";
 
   src = ./.;
 
@@ -28,7 +28,7 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Five-hour upstream account quota reserve plugin for CLIProxyAPI";
+    description = "Five-hour and weekly upstream account quota reserve plugin for CLIProxyAPI";
     homepage = "https://github.com/iceice666/dotfiles";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;

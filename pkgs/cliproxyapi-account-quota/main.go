@@ -76,8 +76,10 @@ import (
 const (
 	abiVersion                uint32 = 1
 	schemaVersion             uint32 = 1
-	pluginVersion                    = "0.4.0"
+	stateVersion                     = 3
+	pluginVersion                    = "0.5.0"
 	fiveHours                        = 5 * time.Hour
+	sevenDays                        = 7 * 24 * time.Hour
 	defaultReservePercent            = 20.0
 	defaultPollInterval              = 15 * time.Minute
 	defaultErrorRetryInterval        = time.Hour
@@ -116,6 +118,8 @@ type lifecycleRequest struct {
 type pluginConfig struct {
 	ReservePercent            float64            `yaml:"reserve_percent"`
 	ReserveByAuthID           map[string]float64 `yaml:"reserve_percent_by_auth_id"`
+	WeeklyReservePercent      *float64           `yaml:"weekly_reserve_percent"`
+	WeeklyReserveByAuthID     map[string]float64 `yaml:"weekly_reserve_percent_by_auth_id"`
 	StatePath                 string             `yaml:"state_path"`
 	PollIntervalSeconds       int                `yaml:"poll_interval_seconds"`
 	ErrorRetryIntervalSeconds int                `yaml:"error_retry_interval_seconds"`
@@ -123,14 +127,38 @@ type pluginConfig struct {
 	FailClosed                bool               `yaml:"fail_closed"`
 }
 
-// reserveFor resolves the reserved percentage for one upstream account. A
-// reserve of 0 leaves the account entirely unmanaged: it is never polled and
-// never withheld.
-func (c pluginConfig) reserveFor(authID string) float64 {
-	if reserve, exists := c.ReserveByAuthID[normalizeAuthID(authID)]; exists {
-		return reserve
+// accountReserves holds the percentage withheld from each upstream rolling
+// window for one account. A reserve of 0 leaves that window unmanaged.
+type accountReserves struct {
+	FiveHour float64
+	Weekly   float64
+}
+
+// managed reports whether any window is reserved. An unmanaged account is never
+// polled and never withheld.
+func (r accountReserves) managed() bool {
+	return r.FiveHour > 0 || r.Weekly > 0
+}
+
+// reservesFor resolves the reserved percentages for one upstream account,
+// most specific setting first: a per-account weekly override beats the
+// per-account reserve, which beats the global weekly reserve, which beats the
+// global reserve. The weekly window therefore inherits whatever the five-hour
+// window reserves unless something more specific overrides it.
+func (c pluginConfig) reservesFor(authID string) accountReserves {
+	key := normalizeAuthID(authID)
+	reserves := accountReserves{FiveHour: c.ReservePercent, Weekly: c.ReservePercent}
+	if c.WeeklyReservePercent != nil {
+		reserves.Weekly = *c.WeeklyReservePercent
 	}
-	return c.ReservePercent
+	if reserve, exists := c.ReserveByAuthID[key]; exists {
+		reserves.FiveHour = reserve
+		reserves.Weekly = reserve
+	}
+	if reserve, exists := c.WeeklyReserveByAuthID[key]; exists {
+		reserves.Weekly = reserve
+	}
+	return reserves
 }
 
 // normalizeAuthID accepts either the host auth file name or the same name
@@ -184,11 +212,20 @@ type schedulerPickResponse struct {
 	Handled         bool
 }
 
-type accountState struct {
-	Provider        string    `json:"provider"`
+// windowState is one upstream rolling quota window. Applicable is false when
+// the provider reports no such limit for the account, which is a definitive
+// answer rather than a missing observation.
+type windowState struct {
+	Applicable      bool      `json:"applicable"`
 	UtilizedPercent float64   `json:"utilized_percent"`
 	ResetAt         time.Time `json:"reset_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type accountState struct {
+	Provider  string      `json:"provider"`
+	FiveHour  windowState `json:"five_hour"`
+	Weekly    windowState `json:"weekly"`
+	UpdatedAt time.Time   `json:"updated_at"`
 }
 
 type persistedState struct {
@@ -196,27 +233,62 @@ type persistedState struct {
 	Accounts map[string]persistedQuotaStatus `json:"accounts"`
 }
 
-type persistedStateV1 struct {
-	Version  int                     `json:"version"`
-	Accounts map[string]accountState `json:"accounts"`
+type persistedQuotaStatus struct {
+	Known     bool         `json:"known,omitempty"`
+	State     accountState `json:"state"`
+	CheckedAt time.Time    `json:"checked_at,omitempty"`
+	RetryAt   time.Time    `json:"retry_at,omitempty"`
+	Err       string       `json:"error,omitempty"`
 }
 
-type persistedQuotaStatus struct {
-	Known      bool         `json:"known,omitempty"`
-	Applicable bool         `json:"applicable,omitempty"`
-	State      accountState `json:"state,omitempty"`
-	CheckedAt  time.Time    `json:"checked_at,omitempty"`
-	RetryAt    time.Time    `json:"retry_at,omitempty"`
-	Err        string       `json:"error,omitempty"`
+// accountStateV1 is the single-window account state written by plugin versions
+// before weekly windows existed. Its scalars describe the five-hour window.
+type accountStateV1 struct {
+	Provider        string    `json:"provider"`
+	UtilizedPercent float64   `json:"utilized_percent"`
+	ResetAt         time.Time `json:"reset_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type persistedStateV1 struct {
+	Version  int                       `json:"version"`
+	Accounts map[string]accountStateV1 `json:"accounts"`
+}
+
+type persistedStateV2 struct {
+	Version  int                               `json:"version"`
+	Accounts map[string]persistedQuotaStatusV2 `json:"accounts"`
+}
+
+type persistedQuotaStatusV2 struct {
+	Known      bool           `json:"known,omitempty"`
+	Applicable bool           `json:"applicable,omitempty"`
+	State      accountStateV1 `json:"state,omitempty"`
+	CheckedAt  time.Time      `json:"checked_at,omitempty"`
+	RetryAt    time.Time      `json:"retry_at,omitempty"`
+	Err        string         `json:"error,omitempty"`
+}
+
+// migrateV1State lifts a pre-weekly observation into the windowed layout. The
+// weekly window stays inapplicable until the next upstream poll fills it in.
+func migrateV1State(state accountStateV1, applicable bool) accountState {
+	return accountState{
+		Provider: state.Provider,
+		FiveHour: windowState{
+			Applicable:      applicable,
+			UtilizedPercent: state.UtilizedPercent,
+			ResetAt:         state.ResetAt,
+		},
+		UpdatedAt: state.UpdatedAt,
+	}
 }
 
 type quotaStatus struct {
-	Known      bool
-	Applicable bool
-	State      accountState
-	CheckedAt  time.Time
-	RetryAt    time.Time
-	Err        string
+	Known     bool
+	State     accountState
+	CheckedAt time.Time
+	RetryAt   time.Time
+	Err       string
 }
 
 type authCredential struct {
@@ -230,9 +302,8 @@ type credentialResult struct {
 }
 
 type quotaObservation struct {
-	Applicable      bool
-	UtilizedPercent float64
-	ResetAt         time.Time
+	FiveHour windowState
+	Weekly   windowState
 }
 
 type credentialLoader func([]schedulerAuthCandidate) map[string]credentialResult
@@ -350,12 +421,22 @@ func pluginRegistration() registration {
 				{
 					Name:        "reserve_percent",
 					Type:        "number",
-					Description: "Default percentage of each Codex or Claude five-hour quota reserved from proxy traffic. 0 disables the reserve.",
+					Description: "Default percentage of each Codex or Claude rolling quota window reserved from proxy traffic. Applies to both the five-hour and the weekly window. 0 disables the reserve.",
 				},
 				{
 					Name:        "reserve_percent_by_auth_id",
 					Type:        "object",
-					Description: "Per-account reserve overrides keyed by auth file name, with or without the .json suffix.",
+					Description: "Per-account reserve overrides keyed by auth file name, with or without the .json suffix. Each override covers both windows and takes precedence over weekly_reserve_percent.",
+				},
+				{
+					Name:        "weekly_reserve_percent",
+					Type:        "number",
+					Description: "Percentage of the weekly quota window reserved from proxy traffic. Defaults to reserve_percent. Accounts listed in reserve_percent_by_auth_id ignore this value; give them a weekly_reserve_percent_by_auth_id entry instead. Accounts whose provider reports no weekly limit are unaffected.",
+				},
+				{
+					Name:        "weekly_reserve_percent_by_auth_id",
+					Type:        "object",
+					Description: "Per-account weekly reserve overrides keyed by auth file name. Takes precedence over every other reserve setting.",
 				},
 				{
 					Name:        "state_path",
@@ -403,20 +484,23 @@ func (l *quotaLimiter) configure(raw []byte) error {
 		}
 	}
 	cfg.StatePath = strings.TrimSpace(cfg.StatePath)
-	reserves := make(map[string]float64, len(cfg.ReserveByAuthID))
-	for authID, reserve := range cfg.ReserveByAuthID {
-		key := normalizeAuthID(authID)
-		if key == "" {
-			return errors.New("reserve_percent_by_auth_id keys must not be empty")
-		}
-		if reserve < 0 || reserve >= 100 || math.IsNaN(reserve) {
-			return fmt.Errorf("reserve_percent_by_auth_id[%q] must be at least 0 and less than 100", authID)
-		}
-		reserves[key] = reserve
+	reserves, errReserves := normalizeReserveOverrides("reserve_percent_by_auth_id", cfg.ReserveByAuthID)
+	if errReserves != nil {
+		return errReserves
 	}
 	cfg.ReserveByAuthID = reserves
-	if cfg.ReservePercent < 0 || cfg.ReservePercent >= 100 || math.IsNaN(cfg.ReservePercent) {
-		return errors.New("reserve_percent must be at least 0 and less than 100")
+	weeklyReserves, errWeekly := normalizeReserveOverrides("weekly_reserve_percent_by_auth_id", cfg.WeeklyReserveByAuthID)
+	if errWeekly != nil {
+		return errWeekly
+	}
+	cfg.WeeklyReserveByAuthID = weeklyReserves
+	if errValidate := validateReservePercent("reserve_percent", cfg.ReservePercent); errValidate != nil {
+		return errValidate
+	}
+	if cfg.WeeklyReservePercent != nil {
+		if errValidate := validateReservePercent("weekly_reserve_percent", *cfg.WeeklyReservePercent); errValidate != nil {
+			return errValidate
+		}
 	}
 	if cfg.StatePath == "" {
 		return errors.New("state_path is required")
@@ -441,6 +525,28 @@ func (l *quotaLimiter) configure(raw []byte) error {
 	l.statuses = statuses
 	l.cursor = make(map[string]int)
 	l.mu.Unlock()
+	return nil
+}
+
+func normalizeReserveOverrides(field string, overrides map[string]float64) (map[string]float64, error) {
+	normalized := make(map[string]float64, len(overrides))
+	for authID, reserve := range overrides {
+		key := normalizeAuthID(authID)
+		if key == "" {
+			return nil, fmt.Errorf("%s keys must not be empty", field)
+		}
+		if errValidate := validateReservePercent(fmt.Sprintf("%s[%q]", field, authID), reserve); errValidate != nil {
+			return nil, errValidate
+		}
+		normalized[key] = reserve
+	}
+	return normalized, nil
+}
+
+func validateReservePercent(field string, reserve float64) error {
+	if reserve < 0 || reserve >= 100 || math.IsNaN(reserve) {
+		return fmt.Errorf("%s must be at least 0 and less than 100", field)
+	}
 	return nil
 }
 
@@ -471,10 +577,14 @@ func loadPersistedState(path string, now time.Time) (map[string]quotaStatus, err
 			if id == "" || !isTargetProvider(state.Provider) || !state.ResetAt.After(now) {
 				continue
 			}
-			statuses[id] = quotaStatus{Known: true, Applicable: true, State: state, CheckedAt: state.UpdatedAt}
+			statuses[id] = quotaStatus{
+				Known:     true,
+				State:     migrateV1State(state, true),
+				CheckedAt: state.UpdatedAt,
+			}
 		}
 	case 2:
-		var persisted persistedState
+		var persisted persistedStateV2
 		if errUnmarshal := json.Unmarshal(raw, &persisted); errUnmarshal != nil {
 			return nil, fmt.Errorf("decode quota state version 2: %w", errUnmarshal)
 		}
@@ -484,30 +594,55 @@ func loadPersistedState(path string, now time.Time) (map[string]quotaStatus, err
 				continue
 			}
 			status := quotaStatus{
-				Known:      persistedStatus.Known,
-				Applicable: persistedStatus.Applicable,
-				State:      persistedStatus.State,
-				CheckedAt:  persistedStatus.CheckedAt,
-				RetryAt:    persistedStatus.RetryAt,
-				Err:        persistedStatus.Err,
+				Known:     persistedStatus.Known,
+				State:     migrateV1State(persistedStatus.State, persistedStatus.Applicable),
+				CheckedAt: persistedStatus.CheckedAt,
+				RetryAt:   persistedStatus.RetryAt,
+				Err:       persistedStatus.Err,
 			}
-			if !status.RetryAt.After(now) {
-				status.RetryAt = time.Time{}
-				status.Err = ""
+			if retained, keep := retainLoadedStatus(status, now); keep {
+				statuses[id] = retained
 			}
-			if status.Known && !observationStillValid(status, now) {
-				status.Known = false
-				status.Applicable = false
-				status.State = accountState{}
+		}
+	case stateVersion:
+		var persisted persistedState
+		if errUnmarshal := json.Unmarshal(raw, &persisted); errUnmarshal != nil {
+			return nil, fmt.Errorf("decode quota state version %d: %w", stateVersion, errUnmarshal)
+		}
+		for id, persistedStatus := range persisted.Accounts {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
 			}
-			if status.Known || status.RetryAt.After(now) {
-				statuses[id] = status
+			status := quotaStatus{
+				Known:     persistedStatus.Known,
+				State:     persistedStatus.State,
+				CheckedAt: persistedStatus.CheckedAt,
+				RetryAt:   persistedStatus.RetryAt,
+				Err:       persistedStatus.Err,
+			}
+			if retained, keep := retainLoadedStatus(status, now); keep {
+				statuses[id] = retained
 			}
 		}
 	default:
 		return nil, fmt.Errorf("unsupported quota state version %d", header.Version)
 	}
 	return statuses, nil
+}
+
+// retainLoadedStatus drops the parts of a persisted status that expired while
+// the plugin was down, and reports whether anything worth keeping is left.
+func retainLoadedStatus(status quotaStatus, now time.Time) (quotaStatus, bool) {
+	if !status.RetryAt.After(now) {
+		status.RetryAt = time.Time{}
+		status.Err = ""
+	}
+	if status.Known && !observationStillValid(status, now) {
+		status.Known = false
+		status.State = accountState{}
+	}
+	return status, status.Known || status.RetryAt.After(now)
 }
 
 func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
@@ -521,6 +656,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 
 	l.refreshCandidates(req.Candidates)
 
+	now := l.now()
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -528,8 +664,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 	unknown := 0
 	eligible := make([]schedulerAuthCandidate, 0, len(req.Candidates))
 	for _, candidate := range req.Candidates {
-		reserve := l.config.reserveFor(candidate.ID)
-		if !isTargetProvider(candidate.Provider) || reserve <= 0 {
+		if !isManagedCandidate(candidate, l.config) {
 			eligible = append(eligible, candidate)
 			continue
 		}
@@ -542,7 +677,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 			eligible = append(eligible, candidate)
 			continue
 		}
-		if status.Applicable && status.State.UtilizedPercent >= 100-reserve {
+		if accountReserved(status, l.config.reservesFor(candidate.ID), now) {
 			blocked++
 			continue
 		}
@@ -562,7 +697,7 @@ func (l *quotaLimiter) pick(raw []byte) ([]byte, error) {
 		}
 		return statusErrorEnvelope(
 			"quota_reserved",
-			fmt.Sprintf("all %d eligible accounts reached their five-hour usage ceiling", blocked),
+			fmt.Sprintf("all %d eligible accounts reached a reserved usage ceiling", blocked),
 			http.StatusTooManyRequests,
 			true,
 		), nil
@@ -581,7 +716,7 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 	cfg := l.config
 	stale := make([]schedulerAuthCandidate, 0, len(candidates))
 	for _, candidate := range candidates {
-		if !isTargetProvider(candidate.Provider) || cfg.reserveFor(candidate.ID) <= 0 {
+		if !isManagedCandidate(candidate, cfg) {
 			continue
 		}
 		status, exists := l.statuses[candidate.ID]
@@ -625,12 +760,11 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 					status.Err = errFetch.Error()
 				} else {
 					status.Known = true
-					status.Applicable = observation.Applicable
 					status.State = accountState{
-						Provider:        normalizeProvider(candidate.Provider),
-						UtilizedPercent: observation.UtilizedPercent,
-						ResetAt:         observation.ResetAt,
-						UpdatedAt:       now,
+						Provider:  normalizeProvider(candidate.Provider),
+						FiveHour:  observation.FiveHour,
+						Weekly:    observation.Weekly,
+						UpdatedAt: now,
 					}
 				}
 			}
@@ -638,7 +772,6 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 				status.RetryAt = now.Add(time.Duration(cfg.ErrorRetryIntervalSeconds) * time.Second)
 				if cached := previous[candidate.ID]; observationStillValid(cached, now) {
 					status.Known = cached.Known
-					status.Applicable = cached.Applicable
 					status.State = cached.State
 				}
 			}
@@ -657,6 +790,13 @@ func (l *quotaLimiter) refreshCandidates(candidates []schedulerAuthCandidate) {
 	_ = l.persist()
 }
 
+// isManagedCandidate reports whether the plugin polls and gates this candidate
+// at all. pick and refreshCandidates must agree, or an account would be
+// withheld on an observation the refresh loop never takes.
+func isManagedCandidate(candidate schedulerAuthCandidate, cfg pluginConfig) bool {
+	return isTargetProvider(candidate.Provider) && cfg.reservesFor(candidate.ID).managed()
+}
+
 func shouldRefresh(status quotaStatus, exists bool, cfg pluginConfig, authID string, now time.Time) bool {
 	if !exists {
 		return true
@@ -664,33 +804,92 @@ func shouldRefresh(status quotaStatus, exists bool, cfg pluginConfig, authID str
 	if !status.RetryAt.IsZero() {
 		return !now.Before(status.RetryAt)
 	}
-	reserve := cfg.reserveFor(authID)
-	if accountReserved(status, reserve, now) {
-		return !now.Before(status.State.ResetAt)
+	// Once any observed window has rolled over the whole observation is stale,
+	// even if another window still withholds the account: the plugin would
+	// otherwise keep a figure it can no longer vouch for, and discard it on the
+	// next restart or failed refresh.
+	if status.Known && !observationStillValid(status, now) {
+		return true
+	}
+	// A reserved account cannot become eligible before the window that
+	// reserved it rolls over, so wait for that instead of polling every
+	// interval. With both windows reserved that is the earlier of the two
+	// resets: the five-hour window can free the account while the weekly one
+	// still holds it, and the plugin must observe that to keep the weekly block
+	// accurate. The wait is capped at five hours because upstream weekly
+	// utilization has been seen to fall before its advertised reset, and a
+	// weekly reset can otherwise be a week away. A reserved window with no
+	// reset time falls through to the ordinary poll interval.
+	if reset, reserved := earliestReservedReset(status, cfg.reservesFor(authID), now); reserved && !reset.IsZero() {
+		if capped := status.CheckedAt.Add(fiveHours); capped.Before(reset) {
+			reset = capped
+		}
+		return !now.Before(reset)
 	}
 	return now.Sub(status.CheckedAt) >= time.Duration(cfg.PollIntervalSeconds)*time.Second
 }
 
+// observationStillValid reports whether a cached observation can still stand in
+// for a fresh one. It expires once any applicable window has rolled over, since
+// the utilization recorded for that window no longer describes the account.
 func observationStillValid(status quotaStatus, now time.Time) bool {
-	return status.Known && (!status.Applicable || status.State.ResetAt.IsZero() || status.State.ResetAt.After(now))
-}
-
-func accountReserved(status quotaStatus, reserve float64, now time.Time) bool {
-	return reserve > 0 && status.Known && status.Applicable && status.State.UtilizedPercent >= 100-reserve && (status.State.ResetAt.IsZero() || status.State.ResetAt.After(now))
-}
-
-func blockedStates(statuses map[string]quotaStatus, cfg pluginConfig, now time.Time) map[string]accountState {
-	blocked := make(map[string]accountState)
-	for id, status := range statuses {
-		reserve := cfg.reserveFor(id)
-		if reserve <= 0 {
-			continue
-		}
-		if accountReserved(status, reserve, now) {
-			blocked[id] = status.State
+	if !status.Known {
+		return false
+	}
+	for _, window := range []windowState{status.State.FiveHour, status.State.Weekly} {
+		if window.Applicable && !window.ResetAt.IsZero() && !window.ResetAt.After(now) {
+			return false
 		}
 	}
-	return blocked
+	return true
+}
+
+// windowReserved reports whether one rolling window has consumed everything up
+// to its reserve. A window whose reset time has passed is treated as free: the
+// upstream counter has rolled over even though the plugin has not re-polled.
+func windowReserved(window windowState, reserve float64, now time.Time) bool {
+	return reserve > 0 &&
+		window.Applicable &&
+		window.UtilizedPercent >= 100-reserve &&
+		(window.ResetAt.IsZero() || window.ResetAt.After(now))
+}
+
+// accountReserved withholds an account when any reserved window is exhausted.
+// The windows are independent limits upstream, so the tighter one governs.
+func accountReserved(status quotaStatus, reserves accountReserves, now time.Time) bool {
+	if !status.Known {
+		return false
+	}
+	return windowReserved(status.State.FiveHour, reserves.FiveHour, now) ||
+		windowReserved(status.State.Weekly, reserves.Weekly, now)
+}
+
+// earliestReservedReset returns the soonest reset among the windows currently
+// withholding the account, and whether any window withholds it at all. A zero
+// reset time means a reserved window carries no upstream reset, so the caller
+// cannot wait on it.
+func earliestReservedReset(status quotaStatus, reserves accountReserves, now time.Time) (time.Time, bool) {
+	var earliest time.Time
+	reserved := false
+	for _, window := range []struct {
+		state   windowState
+		reserve float64
+	}{
+		{status.State.FiveHour, reserves.FiveHour},
+		{status.State.Weekly, reserves.Weekly},
+	} {
+		if !status.Known || !windowReserved(window.state, window.reserve, now) {
+			continue
+		}
+		reserved = true
+		if window.state.ResetAt.IsZero() {
+			return time.Time{}, true
+		}
+		if earliest.IsZero() || window.state.ResetAt.Before(earliest) {
+			earliest = window.state.ResetAt
+		}
+	}
+	return earliest, reserved
 }
 
 func requestTargetsLimitedProvider(req schedulerPickRequest) bool {
@@ -913,11 +1112,18 @@ func doUsageRequest(client *http.Client, req *http.Request) ([]byte, error) {
 	return body, nil
 }
 
+// claudeUsageResponse covers the account-wide windows only. The model-scoped
+// seven_day_opus and seven_day_sonnet limits are deliberately ignored: the
+// scheduler decides per account, so folding a model-scoped limit in here would
+// withhold an account from every model because one model is exhausted.
 type claudeUsageResponse struct {
-	FiveHour *struct {
-		Utilization float64 `json:"utilization"`
-		ResetsAt    string  `json:"resets_at"`
-	} `json:"five_hour"`
+	FiveHour *claudeUsageWindow `json:"five_hour"`
+	SevenDay *claudeUsageWindow `json:"seven_day"`
+}
+
+type claudeUsageWindow struct {
+	Utilization float64 `json:"utilization"`
+	ResetsAt    string  `json:"resets_at"`
 }
 
 func parseClaudeUsage(raw []byte) (quotaObservation, error) {
@@ -925,23 +1131,35 @@ func parseClaudeUsage(raw []byte) (quotaObservation, error) {
 	if errUnmarshal := json.Unmarshal(raw, &response); errUnmarshal != nil {
 		return quotaObservation{}, fmt.Errorf("decode Claude usage: %w", errUnmarshal)
 	}
-	if response.FiveHour == nil {
-		return quotaObservation{Applicable: false}, nil
+	fiveHour, errFiveHour := parseClaudeWindow(response.FiveHour, "five-hour")
+	if errFiveHour != nil {
+		return quotaObservation{}, errFiveHour
+	}
+	weekly, errWeekly := parseClaudeWindow(response.SevenDay, "weekly")
+	if errWeekly != nil {
+		return quotaObservation{}, errWeekly
+	}
+	return quotaObservation{FiveHour: fiveHour, Weekly: weekly}, nil
+}
+
+func parseClaudeWindow(window *claudeUsageWindow, label string) (windowState, error) {
+	if window == nil {
+		return windowState{}, nil
+	}
+	if errValidate := validateUtilization(window.Utilization); errValidate != nil {
+		return windowState{}, fmt.Errorf("decode Claude %s utilization: %w", label, errValidate)
 	}
 	var resetAt time.Time
-	if rawReset := strings.TrimSpace(response.FiveHour.ResetsAt); rawReset != "" {
+	if rawReset := strings.TrimSpace(window.ResetsAt); rawReset != "" {
 		parsed, errParse := time.Parse(time.RFC3339Nano, rawReset)
 		if errParse != nil {
-			return quotaObservation{}, fmt.Errorf("decode Claude five-hour reset: %w", errParse)
+			return windowState{}, fmt.Errorf("decode Claude %s reset: %w", label, errParse)
 		}
 		resetAt = parsed
 	}
-	if errValidate := validateUtilization(response.FiveHour.Utilization); errValidate != nil {
-		return quotaObservation{}, fmt.Errorf("decode Claude five-hour utilization: %w", errValidate)
-	}
-	return quotaObservation{
+	return windowState{
 		Applicable:      true,
-		UtilizedPercent: response.FiveHour.Utilization,
+		UtilizedPercent: window.Utilization,
 		ResetAt:         resetAt,
 	}, nil
 }
@@ -968,9 +1186,25 @@ func parseCodexUsage(raw []byte, now time.Time) (quotaObservation, error) {
 	if response.RateLimit == nil {
 		return quotaObservation{}, errors.New("Codex usage response has no rate_limit")
 	}
+	// Codex labels its windows primary and secondary rather than by duration,
+	// and which one is the five-hour window varies by account, so match on the
+	// advertised window length instead of the field name.
+	windows := []*codexUsageWindow{response.RateLimit.PrimaryWindow, response.RateLimit.SecondaryWindow}
+	fiveHour, errFiveHour := parseCodexWindow(windows, fiveHours, "five-hour", now)
+	if errFiveHour != nil {
+		return quotaObservation{}, errFiveHour
+	}
+	weekly, errWeekly := parseCodexWindow(windows, sevenDays, "weekly", now)
+	if errWeekly != nil {
+		return quotaObservation{}, errWeekly
+	}
+	return quotaObservation{FiveHour: fiveHour, Weekly: weekly}, nil
+}
+
+func parseCodexWindow(windows []*codexUsageWindow, length time.Duration, label string, now time.Time) (windowState, error) {
 	var selected *codexUsageWindow
-	for _, window := range []*codexUsageWindow{response.RateLimit.PrimaryWindow, response.RateLimit.SecondaryWindow} {
-		if window == nil || window.LimitWindowSeconds != int64(fiveHours/time.Second) {
+	for _, window := range windows {
+		if window == nil || window.LimitWindowSeconds != int64(length/time.Second) {
 			continue
 		}
 		if selected == nil || window.UsedPercent > selected.UsedPercent {
@@ -978,10 +1212,10 @@ func parseCodexUsage(raw []byte, now time.Time) (quotaObservation, error) {
 		}
 	}
 	if selected == nil {
-		return quotaObservation{Applicable: false}, nil
+		return windowState{}, nil
 	}
 	if errValidate := validateUtilization(selected.UsedPercent); errValidate != nil {
-		return quotaObservation{}, fmt.Errorf("decode Codex five-hour utilization: %w", errValidate)
+		return windowState{}, fmt.Errorf("decode Codex %s utilization: %w", label, errValidate)
 	}
 	var resetAt time.Time
 	if selected.ResetAt > 0 {
@@ -989,7 +1223,7 @@ func parseCodexUsage(raw []byte, now time.Time) (quotaObservation, error) {
 	} else if selected.ResetAfterSeconds > 0 {
 		resetAt = now.Add(time.Duration(selected.ResetAfterSeconds) * time.Second)
 	}
-	return quotaObservation{
+	return windowState{
 		Applicable:      true,
 		UtilizedPercent: selected.UsedPercent,
 		ResetAt:         resetAt,
@@ -1033,15 +1267,14 @@ func (l *quotaLimiter) persistLocked(now time.Time) error {
 			continue
 		}
 		accounts[id] = persistedQuotaStatus{
-			Known:      status.Known,
-			Applicable: status.Applicable,
-			State:      status.State,
-			CheckedAt:  status.CheckedAt,
-			RetryAt:    status.RetryAt,
-			Err:        status.Err,
+			Known:     status.Known,
+			State:     status.State,
+			CheckedAt: status.CheckedAt,
+			RetryAt:   status.RetryAt,
+			Err:       status.Err,
 		}
 	}
-	persisted := persistedState{Version: 2, Accounts: accounts}
+	persisted := persistedState{Version: stateVersion, Accounts: accounts}
 	raw, errMarshal := json.MarshalIndent(persisted, "", "  ")
 	if errMarshal != nil {
 		return fmt.Errorf("encode quota state: %w", errMarshal)
