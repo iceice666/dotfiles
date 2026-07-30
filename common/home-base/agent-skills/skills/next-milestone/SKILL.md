@@ -1,44 +1,49 @@
 ---
 name: next-milestone
-description: Implement the next uncompleted milestone from plans/, ROADMAP.md, or any progress file, then audit it with the bundled reviewer agent, apply the fixes it reports, re-run the project's build/test/lint/fmt stack, mark the milestone done, commit the finished work, and present only the final verified diff stat plus a findings table. Use when asked to advance a roadmap, knock out the next TODO/milestone, or "do the next item."
+description: Implement the next uncompleted milestone from plans/, ROADMAP.md, or any progress file, then audit it with a fresh reviewer pass, apply the fixes it reports, re-run the project's build/test/lint/fmt stack, mark the milestone done, commit the finished work, and present only the final verified diff stat plus a findings table. Use when asked to advance a roadmap, knock out the next TODO/milestone, or "do the next item."
 ---
 
 # next-milestone
 
 Implement the next uncompleted milestone, then review → fix → verify → mark done → commit → present a clean final diff.
 
-Invoke as `/skill:next-milestone` (interactive) or let the model pick it up by description. To run it across a whole roadmap in one shot, see **Iterating over many milestones** at the bottom.
+Invoke this skill directly, or let your agent pick it up by description. To run it across a whole roadmap in one shot, see **Iterating over many milestones** at the bottom.
+
+This skill is written to work with any coding agent — it never assumes a specific tool name. Wherever it says "search," "read," "edit," or "spawn a subagent," use whatever your environment's equivalent is.
+
+Check this skill's directory for a `workflows/<your-agent>.md` adapter (e.g. `workflows/omp.md`, `workflows/claude.md`). If one matches your agent, read it — it maps the generic language below onto your environment's concrete tools, which matters most for the two optional fan-out steps. If none exists, use your own judgment to map the steps onto whatever tools you have.
 
 ## Operating rules
 
-- Track every step with the `todo` tool so progress is visible and resumable.
+- Track progress through the phases below with whatever task-list mechanism your agent provides. If none is available, keep a short inline checklist of your own and update it as you go.
 - Don't surface intermediate output — only the final block in the last step.
-- Use native tools: `find` for file lookup, `read` for files, `search` for content. Never shell out to `find`/`ls`/`cat`/`grep`/`rg`.
-- Do **not** delegate the review to a hand-written prompt — use the bundled **`reviewer`** agent via the `task` tool. It reads the diff, reports issues through `report_finding`, and yields a structured verdict.
-- **Fan-out is optional and risk-gated.** Steps 1, 3, 5, 6, 7 stay single-author and sequential — never parallelize them. Only **Step 2** (broad milestones) and **Step 4** (high-risk diffs) may fan out, and only when the trigger named in that step fires. For small, local changes the plain path is faster and cheaper; the orchestration below is a net loss there.
+- Use your normal file-search, file-read, and file-edit capabilities for Steps 1–3. There's no required mechanism — dedicated search/read/edit tools and shell commands are equally fine; use whichever your environment provides.
+- The review in Step 4 should be a **fresh, read-only pass** — ideally a separate subagent if your environment can spawn one, so it isn't anchored to the reasoning that produced the diff. If subagents aren't available, do the review yourself as a distinct pass after implementation, applying the same criteria with fresh eyes.
+- **Fan-out is optional and risk-gated.** Steps 1, 3, 5, 6, 7 stay single-author and sequential — never parallelize them. Only **Step 2** (broad milestones) and **Step 4** (high-risk diffs) may fan out across multiple agents, and only when the trigger named in that step fires, and only if your environment supports running several agents concurrently. For small, local changes the plain sequential path is faster and cheaper — fanning out there is a net loss.
 
-## Step 0 — Seed the todo list
+## Step 0 — Seed a progress checklist
+
+Track these phases, in order:
 
 ```
-todo init, phases:
-  Locate   → [Find progress file, Extract next milestone]
-  Build    → [Understand codebase, Implement milestone]
-  Review   → [Run reviewer agent, Apply findings]
-  Verify   → [Run build/test/lint/fmt]
-  Finish   → [Mark milestone done, Commit final state]
+Locate   → Find progress file, extract next milestone
+Build    → Understand codebase, implement milestone
+Review   → Run reviewer pass, apply findings
+Verify   → Run build/test/lint/fmt
+Finish   → Mark milestone done, commit final state
 ```
 
-Mark each `done` as you go; the next task auto-promotes.
+Mark each step done as you go.
 
 ## Step 1 — Locate the next milestone
 
-Find the progress file with `find`, in this preference order:
+Search for the progress file, in this preference order:
 
-1. `find` for `plans/**/*.md` — read each, take the first uncompleted item.
+1. `plans/**/*.md` — read each, take the first uncompleted item.
 2. `ROADMAP.md` at repo root.
-3. `find` for `TODO.md`, `PROGRESS.md`, `MILESTONES.md`, `PLAN.md`, `docs/plan*.md`.
+3. `TODO.md`, `PROGRESS.md`, `MILESTONES.md`, `PLAN.md`, `docs/plan*.md`.
 
-"Uncompleted" = an unchecked `- [ ]`, an unmarked heading, or `TODO`/`PENDING` status. Use `search` for `- \[ \]|TODO|PENDING` inside candidates to jump straight to it.
+"Uncompleted" = an unchecked `- [ ]`, an unmarked heading, or `TODO`/`PENDING` status. Search candidates for `- \[ \]|TODO|PENDING` to jump straight to it.
 
 Extract the **first** uncompleted milestone only (top of file): its title, acceptance criteria/sub-tasks, and any prerequisites already marked done. Implement exactly one.
 
@@ -49,121 +54,73 @@ If no progress file exists, tell the user and stop.
 ## Step 2 — Understand the codebase + validation stack
 
 Before editing:
-- `read` the source files the milestone touches; `search` for the symbols involved.
-- Determine the validation commands and **record them now** (used in Step 4), in priority order:
-  1. `Justfile` / `Makefile` / `taskfile.yml` recipes named `build`, `test`, `lint`, `fmt`, `check` (`find` them, `read` the recipes).
+- Read the source files the milestone touches; search for the symbols involved.
+- Determine the validation commands and **record them now** (used in Step 5), in priority order:
+  1. `Justfile` / `Makefile` / `taskfile.yml` recipes named `build`, `test`, `lint`, `fmt`, `check` (find them, read the recipes).
   2. Language-native, e.g. Rust `cargo build && cargo test && cargo clippy && cargo fmt --check`; Go `go build ./... && go test ./... && golangci-lint run`; JS/TS `<pm> run build && <pm> test && <pm> run lint`; Zig `zig build test`.
-  3. CI config (`read` `.github/workflows/*`, `.gitlab-ci.yml`) for the canonical list.
+  3. CI config (`.github/workflows/*`, `.gitlab-ci.yml`) for the canonical list.
 
-**Broad or unfamiliar milestone? (optional fan-out.)** When the milestone spans several subsystems and you don't already know the code, read in parallel with read-only scouts instead of serial `read`/`search` — drive it from one `eval` cell:
+**Broad or unfamiliar milestone? (optional fan-out.)** When the milestone spans several subsystems you don't already know, and your environment can run multiple subagents concurrently, dispatch a few read-only scouts in parallel instead of reading/searching serially — one per angle:
 
-```py
-M = {"type": "array", "items": {"type": "string"}}
-SCHEMA = {"type": "object", "additionalProperties": False,
-          "required": ["files", "symbols", "invariants", "commands", "risks"],
-          "properties": {k: M for k in ["files", "symbols", "invariants", "commands", "risks"]}}
-SCOUTS = [
-  "Map the source files & symbols this milestone edits: <criteria>.",
-  "Trace call sites / dispatch points for <symbols>; list the invariants they rely on.",
-  "Find existing tests & fixtures for <area> and how they are run.",
-  "Find the build/test/lint/fmt commands (Justfile/Makefile/taskfile, else CI, else language-native).",
-]
-maps = parallel([lambda p=p: agent(p, agent_type="explore", label="scout", schema=SCHEMA) for p in SCOUTS])
-```
+- Map the source files & symbols this milestone edits.
+- Trace call sites / dispatch points for those symbols; list the invariants they rely on.
+- Find existing tests & fixtures for the area and how they're run.
+- Find the build/test/lint/fmt commands (Justfile/Makefile/taskfile, else CI, else language-native).
 
-**You** merge the maps and record the single validation stack — don't offload that synthesis to an agent. Skip this for a one-file milestone; serial `read`/`search` wins there.
+**You** merge what the scouts return and record the single validation stack yourself — don't offload that synthesis to an agent. Skip this entirely for a one-file milestone; serial reading wins there.
 
 ## Step 3 — Implement the milestone
 
 Make the changes that satisfy the acceptance criteria, following existing style and module shape. No refactors or abstractions outside scope. Add tests only if the milestone introduces testable behavior. Do **not** mark the milestone complete yet. Leave changes unstaged so the reviewer's `git diff` sees them.
 
-## Step 4 — Review → fix loop (the loop)
+## Step 4 — Review → fix loop
 
-OMP has no declarative `Loop:` block; this is the native pattern — a bounded orchestrator loop around the `reviewer` subagent. Run **up to 2 rounds**:
+Run **up to 2 rounds**:
 
-**Spawn the reviewer** (`task` tool, batch shape):
+**Get a review.** Give the reviewer (a fresh subagent if you have one, otherwise yourself in a dedicated pass) this context:
 
-```
-task agent="reviewer"
-  context: |
-    Milestone: <title>
-    Reviewing uncommitted changes for this milestone. Project conventions live in
-    AGENTS.md / CONTRIBUTING (read them and enforce). Changes are unstaged; `git diff`
-    shows them. Focus on correctness, safety, concurrency, API misuse, and convention
-    violations introduced by THIS patch only.
-  tasks:
-    - assignment: |
-        Review the current uncommitted diff for the "<title>" milestone. Read every
-        changed file in full and trace new cross-boundary types to their dispatch points.
-        Report each issue via report_finding, then yield your verdict.
-```
+- The milestone title.
+- That it's reviewing the uncommitted diff for this milestone — changes are unstaged; `git diff` shows them.
+- That project conventions live in AGENTS.md / CONTRIBUTING — read and enforce them.
+- To focus on correctness, safety, concurrency, API misuse, and convention violations introduced by *this* patch only.
+- To read every changed file in full, trace new cross-boundary types to their dispatch points, and report each issue with enough detail to act on: title, description, priority (P0–P3), confidence, file path, and line range.
+- To end with an overall verdict: correct / incorrect, explanation, confidence.
 
-**Wait patiently.** A reviewer run taking an hour is normal. After dispatch, do
-independent useful work if any remains; when completely blocked, use `hub wait`
-with `timeoutMs: 3600000`. If that wait window expires while the reviewer is
-still running, wait again. A wait timeout is not a reviewer failure. Never poll,
-restart, replace, or cancel a healthy reviewer merely because it has been
-running for five minutes—or for any other duration. Cancel only after an
-explicit terminal failure, a user request, or a scope change that makes the
-review result unnecessary.
+**Wait for it to finish** if it's running as a separate subagent — a thorough review can reasonably take a long time. Do other useful work while you wait if any remains; otherwise just wait. Don't poll, restart, replace, or cancel a healthy review run just because it's been running a while. Only stop it early on an explicit terminal failure, a user request, or a scope change that makes the review moot.
 
-The reviewer is read-only and returns a structured verdict:
-- `overall_correctness`: `correct` | `incorrect`
-- `explanation`, `confidence`
-- `findings[]`: each `{ title, body, priority (P0–P3), confidence, file_path, line_start, line_end }`
+**Apply findings** in priority order (P0 → P3); within a priority, highest confidence first. Batch findings that land in the same function. Make only the change each finding describes. If a finding is a genuine false positive given surrounding code, keep it for the summary as "Reviewed, not applicable" — don't silently drop it.
 
-**Apply findings** in priority order (P0 → P3); within a priority, highest confidence first. Batch findings in the same function. Make only the change each finding describes. If a finding is a genuine false positive given surrounding code, keep it for the summary as "Reviewed, not applicable" — don't silently drop it.
-
-**Loop condition:** if you applied any fix that changed logic, spawn the reviewer once more (round 2) on the new diff. Stop when `overall_correctness: correct`, or no remaining P0/P1, or after round 2 — whichever comes first. (For follow-up rounds you can `irc` the same reviewer instead of a fresh spawn — it already holds context.)
+**Loop condition:** if you applied any fix that changed logic, get one more review (round 2) on the new diff. Stop when the review comes back correct, or there's no remaining P0/P1, or after round 2 — whichever comes first. For a follow-up round, prefer continuing the same reviewer/subagent over starting fresh — it already holds context.
 
 ### High-risk mode (optional — gated on risk)
 
-Use the default single-reviewer loop above for local, low-risk diffs. Switch to this panel **only** when the diff trips a risk signal: it touches a **security / trust boundary**, **concurrency / async**, a **data migration or schema change**, a **broad call-graph or public-API change**, or Step 5 has **failed twice** on this milestone. For a one-file fix the panel is pure cost — don't.
+Use the default single-reviewer loop above for local, low-risk diffs. Switch to a multi-lens panel **only** when the diff trips a risk signal: it touches a **security / trust boundary**, **concurrency / async**, a **data migration or schema change**, a **broad call-graph or public-API change**, or Step 5 has **failed twice** on this milestone. For a one-file fix the panel is pure cost — don't.
 
-Drive it from one `eval` cell. The bundled `reviewer` runs as one lens among several; **you** dedupe and own the final call — panel members never patch the diff.
+If your environment supports concurrent subagents, run several review passes in parallel, each looking through one lens over the same diff:
 
-```py
-# VERDICT = the same shape the reviewer yields: overall_correctness, explanation, confidence, findings[]
-DIFF = "the uncommitted diff for milestone <title> (run `git diff`)"
-LENSES = [
-  ("canonical",   "Review THIS patch for any issue. " + DIFF),
-  ("correctness", "ONLY correctness / data-flow / edge cases / broken invariants. " + DIFF),
-  ("security",    "ONLY trust-boundary / injection / authz / secret-leak issues. " + DIFF),
-  ("concurrency", "ONLY races / lifetimes / reentrancy / ordering. " + DIFF),
-  ("convention",  "ONLY project-convention & API-misuse issues (read AGENTS.md first). " + DIFF),
-]
-reviews  = parallel([lambda l=l: agent(l[1], agent_type="reviewer", label=f"rev:{l[0]}", schema=VERDICT) for l in LENSES])
-findings = [f for r in reviews for f in r["findings"]]
-# >>> YOU dedupe findings here by (file_path, nearby line, same root cause). <<<
+- **canonical** — any issue at all.
+- **correctness** — only correctness / data-flow / edge cases / broken invariants.
+- **security** — only trust-boundary / injection / authz / secret-leak issues.
+- **concurrency** — only races / lifetimes / reentrancy / ordering.
+- **convention** — only project-convention & API-misuse issues (read AGENTS.md first).
 
-# Adversarially verify only what matters: every P0/P1, plus low-confidence P2.
-REF = {"type": "object", "additionalProperties": False, "required": ["verdict", "rationale"],
-       "properties": {"verdict": {"enum": ["survives", "refuted"]}, "rationale": {"type": "string"}}}
-def survives(f):  # 3 skeptics, each told to refute from code; default 'refuted' when unsure
-    votes = parallel([lambda i=i: agent(
-        f"Try to REFUTE this finding from concrete code evidence. Return 'refuted' if you "
-        f"cannot prove it is a real bug, or are unsure.\nFinding: {f['title']} @ "
-        f"{f['file_path']}:{f['line_start']}\n{f['body']}",
-        agent_type="oracle", label=f"refute#{i}", schema=REF) for i in range(3)])
-    return sum(v["verdict"] == "survives" for v in votes) >= 2
+Collect all findings and dedupe them yourself by (file, nearby line, same root cause) — panel members never patch the diff, only report.
 
-def hot(f):  return f["priority"] in ("P0", "P1") or (f["priority"] == "P2" and f["confidence"] < 0.6)
-confirmed = [f for f in findings if not hot(f) or survives(f)]
-```
+Then adversarially verify what matters: every P0/P1, plus any low-confidence P2. For each, get three independent skeptics to try to refute it from concrete code evidence (each defaults to "refuted" if it can't prove the bug is real, or is unsure); a finding survives if at least 2 of 3 vote "survives." If your environment can't run subagents concurrently, do this verification serially, or skip it and apply the panel's findings directly using your own judgment.
 
-Then **you** (one author) apply `confirmed` in priority order exactly as the default loop describes, record refuted findings as "Reviewed, not applicable" (don't silently drop them), and run the bounded round-2 reviewer if a logic-changing fix landed.
+Apply the confirmed findings exactly as the default loop describes above, record refuted findings as "Reviewed, not applicable," and run the bounded round-2 review if a logic-changing fix landed.
 
 ## Step 5 — Verify
 
-Run the full validation stack from Step 2 with `bash`. Every command must pass. On failure: fix it, then re-run the **entire** stack from the top. Don't proceed until clean.
+Run the full validation stack from Step 2. Every command must pass. On failure: fix it, then re-run the **entire** stack from the top. Don't proceed until clean.
 
 ## Step 6 — Mark the milestone done
 
-In the Step 1 file, flip `- [ ]` → `- [x]` (or set `Status: done` if the file uses that style). Use `edit` for the single-line change; touch nothing else.
+In the Step 1 file, flip `- [ ]` → `- [x]` (or set `Status: done` if the file uses that style). Edit only that single line; touch nothing else.
 
 ## Step 7 — Commit final state
 
-Use the `commit` skill as the last workflow step. Commit only after Step 6 is complete and the working tree contains the milestone implementation, reviewer fixes, validation updates, and progress-file completion mark. Follow the project's commit-message conventions; if the commit skill reports that no safe agent-authored commit can be made, stop and report the exact blocker.
+Finalize the commit using this repository's `commit` skill if one is available; otherwise write a Conventional Commit message yourself following the repo's own conventions and commit directly with `git commit`. Commit only after Step 6 is complete and the working tree contains the milestone implementation, reviewer fixes, validation updates, and progress-file completion mark. If no safe agent-authored commit can be made, stop and report the exact blocker.
 
 After the commit succeeds, print only this final block:
 
@@ -186,19 +143,14 @@ After the commit succeeds, print only this final block:
 Build ✓  Tests ✓  Lint ✓  Fmt ✓
 ```
 
-Do not print build logs, the full diff, step narration, or the reviewer's raw transcript. The user can run `git show --stat HEAD` for the committed diff; the reviewer transcript is at `history://<reviewer-id>`.
+Do not print build logs, the full diff, step narration, or the reviewer's raw transcript. The user can run `git show --stat HEAD` for the committed diff.
 
 ---
 
 ## Iterating over many milestones
 
-This skill does **one** milestone. To advance several, use an OMP-native outer loop:
+This skill does **one** milestone. To advance several, re-invoke it once per milestone using whatever repetition mechanism your environment provides:
 
-- **`/loop`** — re-submits `/skill:next-milestone` each iteration. `loop.mode` (`prompt | compact | reset`) controls what happens between iterations (`compact`/`reset` keep context from ballooning across milestones).
-- **Goal Mode** (`goal.enabled`, `goal.continuationModes`) — set a goal like "complete all unchecked roadmap items"; the session auto-continues between turns until it's met.
-- **`eval` `agent()` / `pipeline()`** — drive it programmatically when milestones are independent:
-  ```py
-  # one isolated subagent per milestone, bounded fan-out
-  results = parallel([lambda m=m: agent(f"Run next-milestone for: {m}") for m in milestones])
-  ```
-  Use `pipeline(items, *stages)` instead when each milestone depends on the previous one (barrier between stages).
+- A recurring/loop mechanism if your agent has one.
+- A manual repeat: run the skill, let it finish and commit, run it again.
+- If your environment can run independent subagents and the milestones are genuinely independent, fan them out concurrently — one isolated subagent per milestone. Use a dependent pipeline instead (each milestone's outcome feeding the next) when milestones build on each other.

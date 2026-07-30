@@ -512,13 +512,22 @@ Canonical module shape:
 - `common/home-alpine/` adds root-only Lix, direct sops activation, and Alpine root-shell wiring for standalone Home Manager hosts.
 - `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (ghostty, vscodium, zed, rime, themegen, helium-bin, etc.) live here and are not imported by server hosts.
 - `common/home-base/agent-skills.nix` installs curated reusable skills into
-  `$HOME/.skills`, then exposes OMP-compatible adapters under
-  `$HOME/.agents/skills`. OMP workflow adapters live beside their canonical skill
-  under `workflows/` and are installed as native commands under
-  `$HOME/.omp/agent/commands`; `next-milestone/workflows/omp.md` provides
-  `/next-milestone`. Keep `$HOME/.skills` as the agent-neutral source of truth,
-  and do not manage generated system skills, sessions, memory data, auth state,
-  plugin caches, or screen recordings from this repo.
+  `$HOME/.skills`, then symlinks each into every onboarded agent's personal
+  skill directory (`$HOME/.agents/skills` for OMP, `$HOME/.claude/skills` for
+  Claude Code — add a base to `skillAdapterBases` to onboard another agent).
+  Each skill's `SKILL.md` must stay agent-neutral prose (no tool-specific
+  vocabulary like a particular todo/task/eval API) so every onboarded agent
+  can follow it directly. Per-agent execution detail — concrete tool/API
+  mappings for the steps that benefit from it — lives beside the skill under
+  `workflows/<agent>.md` (e.g. `next-milestone/workflows/omp.md`,
+  `next-milestone/workflows/claude.md`); `SKILL.md` tells the agent to check
+  for and read a matching adapter. OMP additionally needs its adapter
+  installed as a native command to expose it as a slash command, wired at
+  `$HOME/.omp/agent/commands/next-milestone.md`; Claude Code has no such step
+  since its `Skill` mechanism reads `SKILL.md` (and anything beside it)
+  directly out of `$HOME/.claude/skills`. Do not manage generated system
+  skills, sessions, memory data, auth state, plugin caches, or screen
+  recordings from this repo.
 - `common/home-base/agent-instructions.nix` installs the repo-owned global
   instructions at `$HOME/.agents/AGENTS.md`.
 - `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
