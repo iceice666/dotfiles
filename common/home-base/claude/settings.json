@@ -62,7 +62,6 @@
     "padding": 1,
     "hideVimModeIndicator": true
   },
-  "viewMode": "focus",
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": false,
@@ -100,7 +99,7 @@
     }
   },
   "spinnerTipsEnabled": false,
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "advisorModel": "opus",
   "awaySummaryEnabled": false,
   "autoUpdatesChannel": "stable",
