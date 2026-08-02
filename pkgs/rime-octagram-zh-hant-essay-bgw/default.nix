@@ -6,11 +6,11 @@
 
 stdenvNoCC.mkDerivation {
   pname = "rime-octagram-zh-hant-essay-bgw";
-  version = "2026-05-16";
+  version = "2026-07-12";
 
   src = fetchurl {
-    url = "https://media.githubusercontent.com/media/rimeinn/octagram-data/39a77abf2ec22e2aa4b0d7e1e2888e44ad6508c1/models/essay/zh-hant-t-essay-bgw.gram";
-    hash = "sha256-V0yZ0QD0InZsQzxgHtbv1kLogdaaMN+f/7bxaVvlUOM=";
+    url = "https://raw.githubusercontent.com/lotem/rime-octagram-data/97bf55046aad163c3d1881abae5312040b1bbed9/zh-hant-t-essay-bgw.gram";
+    hash = "sha256-BIjr1miPkAo5IA8reU8vmby/Ho/CcoCuSiMksIsVWcE=";
   };
 
   dontUnpack = true;
