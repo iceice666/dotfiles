@@ -13,7 +13,7 @@ in
 
   _module.args = {
     inherit desktopWallpaper;
-    themegenHost = "m3air";
+    themegenHost = "m5pro";
     ghosttyFontSize = 16;
   };
 

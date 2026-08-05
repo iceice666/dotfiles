@@ -3,7 +3,7 @@
 
 keys:
   # Per-device age recipients (public)
-  - &m3air         age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
+  - &m5pro         age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
   - &framework     age1cxxr5xe7u7zxepf7y4eka07m856dx9hqwynu6jyf9xftc7q53ulqd997ah
   - &homolab       age1r80n348lhctp82j7vuj6fe6hs6sup7lz7x66nh80xunrsrg2sqrqh98zpu
   - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
@@ -16,40 +16,40 @@ creation_rules:
   # Shared secrets: decryptable on every device (+ recovery)
   - path_regex: ^sensitive/shared/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
-      - *m3air
+      - *m5pro
       - *framework
       - *homolab
       - *homolab-home
       - *lumo
       # - *recovery
 
-  # Workstation secrets: m3air and framework are both admin recipients
-  - path_regex: ^sensitive/hosts/m3air/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age: [*m3air, *framework]
+  # Workstation secrets: m5pro and framework are both admin recipients
+  - path_regex: ^sensitive/hosts/m5pro/.*\.(yaml|yml|json|env|ini|key|pem)$
+    age: [*m5pro, *framework]
 
   - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age: [*framework, *m3air]
+    age: [*framework, *m5pro]
 
-  # Homolab home-user secrets: editable from m3air, decryptable by the home user on homolab
+  # Homolab home-user secrets: editable from m5pro, decryptable by the home user on homolab
   - path_regex: ^sensitive/hosts/homolab/home/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
-      - *m3air
+      - *m5pro
       - *homolab-home
 
-  # Homolab system secrets: editable from m3air, decryptable by the system on homolab
+  # Homolab system secrets: editable from m5pro, decryptable by the system on homolab
   - path_regex: ^sensitive/hosts/homolab/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
-      - *m3air
+      - *m5pro
       - *homolab
 
   - path_regex: ^sensitive/hosts/lumo/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
-      - *m3air
+      - *m5pro
       - *framework
       - *lumo
 
   - path_regex: ^sensitive/hosts/worker/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:
-      - *m3air
+      - *m5pro
       - *framework
       - *worker

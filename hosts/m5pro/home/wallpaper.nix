@@ -5,7 +5,7 @@
 }:
 
 let
-  applyWallpaper = pkgs.writeShellScript "m3air-apply-wallpaper" ''
+  applyWallpaper = pkgs.writeShellScript "m5pro-apply-wallpaper" ''
     #!/usr/bin/env bash
     set -euo pipefail
 

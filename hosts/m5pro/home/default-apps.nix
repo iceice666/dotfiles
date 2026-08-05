@@ -60,7 +60,7 @@ let
     "zig"
   ];
 
-  applyDefaultApps = pkgs.writeShellScript "m3air-apply-default-apps" ''
+  applyDefaultApps = pkgs.writeShellScript "m5pro-apply-default-apps" ''
         #!/usr/bin/env bash
         set -euo pipefail
 

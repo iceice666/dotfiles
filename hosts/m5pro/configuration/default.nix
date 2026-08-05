@@ -105,8 +105,8 @@ in
     shell = pkgs.fish;
   };
 
-  networking.computerName = "M3Air";
-  networking.hostName = "M3Air";
+  networking.computerName = "M5Pro";
+  networking.hostName = "M5Pro";
 
   # Set Git commit hash for darwin-version.
   system.configurationRevision = self.rev or self.dirtyRev or null;

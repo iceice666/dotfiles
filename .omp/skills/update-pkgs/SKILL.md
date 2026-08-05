@@ -64,7 +64,7 @@ For each:
 - Keep validation scoped to the selected platforms: Linux AMD64 (`x86_64-linux`) and macOS ARM64 (`aarch64-darwin`).
 - Run the narrowest relevant build or check that validates the changed packages:
   - Standalone packages: `nix build .#<name>` — works for most overlay packages on their supported platform.
-  - Some packages are not exposed as standalone flake outputs on `aarch64-darwin` (e.g. `helium-bin` uses the local `pkgs/helium-bin` package through the overlay but is not in `packages.aarch64-darwin`). For these, validate through the macOS ARM64 host build: `nix build .#darwinConfigurations.m3air.config.system.build.toplevel --dry-run` or the matching `just <host>-build` recipe.
+  - Some packages are not exposed as standalone flake outputs on `aarch64-darwin` (e.g. `helium-bin` uses the local `pkgs/helium-bin` package through the overlay but is not in `packages.aarch64-darwin`). For these, validate through the macOS ARM64 host build: `nix build .#darwinConfigurations.m5pro.config.system.build.toplevel --dry-run` or the matching `just <host>-build` recipe.
   - Linux-only packages (`blocky-bin`, `cliproxyapi-bin`) cannot be built on darwin. Validate Linux AMD64 hashes through a linux host build, or accept that sequential prefetching is authoritative and document the gap.
 - If validation cannot be completed, explain the blocker in the commit body or final response.
 

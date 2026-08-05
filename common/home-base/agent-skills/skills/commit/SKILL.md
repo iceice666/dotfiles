@@ -64,7 +64,7 @@ Subject rules:
 - Use imperative mood.
 - Do not end with punctuation.
 - Prefer the most specific allowed type.
-- Use a scope such as `common/home`, `framework/niri`, `m3air/home`, `pkgs/omp`,
+- Use a scope such as `common/home`, `framework/niri`, `m5pro/home`, `pkgs/omp`,
   or `repo/agents`.
 - Do not mention file names unless essential.
 

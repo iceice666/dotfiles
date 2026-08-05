@@ -40,12 +40,12 @@ common/              # shared modules injected by mk-host into every host
 
 themegen/            # root-level plain theme templates, split by common/host
   common/            # shared $HOME-relative templates for shells/editors/terminal
-  m3air/             # macOS-only $HOME-relative templates
+  m5pro/             # macOS-only $HOME-relative templates
   framework/         # Linux-only $HOME-relative templates for GTK/Qt/fuzzel/Eww
   preview.html       # HTML palette preview template
 
 hosts/               # per-host entrypoints
-  m3air/             # macOS via nix-darwin
+  m5pro/             # macOS via nix-darwin
     host.nix         # feature manifest
     configuration/   # default.nix, system-defaults.nix
     home/            # appearance, default-apps, karabiner, wallpaper, _module.args
@@ -129,7 +129,7 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 
 | Output | Type |
 |---|---|
-| `darwinConfigurations.m3air` | nix-darwin configuration |
+| `darwinConfigurations.m5pro` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (built locally) |
 | `homeConfigurations.lumo` | Alpine root Home Manager data+apps + edge configuration |
@@ -188,7 +188,7 @@ Framework system configuration — not in the shared overlay.
 
 Additional notes:
 - `reimu-on-starlit-water` imports the local package expression from `/home/iceice666/code/reimu_lays_on_water/nix/package.nix` through a non-flake path input and builds it with the `nixpkgs-unstable` Rust toolchain.
-- `helium-bin` is the local package under `pkgs/helium-bin`: the Helium macOS DMG on Darwin and the Helium Linux AppImage (via `appimageTools`) on Linux. m3air and Framework use it as their default browser; homolab installs it for its bspwm desktop (`super + b`).
+- `helium-bin` is the local package under `pkgs/helium-bin`: the Helium macOS DMG on Darwin and the Helium Linux AppImage (via `appimageTools`) on Linux. m5pro and Framework use it as their default browser; homolab installs it for its bspwm desktop (`super + b`).
 
 ### `unstablePkgsFor`
 
@@ -200,11 +200,11 @@ Claude Code is configured through `common/home-base/claude.nix` to install
 `claude-code-bin`, route Anthropic Messages API traffic through
 `https://cliproxyapi.justaslime.dev`, and read the shared homonet client key via
 a SOPS-backed `apiKeyHelper`. The module pins Claude aliases to the matching
-CLIProxyAPI model IDs and is enabled on homolab, lumo, m3air, and framework.
+CLIProxyAPI model IDs and is enabled on homolab, lumo, m5pro, and framework.
 
 omp (oh-my-pi) is configured through `common/home-base/omp.nix` to install the `oh-my-pi-bin` binary, wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions, and supply an `EXA_API_KEY` (via `~/.omp/agent/.env`) for omp's builtin `web_search` tool.
 Use omp's builtin `web_search` and `browser` tools for external web research and URL fetching when repository-local information is insufficient.
-The `cliproxyapi` provider is enabled on homolab, lumo, m3air, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
+The `cliproxyapi` provider is enabled on homolab, lumo, m5pro, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
 
 ## Build, Format, and Validation Commands
 
@@ -258,7 +258,7 @@ just fmt-check
 just check
 ```
 
-- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m3air`, and Linux detects the hostname to pick `framework` or `homolab`.
+- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m5pro`, and Linux detects the hostname to pick `framework` or `homolab`.
 - `just boot` is Linux-only and sets the current NixOS host generation for next boot.
 - Theme files are generated inside the host build by a Nix derivation.
 - `just theme` generates a local concrete theme cache for inspection only.
@@ -277,13 +277,13 @@ just build
 ```
 
 Run it on the platform that owns the changed host. For shared changes, dry-build
-on both `m3air` and `framework`.
+on both `m5pro` and `framework`.
 
 Which build to run for a given change:
 
 | Changed path | Dry-build target(s) |
 |---|---|
-| `hosts/m3air/**` | `m3air` |
+| `hosts/m5pro/**` | `m5pro` |
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | `framework` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
@@ -291,12 +291,12 @@ Which build to run for a given change:
 | `hosts/worker/**` | `worker` (via `just worker-build`) |
 | `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
 | `lib/homolab.nix` | `homolab` + `lumo` + `worker` |
-| `common/system/**` | `m3air` + `framework` + `homolab` + `gce-dns` |
-| `common/system-darwin/**` | `m3air` |
+| `common/system/**` | `m5pro` + `framework` + `homolab` + `gce-dns` |
+| `common/system-darwin/**` | `m5pro` |
 | `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
 | `common/home-base/**` | all Home Manager-enabled hosts |
 | `common/home-alpine/**` | `lumo` + `worker` |
-| `common/home-gui/**` | `m3air` + `framework` |
+| `common/home-gui/**` | `m5pro` + `framework` |
 | `pkgs/<name>` | `nix build .#<name>` (standalone) or any host that uses it |
 
 ### Other useful commands
@@ -312,8 +312,8 @@ just store-size
 ### Host-specific helpers
 
 ```sh
-just m3air-homebrew    # install Homebrew (first-time macOS setup)
-just m3air-activate    # reapply macOS settings without a full rebuild
+just m5pro-homebrew    # install Homebrew (first-time macOS setup)
+just m5pro-activate    # reapply macOS settings without a full rebuild
 
 just homolab-build           # dry-build homolab locally
 just homolab-switch          # build + activate homolab locally
@@ -394,14 +394,14 @@ trust boundary:
 ### Secrets helpers
 
 ```sh
-just secret-encrypt sensitive/hosts/m3air/forgejo.yaml ./forgejo.yaml
-just secret-decrypt sensitive/hosts/m3air/forgejo.yaml
-just secret-edit sensitive/hosts/m3air/forgejo.yaml
+just secret-encrypt sensitive/hosts/m5pro/forgejo.yaml ./forgejo.yaml
+just secret-decrypt sensitive/hosts/m5pro/forgejo.yaml
+just secret-edit sensitive/hosts/m5pro/forgejo.yaml
 ```
 
 Never commit plaintext secrets. Keep secret material in `sensitive/shared/` encrypted with `sops`.
 
-`m3air` and `framework` are both admin recipients in `.sops.yaml`: every
+`m5pro` and `framework` are both admin recipients in `.sops.yaml`: every
 creation rule lists both, so any secret is readable and editable from either
 workstation. Server secrets also carry the owning host key (`lumo`, `worker`,
 `homolab`, `homolab-home`) so activation can decrypt them locally. On
@@ -411,9 +411,9 @@ workstation. Server secrets also carry the owning host key (`lumo`, `worker`,
 
 Homolab secrets live under `sensitive/hosts/homolab/` (system secrets) and
 `sensitive/hosts/homolab/home/` (per-user secrets). Their `.sops.yaml` rules
-still list `m3air` plus the homolab keys only — the encrypted files were not
+still list `m5pro` plus the homolab keys only — the encrypted files were not
 re-keyed for `framework`, so re-key them with
-`just secret-refresh sensitive/hosts/homolab` from `m3air` or the homolab
+`just secret-refresh sensitive/hosts/homolab` from `m5pro` or the homolab
 itself before expecting framework access. Service modules under
 `hosts/homolab/configuration/sensitive/*.nix` and `hosts/homolab/services/**`
 reference these via `dotfiles + /sensitive/hosts/homolab/<file>`.
@@ -450,7 +450,7 @@ topic(machine/scope): subject
 ```
 
 - `topic` is the Conventional Commit type, such as `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, or `chore`.
-- `machine` is the affected host or layer, such as `m3air`, `framework`, `common`, `pkgs`, or `repo`.
+- `machine` is the affected host or layer, such as `m5pro`, `framework`, `common`, `pkgs`, or `repo`.
 - `scope` is the focused area, package, or module, such as `home`, `niri`, `themegen`, `rime`, or `flake`.
 - Keep `subject` short, imperative, and lowercase unless it contains proper nouns.
 
@@ -458,7 +458,7 @@ Examples:
 
 ```text
 feat(framework/niri): add workspace keybindings
-fix(m3air/default-apps): update browser associations
+fix(m5pro/default-apps): update browser associations
 docs(repo/agents): document commit message format
 feat(lumo/hermes-agent): deploy hermes-agent gateway via podman
 ```
@@ -540,7 +540,7 @@ Canonical module shape:
   recordings from this repo.
 - `common/home-base/agent-instructions.nix` installs the repo-owned global
   instructions at `$HOME/.agents/AGENTS.md`.
-- `themegen/` contains root-level plain templates split into `common/`, `m3air/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
+- `themegen/` contains root-level plain templates split into `common/`, `m5pro/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
 - `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
 - `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
 - `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
@@ -550,8 +550,8 @@ Canonical module shape:
 - `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
-- `hosts/m3air/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.
-- `hosts/m3air/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
+- `hosts/m5pro/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.
+- `hosts/m5pro/home/default-apps.nix` uses `default-browser` and `utiluti` to manage default browser and default editor associations on macOS.
 - `sensitive/shared/` is for cross-host secrets.
 
 ## Change Strategy for Agents
@@ -574,7 +574,7 @@ topic(machine/scope): subject
 ```
 
 - `topic` is the Conventional Commit type, such as `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, or `chore`.
-- `machine` is the affected host or layer, such as `m3air`, `framework`, `common`, `pkgs`, or `repo`.
+- `machine` is the affected host or layer, such as `m5pro`, `framework`, `common`, `pkgs`, or `repo`.
 - `scope` is the focused area, package, or module, such as `home`, `niri`, `themegen`, `rime`, or `flake`.
 - Keep `subject` short, imperative, and lowercase unless it contains proper nouns.
 
@@ -582,6 +582,6 @@ Examples:
 
 ```text
 feat(framework/niri): add workspace keybindings
-fix(m3air/default-apps): update browser associations
+fix(m5pro/default-apps): update browser associations
 docs(repo/agents): document commit message format
 ```

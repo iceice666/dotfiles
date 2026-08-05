@@ -16,7 +16,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 
 - `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
 - `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and Eww bar templates. GTK templates become a standalone package on Framework.
-- `themegen/m3air/`: macOS-only Equibop template.
+- `themegen/m5pro/`: macOS-only Equibop template.
 - `common/home/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
 
@@ -49,7 +49,7 @@ The generated preview is written to `.cache/themegen/preview/index.html`.
 ## Editing
 
 - Change shared templates in `themegen/common/`.
-- Change host-only templates in `themegen/m3air/` or `themegen/framework/`.
+- Change host-only templates in `themegen/m5pro/` or `themegen/framework/`.
 - Add a new themed file by placing it at the final `$HOME`-relative target path under the right scope.
 - Use direct `{{color.dark.primary}}`-style lookups in template bodies. Put derived colors in an optional leading `{{#themegen ... }}` header with `let local.name = ...` declarations, then reference them as `{{local.name}}`.
 - Header helpers cover the current derived-color operations: `alpha`, `mix`, `lightness_add`, `tone`, `readable`, `readable_alpha`, `tone_alpha`, and `tone_readable`.

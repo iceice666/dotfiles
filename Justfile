@@ -3,18 +3,18 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
-host := if os() == "macos" { "m3air" } else { `cat /etc/hostname | sed 's/-linux$//'` }
-m3air_flake := ".#m3air"
-system_target := if host == "m3air" { ".#darwinConfigurations.m3air.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
+host := if os() == "macos" { "m5pro" } else { `cat /etc/hostname | sed 's/-linux$//'` }
+m5pro_flake := ".#m5pro"
+system_target := if host == "m5pro" { ".#darwinConfigurations.m5pro.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
 gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"
 gce_dns_image := ".#nixosConfigurations.gce-dns.config.system.build.googleComputeImage"
 scripts := repo_root / "scripts"
 
-# Apply the M3 Air nix-darwin configuration
+# Apply the M5 Pro nix-darwin configuration
 [group('host')]
 [macos]
 switch:
-    sudo darwin-rebuild switch --flake {{ m3air_flake }}
+    sudo darwin-rebuild switch --flake {{ m5pro_flake }}
 
 # Apply the current NixOS host configuration
 [group('host')]
@@ -28,11 +28,11 @@ switch:
 [group('host')]
 switch-all: switch gce-dns-switch lumo-switch worker-switch
 
-# Dry-build the M3 Air nix-darwin configuration
+# Dry-build the M5 Pro nix-darwin configuration
 [group('host')]
 [macos]
 build:
-    darwin-rebuild build --flake {{ m3air_flake }}
+    darwin-rebuild build --flake {{ m5pro_flake }}
 
 # Dry-build the current NixOS host configuration
 [group('host')]
@@ -133,16 +133,16 @@ worker-build:
 worker-switch:
     nix develop --command deploy .#worker --skip-checks
 
-# Install Homebrew on M3 Air
+# Install Homebrew on M5 Pro
 [group('host')]
 [macos]
-m3air-homebrew:
+m5pro-homebrew:
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Re-apply macOS system settings without a rebuild
 [group('host')]
 [macos]
-m3air-activate:
+m5pro-activate:
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
 # Generate a local concrete theme cache for the current host

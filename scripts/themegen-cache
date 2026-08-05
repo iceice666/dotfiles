@@ -32,7 +32,7 @@ hash_stdin() {
 
 default_image_for_host() {
   case "$1" in
-    m3air) printf '%s\n' "$repo_root/assets/win_chan.jpg" ;;
+    m5pro) printf '%s\n' "$repo_root/assets/win_chan.jpg" ;;
     framework) printf '%s\n' "$repo_root/assets/mzen.png" ;;
     *) echo "Unsupported host: $1" >&2; exit 1 ;;
   esac
