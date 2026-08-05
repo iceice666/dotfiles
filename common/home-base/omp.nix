@@ -168,7 +168,7 @@ let
     retry.fallbackChains = {
       default = [
         "cliproxyapi-claude/claude-opus-5:high"
-        "cliproxyapi-claude/claude-sonnet-5:high"
+        "cliproxyapi/gpt-5.6-sol:high"
       ];
       slow = [
         "cliproxyapi/gpt-5.6-sol:xhigh"
