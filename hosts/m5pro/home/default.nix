@@ -8,6 +8,7 @@ in
     ./appearance.nix
     ./default-apps.nix
     ./karabiner.nix
+    ./sleepguard.nix
     ./wallpaper.nix
   ];
 

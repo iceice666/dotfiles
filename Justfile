@@ -262,3 +262,27 @@ gc:
 [group('nix')]
 store-size:
     du -sh /nix/store
+
+# Build SleepGuard.app (Release) via xcodegen + xcodebuild
+[group('apps')]
+[macos]
+sleepguard-build:
+    cd {{ repo_root }}/pkgs/sleepguard && \
+        xcodegen generate && \
+        xcodebuild -project SleepGuard.xcodeproj -scheme SleepGuard \
+            -configuration Release -derivedDataPath build build
+
+# Build SleepGuard.app and install it to /Applications
+[group('apps')]
+[macos]
+sleepguard-install: sleepguard-build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    src="{{ repo_root }}/pkgs/sleepguard/build/Build/Products/Release/SleepGuard.app"
+    dest="/Applications/SleepGuard.app"
+    launchctl bootout "gui/$(id -u)/com.iceice666.sleepguard" 2>/dev/null || true
+    pkill -f "$dest/Contents/MacOS/SleepGuard" 2>/dev/null || true
+    rm -rf "$dest"
+    cp -R "$src" "$dest"
+    echo "Installed $dest"
+    echo "Run 'just switch' to (re)activate its launchd agent."

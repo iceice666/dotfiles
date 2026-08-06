@@ -1,0 +1,58 @@
+name: SleepGuard
+options:
+  bundleIdPrefix: com.iceice666.sleepguard
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: VWZB7NR2YV
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  SleepGuard:
+    type: application
+    platform: macOS
+    sources:
+      - SleepGuard
+      - Shared
+    info:
+      path: SleepGuard/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: SleepGuard
+    entitlements:
+      path: SleepGuard/SleepGuard.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)group.com.iceice666.sleepguard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.iceice666.sleepguard
+    dependencies:
+      - target: SleepGuardWidgetExtension
+        embed: true
+  SleepGuardWidgetExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - SleepGuardWidget
+      - Shared
+    info:
+      path: SleepGuardWidget/Info.plist
+      properties:
+        CFBundleDisplayName: SleepGuard Widget
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: SleepGuardWidget/SleepGuardWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)group.com.iceice666.sleepguard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.iceice666.sleepguard.widget
+        SKIP_INSTALL: true
