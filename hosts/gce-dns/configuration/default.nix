@@ -64,10 +64,7 @@
   time.timeZone = "Asia/Taipei";
   i18n.defaultLocale = "en_US.UTF-8";
 
-  users = {
-    allowNoPasswordLogin = true;
-    mutableUsers = false;
-  };
+  users.mutableUsers = true;
 
   system.stateVersion = "26.05";
 }

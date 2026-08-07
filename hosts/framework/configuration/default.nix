@@ -369,7 +369,7 @@ in
   ];
 
   users = {
-    mutableUsers = false;
+    mutableUsers = true;
     users.${username} = {
       isNormalUser = true;
       description = "Brian Duan";
@@ -384,11 +384,6 @@ in
         "dialout"
       ];
       shell = pkgs.fish;
-      hashedPassword = "$y$j9T$fbTjrWvTrGjiwdrOngS7r/$R7YM5G5.sAkwmaWVR3aeMQyjP0ILHAOZXsg9SoAmCe5";
-    };
-
-    users.root = {
-      hashedPassword = "$y$j9T$pdHphuflshVqXSrSyPiqF.$YpuXSNnoqNDG6RXzDy3p/IU5aAgSzOHSvYUMloQ/rb/";
     };
   };
 
