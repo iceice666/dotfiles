@@ -60,6 +60,7 @@ in
       "ungoogled-chromium"
       "pearcleaner"
       "mos" # per-device scroll direction (reverse mouse, keep trackpad natural)
+      "zulu@25"
     ];
   };
 
