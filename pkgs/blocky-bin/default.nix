@@ -9,6 +9,11 @@ let
   version = "0.34.0";
 
   srcs = {
+    "aarch64-darwin" = fetchurl {
+      url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Darwin_arm64.tar.gz";
+      hash = "sha256-F//S4vwMYpgwnMUVR2xHrLTwTsa4Mg4Kx8kpxGhgZFU=";
+    };
+
     "x86_64-linux" = fetchurl {
       url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_x86_64.tar.gz";
       hash = "sha256-F7A/iSNGoWDp+vl0zmi6roX6TyqU17+OpSWSqUvl7rQ=";
