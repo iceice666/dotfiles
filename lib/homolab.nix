@@ -35,6 +35,7 @@ let
     postgresql = 25432;
     authelia = 18091;
     cliproxyapi = 20129;
+    cliproxyapiUsageKeeper = 20130;
     teaAsrHttp = 19000;
     dynacat = 18075;
     devPortProxy = 18076;

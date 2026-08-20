@@ -6,6 +6,9 @@ final: prev: {
   claude-code-bin = final.callPackage (dotfiles + /pkgs/claude-code-bin) { };
   cliproxyapi-bin = final.callPackage (dotfiles + /pkgs/cliproxyapi-bin) { };
   cliproxyapi-account-quota = final.callPackage (dotfiles + /pkgs/cliproxyapi-account-quota) { };
+  cliproxyapi-usage-keeper-plugin = final.callPackage (
+    dotfiles + /pkgs/cliproxyapi-usage-keeper-plugin
+  ) { };
   default-browser = final.callPackage (dotfiles + /pkgs/default-browser) { };
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
   framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };

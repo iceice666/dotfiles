@@ -93,6 +93,9 @@ in
         install -Dm755 -o cliproxyapi -g cliproxyapi \
           ${pkgs.cliproxyapi-account-quota}/lib/cliproxyapi/plugins/account-quota.so \
           ${dataDir}/plugins/account-quota.so
+        install -Dm755 -o cliproxyapi -g cliproxyapi \
+          ${pkgs.cliproxyapi-usage-keeper-plugin}/lib/cliproxyapi/plugins/keeper.so \
+          ${dataDir}/plugins/keeper.so
 
         homonet_api_key="$(cat '${homonetApiKeyPath}')"
         management_key="$(cat '${managementKeyPath}')"
@@ -145,6 +148,10 @@ in
           error_retry_interval_seconds: 3600
           request_timeout_seconds: 5
           fail_closed: true
+        keeper:
+          enabled: true
+          priority: 1
+          keeper_url: "${homolab.urls.cliproxyapi}/keeper/"
 
     commercial-mode: false
     logging-to-file: true

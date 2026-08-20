@@ -203,6 +203,15 @@ let
         service = "cliproxyapi";
         tls.certResolver = "letsencrypt";
       };
+      # Same-origin Keeper route must outrank the broader CPAMC dashboard.
+      cliproxyapi-keeper = {
+        rule = mkHostPathRule homolab.domains.cliproxyapi "(Path(`/keeper`) || PathPrefix(`/keeper/`))";
+        entryPoints = [ "websecure" ];
+        priority = 1000;
+        middlewares = [ "authelia@file" ];
+        service = "cliproxyapi-usage-keeper";
+        tls.certResolver = "letsencrypt";
+      };
 
       # Dashboard — Authelia protected
       cliproxyapi = {
@@ -305,6 +314,9 @@ let
       ];
       cliproxyapi.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}"; }
+      ];
+      cliproxyapi-usage-keeper.loadBalancer.servers = [
+        { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapiUsageKeeper}"; }
       ];
       umami.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }
