@@ -9,13 +9,13 @@
 
 let
   pname = "helium-bin";
-  version = "0.15.5.1";
+  version = "0.15.7.1";
   system = stdenvNoCC.hostPlatform.system;
 
   darwinSrcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/imputnet/helium-macos/releases/download/${version}/helium_${version}_arm64-macos.dmg";
-      hash = "sha256-zKjDii66+j9hr04+xHe1is4kDhq9tX8YVHjK2P8kzl0=";
+      hash = "sha256-QQT3dtBKQvnGi3ySsgaVeXGqKIJ/iys5fDApZnDlt5E=";
     };
 
     "x86_64-darwin" = fetchurl {
@@ -27,7 +27,7 @@ let
   appImageSrcs = {
     "x86_64-linux" = fetchurl {
       url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-x86_64.AppImage";
-      hash = "sha256-UC2LpmlRl7V+LRhojqg5VlS7VpMpE99m4/7yiH1KAM4=";
+      hash = "sha256-+zGEGfhIiZWE8mUYb3HrkoM7reFBMdfXlgw3KWT0T98=";
     };
 
     "aarch64-linux" = fetchurl {
