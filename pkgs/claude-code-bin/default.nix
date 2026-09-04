@@ -8,12 +8,12 @@
 
 let
   pname = "claude-code-bin";
-  version = "2.1.243";
+  version = "2.1.260";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/anthropics/claude-code/releases/download/v${version}/claude-darwin-arm64.tar.gz";
-      hash = "sha256-B0sSmEXi2uvMe4rEsSImveYeLXAudY2N0DCbIf9QIE0=";
+      hash = "sha256-wzPJm8Trjj0QaFr7O6DFt754ZPG3AldfLG0UW/43Ayk=";
     };
 
     "x86_64-darwin" = fetchurl {
@@ -28,7 +28,7 @@ let
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/anthropics/claude-code/releases/download/v${version}/claude-linux-x64.tar.gz";
-      hash = "sha256-JoLnPrZLE2odcUVYt86f9vBSv5BFi6BX8RiB/tTz6qg=";
+      hash = "sha256-hcCY63bvdHbn1se4E6ikpCw8lWVpR4CRZhAgZ/Wj1VE=";
     };
   };
 

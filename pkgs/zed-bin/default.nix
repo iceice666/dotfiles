@@ -7,12 +7,12 @@
 
 let
   pname = "zed-bin";
-  version = "1.16.2";
+  version = "1.18.0";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/Zed-aarch64.dmg";
-      hash = "sha256-S60INNNUI5HehrMJyOkgs35piHkV34DVPeCqEZ6h4U0=";
+      hash = "sha256-cjj0DTcHhTaoS5SXLkQcIssg00m53SityEXg3G7B1LQ=";
     };
 
     "x86_64-darwin" = fetchurl {
@@ -22,7 +22,7 @@ let
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/zed-industries/zed/releases/download/v${version}/zed-linux-x86_64.tar.gz";
-      hash = "sha256-x2GsueUpd5JMajahAiTPtymF5r71wenixvJOl0ixBqc=";
+      hash = "sha256-YO4tons3jF0Ay/xOngyYQuN3lYA8RWV1T0G+VCOJh5k=";
     };
 
     "aarch64-linux" = fetchurl {
