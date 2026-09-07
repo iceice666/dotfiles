@@ -42,6 +42,7 @@ let
         supportsReasoningEffort = true;
       };
       models = [
+        (mkModel "gpt-6-astra" 1050000 128000 false)
         (mkModel "gpt-5.6-terra" 272000 16384 false)
         (mkModel "gpt-5.6-sol" 272000 16384 false)
         (mkModel "gpt-5.6-luna" 272000 16384 false)
