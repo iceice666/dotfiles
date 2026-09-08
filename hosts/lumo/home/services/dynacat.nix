@@ -94,11 +94,11 @@ let
       }
       ''<li class="flex justify-between"><span>Req/s</span><span class="color-highlight">{{ printf "%.1f" ((.Subrequest "traefik").JSON.Float "data.result.0.value.1") }}</span></li>'';
 
-  gceDnsPanel =
-    mkHostPanel "gce-dns"
+  dnsPanel =
+    mkHostPanel "dns"
       {
-        dnsRate = mkPromReq ''sum(rate(blocky_query_total{instance="gce-dns"}[5m]))'';
-        cache = mkPromReq ''sum(blocky_cache_entry_count{instance="gce-dns"})'';
+        dnsRate = mkPromReq ''sum(rate(blocky_query_total{instance="lumo"}[5m]))'';
+        cache = mkPromReq ''sum(blocky_cache_entry_count{instance="lumo"})'';
       }
       ''
         <li class="flex justify-between"><span>DNS/s</span><span class="color-highlight">{{ printf "%.1f" ((.Subrequest "dnsRate").JSON.Float "data.result.0.value.1") }}</span></li>
@@ -174,7 +174,7 @@ let
                   homolabPanel
                   lumoPanel
                   edgePanel
-                  gceDnsPanel
+                  dnsPanel
                 ];
               }
             ];

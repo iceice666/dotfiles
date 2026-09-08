@@ -1,7 +1,7 @@
 # dotfiles
 
-Multi-host Nix configuration for `m5pro`, `framework`, `homolab`, `lumo`,
-`worker`, and `gce-dns`.
+Multi-host Nix configuration for `m5pro`, `framework`, `homolab`, `lumo`, and
+`worker`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
@@ -16,7 +16,6 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | `homolab` | `.#homolab` | `x86_64-linux` | NixOS AI host |
 | `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi |
 | `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
-| `gce-dns` | `.#gce-dns` | `x86_64-linux` | Google Compute Engine NixOS DoH resolver with Blocky |
 
 ## Layout
 
@@ -41,7 +40,6 @@ hosts/               # per-host entrypoints
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
   lumo/              # Alpine root Home Manager + OpenRC data/apps + edge services
   worker/            # Alpine root Home Manager disposable-work / agent-runtime host (ex-gateway)
-  gce-dns/           # Google Compute Engine image host for Blocky DoH
 
 lib/                 # shared nix helpers and local flake framework
   flake/             # mk-host (feature-flag system), auto-discovery, HM wiring, overlays/
@@ -89,8 +87,8 @@ Lumo uses the official Alpine Linux 3.24 Raspberry Pi image with root-only Lix
 (`--init none`). Its root Home Manager closure is built on the target and
 activated through deploy-rs. Alpine owns boot, networking, OpenSSH, Tailscale,
 cgroups, and the nftables launcher; Home Manager owns root tooling, Nix-built
-service binaries, generated configuration, and lumo's OpenRC jobs (data/apps
-plus the edge stack: Traefik, Authelia, Cloudflare DDNS).
+service binaries, generated configuration, and lumo's OpenRC jobs (data/apps,
+Blocky DNS, plus the edge stack: Traefik, Authelia, Cloudflare DDNS).
 
 ```sh
 just lumo-bootstrap lumo        # converge the existing Alpine/NVMe lumo host
@@ -100,25 +98,17 @@ just lumo-smoke                 # verify OpenRC services and local endpoints
 ```
 
 
+Blocky listens on lumo's Tailscale address (`100.120.152.7`) for TCP/UDP DNS
+and exposes its HTTP/Prometheus endpoint only on `127.0.0.1:4000`. Traefik
+publishes DoH at `https://dns.justaslime.dev/dns-query`; lumo Prometheus
+scrapes Blocky locally. Configure the tailnet global nameserver as
+`100.120.152.7` before retiring the former resolver.
+
+
 Bootstrap prints the host age recipient. Add it to `.sops.yaml`, include it in
 the matching host rule, then run `just secret-refresh sensitive/hosts/<host>`
 before deploying services that require secrets.
 
-GCE DNS image recipes build the `gce-dns` NixOS system and custom Google Compute
-Engine image. The host runs Blocky as a DoH resolver and exposes its DoH and
-Prometheus metrics listener over Tailscale TCP. Build these on `x86_64-linux` or
-with a Linux builder.
-
-```sh
-just gce-dns-build    # dry-build the NixOS system toplevel
-just gce-dns-image    # build the googleComputeImage artifact
-just gce-dns-switch   # deploy over Tailscale after first boot
-```
-
-The first boot expects a GCE instance metadata attribute named
-`tailscale-auth-key`. Use a preauthorized Tailscale auth key and ensure tailnet
-ACLs allow `tailscale ssh iceice666@gce-dns`. The image does not enable public
-OpenSSH or Google OS Login.
 
 M5 Pro helper recipes are available only on macOS:
 

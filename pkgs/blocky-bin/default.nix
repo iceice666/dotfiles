@@ -14,6 +14,10 @@ let
       hash = "sha256-F//S4vwMYpgwnMUVR2xHrLTwTsa4Mg4Kx8kpxGhgZFU=";
     };
 
+    "aarch64-linux" = fetchurl {
+      url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_arm64.tar.gz";
+      hash = "sha256-GgeqUrEn110VWEcGx2hDufo3Br4TOw17lrLKZbpPVh8=";
+    };
     "x86_64-linux" = fetchurl {
       url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_x86_64.tar.gz";
       hash = "sha256-F7A/iSNGoWDp+vl0zmi6roX6TyqU17+OpSWSqUvl7rQ=";

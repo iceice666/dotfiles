@@ -3,6 +3,7 @@
 {
   imports = [
     ./audit.nix
+    ./blocky.nix
     ./cliproxyapi.nix
     ./cliproxyapi-usage-keeper.nix
     ./database.nix

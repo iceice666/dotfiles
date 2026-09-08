@@ -51,6 +51,7 @@
 
     current_services='
     lumo-postgresql
+    lumo-blocky
     lumo-valkey
     lumo-podman
     lumo-node-exporter

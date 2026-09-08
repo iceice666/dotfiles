@@ -64,16 +64,13 @@ hosts/               # per-host entrypoints
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
-  lumo/              # Alpine 3.24 server (aarch64, Raspberry Pi 5), data+apps + edge plane
+  lumo/              # Alpine 3.24 server (aarch64, Raspberry Pi 5), data+apps + DNS + edge plane
     host.nix         # standalone root Home Manager + deploy-rs metadata
-    home/services/   # Nix binaries, generated configs, OpenRC activation
+    home/services/   # Nix binaries, generated configs, OpenRC activation, Blocky DNS
     home/services/edge/ # edge stack (Traefik/Authelia/Cloudflare) moved from the retired gateway Pi
   worker/            # Alpine 3.24 (aarch64, ex-gateway Pi): disposable work / agent runtime, state on lumo
     host.nix         # standalone root Home Manager + deploy-rs metadata
     home/services/   # podman runtime + minimal firewall
-  gce-dns/           # Google Compute Engine NixOS image host for Blocky DoH
-    host.nix         # feature manifest
-    configuration/   # GCE image, Blocky DoH, Tailscale metadata bootstrap, local deploy user
 
 lib/                 # shared nix helpers and local flake framework
   flake/             # auto-discovery, mk-host, home-manager wiring, overlays/, deploy, formatter, devshell outputs
@@ -132,10 +129,9 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 | `darwinConfigurations.m5pro` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
 | `nixosConfigurations.homolab` | NixOS server configuration (built locally) |
-| `homeConfigurations.lumo` | Alpine root Home Manager data+apps + edge configuration |
+| `homeConfigurations.lumo` | Alpine root Home Manager data+apps + DNS + edge configuration |
 | `homeConfigurations.worker` | Alpine root Home Manager disposable-work / agent-runtime host |
-| `nixosConfigurations.gce-dns` | NixOS Google Compute Engine image host |
-| `deploy` | deploy-rs node definitions for `framework`, `lumo`, `worker`, and `gce-dns` |
+| `deploy` | deploy-rs node definitions for `framework`, `lumo`, and `worker` |
 | `checks.x86_64-linux` | deploy-rs schema validation checks |
 | `devShells.aarch64-darwin.default` / `devShells.x86_64-linux.default` | Rust/themegen development shell (includes `deploy`) |
 | `formatter.aarch64-darwin` / `formatter.x86_64-linux` | treefmt |
@@ -289,11 +285,10 @@ Which build to run for a given change:
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
 | `hosts/lumo/**` | `lumo` (via `just lumo-build`) |
 | `hosts/worker/**` | `worker` (via `just worker-build`) |
-| `hosts/gce-dns/**` | `gce-dns` (via `just gce-dns-build`; image changes via `just gce-dns-image`) |
 | `lib/homolab.nix` | `homolab` + `lumo` + `worker` |
-| `common/system/**` | `m5pro` + `framework` + `homolab` + `gce-dns` |
+| `common/system/**` | `m5pro` + `framework` + `homolab` |
 | `common/system-darwin/**` | `m5pro` |
-| `common/system-nixos/**` | `framework` + `homolab` + `gce-dns` |
+| `common/system-nixos/**` | `framework` + `homolab` |
 | `common/home-base/**` | all Home Manager-enabled hosts |
 | `common/home-alpine/**` | `lumo` + `worker` |
 | `common/home-gui/**` | `m5pro` + `framework` |
@@ -321,10 +316,6 @@ just homolab-boot            # stage the closure for next homolab boot
 just homolab-gen-hardware    # refresh hardware-configuration.nix from the live server
 just homolab-tea-asr-smoke   # readiness check for TEA-ASR 1.1 mini (zh-TW ASR)
 
-just gce-dns-build           # dry-build the gce-dns NixOS system toplevel
-just gce-dns-image           # build the gce-dns Google Compute Engine image
-just gce-dns-switch          # deploy gce-dns over Tailscale after first boot
-
 just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installation
 just lumo-build              # dry-activate lumo root Home Manager
 just lumo-switch             # deploy lumo root Home Manager
@@ -349,11 +340,12 @@ deploy-rs activates the standalone root Home Manager profile and builds the
 aarch64 closure on its target. Alpine/APK owns boot, the kernel, networking,
 OpenSSH, Tailscale, cgroups, and the nftables launcher. Home Manager owns root
 tooling and Nix-provided application services supervised by OpenRC — including
-the edge stack (Traefik/Authelia/Cloudflare DDNS) that moved off the retired
-gateway Pi.
+Blocky DNS and the edge stack (Traefik/Authelia/Cloudflare DDNS) that moved off
+the retired gateway Pi.
 
-`lumo` is the data+apps plane: Postgres, Valkey, git-server, Podman, Prometheus,
-Grafana, Dynacat, dev-port-proxy, the Hermes Agent gateway, and the daily audit.
+`lumo` is the data+apps+DNS plane: Postgres, Valkey, git-server, Podman,
+Blocky, Prometheus, Grafana, Dynacat, dev-port-proxy, the Hermes Agent gateway,
+and the daily audit.
 Traefik on `homolab` proxies Grafana/Dynacat/dev-port-proxy to `lumo`'s LAN IP
 (`192.168.1.128`).
 Inter-host metrics scraping (Prometheus on lumo
@@ -361,20 +353,17 @@ Inter-host metrics scraping (Prometheus on lumo
 `auth.proxy.whitelist` is set to `homolab`'s LAN IP — never widen this without
 adjusting the firewall rule that scopes the Grafana port to `homolab` only.
 
+Blocky listens on lumo's Tailscale address (`100.120.152.7`) on TCP/UDP 53.
+Its HTTP/Prometheus listener is loopback-only on port 4000; Traefik publishes
+DoH at `https://dns.justaslime.dev/dns-query`. The tailnet global nameserver
+must point to `100.120.152.7`.
+
 After provisioning either Alpine board:
 1. Run `just <host>-bootstrap`; it installs host primitives and prints the age recipient.
 2. Add the recipient anchor and host rule entry to `.sops.yaml`.
 3. Re-encrypt host secrets with `just secret-refresh sensitive/hosts/<host>`.
 4. Run `just <host>-build`, then `just <host>-switch`.
 5. Reboot and run `just lumo-smoke` for lumo.
-
-`gce-dns` is a GCE image host for Blocky DoH. Blocky serves `/dns-query` and
-Prometheus metrics on TCP port 4000 over Tailscale; classic UDP DNS is not
-opened. First boot expects a GCE instance metadata attribute named
-`tailscale-auth-key`, containing a preauthorized Tailscale auth key. The host
-joins as `gce-dns`, enables Tailscale SSH, keeps public OpenSSH disabled, and
-disables Google OS Login. Build the image on `x86_64-linux` or through an
-available Linux builder.
 
 ### Homolab-specific danger areas
 

@@ -325,7 +325,7 @@ let
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }
       ];
       blocky.loadBalancer.servers = [
-        { url = "http://gce-dns:4000"; }
+        { url = "http://127.0.0.1:4000"; }
       ];
       dynacat.loadBalancer.servers = [
         { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.dynacat}"; }
@@ -376,7 +376,7 @@ in
     mode = "0400";
   };
 
-  home.activation.lumoTraefik = lib.hm.dag.entryAfter [ "sopsAlpine" "lumoAuthelia" ] ''
+  home.activation.lumoTraefik = lib.hm.dag.entryAfter [ "sopsAlpine" "lumoAuthelia" "lumoBlocky" ] ''
     install -Dm755 ${traefikService} /etc/init.d/lumo-traefik
     /sbin/rc-update add lumo-traefik default
     /sbin/rc-service lumo-traefik restart

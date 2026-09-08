@@ -10,7 +10,7 @@
 let
   blackboxPort = 19115;
   nodeExporterPort = 19100;
-  gceDnsScrapeInterval = "60s";
+  blockyScrapeInterval = "60s";
 
   grafanaPlugins = pkgs.buildEnv {
     name = "lumo-grafana-plugins";
@@ -92,22 +92,6 @@ let
         ];
       }
       {
-        job_name = "node-gce-dns";
-        scrape_interval = gceDnsScrapeInterval;
-        relabel_configs = [
-          {
-            target_label = "job";
-            replacement = "node";
-          }
-        ];
-        static_configs = [
-          {
-            targets = [ "gce-dns:${toString nodeExporterPort}" ];
-            labels.instance = "gce-dns";
-          }
-        ];
-      }
-      {
         job_name = "traefik";
         static_configs = [
           {
@@ -120,12 +104,12 @@ let
       }
       {
         job_name = "blocky";
-        scrape_interval = gceDnsScrapeInterval;
+        scrape_interval = blockyScrapeInterval;
         metrics_path = "/metrics";
         static_configs = [
           {
-            targets = [ "gce-dns:4000" ];
-            labels.instance = "gce-dns";
+            targets = [ "127.0.0.1:4000" ];
+            labels.instance = "lumo";
           }
         ];
       }
@@ -351,7 +335,7 @@ in
     mode = "0400";
   };
 
-  home.activation.lumoMonitoring = lib.hm.dag.entryAfter [ "lumoDirectories" ] ''
+  home.activation.lumoMonitoring = lib.hm.dag.entryAfter [ "lumoDirectories" "lumoBlocky" ] ''
     for account in prometheus grafana; do
       if ! /usr/bin/getent group "$account" >/dev/null; then
         /usr/sbin/addgroup -S "$account"

@@ -7,6 +7,7 @@ ssh "root@${target}" sh -s <<'REMOTE'
 set -eu
 
 services="
+lumo-blocky
 lumo-postgresql
 lumo-valkey
 lumo-podman
@@ -26,6 +27,9 @@ curl --fail --silent --show-error http://127.0.0.1:18083/-/ready >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18084/api/health >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18075/ >/dev/null
 curl --silent --show-error --output /dev/null http://127.0.0.1:18076/
+curl --fail --silent --show-error http://127.0.0.1:4000/metrics >/dev/null
+nslookup dns.justaslime.dev 100.120.152.7 |
+  grep -F 'Address: 100.120.152.7' >/dev/null
 
 test -S /run/postgresql/.s.PGSQL.25432
 test -S /run/podman/podman.sock

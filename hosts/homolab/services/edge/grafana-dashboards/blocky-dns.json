@@ -92,7 +92,7 @@
           "editorMode": "code",
           "expr": "up{job=\"blocky\"}",
           "instant": false,
-          "legendFormat": "gce-dns",
+          "legendFormat": "lumo",
           "range": true,
           "refId": "A"
         }

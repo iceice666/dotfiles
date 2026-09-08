@@ -6,8 +6,6 @@ repo_root := justfile_directory()
 host := if os() == "macos" { "m5pro" } else { `cat /etc/hostname | sed 's/-linux$//'` }
 m5pro_flake := ".#m5pro"
 system_target := if host == "m5pro" { ".#darwinConfigurations.m5pro.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
-gce_dns_system := ".#nixosConfigurations.gce-dns.config.system.build.toplevel"
-gce_dns_image := ".#nixosConfigurations.gce-dns.config.system.build.googleComputeImage"
 scripts := repo_root / "scripts"
 
 # Apply the M5 Pro nix-darwin configuration
@@ -26,7 +24,7 @@ switch:
 
 # Apply the local host plus all remote host configurations
 [group('host')]
-switch-all: switch gce-dns-switch lumo-switch worker-switch
+switch-all: switch lumo-switch worker-switch
 
 # Dry-build the M5 Pro nix-darwin configuration
 [group('host')]
@@ -82,21 +80,6 @@ homolab-gen-hardware:
 homolab-tea-asr-smoke:
     TEA_ASR_BASE_URL="${TEA_ASR_BASE_URL:-http://100.110.95.111:19000}" \
         {{ scripts }}/tea-asr-smoke
-
-# Build the gce-dns NixOS system toplevel
-[group('host')]
-gce-dns-build:
-    nix build {{ gce_dns_system }}
-
-# Build the gce-dns Google Compute Engine image
-[group('host')]
-gce-dns-image:
-    nix build {{ gce_dns_image }}
-
-# Apply the gce-dns NixOS configuration over Tailscale SSH
-[group('host')]
-gce-dns-switch:
-    nix develop --command deploy .#gce-dns --skip-checks
 
 # Bootstrap the existing Alpine 3.24 installation for lumo
 [group('host')]
