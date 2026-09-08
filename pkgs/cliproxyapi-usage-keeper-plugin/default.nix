@@ -11,7 +11,7 @@ let
   srcs = {
     "aarch64-linux" = fetchzip {
       url = "https://github.com/Willxup/cpa-plugin-usage-keeper/releases/download/v${version}/keeper_${version}_linux_arm64.zip";
-      hash = "sha256-xFS3ITiy5sLVKZgvAxj9ANuyGmuf/XsBbvXRrf14FUY=";
+      hash = "sha256-guZJick0P8sz/6z0GK92BohF4WiAqZc375+pwEyDl2A=";
       stripRoot = false;
     };
   };
