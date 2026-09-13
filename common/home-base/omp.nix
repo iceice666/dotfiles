@@ -59,7 +59,7 @@ let
       api = "anthropic-messages";
       apiKey = apiKeySentinel;
       models = [
-        (mkClaudeThinkingModel "claude-fable-5" 1000000 64000)
+        (mkClaudeThinkingModel "claude-fable-5.1" 1000000 64000)
         (mkClaudeThinkingModel "claude-sonnet-5" 1000000 64000)
         (mkClaudeThinkingModel "claude-opus-5" 1000000 64000)
         (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
@@ -148,61 +148,16 @@ let
       "opencode-go"
     ];
     modelRoles = {
-      default = "cliproxyapi/gpt-5.6-sol:high"; # main interactive agent: OAuth first, quality over latency
+      default = "cliproxyapi/gpt-6-astra:high"; # main interactive agent: OAuth first, quality over latency
       slow = "cliproxyapi-claude/claude-opus-5:high"; # hardest problems, cross-family
       smol = "cliproxyapi/gpt-5.6-sol:low"; # small/quick work
       title = "cliproxyapi-claude/claude-haiku-4-5-20251001";
       commit = "cliproxyapi/gpt-5.6-terra:medium";
-      task = "cliproxyapi/gpt-5.6-sol:medium"; # workhorse subagents
-      plan = "cliproxyapi-claude/claude-sonnet-5:xhigh"; # final plans need strongest reasoning
+      task = "cliproxyapi/gpt-6-astra:medium"; # workhorse subagents
+      plan = "cliproxyapi/gpt-6-astra:xhigh"; # final plans need strongest reasoning
       designer = "cliproxyapi-claude/claude-sonnet-5:high";
-      vision = "cliproxyapi/gpt-5.6-sol:high";
-      advisor = "opencode-go/kimi-k3"; # high-quality second opinion
-    };
-    # Role primaries use CLIProxyAPI selectors. Their fallback chains add
-    # cross-model proxy alternatives. When a model errors or hits a usage limit,
-    # omp switches to the next selector in the role chain, then reverts once the
-    # cooldown expires.
-    # NOTE: chains are keyed by ROLE name (default/slow/task/...), not by model
-    # selector — omp resolves each key via getModelRole(), so a model-selector
-    # key silently never matches and fallback never fires.
-    retry.fallbackChains = {
-      default = [
-        "cliproxyapi-claude/claude-opus-5:high"
-        "cliproxyapi/gpt-5.6-sol:high"
-      ];
-      slow = [
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-sonnet-5:xhigh"
-      ];
-      task = [
-        "cliproxyapi/gpt-5.3-codex-spark:high"
-        "cliproxyapi/gpt-5.6-sol:high"
-        "cliproxyapi-claude/claude-opus-5:high"
-      ];
-      plan = [
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-opus-5:xhigh"
-      ];
-      smol = [
-        "cliproxyapi-claude/claude-sonnet-5:medium"
-      ];
-      title = [
-        "anthropic/claude-haiku-4-5-20251001"
-        "cliproxyapi/gpt-5.6-sol:low"
-      ];
-      designer = [
-        "cliproxyapi-claude/claude-sonnet-5:high"
-        "cliproxyapi-claude/claude-opus-5:high"
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-      ];
-      advisor = [
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-        "cliproxyapi-claude/claude-opus-5:high"
-      ];
-      vision = [
-        "cliproxyapi/gpt-5.6-sol:xhigh"
-      ];
+      vision = "cliproxyapi/gpt-6-astra:high";
+      advisor = "cliproxyapi-claude/claude-fable-5.1"; # high-quality second opinion
     };
   };
 
