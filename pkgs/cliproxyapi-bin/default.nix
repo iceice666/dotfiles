@@ -6,7 +6,7 @@
 
 let
   pname = "cliproxyapi-bin";
-  version = "7.2.149";
+  version = "7.2.159";
 
   srcs = {
     "aarch64-linux" = fetchurl {
@@ -16,12 +16,12 @@ let
 
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/router-for-me/CLIProxyAPI/releases/download/v${version}/CLIProxyAPI_${version}_darwin_aarch64.tar.gz";
-      hash = "sha256-kJYskZT+VHDcIfFnsMvxZ6T5/ylhprzIjwt+7DLxtJs=";
+      hash = "sha256-/2354hgb3BPesBHpNe7P7qELA/3hy4lqpdsfKhctYl0=";
     };
 
     "x86_64-linux" = fetchurl {
       url = "https://github.com/router-for-me/CLIProxyAPI/releases/download/v${version}/CLIProxyAPI_${version}_linux_amd64.tar.gz";
-      hash = "sha256-ldhl3ReYbafQjLOf+v4H0FBmnFJk1NABFXWKtN51KnI=";
+      hash = "sha256-lC1WelJdD43Q54woQ8/vrn9VPAo4XIWcIJUbEtikghg=";
     };
   };
 

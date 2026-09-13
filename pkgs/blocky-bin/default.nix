@@ -6,21 +6,21 @@
 
 let
   pname = "blocky-bin";
-  version = "0.34.0";
+  version = "0.35.0";
 
   srcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Darwin_arm64.tar.gz";
-      hash = "sha256-F//S4vwMYpgwnMUVR2xHrLTwTsa4Mg4Kx8kpxGhgZFU=";
+      hash = "sha256-YnjFYJMQy/2PzH1j3DFL2uPATFIGbWQlcVmK75oyyos=";
     };
 
     "aarch64-linux" = fetchurl {
-      url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_arm64.tar.gz";
+      url = "https://github.com/0xERR0R/blocky/releases/download/v0.34.0/blocky_v0.34.0_Linux_arm64.tar.gz";
       hash = "sha256-GgeqUrEn110VWEcGx2hDufo3Br4TOw17lrLKZbpPVh8=";
     };
     "x86_64-linux" = fetchurl {
       url = "https://github.com/0xERR0R/blocky/releases/download/v${version}/blocky_v${version}_Linux_x86_64.tar.gz";
-      hash = "sha256-F7A/iSNGoWDp+vl0zmi6roX6TyqU17+OpSWSqUvl7rQ=";
+      hash = "sha256-l65CV+Ty6n7k4GIvyhUgGeuSIk2BtBslSfBk5M71WE4=";
     };
   };
 

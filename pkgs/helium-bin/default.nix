@@ -9,13 +9,13 @@
 
 let
   pname = "helium-bin";
-  version = "0.16.4.1";
+  version = "0.17.0.1";
   system = stdenvNoCC.hostPlatform.system;
 
   darwinSrcs = {
     "aarch64-darwin" = fetchurl {
       url = "https://github.com/imputnet/helium-macos/releases/download/${version}/helium_${version}_arm64-macos.dmg";
-      hash = "sha256-fJRdy6yoFR0rLCh9Q4p7Rry+aaPZ2SHbh9YMw1tLj2w=";
+      hash = "sha256-/8HOMvHzP8rSW06a0U5NGMldGJm8Q0a53ZBYDgsWBNY=";
     };
 
     "x86_64-darwin" = fetchurl {
@@ -27,7 +27,7 @@ let
   appImageSrcs = {
     "x86_64-linux" = fetchurl {
       url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-x86_64.AppImage";
-      hash = "sha256-z0OoKmW49F/2F3mxjZlyJsTY45keyZJAj4pjoGBjBO8=";
+      hash = "sha256-JmqdEwoXP/2GGAMS2gjAq7G2oWFuyUTr5ouMDhSOcHY=";
     };
 
     "aarch64-linux" = fetchurl {
@@ -78,6 +78,8 @@ let
     dontConfigure = true;
     dontBuild = true;
     dontUnpack = true;
+    # Rewriting bundled scripts invalidates the upstream code signature.
+    dontPatchShebangs = true;
 
     nativeBuildInputs = [ makeWrapper ];
 
