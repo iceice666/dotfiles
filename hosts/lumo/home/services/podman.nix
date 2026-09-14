@@ -19,6 +19,12 @@ let
     location = "docker.io"
   '';
 
+  containersConfig = pkgs.writeText "containers.conf" ''
+    [network]
+    network_backend = "netavark"
+    firewall_driver = "nftables"
+  '';
+
   podmanService = pkgs.writeText "lumo-podman" ''
     #!/sbin/openrc-run
     name="lumo-podman"
@@ -51,6 +57,7 @@ in
   home.activation.lumoPodman = lib.hm.dag.entryAfter [ "lumoDirectories" ] ''
     install -d -m 0755 /etc/containers
     install -Dm644 ${storageConfig} /etc/containers/storage.conf
+    install -Dm644 ${containersConfig} /etc/containers/containers.conf
     install -Dm644 ${registriesConfig} /etc/containers/registries.conf
     install -Dm755 ${podmanService} /etc/init.d/lumo-podman
     /sbin/rc-update add lumo-podman default
