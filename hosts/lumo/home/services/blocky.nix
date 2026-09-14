@@ -54,6 +54,8 @@ let
         ${homolab.domains.traefik} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.home} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.dev} = homolab.hosts.lumo.tailnet;
+        ${homolab.domains.forgejo} = homolab.hosts.lumo.tailnet;
+        ${homolab.domains.woodpecker} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.npu} = homolab.hosts.lumo.tailnet;
       };
       zone = "";

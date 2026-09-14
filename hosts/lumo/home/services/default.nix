@@ -10,6 +10,7 @@
     ./dev-port-proxy.nix
     ./dynacat.nix
     ./edge
+    ./forgejo-woodpecker.nix
     ./git-server.nix
     ./monitoring.nix
     ./podman.nix

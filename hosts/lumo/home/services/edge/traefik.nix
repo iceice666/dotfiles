@@ -221,6 +221,34 @@ let
         service = "cliproxyapi";
         tls.certResolver = "letsencrypt";
       };
+      forgejo-http = {
+        rule = mkHostRule homolab.domains.forgejo;
+        entryPoints = [ "web" ];
+        middlewares = [ "redirect-to-https@file" ];
+        service = "noop@internal";
+      };
+
+      forgejo = {
+        rule = mkHostRule homolab.domains.forgejo;
+        entryPoints = [ "websecure" ];
+        service = "forgejo";
+        tls.certResolver = "letsencrypt";
+      };
+
+      woodpecker-http = {
+        rule = mkHostRule homolab.domains.woodpecker;
+        entryPoints = [ "web" ];
+        middlewares = [ "redirect-to-https@file" ];
+        service = "noop@internal";
+      };
+
+      woodpecker = {
+        rule = mkHostRule homolab.domains.woodpecker;
+        entryPoints = [ "websecure" ];
+        service = "woodpecker";
+        tls.certResolver = "letsencrypt";
+      };
+
       umami-http = {
         rule = mkHostRule homolab.domains.analytics;
         entryPoints = [ "web" ];
@@ -317,6 +345,12 @@ let
       ];
       cliproxyapi-usage-keeper.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapiUsageKeeper}"; }
+      ];
+      forgejo.loadBalancer.servers = [
+        { url = "http://127.0.0.1:${toString homolab.ports.forgejo}"; }
+      ];
+      woodpecker.loadBalancer.servers = [
+        { url = "http://127.0.0.1:${toString homolab.ports.woodpecker}"; }
       ];
       umami.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }

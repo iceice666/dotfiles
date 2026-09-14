@@ -43,6 +43,11 @@ let
     hermesDashboard = 9119;
     honcho = 18077;
     umami = 18078;
+    forgejo = 18079;
+    forgejoSsh = 2222;
+    woodpecker = 18080;
+    woodpeckerGrpc = 19001;
+    woodpeckerAgentHealth = 19002;
   };
 
   portRanges = {
@@ -84,6 +89,8 @@ rec {
     dev = "dev.${root}";
     npu = "npu.${root}";
     analytics = "analytics.${root}";
+    forgejo = "git.${root}";
+    woodpecker = "ci.${root}";
     proxy = "proxy.${root}";
   };
 
@@ -97,6 +104,8 @@ rec {
     dev = "https://${domains.dev}";
     npu = "https://${domains.npu}";
     analytics = "https://${domains.analytics}";
+    forgejo = "https://${domains.forgejo}";
+    woodpecker = "https://${domains.woodpecker}";
   };
 
   contact = {

@@ -64,6 +64,10 @@
     lumo-cliproxyapi-usage-keeper
     lumo-umami-postgres
     lumo-umami
+    lumo-forgejo
+    lumo-forgejo-bootstrap
+    lumo-woodpecker-server
+    lumo-woodpecker-agent
     lumo-authelia
     lumo-cloudflare-ddns
     lumo-cloudflare-ips

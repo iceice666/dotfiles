@@ -17,6 +17,10 @@ lumo-prometheus
 lumo-grafana
 lumo-dynacat
 lumo-dev-port-proxy
+lumo-forgejo
+lumo-forgejo-bootstrap
+lumo-woodpecker-server
+lumo-woodpecker-agent
 "
 
 for service in $services; do
@@ -28,11 +32,22 @@ curl --fail --silent --show-error http://127.0.0.1:18084/api/health >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18075/ >/dev/null
 curl --silent --show-error --output /dev/null http://127.0.0.1:18076/
 curl --fail --silent --show-error http://127.0.0.1:4000/metrics >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:18079/api/healthz >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:18080/healthz >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:19002/healthz >/dev/null
 nslookup dns.justaslime.dev 100.120.152.7 |
   grep -F 'Address: 100.120.152.7' >/dev/null
 
 test -S /run/postgresql/.s.PGSQL.25432
 test -S /run/podman/podman.sock
+test -s /var/lib/woodpecker/forgejo-oauth-client
+test -s /var/lib/woodpecker/forgejo-oauth-secret
+podman exec --user git lumo-forgejo forgejo --work-path /data/gitea --config /data/gitea/conf/app.ini admin user list |
+  grep -Eq '(^|[[:space:]])iceice666([[:space:]]|$)'
+podman exec --user git lumo-forgejo forgejo --work-path /data/gitea --config /data/gitea/conf/app.ini admin auth list |
+  grep -Eq '(^|[[:space:]])github[[:space:]]+OAuth2[[:space:]]+true([[:space:]]|$)'
+curl --fail --silent --show-error http://127.0.0.1:18079/user/login |
+  grep -F '/user/oauth2/github' >/dev/null
 test -d /srv/git
 
 echo "lumo smoke checks passed"
