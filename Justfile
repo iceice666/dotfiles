@@ -116,6 +116,16 @@ worker-build:
 worker-switch:
     nix develop --command deploy .#worker --skip-checks
 
+# Install or update the m3air Woodpecker agent and Colima runtime
+[group('host')]
+m3air-agent-install target='m3air':
+    {{ scripts }}/m3air-woodpecker-agent install {{ target }}
+
+# Smoke-check the m3air Woodpecker agent and container runtime
+[group('host')]
+m3air-agent-smoke target='m3air':
+    {{ scripts }}/m3air-woodpecker-agent smoke {{ target }}
+
 # Install Homebrew on M5 Pro
 [group('host')]
 [macos]

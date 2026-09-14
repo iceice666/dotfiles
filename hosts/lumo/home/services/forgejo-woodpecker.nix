@@ -284,7 +284,7 @@ in
         {
           printf 'WOODPECKER_HOST=${homolab.urls.woodpecker}\n'
           printf 'WOODPECKER_SERVER_ADDR=127.0.0.1:${toString woodpeckerPort}\n'
-          printf 'WOODPECKER_GRPC_ADDR=127.0.0.1:${toString woodpeckerGrpcPort}\n'
+          printf 'WOODPECKER_GRPC_ADDR=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
           printf 'WOODPECKER_FORGEJO=true\n'
           printf 'WOODPECKER_FORGEJO_URL=${homolab.urls.forgejo}\n'
           printf 'WOODPECKER_FORGEJO_CLIENT=%s\n' "$(cat '${woodpeckerOauthClientPath}')"
@@ -294,7 +294,7 @@ in
           printf 'WOODPECKER_ADMIN=${adminUsername}\n'
         } > ${woodpeckerServerEnvPath}
         {
-          printf 'WOODPECKER_SERVER=127.0.0.1:${toString woodpeckerGrpcPort}\n'
+          printf 'WOODPECKER_SERVER=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
           printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
           printf 'WOODPECKER_AGENT_CONFIG_FILE=/etc/woodpecker/agent.conf\n'
           printf 'WOODPECKER_BACKEND=docker\n'

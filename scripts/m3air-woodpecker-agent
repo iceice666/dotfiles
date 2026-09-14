@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode=${1:-}
+target=${2:-m3air}
+woodpecker_version=3.18.0
+woodpecker_sha256=f436d0cf17a10c3c717f3bbebdd5af1503d70d7d213b8c2ac1b877ef72b31ac0
+woodpecker_url="https://github.com/woodpecker-ci/woodpecker/releases/download/v${woodpecker_version}/woodpecker-agent_darwin_arm64.tar.gz"
+server="100.120.152.7:19001"
+label="dev.justaslime.woodpecker-agent"
+
+usage() {
+  echo "Usage: $0 <install|smoke> [ssh-target]" >&2
+  exit 2
+}
+
+case "$mode" in
+  install)
+    agent_secret=$(ssh root@lumo 'cat /var/lib/sops-nix/secrets/woodpecker-agent-secret')
+    archive=$(mktemp "${TMPDIR:-/tmp}/woodpecker-agent.XXXXXX.tar.gz")
+    trap 'rm -f "$archive"' EXIT
+    curl --fail --location --silent --show-error --output "$archive" "$woodpecker_url"
+    printf '%s  %s\n' "$woodpecker_sha256" "$archive" | shasum -a 256 --check >/dev/null
+
+    ssh "$target" 'brew list colima >/dev/null 2>&1 || brew install colima; brew list docker >/dev/null 2>&1 || brew install docker; colima start --cpu 6 --memory 12 --disk 100'
+
+    remote_tmp="/tmp/woodpecker-agent-${woodpecker_version}.tar.gz"
+    remote_secret="/tmp/woodpecker-agent-secret"
+    scp "$archive" "$target:$remote_tmp" >/dev/null
+    printf '%s' "$agent_secret" | ssh "$target" "umask 077; cat > '$remote_secret'"
+    ssh "$target" /bin/bash -s -- "$remote_tmp" "$remote_secret" "$server" "$label" <<'REMOTE'
+set -euo pipefail
+archive=$1
+secret_file=$2
+server=$3
+label=$4
+agent_secret=$(cat "$secret_file")
+rm -f "$secret_file"
+
+base="$HOME/.local/share/woodpecker-agent"
+bin_dir="$HOME/.local/bin"
+config_dir="$HOME/.config/woodpecker-agent"
+log_dir="$HOME/Library/Logs/woodpecker-agent"
+plist="$HOME/Library/LaunchAgents/${label}.plist"
+mkdir -p "$base" "$bin_dir" "$config_dir" "$log_dir" "$HOME/Library/LaunchAgents"
+tar -xzf "$archive" -C "$base"
+rm -f "$archive"
+agent=$(find "$base" -type f -name woodpecker-agent -print -quit)
+if [ -z "$agent" ]; then
+  echo "woodpecker-agent binary missing from release archive" >&2
+  exit 1
+fi
+chmod 0755 "$agent"
+ln -sfn "$agent" "$bin_dir/woodpecker-agent"
+
+umask 077
+cat > "$config_dir/agent.env" <<EOF
+WOODPECKER_SERVER=$server
+WOODPECKER_AGENT_SECRET=$agent_secret
+WOODPECKER_BACKEND=docker
+WOODPECKER_AGENT_CONFIG_FILE=$HOME/.config/woodpecker-agent/agent.conf
+WOODPECKER_HOSTNAME=m3air
+WOODPECKER_MAX_WORKFLOWS=4
+WOODPECKER_HEALTHCHECK_ADDR=127.0.0.1:19002
+DOCKER_HOST=unix://$HOME/.colima/default/docker.sock
+EOF
+
+cat > "$config_dir/run" <<'EOF'
+#!/bin/bash
+set -a
+. "$HOME/.config/woodpecker-agent/agent.env"
+set +a
+/opt/homebrew/bin/colima start --cpu 6 --memory 12 --disk 100 >/dev/null 2>&1 || true
+for attempt in $(seq 1 60); do
+  if /opt/homebrew/bin/docker info >/dev/null 2>&1; then
+    exec "$HOME/.local/bin/woodpecker-agent" agent
+  fi
+  sleep 2
+done
+echo "Colima Docker socket did not become ready" >&2
+exit 1
+EOF
+chmod 0700 "$config_dir/run"
+
+cat > "$plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$config_dir/run</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>$log_dir/agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>$log_dir/agent.log</string>
+</dict>
+</plist>
+EOF
+
+uid=$(id -u)
+chmod 0644 "$plist"
+launchctl bootout "gui/$uid/$label" >/dev/null 2>&1 || true
+for attempt in 1 2 3 4 5; do
+  if launchctl bootstrap "gui/$uid" "$plist"; then
+    break
+  fi
+  if [ "$attempt" -eq 5 ]; then
+    exit 1
+  fi
+  sleep 2
+done
+launchctl kickstart -k "gui/$uid/$label"
+REMOTE
+    ;;
+  smoke)
+    ssh "$target" /bin/bash -s -- "$label" <<'REMOTE'
+set -euo pipefail
+label=$1
+uid=$(id -u)
+launchctl print "gui/$uid/$label" >/dev/null
+/opt/homebrew/bin/colima status
+/opt/homebrew/bin/docker info >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:19002/healthz >/dev/null
+/opt/homebrew/bin/docker run --rm alpine:3.22 /bin/sh -c 'wget -qO- https://example.com >/dev/null'
+echo "m3air Woodpecker agent smoke checks passed"
+REMOTE
+    ;;
+  *)
+    usage
+    ;;
+esac
