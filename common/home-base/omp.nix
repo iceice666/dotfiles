@@ -59,7 +59,7 @@ let
       api = "anthropic-messages";
       apiKey = apiKeySentinel;
       models = [
-        (mkClaudeThinkingModel "claude-fable-5.1" 1000000 64000)
+        (mkClaudeThinkingModel "claude-fable-5-1" 1000000 64000)
         (mkClaudeThinkingModel "claude-sonnet-5" 1000000 64000)
         (mkClaudeThinkingModel "claude-opus-5" 1000000 64000)
         (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
@@ -157,7 +157,7 @@ let
       plan = "cliproxyapi/gpt-6-astra:xhigh"; # final plans need strongest reasoning
       designer = "cliproxyapi-claude/claude-sonnet-5:high";
       vision = "cliproxyapi/gpt-6-astra:high";
-      advisor = "cliproxyapi-claude/claude-fable-5.1"; # high-quality second opinion
+      advisor = "cliproxyapi-claude/claude-fable-5-1"; # high-quality second opinion
     };
   };
 
