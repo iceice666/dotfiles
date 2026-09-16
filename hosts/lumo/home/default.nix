@@ -1,5 +1,4 @@
 {
-  pkgs,
   dotfiles,
   lib,
   ...
@@ -11,22 +10,11 @@
     ./services
   ];
 
-  home.packages = with pkgs; [
-    oh-my-pi-bin
-  ];
-
-  home.activation.claudeLocalBin = lib.hm.dag.entryAfter [ "claude-remove-self-install-shim" ] ''
-    install -dm755 "$HOME/.local/bin"
-    claude_link="$HOME/.local/bin/claude"
+  home.activation.claude-unlock-versions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     claude_versions="$HOME/.local/share/claude/versions"
-
-    rm -f "$claude_link"
-    ln -s "${pkgs.claude-code-bin}/bin/claude" "$claude_link"
-
-    chmod u+w "$claude_versions" 2>/dev/null || true
-    find "$claude_versions" -maxdepth 1 -mindepth 1 -delete 2>/dev/null || true
-    mkdir -p "$claude_versions"
-    chmod 555 "$claude_versions"
+    if [ -d "$claude_versions" ]; then
+      chmod u+w "$claude_versions"
+    fi
   '';
 
   home.activation.lumoDirectories = lib.hm.dag.entryAfter [ "sopsAlpine" ] ''

@@ -81,6 +81,7 @@ let
             equibop-bin
             claude-code-bin
             oh-my-pi-bin
+            pi-bin
             zed-bin
             rime-frost
             rime-octagram-zh-hant-essay-bgw

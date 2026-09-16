@@ -36,8 +36,6 @@ in
     mode = "0400";
   };
 
-  home.packages = [ pkgs.claude-code-bin ];
-
   home.file = builtins.listToAttrs (map mkClaudeFile managedFiles) // {
     ".claude/cliproxyapi-api-key" = {
       source = apiKeyHelper;
@@ -50,13 +48,16 @@ in
     chmod +x "${dotfilesHome}/statusline.sh" 2>/dev/null || true
   '';
 
-  home.activation.claude-remove-self-install-shim = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.claude-remove-managed-shim = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     claude_shim="${config.home.homeDirectory}/.local/bin/claude"
-    claude_target="$(readlink "$claude_shim" 2>/dev/null || true)"
+    claude_target="$(${pkgs.coreutils}/bin/readlink "$claude_shim" 2>/dev/null || true)"
 
     case "$claude_target" in
-      "${config.home.homeDirectory}/.local/share/claude/"*)
-        rm -f "$claude_shim"
+      /nix/store/*-claude-code-bin-*/bin/claude)
+        ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+          /usr/bin/chflags -h nouchg "$claude_shim"
+        ''}
+        ${pkgs.coreutils}/bin/rm -f "$claude_shim"
         ;;
     esac
   '';

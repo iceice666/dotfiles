@@ -14,6 +14,7 @@ final: prev: {
   framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };
   helium-bin = final.callPackage (dotfiles + /pkgs/helium-bin) { };
   oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
+  pi-bin = final.callPackage (dotfiles + /pkgs/pi-bin) { };
   rime-frost = final.callPackage (dotfiles + /pkgs/rime-frost) { };
   rime-octagram-zh-hant-essay-bgw = final.callPackage (
     dotfiles + /pkgs/rime-octagram-zh-hant-essay-bgw

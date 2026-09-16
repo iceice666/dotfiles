@@ -28,9 +28,10 @@ common/              # shared modules injected by mk-host into every host
     dev-env.nix      # developer environment PATH/ENV (features.devEnv)
     claude.nix       # Claude Code: CLIProxyAPI gateway, model pins, shared settings (features.claude)
     omp.nix          # oh-my-pi (omp) coding-agent: CLIProxyAPI provider + Exa web search (features.omp)
+    pi.nix           # Pi binary + CLIProxyAPI models and runtime SOPS key lookup (features.pi)
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
-    packages-gui.nix # GUI binaries: oh-my-pi-bin, equibop-bin, helium-bin, …
+    packages-gui.nix # GUI binaries: equibop-bin, helium-bin, …
     app-defaults.nix # XDG MIME associations
     ghostty.nix      # Ghostty config
     vscodium.nix     # VSCodium config + marketplace wiring
@@ -85,6 +86,7 @@ pkgs/                # overlay packages
   framework-eww-state/ # Rust state daemon/action helper for Framework Eww
   helium-bin/        # Helium Browser package (macOS DMG / Linux AppImage)
   oh-my-pi-bin/      # prebuilt oh-my-pi (omp) coding agent releases
+  pi-bin/           # official prebuilt Pi coding agent, including Linux loader wrapper
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
   themegen/          # Rust-based theme generator (Cargo project)
@@ -163,8 +165,9 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 | `themegen` | `common/home-gui/themegen` |
 | `rime` | `common/home-gui/rime` |
 | `devEnv` | `common/home-base/dev-env.nix` |
-| `claude` | `common/home-base/claude.nix` |
-| `omp` | `common/home-base/omp.nix` |
+| `claude` | `common/home-base/claude.nix` (configuration only) |
+| `omp` | `common/home-base/omp.nix` (configuration only) |
+| `pi` | `common/home-base/pi.nix` (binary and configuration) |
 | `nirinit` | `inputs.nirinit.nixosModules.nirinit` |
 
 **Adding a host:** create `hosts/<new>/host.nix` with `{ inputs, dotfiles, name }:` signature, declare `features`, and add `homeModules = [ ./home ]`. The host appears as a flake output automatically.
@@ -174,7 +177,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `oh-my-pi-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
@@ -192,15 +195,32 @@ A helper is defined that imports `nixpkgs-unstable` with `allowUnfree = true` an
 
 ## Web, Code, and Docs Research
 
-Claude Code is configured through `common/home-base/claude.nix` to install
-`claude-code-bin`, route Anthropic Messages API traffic through
-`https://cliproxyapi.justaslime.dev`, and read the shared homonet client key via
+Claude Code configuration is retained through `common/home-base/claude.nix`
+without installing its binary. It routes Anthropic Messages API traffic through
+`https://cliproxyapi.justaslime.dev`, and reads the shared homonet client key via
 a SOPS-backed `apiKeyHelper`. The module pins Claude aliases to the matching
 CLIProxyAPI model IDs and is enabled on homolab, lumo, m5pro, and framework.
 
-omp (oh-my-pi) is configured through `common/home-base/omp.nix` to install the `oh-my-pi-bin` binary, wire a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions, and supply an `EXA_API_KEY` (via `~/.omp/agent/.env`) for omp's builtin `web_search` tool.
+omp (oh-my-pi) configuration is retained through `common/home-base/omp.nix` without installing its binary. It wires a `cliproxyapi` provider pointing at `https://cliproxyapi.justaslime.dev/v1` for LLM completions and supplies an `EXA_API_KEY` (via `~/.omp/agent/.env`) for omp's builtin `web_search` tool. The old OMP and Claude Code package definitions remain available as standalone outputs, but no active host installs them. Activation removes only repo-managed Claude Nix-store launchers from `~/.local/bin`, including the macOS immutable flag, and releases the old lumo versions-directory write lock.
 Use omp's builtin `web_search` and `browser` tools for external web research and URL fetching when repository-local information is insufficient.
 The `cliproxyapi` provider is enabled on homolab, lumo, m5pro, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
+
+Pi (`https://pi.dev/`) is configured through `common/home-base/pi.nix`, enabled
+with `features.pi` on m5pro, framework, homolab, and lumo. It installs `pi-bin` and manages
+`~/.pi/agent/models.json` with the `cliproxyapi` OpenAI Chat Completions provider
+at `https://cliproxyapi.justaslime.dev/v1` and the `cliproxyapi-claude` native
+Anthropic Messages provider at `https://cliproxyapi.justaslime.dev`. Claude models
+support thinking and image input; all except Haiku use adaptive thinking.
+The `apiKey` command reads the shared
+SOPS secret at request time; no plaintext key enters the Nix store. Pi's
+settings, auth state, and sessions remain unmanaged. After switching, select a
+model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
+`pi --model cliproxyapi-claude/claude-sonnet-5`.
+
+The active lumo daily audit reporter uses Pi with `cliproxyapi/gpt-6-astra`,
+`/root/.pi/agent`, read-only `read`/`ls`/`find` tools, and extension/skill/context discovery
+disabled. Evidence collection and Resend delivery are unchanged; model stderr
+is saved as `pi-output.log`. `just update-pkgs` also invokes Pi now.
 
 ## Build, Format, and Validation Commands
 

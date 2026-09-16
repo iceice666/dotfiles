@@ -25,6 +25,7 @@
     devEnv = false;
     claude = true;
     omp = true;
+    pi = true;
   };
 
   extraSpecialArgs = {

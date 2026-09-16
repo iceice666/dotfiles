@@ -24,6 +24,7 @@
     devEnv = true;
     claude = true;
     omp = true;
+    pi = true;
     nirinit = true;
   };
 

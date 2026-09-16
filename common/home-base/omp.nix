@@ -186,10 +186,6 @@ in
     install -m 0600 "${configFile}" "${config.home.homeDirectory}/.omp/agent/config.yml"
   '';
 
-  home.packages = with pkgs; [
-    oh-my-pi-bin
-  ];
-
   # omp's builtin web_search tool prefers Exa; the key is read from the
   # process environment (resolved via the agent .env file at startup).
   sops.templates."omp-env".path = "${config.home.homeDirectory}/.omp/agent/.env";

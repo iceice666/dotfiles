@@ -130,7 +130,7 @@ let
       coreutils
       curl
       jq
-      pkgs.oh-my-pi-bin
+      pkgs.pi-bin
       sops
     ];
     text = ''
@@ -147,7 +147,7 @@ let
       manifest="$run_dir/manifest.json"
       report_file="$run_dir/daily-report.md"
       prompt_file="$run_dir/report-prompt.md"
-      omp_log="$run_dir/omp-output.log"
+      pi_log="$run_dir/pi-output.log"
 
       if [ ! -s "$manifest" ]; then
         echo "Audit manifest is missing: $manifest" >&2
@@ -177,16 +177,22 @@ let
 
       export HOME=/root
       export NO_COLOR=1
-      export PI_CODING_AGENT_DIR=/root/.omp/agent
+      export PI_CODING_AGENT_DIR=/root/.pi/agent
 
-      omp --print \
+      cd "$run_dir"
+      pi --print \
         --no-session \
-        --approval-mode yolo \
-        --cwd "$run_dir" \
+        --model cliproxyapi/gpt-6-astra \
+        --tools read,ls,find \
+        --no-extensions \
+        --no-skills \
+        --no-prompt-templates \
+        --no-context-files \
         @"$prompt_file" \
+        < /dev/null \
         > "$report_file" \
-        2> "$omp_log"
-      chmod 0640 "$omp_log" || true
+        2> "$pi_log"
+      chmod 0640 "$pi_log" || true
 
       html_file="$run_dir/report-email.html"
       {
@@ -221,7 +227,6 @@ in
   home.packages = [
     collector
     reporter
-    pkgs.oh-my-pi-bin
   ];
 
   sops.secrets.homolab-audit-resend-api-key = {
