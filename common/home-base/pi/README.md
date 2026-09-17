@@ -1,0 +1,87 @@
+# Pi extensions
+
+`../pi.nix` installs `extensions/` for every host with `features.pi = true`
+(m5pro, framework, homolab, and lumo). Home Manager recursively links the files
+from the Nix store into `~/.pi/agent/extensions/`, preserving sibling imports
+without taking ownership of unrelated local extensions.
+
+| Extension | Purpose |
+|---|---|
+| `agent-team/` | Persistent Pi RPC workers, team messaging and observation UI |
+| `ask-question/` | Structured human questions, including worker-to-parent routing |
+| `background-task/` | Session-local background Bash jobs and bounded logs |
+| `todo/` | Session-backed task tracking and progress UI |
+| `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
+| `exa-search/` | Bounded public web search through Exa (`web_search`) |
+
+The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
+is needed on deployed hosts. Bash is installed explicitly for background jobs;
+Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
+the invoking user's permissions, including root on lumo. These extensions are
+not a sandbox or automatic command-approval system.
+
+## First adoption
+
+Existing unmanaged files are deliberately **not** force-overwritten. Before the
+first switch, quit Pi (including team workers and background jobs) and move only
+these managed entries outside the auto-discovery directory. For example:
+
+```sh
+backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup"
+for entry in agent-team ask-question background-task todo status-line.ts exa-search; do
+  source="$HOME/.pi/agent/extensions/$entry"
+  if [ -e "$source" ] || [ -L "$source" ]; then
+    mv "$source" "$backup/"
+  fi
+done
+```
+
+Then run the host's normal switch recipe and restart Pi. Keep the backup until
+the new extensions have been verified. Subsequent updates use normal host
+build/switch workflows; edit the repo sources, not the installed store links.
+Do not use `pi install` to install a second copy of these extensions.
+
+Settings, authentication, trust decisions, sessions, team archives and temporary
+background logs remain unmanaged. The Lumo audit explicitly disables extension
+discovery and is unaffected.
+
+## Instructions, workflows and search
+
+Pi receives the shared agent-neutral `../agent-instructions.md` as
+`~/.pi/agent/AGENTS.md`. If an unmanaged file already exists there, back it up
+before the first switch; Home Manager will not force-overwrite it.
+
+Invoke `/skill:next-milestone` to use the shared skill and its `workflows/pi.md`
+adapter. It maps the canonical review/verify/commit process to the team and todo
+extensions; no OMP-specific tools or extra slash-command alias are required.
+
+`web_search` uses Exa's fixed HTTPS search endpoint. The
+`~/.pi/agent/exa-api-key` helper reads the SOPS-backed `exa_api_key` on each
+request; credentials are not stored in settings, source files, or environment
+files. A custom `PI_CODING_AGENT_DIR` needs its own helper at `exa-api-key`.
+See [exa-search/README.md](extensions/exa-search/README.md) for limits and tests.
+Search queries leave the host: never include private source or credentials.
+Results are untrusted evidence and may be incomplete; cite URLs, and fetch the
+full source separately when needed. This is not a browser integration.
+
+## Development
+
+Tests and dependency metadata live here for development only and are not runtime
+requirements. See each extension's README for behavior and test coverage. Keep
+Pi SDK development dependencies aligned with `pkgs/pi-bin/default.nix`.
+
+From the repository root (Node 22.19+ and Bun required):
+
+```sh
+cd common/home-base/pi
+bun install --frozen-lockfile --ignore-scripts
+bun run test
+```
+
+The test suite resolves the local pinned SDK, not a machine-specific global npm
+installation. Dependency lifecycle scripts are not needed. The two legacy
+real-Pi smoke tests are explicitly skipped until they use an isolated,
+fail-closed provider fixture; `--offline` alone does not block completion API
+requests. Enabled tests use no live models or credentials. `status-line.ts`
+has no dedicated behavior tests yet.

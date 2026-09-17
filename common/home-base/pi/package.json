@@ -1,0 +1,15 @@
+{
+  "name": "dotfiles-pi-extensions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun run test:unit && bun run test:node",
+    "test:unit": "bun test extensions/*/tests/*.test.ts",
+    "test:node": "node --test extensions/agent-team/tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.85.1",
+    "@earendil-works/pi-tui": "0.85.1",
+    "jiti": "2.7.0"
+  }
+}

@@ -7,3 +7,4 @@ __pycache__
 target
 .cache/
 /result
+/common/home-base/pi/node_modules/

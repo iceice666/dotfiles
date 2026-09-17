@@ -27,7 +27,27 @@ let
   apiKey = "!${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.cliproxyapi_homonet_api_key.path}";
 in
 {
-  home.packages = [ pkgs.pi-bin ];
+  home.packages = [
+    pkgs.pi-bin
+    pkgs.bash
+  ];
+
+  home.file.".pi/agent/AGENTS.md".source = ./agent-instructions.md;
+
+  home.file.".pi/agent/exa-api-key".source = pkgs.writeShellScript "pi-exa-api-key" ''
+    exec ${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.exa_api_key.path}
+  '';
+
+  sops.secrets.exa_api_key = {
+    sopsFile = dotfiles + /sensitive/shared/exa.yaml;
+    mode = "0400";
+  };
+
+  # Keep sibling imports intact and leave unrelated local extensions alone.
+  home.file.".pi/agent/extensions" = {
+    source = ./pi/extensions;
+    recursive = true;
+  };
 
   sops.secrets.cliproxyapi_homonet_api_key = {
     sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
