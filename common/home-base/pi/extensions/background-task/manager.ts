@@ -18,6 +18,10 @@ export interface TaskInfo {
   endedAt?: string;
   error?: string;
 }
+export interface WaitResult {
+  outcome: "finished" | "timed_out" | "aborted";
+  task: TaskInfo;
+}
 interface RecordState {
   info: TaskInfo;
   child: ChildProcess;
@@ -32,6 +36,7 @@ interface RecordState {
   finished: boolean;
   done: Promise<void>;
   resolve: () => void;
+  waiters: Set<() => void>;
 }
 const TAIL_LIMIT = 1024 * 1024;
 const LOG_LIMIT = 10 * 1024 * 1024;
@@ -93,7 +98,7 @@ export class TaskManager {
     const record: RecordState = {
       info: { id, command: options.command, cwd: options.cwd, status: "running", pid: child.pid, logPath, startedAt: new Date().toISOString() },
       child, fd, tail: Buffer.alloc(0), bytes: 0, tailTruncated: false, logTruncated: false,
-      finished: false, done, resolve,
+      finished: false, done, resolve, waiters: new Set(),
     };
     this.records.set(id, record);
     child.stdout!.on("data", (data: Buffer) => this.append(record, data));
@@ -134,6 +139,37 @@ export class TaskManager {
     if (record.tailTruncated) notices.push("[Output truncated: showing the retained 1 MiB tail.]");
     if (record.logTruncated) notices.push("[Log truncated: the log file contains only the first 10 MiB.]");
     return [...notices, ...parts.slice(-lines)].join("\n");
+  }
+
+  wait(id: string, options: { timeout?: number; signal?: AbortSignal } = {}): Promise<WaitResult> {
+    const record = this.lookup(id);
+    const timeout = options.timeout ?? 60;
+    if (!Number.isFinite(timeout) || timeout <= 0 || timeout > 86400) {
+      throw new Error("wait timeout must be positive seconds, at most 86400");
+    }
+    const { signal } = options;
+    if (signal?.aborted) return Promise.resolve({ outcome: "aborted", task: { ...record.info } });
+    if (record.finished) return Promise.resolve({ outcome: "finished", task: { ...record.info } });
+    return new Promise(resolve => {
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const settle = (outcome: WaitResult["outcome"]) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        record.waiters.delete(onFinish);
+        signal?.removeEventListener("abort", onAbort);
+        resolve({ outcome, task: { ...record.info } });
+      };
+      const onFinish = () => settle("finished");
+      const onAbort = () => settle("aborted");
+      record.waiters.add(onFinish);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      timer = setTimeout(() => settle("timed_out"), timeout * 1000);
+      // Recheck after subscribing so cancellation cannot be lost during setup.
+      if (signal?.aborted) onAbort();
+      else if (record.finished) onFinish();
+    });
   }
 
   async stop(id: string): Promise<TaskInfo> {
@@ -224,6 +260,7 @@ export class TaskManager {
     record.info.status = record.reason ?? (record.info.exitCode === 0 && !record.info.error ? "completed" : "failed");
     record.info.endedAt = new Date().toISOString();
     record.resolve();
+    for (const waiter of record.waiters) waiter();
     if (!this.closing) {
       try { this.onFinish?.({ ...record.info }); } catch { /* Consumer callbacks cannot break cleanup. */ }
     }

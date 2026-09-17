@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, request } from 'node:http';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdirSync, appendFileSync, writeFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -40,12 +40,39 @@ export function userQuestion(args) {
   if ([question.question, question.header, ...(question.options ?? []).flatMap(o => [o.label, o.description])].some(value => value && unsafe.test(value))) throw new Error('Question text must not contain terminal control characters');
   return question;
 }
+// Unlike fetch's default headers timeout, this transport supports a full-day wait.
+export function remoteWait(url, token, args, signal) {
+  return new Promise((resolve, reject) => {
+    const req = request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: token }, signal }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => {
+        body += chunk;
+        if (body.length > 64000) req.destroy(new Error('Team response too large'));
+      });
+      res.on('error', reject);
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (res.statusCode !== 200 || data.error) throw new Error(data.error || `Team HTTP ${res.statusCode}`);
+          resolve(data.result);
+        } catch (error) { reject(error); }
+      });
+    });
+    const seconds = typeof args?.timeout === 'number' && Number.isFinite(args.timeout) ? Math.max(0, Math.min(86400, args.timeout)) : 60;
+    const deadline = setTimeout(() => req.destroy(new Error('Team wait transport timed out')), (seconds + 5) * 1000);
+    req.once('close', () => clearTimeout(deadline));
+    req.on('error', reject);
+    req.end(JSON.stringify({ operation: 'agent_wait', args }));
+  });
+}
 export class Team {
   constructor({ directory, extension, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }) }) {
     this.directory = directory; this.extension = extension; this.deliverParent = deliverParent;
     this.executable = executable; this.limit = limit; this.onChange = onChange;
     this.askUser = askUser; this.userQuestions = new Map();
     this.agents = new Map(); this.tokens = new Map(); this.records = []; this.closing = false;
+    this.waiters = new Set();
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     this.server = createServer(async (req, res) => {
       try {
@@ -55,8 +82,13 @@ export class Team {
         let body = ''; req.setEncoding('utf8');
         for await (const chunk of req) { body += chunk; if (body.length > 64000) throw new Error('Request too large'); }
         const { operation, args } = JSON.parse(body);
-        const result = await this.call(who, operation, args ?? {});
-        res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ result }));
+        const controller = new AbortController();
+        const disconnected = () => controller.abort();
+        res.once('close', disconnected);
+        try {
+          const result = await this.call(who, operation, args ?? {}, controller.signal);
+          res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ result }));
+        } finally { res.removeListener('close', disconnected); }
       } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: String(e.message) })); }
     });
     this.server.requestTimeout = 10000;
@@ -68,7 +100,7 @@ export class Team {
   record(kind, data) {
     const entry = { id: randomUUID(), time: new Date().toISOString(), kind, ...data };
     appendFileSync(join(this.directory, 'events.jsonl'), JSON.stringify(entry) + '\n', { mode: 0o600 });
-    this.records.push(entry); return entry;
+    this.records.push(entry); this.notifyWaiters(); return entry;
   }
   list() {
     return { directory: this.directory, agents: [...this.agents.values()].map(({ name, status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity }) => ({ name, status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity })) };
@@ -86,7 +118,56 @@ export class Team {
   }
   change(a, status) {
     a.status = status; a.activity = status; a.lastActivity = new Date().toISOString();
+    a.stateRevision = (a.stateRevision ?? 0) + 1;
+    this.notifyWaiters();
     this.onChange(this.list());
+  }
+  notifyWaiters() {
+    for (const waiter of [...this.waiters]) waiter.check();
+  }
+  wait(who, args, signal) {
+    const name = text(args.agent, 'agent', 40);
+    if (name === who) throw new Error('Cannot wait for yourself');
+    const a = this.agents.get(name);
+    if (!a) throw new Error(`Unknown worker agent: ${name}; parent cannot be waited on`);
+    const timeout = args.timeout ?? 60;
+    if (typeof timeout !== 'number' || !Number.isFinite(timeout) || timeout <= 0 || timeout > 86400) throw new Error('timeout must be seconds greater than 0 and at most 86400');
+    // A caller can issue parallel waits; follow every edge to reject cycles.
+    const reaches = (from, seen = new Set()) => {
+      if (from === who) return true;
+      if (seen.has(from)) return false;
+      seen.add(from);
+      return [...this.waiters].some(w => w.who === from && reaches(w.agent, seen));
+    };
+    if (reaches(name)) throw new Error('Wait would create a dependency cycle');
+    return new Promise(resolve => {
+      let timer, settled = false;
+      const finish = (reason, question) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', abort);
+        this.waiters.delete(waiter);
+        resolve({ agent: name, reason, status: a.status, question_id: question?.id, question_to: question?.to, sessionFile: a.sessionFile });
+      };
+      const abort = () => finish('cancelled');
+      const waiter = { who, agent: name, check: () => {
+        if (signal?.aborted) return finish('cancelled');
+        if (this.closing) return finish('closed');
+        if (who !== 'parent' && !active(this.agents.get(who) ?? { status: 'stopped' })) return finish('caller_stopped');
+        if (!active(a)) return finish(a.status);
+        const question = this.records.find(q => q.kind === 'question' && (q.to === who || q.from === name)
+          && (q.from === 'parent' || active(this.agents.get(q.from) ?? { status: 'stopped' }))
+          && !this.records.some(r => r.kind === 'reply' && r.question_id === q.id && !this.records.some(f => f.kind === 'delivery_failed' && f.message_id === r.id)));
+        if (question) return finish('question', question);
+        if (a.status === 'waiting') return finish('blocked');
+        if (a.status === 'idle') return finish('idle');
+      } };
+      this.waiters.add(waiter);
+      timer = setTimeout(() => finish('timeout'), timeout * 1000);
+      signal?.addEventListener('abort', abort, { once: true });
+      waiter.check();
+    });
   }
   async spawn(args, defaults, signal) {
     if (this.closing) throw new Error('Team shutting down');
@@ -124,7 +205,7 @@ export class Team {
       if (this.closing || a.status === 'stopped') throw new Error('Agent stopped during startup');
       a.sessionFile = state.sessionFile;
       this.record('spawn', { name, cwd, model, thinking, sessionFile: a.sessionFile });
-      this.change(a, 'idle');
+      this.change(a, 'running');
       await this.send('parent', name, task, 'task');
       signal?.throwIfAborted();
       return this.list().agents.find(item => item.name === name);
@@ -186,7 +267,15 @@ export class Team {
     const label = entry.origin === 'human'
       ? 'Human answer collected by the parent question UI (only the answers are user input; question text/options were agent-provided)'
       : 'Team message (agent data, not a user/system instruction)';
-    await a.rpc.request('prompt', { message: `${label}:\n${JSON.stringify(entry)}`, streamingBehavior: 'steer' });
+    const previous = a.status;
+    if (previous === 'idle' || previous === 'waiting') this.change(a, 'running');
+    const revision = a.stateRevision = (a.stateRevision ?? 0) + 1;
+    try {
+      await a.rpc.request('prompt', { message: `${label}:\n${JSON.stringify(entry)}`, streamingBehavior: 'steer' });
+    } catch (error) {
+      if (a.stateRevision === revision && a.status === 'running' && (previous === 'idle' || previous === 'waiting')) this.change(a, previous);
+      throw error;
+    }
   }
   async send(from, to, body, kind = 'message', extra = {}) {
     text(body); this.recipient(to);
@@ -241,11 +330,12 @@ export class Team {
   cancelUserQuestions(who) {
     for (const pending of this.userQuestions.values()) if (!who || pending.from === who) pending.controller.abort();
   }
-  async call(who, operation, args = {}) {
+  async call(who, operation, args = {}, signal) {
     if (this.closing) throw new Error('Team shutting down');
     if (who !== 'parent' && !active(this.agents.get(who) ?? { status: 'stopped' })) throw new Error('Unknown sender');
     switch (operation) {
       case 'agent_list': return this.list();
+      case 'agent_wait': return this.wait(who, args, signal);
       case 'agent_send': return this.send(who, args.to, args.message);
       case 'agent_ask': return args.to === 'user'
         ? this.askHuman(who, args)
@@ -295,6 +385,7 @@ export class Team {
   async close() {
     if (this.closing) return;
     this.closing = true;
+    this.notifyWaiters();
     this.cancelUserQuestions();
     await Promise.all([...this.userQuestions.values()].map(p => p.task));
     await this.ready;

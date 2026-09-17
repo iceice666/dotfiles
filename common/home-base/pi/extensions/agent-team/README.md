@@ -22,6 +22,7 @@ Only the parent gets `agent_spawn` and `agent_stop`.
 | --- | --- |
 | `agent_spawn({name, task, cwd?, model?, thinking?})` | Spawn a worker; returns on task acceptance, not completion |
 | `agent_list({})` | Worker states, session paths, archive directory |
+| `agent_wait({agent, timeout?})` | Event-driven wait for worker idle; default 60 seconds, maximum 86400 |
 | `agent_send({to, message})` | Send to a sibling or `parent`; wakes idle recipients |
 | `agent_ask({to?, question, options?, multiSelect?, header?})` | Default: tracked question to `parent`; explicit `to: "user"`: real human UI |
 | `agent_reply({question_id, answer})` | Answer a question addressed to you |
@@ -29,6 +30,41 @@ Only the parent gets `agent_spawn` and `agent_stop`.
 | `board_post({topic, body, reply_to?})` | Append shared information; no automatic notifications |
 | `board_read({topic?, after?, limit?})` | Paginated shared notes |
 | `agent_stop({agent})` | Stop worker and process group |
+
+### Readable tool and message cards
+
+`agent_*` and `board_*` calls/results use compact TUI cards: operation, recipient,
+state, and message preview instead of raw JSON. Automatic worker messages use the
+same presentation and retain their agent-data provenance label. Long results are
+collapsed by rendered line count; use Pi's tool expansion shortcut (default
+`Ctrl+O`) for full text, question IDs, session paths, and pagination/archive metadata.
+Acceptance, idle, and cancelled/unavailable human answers are explicitly distinct
+from task success or authorization. JSON sent to the model and RPC clients is unchanged.
+Saved JSON results and older automatic messages also render with these cards.
+
+### Waiting for a worker
+
+Parents and children can call `agent_wait` with a worker name (not themselves or
+`parent`). It returns immediately for an already idle/stopped/failed worker;
+otherwise it waits for Pi's `agent_settled`, not intermediate final text or
+`agent_end` during automatic retries. Accepted new messages mark workers running
+before their RPC `agent_start` event arrives. Idle means this run settled, **not**
+proof that the requested task succeeded. Read automatic results or `agent_inbox`
+and verify the work independently.
+
+The result includes `agent`, `status`, `reason` and the session path when known.
+Reasons are `idle`, `question`, `blocked`, `stopped`, `failed`, `timeout`,
+`cancelled`, `caller_stopped`, or `closed`. Outstanding questions from the target,
+or addressed to the caller, return promptly with `question_id` and `question_to`;
+read the question with `agent_inbox` and answer with `agent_reply` when addressed
+to you. A human question remains exclusively for the real user. Questions to
+other agents are not human authorization. Waiting cycles are rejected.
+
+Timeout is a positive number of seconds, defaults to 60, and is capped at 86400.
+Escape cancels only the wait, never the worker. Session shutdown releases waits;
+child HTTP disconnects remove broker waiters. No polling or extra worker prompts
+are used. You can continue other work instead of waiting; notifications still
+arrive automatically. Do not use repeated short waits as a polling loop.
 
 ### Live panel and read-only attach
 
@@ -51,8 +87,8 @@ The architecture follows oh-my-pi's separate `AgentTranscriptViewer` /
 `ChatTranscriptBuilder` approach, adapted to this Pi version's public APIs.
 
 Only thinking exposed by the provider can be shown. Images are not rendered in this
-scrolling viewer. Built-in tool renderers are reused; child-only custom extension
-renderers cannot be transported over RPC and use a generic expandable tool card.
+scrolling viewer. Built-in and repo-owned team tool renderers are reused; other child-only custom
+extension renderers cannot be transported over RPC and use a generic expandable tool card.
 Edit previews use recorded diffs, never re-read current files to reconstruct history.
 
 Attach is **observation only**: no session switch, prompt, steer, abort, or stop is
@@ -174,7 +210,7 @@ worker environment variables; do not set them manually.
 cd common/home-base/pi # from the dotfiles checkout
 bun install --frozen-lockfile --ignore-scripts
 node --test extensions/agent-team/tests/*.test.mjs
-bun test extensions/agent-team/tests/extension.test.ts extensions/agent-team/tests/panel.test.ts
+bun test extensions/agent-team/tests/*.test.ts
 ```
 
 Requires Node 22.19+ and Bun. Tests use the pinned local Pi 0.85.1 development SDK,

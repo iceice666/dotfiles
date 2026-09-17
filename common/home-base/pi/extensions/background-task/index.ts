@@ -4,7 +4,7 @@ import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { resolve } from "node:path";
 import { stripVTControlCharacters } from "node:util";
-import { TaskManager, type TaskInfo } from "./manager";
+import { TaskManager, type TaskInfo, type WaitResult } from "./manager";
 import { BackgroundPanel } from "./panel";
 
 const HELP = `/bg or /bg panel — Live task panel (Ctrl+Shift+B)
@@ -55,14 +55,14 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "background_task",
     label: "Background Task",
-    description: "Start/list/output/stop background Bash jobs. Start returns immediately. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completion is queued for the next user turn, not an automatic agent wakeup.",
+    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completion is queued for the next user turn, not an automatic agent wakeup.",
     promptSnippet: "Run and manage background Shell commands without blocking the conversation",
-    promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval or sandbox restrictions."],
+    promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work, use background_task wait when completion is needed, or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval or sandbox restrictions."],
     parameters: Type.Object({
-      action: StringEnum(["start", "list", "output", "stop"] as const),
+      action: StringEnum(["start", "list", "output", "wait", "stop"] as const),
       command: Type.Optional(Type.String({ minLength: 1, maxLength: 16000 })),
       cwd: Type.Optional(Type.String({ description: "Working directory, relative to session cwd or absolute" })),
-      timeout: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 86400, description: "Optional timeout in seconds" })),
+      timeout: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 86400, description: "Seconds: start job deadline (default unlimited), or wait deadline (default 60); wait timeout does not stop the job" })),
       id: Type.Optional(Type.String()),
       lines: Type.Optional(Type.Integer({ minimum: 1, maximum: 2000 })),
     }),
@@ -71,6 +71,7 @@ export default function (pi: ExtensionAPI) {
       requireOpen();
       ctx = context;
       let text: string;
+      let wait: WaitResult | undefined;
       if (params.action === "start") {
         if (!params.command?.trim()) throw new Error("command is required for start.");
         const task = manager.start({ command: params.command, cwd: resolve(context.cwd, (params.cwd ?? ".").replace(/^@/, "")), timeout: params.timeout });
@@ -79,10 +80,17 @@ export default function (pi: ExtensionAPI) {
         text = manager.list().map(summary).join("\n") || "No background tasks.";
       } else {
         if (!params.id) throw new Error("id is required.");
-        text = params.action === "stop" ? summary(await manager.stop(params.id)) : output(params.id, params.lines);
+        if (params.action === "wait") {
+          if (params.lines !== undefined && (!Number.isInteger(params.lines) || params.lines < 1 || params.lines > 2000)) throw new Error("lines must be an integer from 1 to 2000.");
+          wait = await manager.wait(params.id, { timeout: params.timeout, signal });
+          const notice = wait.outcome === "finished" ? "Wait finished; check task status and exit code."
+            : wait.outcome === "timed_out" ? "Wait timed out; the job was not stopped."
+            : "Wait cancelled; the job was not stopped.";
+          text = `${notice}\n${output(params.id, params.lines)}`;
+        } else text = params.action === "stop" ? summary(await manager.stop(params.id)) : output(params.id, params.lines);
       }
       refresh();
-      return { content: [{ type: "text", text }], details: { tasks: manager.list().map(task => ({ ...task, command: task.command.slice(0, 180) })) } };
+      return { content: [{ type: "text", text }], details: { ...(wait ? { wait: { outcome: wait.outcome, task: { ...wait.task, command: wait.task.command.slice(0, 180) } } } : {}), tasks: manager.list().map(task => ({ ...task, command: task.command.slice(0, 180) })) } };
     },
   });
   const showPanel = async (context: ExtensionContext) => {

@@ -91,6 +91,44 @@ test("headless tools do not access UI; missing arguments and bad IDs fail", asyn
   } finally { await s.event("session_shutdown"); }
 });
 
+test("wait returns bounded final output and terminal failure without requiring UI", async () => {
+  const s = await setup();
+  s.ctx.hasUI = false;
+  s.ctx.mode = "print";
+  s.ctx.ui = new Proxy({}, { get() { throw new Error("Unexpected UI"); } });
+  const started: any = await s.call({ action: "start", command: "printf 'first\\nlast\\n'; exit 9" });
+  const id = started.details.tasks[0].id;
+  const result: any = await s.call({ action: "wait", id, lines: 1 });
+  expect(result.details.wait.outcome).toBe("finished");
+  expect(result.details.wait.task.exitCode).toBe(9);
+  expect(result.details.wait.task.status).toBe("failed");
+  expect(result.content[0].text.endsWith("\nlast")).toBe(true);
+  expect((await s.call({ action: "wait", id }) as any).details.wait.outcome).toBe("finished");
+});
+test("wait timeout/abort leave jobs running and shutdown settles an outstanding wait", async () => {
+  const s = await setup();
+  const started: any = await s.call({ action: "start", command: "sleep 30" });
+  const id = started.details.tasks[0].id;
+  await expect(s.call({ action: "wait" })).rejects.toThrow("id");
+  await expect(s.call({ action: "wait", id: "missing" })).rejects.toThrow("Unknown");
+  await expect(s.call({ action: "wait", id, timeout: 0 })).rejects.toThrow("timeout");
+  await expect(s.call({ action: "wait", id, lines: 0 })).rejects.toThrow("lines");
+  const timed: any = await s.call({ action: "wait", id, timeout: 0.01 });
+  expect(timed.details.wait.outcome).toBe("timed_out");
+  expect(timed.details.wait.task.status).toBe("running");
+  const controller = new AbortController();
+  const waiting = s.call({ action: "wait", id }, controller.signal);
+  controller.abort();
+  const aborted: any = await waiting;
+  expect(aborted.details.wait.outcome).toBe("aborted");
+  expect(aborted.content[0].text).toContain("job was not stopped");
+  expect(aborted.details.wait.task.status).toBe("running");
+  const shutdownWait = s.call({ action: "wait", id });
+  await s.event("session_shutdown");
+  expect((await shutdownWait as any).details.wait.task.status).toBe("stopped");
+  expect(s.messages).toEqual([]);
+});
+
 function mockPanel(s: Awaited<ReturnType<typeof setup>>) {
   let component: any;
   let renders = 0;

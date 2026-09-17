@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync } from "node:fs";
+import { getEventListeners } from "node:events";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { TaskManager, type TaskInfo } from "../manager";
@@ -35,6 +36,70 @@ afterEach(async () => {
 });
 
 describe("TaskManager", () => {
+  test("wait observes completion and failure, including already finished jobs", async () => {
+    const instance = manager();
+    const task = instance.start({ command: "printf ready; exit 7", cwd: tmpdir() });
+    const result = await instance.wait(task.id);
+    expect(result.outcome).toBe("finished");
+    expect(result.task.status).toBe("failed");
+    expect(result.task.exitCode).toBe(7);
+    expect(instance.output(task.id)).toBe("ready");
+    expect((await instance.wait(task.id)).outcome).toBe("finished");
+    result.task.status = "running";
+    expect(instance.get(task.id).status).toBe("failed");
+  });
+
+  test("wait timeout and abort detach listeners without stopping the job", async () => {
+    const instance = manager();
+    const task = instance.start({ command: "sleep 30", cwd: tmpdir() });
+    const record = (instance as any).records.get(task.id);
+    expect((await instance.wait(task.id, { timeout: 0.01 })).outcome).toBe("timed_out");
+    expect(record.waiters.size).toBe(0);
+    const controller = new AbortController();
+    const waiting = instance.wait(task.id, { signal: controller.signal });
+    expect(record.waiters.size).toBe(1);
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(1);
+    controller.abort();
+    expect((await waiting).outcome).toBe("aborted");
+    expect(record.waiters.size).toBe(0);
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+    expect((await instance.wait(task.id, { signal: AbortSignal.abort() })).outcome).toBe("aborted");
+    expect(record.waiters.size).toBe(0);
+    expect(instance.get(task.id).status).toBe("running");
+    expect(alive(task.pid!)).toBe(true);
+  });
+
+  test("concurrent waiters settle on stop and shutdown and clean subscriptions", async () => {
+    const instance = manager();
+    const task = instance.start({ command: "sleep 30", cwd: tmpdir() });
+    const controller = new AbortController();
+    const aborted = instance.wait(task.id, { signal: controller.signal });
+    const first = instance.wait(task.id), second = instance.wait(task.id);
+    controller.abort();
+    await instance.stop(task.id);
+    expect((await aborted).outcome).toBe("aborted");
+    for (const waiting of [first, second]) {
+      expect((await waiting).task.status).toBe("stopped");
+      expect((await waiting).outcome).toBe("finished");
+    }
+    expect((instance as any).records.get(task.id).waiters.size).toBe(0);
+    const next = instance.start({ command: "sleep 30", cwd: tmpdir() });
+    const waiting = instance.wait(next.id);
+    await instance.shutdown();
+    expect((await waiting).task.status).toBe("stopped");
+    expect((instance as any).records.get(next.id).waiters.size).toBe(0);
+  });
+
+  test("wait validates IDs and deadlines without registering listeners", () => {
+    const instance = manager();
+    expect(() => instance.wait("missing")).toThrow("Unknown");
+    const task = instance.start({ command: "sleep 30", cwd: tmpdir() });
+    for (const timeout of [0, -1, NaN, Infinity, 86401]) {
+      expect(() => instance.wait(task.id, { timeout })).toThrow("timeout");
+    }
+    expect((instance as any).records.get(task.id).waiters.size).toBe(0);
+  });
+
   test("resolves Bash from PATH instead of assuming /bin/bash", async () => {
     const directory = mkdtempSync(join(tmpdir(), "pi-task-path-"));
     const previousPath = process.env.PATH;
@@ -92,7 +157,9 @@ describe("TaskManager", () => {
   test("timeout and repeated stop preserve terminal reasons", async () => {
     const instance = manager();
     const task = instance.start({ command: "sleep 30", cwd: tmpdir(), timeout: 0.05 });
-    expect((await finish(instance, task.id)).status).toBe("timed_out");
+    const waited = await instance.wait(task.id);
+    expect(waited.outcome).toBe("finished");
+    expect(waited.task.status).toBe("timed_out");
     expect((await instance.stop(task.id)).status).toBe("timed_out");
     const second = instance.start({ command: "sleep 30", cwd: tmpdir() });
     const [a, b] = await Promise.all([instance.stop(second.id), instance.stop(second.id)]);

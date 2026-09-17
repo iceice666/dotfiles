@@ -6,6 +6,7 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import { Text, type Component } from '@earendil-works/pi-tui';
 import { safeText } from './observation.mjs';
+import { teamToolNames, teamToolRenderers } from './render.ts';
 
 export type NativeSnapshot = { revision: number; truncated: boolean; messages: Array<{
   id: string; message: any; streaming: boolean; tool?: { args: any; status: string };
@@ -37,6 +38,7 @@ export class NativeTranscript {
   private width = -1;
   private cached?: string[];
   constructor(private tui: any, private cwd: string) {
+    for (const name of teamToolNames) this.renderers.set(name, teamToolRenderers(name));
     for (const factory of factories) {
       const { name, renderCall, renderResult, renderShell } = factory(cwd);
       // Edit's normal pre-execution preview reads today's file. A historical viewer

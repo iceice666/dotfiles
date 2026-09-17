@@ -20,6 +20,16 @@ async function setup() {
   return { ctx, views, call, ask, shutdown, team };
 }
 
+test('all registered team tools provide display-only renderers', async () => {
+  const s = await setup();
+  for (const { definition } of s.team.tools.values()) {
+    expect(typeof definition.renderCall).toBe('function');
+    expect(typeof definition.renderResult).toBe('function');
+  }
+  expect(s.team.messageRenderers.has('agent-team')).toBe(true);
+  await s.shutdown();
+});
+
 test('parent to:user directly awaits shared UI and returns structured selection', async () => {
   const s = await setup();
   const pending = s.call({ to: 'user', question: 'Choose', options: [{ label: 'A' }, { label: 'B' }] });

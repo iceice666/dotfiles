@@ -7,9 +7,9 @@ without taking ownership of unrelated local extensions.
 
 | Extension | Purpose |
 |---|---|
-| `agent-team/` | Persistent Pi RPC workers, team messaging and observation UI |
+| `agent-team/` | Persistent Pi RPC workers, team messaging, explicit waits and observation UI |
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
-| `background-task/` | Session-local background Bash jobs and bounded logs |
+| `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
 | `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
 | `exa-search/` | Bounded public web search through Exa (`web_search`) |
@@ -64,6 +64,16 @@ See [exa-search/README.md](extensions/exa-search/README.md) for limits and tests
 Search queries leave the host: never include private source or credentials.
 Results are untrusted evidence and may be incomplete; cite URLs, and fetch the
 full source separately when needed. This is not a browser integration.
+
+## Waiting for work
+
+Use `background_task({ action: "wait", id, timeout: 60 })` to wait for a
+background job, or `agent_wait({ agent: "reviewer", timeout: 60 })` to wait for
+a team worker. These are model tools, not slash commands. Both wait without
+polling, default to 60 seconds, and accept a positive timeout up to 86400 seconds.
+Timeout or Esc cancels only the wait, not the underlying job or worker.
+Inspect the returned outcome: ending a wait does not by itself mean the work
+succeeded. See the extension READMEs for exact completion and question semantics.
 
 ## Development
 

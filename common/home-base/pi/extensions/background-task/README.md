@@ -34,15 +34,20 @@
 
 ## AI 工具
 
-`background_task` 支援 `start | list | output | stop`。
+`background_task` 支援 `start | list | output | wait | stop`。
 
 ```json
 {"action":"start","command":"bun test","cwd":"./project","timeout":120}
 {"action":"output","id":"<returned-id>","lines":200}
+{"action":"wait","id":"<returned-id>","timeout":60,"lines":200}
 {"action":"stop","id":"<returned-id>"}
 ```
 
-`timeout` 為秒數，省略則無時間限制。啟動成功只代表程序已建立，不代表工作成功；請檢查最終 status / exitCode。
+`timeout` 為秒數（大於 0、最多 86400）；`start` 省略則工作無時間限制。啟動成功只代表程序已建立，不代表工作成功；請檢查最終 status / exitCode。
+
+`wait` 必須指定 `id`，以完成事件等待指定工作結束，不輪詢、不額外呼叫模型；已結束的工作立即回傳。等待預設最多 60 秒，`timeout` 只限制本次等待，**不改變工作期限或停止工作**。Esc 取消目前 agent turn 和等待，同樣不停止工作。完成、等待逾時或取消都會清理等待計時器與訂閱；session shutdown 則沿用既有規則停止工作並結束等待。
+
+結果包含工作摘要和受限的最新輸出（`lines` 預設 200，最多 2000 行 / 48 KiB），`details.wait.outcome` 為 `finished | timed_out | aborted`，`details.wait.task` 為該時點的工作快照。`finished` 只表示工作已終止，不表示成功；請檢查工作 `status` / `exitCode`。等待 `timed_out` 不等同工作 `status: timed_out`。需要完成結果時使用 `wait`，不要反覆呼叫 `list` / `output` 忙碌輪詢。
 
 ## 生命週期與限制
 
