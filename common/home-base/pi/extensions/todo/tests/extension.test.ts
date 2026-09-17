@@ -60,6 +60,32 @@ describe("todo extension host integration", () => {
     await end();
     expect(s.messages).toHaveLength(2);
   });
+  test("reminders preserve dependencies on completed tasks without changing state", async () => {
+    const s = await setup();
+    await s.call({ action: "add", items: [
+      { text: "Completed prerequisite", status: "completed" },
+      { text: "Working dependent", status: "in_progress", blockedBy: [1] },
+      { text: "Pending dependent", blockedBy: [1, 2] },
+    ] });
+    const before = (await s.call({ action: "list" })).details.state;
+    const history = structuredClone(s.branch);
+    const end = () => s.event("agent_end", { messages: [{ role: "assistant", stopReason: "stop" }] });
+    await end();
+    expect(s.messages).toHaveLength(1);
+    const content = s.messages[0].message.content;
+    expect(content).toContain("2 unfinished");
+    expect(content).toContain("#2 [In progress] Working dependent; depends on: #1");
+    expect(content).toContain("#3 [Pending] Pending dependent; depends on: #1, #2");
+    expect(content).not.toContain("Completed prerequisite");
+    await end();
+    expect(s.messages).toHaveLength(1);
+    expect((await s.call({ action: "list" })).details.state).toEqual(before);
+    expect(s.branch).toEqual(history);
+    await s.event("session_start");
+    await end();
+    expect(s.messages).toHaveLength(2);
+    expect(s.messages[1].message.content).toBe(content);
+  });
   test("reminders respect aborts, errors, terminating tools, queued messages and disabled todo", async () => {
     const s = await setup();
     await s.call({ action: "add", text: "Unfinished" });

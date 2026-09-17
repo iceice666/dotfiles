@@ -225,11 +225,13 @@ export function applyAction(state: State, action: Action): State {
 	return checkedState(next);
 }
 
-export function formatTodos(state: State): string {
+export function formatTodos(state: State, options: { unfinishedOnly?: boolean } = {}): string {
+	// Validate the full graph before filtering display rows: completed dependencies still exist.
 	const current = checkedState(state);
-	if (!current.todos.length) return "No tasks yet.";
+	const todos = options.unfinishedOnly ? current.todos.filter(todo => todo.status !== "completed") : current.todos;
+	if (!todos.length) return "No tasks yet.";
 	const labels: Record<Status, string> = { pending: "Pending", in_progress: "In progress", completed: "Completed" };
-	return current.todos.map((todo) => {
+	return todos.map((todo) => {
 		const blocked = todo.blockedBy.length ? `; depends on: ${todo.blockedBy.map((id) => `#${id}`).join(", ")}` : "";
 		const category = todo.category === undefined ? "" : ` [Category: ${todo.category}]`;
 		return `#${todo.id} [${labels[todo.status]}]${category} ${todo.text}${blocked}`;
