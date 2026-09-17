@@ -206,7 +206,13 @@ Anthropic Messages provider at `https://cliproxyapi.justaslime.dev`. Claude mode
 support thinking and image input; all except Haiku use adaptive thinking.
 The `apiKey` command reads the shared
 SOPS secret at request time; no plaintext key enters the Nix store. Pi's
-settings, auth state, and sessions remain unmanaged. After switching, select a
+auth state and sessions remain unmanaged. `settings.json` is *partially*
+managed: an activation step merges the repo-owned keys (`theme`,
+`hideThinkingBlock`) into the existing file with `jq` instead of installing a
+store symlink, so Pi can still persist `/model`, `/settings`, and
+`lastChangelogVersion` at runtime. On themegen hosts the theme resolves to
+`themegen-light/themegen-dark`; other hosts keep the built-in `light/dark`.
+After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.
 
@@ -235,7 +241,7 @@ no plaintext key in the Nix store or settings. The Exa search endpoint is fixed 
 `https://cliproxyapi.justaslime.dev/v1/responses` and `/v1/messages` endpoints.
 Native search requires successful search evidence and labels model synthesis
 separately from sources; there is no extension-level retry or automatic fallback.
-Settings and auth/session state remain unmanaged.
+Unmanaged settings keys, auth state, and session state are left alone.
 
 `analyze_image` delegates local PNG/JPEG/GIF/WebP analysis to a configured vision
 model (default `cliproxyapi-claude/claude-sonnet-5`) and returns text for text-only

@@ -25,6 +25,19 @@ let
     };
 
   apiKey = "!${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.cliproxyapi_homonet_api_key.path}";
+
+  # Themegen renders the wallpaper-derived Pi themes only on GUI hosts; servers
+  # keep the built-in pair so the theme setting always resolves.
+  hasThemegenThemes = config.home.file ? ".pi/agent/themes/themegen-dark.json";
+
+  # Keys this repo owns. Everything else in settings.json (model choice,
+  # lastChangelogVersion, /settings toggles) stays runtime-owned and writable.
+  managedSettings = {
+    theme = if hasThemegenThemes then "themegen-light/themegen-dark" else "light/dark";
+    hideThinkingBlock = false;
+  };
+
+  settingsPath = "${config.home.homeDirectory}/.pi/agent/settings.json";
 in
 {
   home.packages = [
@@ -54,6 +67,20 @@ in
     key = "homonetApiKey";
     mode = "0400";
   };
+
+  # Merge-on-activation instead of a store symlink: Pi rewrites settings.json at
+  # runtime, so a read-only link would break /model and /settings persistence.
+  home.activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg (builtins.dirOf settingsPath)}
+    if [ ! -s ${lib.escapeShellArg settingsPath} ]; then
+      ${pkgs.coreutils}/bin/echo '{}' > ${lib.escapeShellArg settingsPath}
+    fi
+    if merged=$(${pkgs.jq}/bin/jq --argjson managed ${lib.escapeShellArg (builtins.toJSON managedSettings)} '. * $managed' ${lib.escapeShellArg settingsPath}); then
+      printf '%s\n' "$merged" > ${lib.escapeShellArg settingsPath}
+    else
+      echo "pi: settings.json is not valid JSON; leaving it untouched" >&2
+    fi
+  '';
 
   home.file.".pi/agent/models.json".text = builtins.toJSON {
     providers.cliproxyapi = {

@@ -44,9 +44,19 @@ the new extensions have been verified. Subsequent updates use normal host
 build/switch workflows; edit the repo sources, not the installed store links.
 Do not use `pi install` to install a second copy of these extensions.
 
-Settings, authentication, trust decisions, sessions, team archives and temporary
+Authentication, trust decisions, sessions, team archives and temporary
 background logs remain unmanaged. The Lumo audit explicitly disables extension
 discovery and is unaffected.
+
+`settings.json` is only partially managed. A `piSettings` activation step merges
+the repo-owned keys (`theme`, `hideThinkingBlock`) into the existing file with
+`jq`; every other key stays runtime-owned and writable, so `/model`, `/settings`
+and `lastChangelogVersion` still persist. On hosts with `features.themegen` the
+wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
+and the theme resolves to `themegen-light/themegen-dark`, matching Ghostty;
+other hosts keep the built-in `light/dark` pair. Changing the theme via
+`/settings` is overwritten on the next switch — edit the repo instead. If
+`settings.json` is not valid JSON, activation warns and leaves it untouched.
 
 ## Instructions, workflows and search
 
