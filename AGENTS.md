@@ -210,8 +210,8 @@ settings, auth state, and sessions remain unmanaged. After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.
 
-The six personal Pi extensions (`agent-team`, `ask-question`, `background-task`,
-`todo`, `status-line`, and `exa-search`) are owned by `common/home-base/pi/extensions/` and
+The seven personal Pi extensions (`agent-team`, `ask-question`, `background-task`,
+`todo`, `status-line`, `exa-search`, and `analyze-image`) are owned by `common/home-base/pi/extensions/` and
 installed on all Pi-enabled hosts as recursive Home Manager store links. Keep
 sibling directories together: agent-team imports ask-question's service.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
@@ -232,6 +232,13 @@ no plaintext key in the Nix store or settings. The Exa search endpoint is fixed 
 Native search requires successful search evidence and labels model synthesis
 separately from sources; there is no extension-level retry or automatic fallback.
 Settings and auth/session state remain unmanaged.
+
+`analyze_image` delegates local PNG/JPEG/GIF/WebP analysis to a configured vision
+model (default `cliproxyapi-claude/claude-sonnet-5`) and returns text for text-only
+models. It uses registry-managed auth, sends only the image and question (no
+history/tools), and enforces file/output limits plus cancellation/deadlines.
+Images leave the host; do not send sensitive content without authorization.
+See `common/home-base/pi/extensions/analyze-image/README.md` for details.
 
 The active lumo daily audit reporter uses Pi with `cliproxyapi/gpt-6-astra`,
 `/root/.pi/agent`, read-only `read`/`ls`/`find` tools, and extension/skill/context discovery

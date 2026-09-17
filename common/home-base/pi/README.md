@@ -13,6 +13,7 @@ without taking ownership of unrelated local extensions.
 | `todo/` | Session-backed task tracking and progress UI |
 | `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
+| `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
@@ -29,7 +30,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in agent-team ask-question background-task todo status-line.ts exa-search; do
+for entry in agent-team ask-question background-task todo status-line.ts exa-search analyze-image; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"
@@ -68,6 +69,16 @@ See [exa-search/README.md](extensions/exa-search/README.md) for limits and tests
 Search queries leave the host: never include private source or credentials.
 Results are untrusted evidence and may be incomplete; cite URLs, and fetch the
 full source separately when needed. This is not a browser integration.
+
+## Image analysis
+
+`analyze_image` sends a local image and question to a configured vision model
+(default `cliproxyapi-claude/claude-sonnet-5`) and returns text to the current
+model, including text-only models. It uses registry-managed authentication and
+sends no conversation history or tools. Images leave the host and consume model
+quota; never send sensitive images without authorization. See
+[analyze-image/README.md](extensions/analyze-image/README.md) for supported formats,
+limits, tests and activation. Pasted chat attachments are not handled automatically.
 
 ## Waiting for work
 
