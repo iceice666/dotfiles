@@ -135,7 +135,14 @@ export async function showQuestionnaire(ctx: ExtensionContext, questions: Questi
             });
             body.push(questions.every((_, i) => answer(i)) ? "✓ Answers ready. Press Enter to submit." : "Go back to complete the unanswered questions." );
           } else {
-            body.push(...wrapTextWithAnsi(q.question, inner).slice(0, Math.min(2, budget - 1)));
+            const questionLines = wrapTextWithAnsi(q.question, inner);
+            // Reserve enough space for choices or the editor, not a fixed two-line question preview.
+            const questionRoom = budget - Math.min(3, budget - 1);
+            if (questionLines.length <= questionRoom) body.push(...questionLines);
+            else {
+              body.push(...questionLines.slice(0, questionRoom - 1));
+              body.push(theme.fg("dim", one("… Ctrl+O: full question")));
+            }
             const room = budget - body.length;
             if (d.editing) {
               const rendered = d.editor.render(inner);

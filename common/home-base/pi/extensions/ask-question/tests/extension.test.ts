@@ -3,7 +3,7 @@ const workerEnv = process.env.PI_TEAM_AGENT;
 delete process.env.PI_TEAM_AGENT;
 afterAll(() => { if (workerEnv !== undefined) process.env.PI_TEAM_AGENT = workerEnv; });
 import { loadExtensions } from "../../agent-team/tests/sdk.ts";
-import { visibleWidth } from "@earendil-works/pi-tui";
+import { visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 
 async function setup(mode = "tui") {
   const loaded = await loadExtensions([`${import.meta.dir}/../index.ts`], process.cwd());
@@ -30,6 +30,54 @@ test("single selection and narrow width / IME focus", async () => {
   for (const width of [1, 2, 10, 80]) expect(view.render(width).every((line: string) => visibleWidth(line) <= width)).toBe(true);
   view.handleInput("\x1b[B"); view.handleInput("\r"); view.handleInput("\r");
   expect((await result).details).toEqual({ status: "answered", answers: [{ question: "选什么？", selected: ["乙"] }] });
+});
+
+test("long questions wrap beyond two lines with choices and a focused editor", async () => {
+  const s = await setup();
+  const question = "請確認這個比較長的問題是否能夠完整換行顯示，而不是只留下前兩行。".repeat(3) + "\n問題結尾";
+  for (const options of [[{ label: "同意" }], undefined]) {
+    const result = s.call([{ question, options }]);
+    await tick();
+    const v = s.views.at(-1);
+    v.focused = true;
+    for (const width of [40, 60, 80]) {
+      const wrapped = wrapTextWithAnsi(question, width - 4);
+      expect(wrapped.length).toBeGreaterThan(2);
+      const lines = v.render(width);
+      for (const line of wrapped) expect(lines.join("\n")).toContain(line);
+      expect(lines.length).toBeLessThanOrEqual(24);
+      expect(lines.every((line: string) => visibleWidth(line) <= width)).toBe(true);
+      expect(lines.join("\n")).toContain(options ? "同意" : "\x1b_pi:c\x07");
+    }
+    v.handleInput("\x03");
+    expect((await result).details.status).toBe("cancelled");
+  }
+});
+
+test("overflowing questions advertise full details and reflow after resizing", async () => {
+  const s = await setup();
+  const question = "問題開頭\n" + "長問題內容".repeat(100) + "\n問題結尾";
+  const result = s.call([{ question, options: [{ label: "同意" }] }]);
+  await tick();
+  const v = s.views[0];
+  for (const rows of [8, 12, 24]) {
+    s.terminal.rows = rows;
+    const lines = v.render(40);
+    expect(lines.join("\n")).toContain("Ctrl+O: full question");
+    expect(lines.join("\n")).toContain("同意");
+    expect(lines.length).toBeLessThanOrEqual(rows);
+  }
+  s.terminal.rows = 24;
+  v.handleInput("\x0f");
+  v.render(40);
+  for (let i = 0; i < 100; i++) v.handleInput("\x1b[B");
+  expect(v.render(40).join("\n")).toContain("問題結尾");
+  v.handleInput("\x1b");
+  const wide = v.render(120);
+  expect(wide.join("\n")).toContain("問題結尾");
+  expect(wide.join("\n")).not.toContain("Ctrl+O: full question");
+  v.handleInput("\r"); v.handleInput("\r");
+  expect((await result).details.answers[0].selected).toEqual(["同意"]);
 });
 
 test("multiple choices plus custom answer", async () => {
