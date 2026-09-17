@@ -1,14 +1,57 @@
 import { homedir } from "node:os";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { CustomEditor, type ExtensionAPI, type Theme } from "@earendil-works/pi-coding-agent";
+import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-// Single-line footer. Time measures the current/last prompt, not idle time.
+type TeamAgent = { name: string; status: string };
+
+// Selection belongs to the footer, but input is handled only by the focused editor.
+export class TeamStatus {
+  agents: TeamAgent[] = [];
+  selected: string | undefined;
+  update(agents: TeamAgent[]) {
+    this.agents = agents.filter(a => !['stopped', 'failed', 'exited'].includes(a.status));
+    if (!this.agents.some(a => a.name === this.selected)) this.selected = undefined;
+  }
+  input(data: string, text: string, attach: (name: string) => void): boolean {
+    if (text !== '' || !this.agents.length) { this.selected = undefined; return false; }
+    const index = this.agents.findIndex(a => a.name === this.selected);
+    if (matchesKey(data, 'down')) {
+      this.selected = this.agents[Math.min(index + 1, this.agents.length - 1)].name;
+      return true;
+    }
+    if (index < 0) return false;
+    if (matchesKey(data, 'up')) { this.selected = this.agents[index - 1]?.name; return true; }
+    if (matchesKey(data, 'escape')) { this.selected = undefined; return true; }
+    if (matchesKey(data, 'enter')) {
+      const name = this.selected!;
+      this.selected = undefined;
+      attach(name);
+      return true;
+    }
+    this.selected = undefined;
+    return false;
+  }
+  render(width: number, theme: Pick<Theme, 'fg'>): string[] {
+    return this.agents.map(a => {
+      const selected = a.name === this.selected;
+      const clean = (s: string) => s.replace(/[\x00-\x1f\x7f-\x9f]/g, '?');
+      const hint = selected ? ' · ↑↓ select · Enter view · Esc back' : '';
+      return truncateToWidth(theme.fg(selected ? 'accent' : a.status === 'waiting' ? 'warning' : 'muted',
+        `${selected ? '›' : '·'} ${clean(a.name)} · ${clean(a.status)}${hint}`), Math.max(0, width));
+    });
+  }
+}
+
+// Time measures the current/last prompt, not idle time.
 export default function (pi: ExtensionAPI) {
   let started: number | undefined;
   let elapsed = 0;
   let redraw = () => {};
   let refreshGit = () => {};
   let dispose = () => {};
+  let disconnect = () => {};
+  let restoreEditor = () => {};
+  const team = new TeamStatus();
 
   pi.on("agent_start", () => {
     started ??= performance.now();
@@ -24,13 +67,45 @@ export default function (pi: ExtensionAPI) {
   pi.on("model_select", () => redraw());
   pi.on("thinking_level_select", () => redraw());
   pi.on("tool_execution_end", () => refreshGit());
-  pi.on("session_shutdown", () => dispose());
+  pi.on("ui_prompt_start", () => { team.selected = undefined; redraw(); });
+  pi.on("session_shutdown", () => { disconnect(); restoreEditor(); dispose(); team.update([]); });
 
   pi.on("session_start", (_event, ctx) => {
+    disconnect();
+    restoreEditor();
     dispose();
     if (ctx.mode !== "tui") return;
     started = undefined;
     elapsed = 0;
+    team.update([]);
+    disconnect = pi.events.on('agent-team:state', (data: { agents: TeamAgent[] }) => {
+      team.update(data.agents);
+      redraw();
+    });
+    pi.events.emit('agent-team:request-state', {});
+    const previous = ctx.ui.getEditorComponent();
+    const restoreHandlers: (() => void)[] = [];
+    const factory: NonNullable<ReturnType<typeof ctx.ui.getEditorComponent>> = (tui, theme, keybindings) => {
+      const editor = previous?.(tui, theme, keybindings) ?? new CustomEditor(tui, theme, keybindings);
+      const originalInput = editor.handleInput;
+      const handleInput = originalInput.bind(editor);
+      const wrappedInput = (data: string) => {
+        const handled = team.input(data, editor.getText(), name => pi.events.emit('agent-team:attach', { name }));
+        if (!handled) handleInput(data);
+        tui.requestRender();
+      };
+      editor.handleInput = wrappedInput;
+      restoreHandlers.push(() => {
+        if (editor.handleInput === wrappedInput) editor.handleInput = originalInput;
+      });
+      return editor;
+    };
+    ctx.ui.setEditorComponent(factory);
+    restoreEditor = () => {
+      for (const restore of restoreHandlers.reverse()) restore();
+      restoreHandlers.length = 0;
+      if (ctx.ui.getEditorComponent() === factory) ctx.ui.setEditorComponent(previous);
+    };
 
     ctx.ui.setFooter((tui, theme, footerData) => {
       let closed = false;
@@ -131,7 +206,8 @@ export default function (pi: ExtensionAPI) {
           }
           // Keep other extensions' statuses visible only when they have something to report.
           const statuses = [...footerData.getExtensionStatuses().values()];
-          return statuses.length ? [line, truncateToWidth(statuses.join("  ").replace(/[\r\n\t]/g, " "), width)] : [line];
+          return [line, ...team.render(width, theme),
+            ...(statuses.length ? [truncateToWidth(statuses.join("  ").replace(/[\r\n\t]/g, " "), width)] : [])];
         },
       };
     });

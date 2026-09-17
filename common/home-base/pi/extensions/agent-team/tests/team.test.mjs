@@ -82,10 +82,28 @@ test('spawn validates names/capacity/cancellation and cleans failed executable',
   team.limit = 1;
   await assert.rejects(team.spawn({ name: 'extra', task: 'x' }, defaults), /Limit/);
   team.limit = 4; team.executable = '/nonexistent-pi-team-executable';
+  const published = [];
+  team.onChange = state => published.push(state.agents.find(a => a.name === 'broken')?.status);
   await assert.rejects(team.spawn({ name: 'broken', task: 'x' }, defaults));
+  assert.equal(published[0], 'starting');
+  assert.equal(published.at(-1), 'failed');
   assert.equal(team.agents.get('broken').status, 'failed');
   assert.equal(team.tokens.size, 1);
 });
+test('terminal state notifications preserve archived workers and observations', async t => {
+  const { team } = await fixture(t);
+  const states = [];
+  team.onChange = state => states.push(state);
+  const alice = team.agents.get('alice');
+  team.event(alice, { type: 'team_exit', code: 0, stderr: '' });
+  assert.equal(states.at(-1).agents[0].status, 'failed');
+  assert.equal(team.list().agents[0].name, 'alice');
+  assert.ok(team.observeNative('alice'));
+  await team.stop('alice');
+  assert.equal(states.at(-1).agents[0].status, 'stopped');
+  assert.ok(team.observeNative('alice'));
+});
+
 test('waiting status follows unresolved questions; retries do not report premature idle', async t => {
   const { team } = await fixture(t);
   const a = team.agents.get('alice');

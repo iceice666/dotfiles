@@ -5,7 +5,16 @@ delete process.env.PI_TEAM_AGENT;
 afterAll(() => { if (saved !== undefined) process.env.PI_TEAM_AGENT = saved; });
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 async function setup() {
-  const loaded = await loadExtensions([`${import.meta.dir}/../index.ts`, `${import.meta.dir}/../../ask-question/index.ts`], process.cwd());
+  const listeners = new Map<string, Set<(data: any) => void>>();
+  const events = {
+    emit(name: string, data?: any) { for (const listener of listeners.get(name) ?? []) listener(data); },
+    on(name: string, listener: (data: any) => void) {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name)!.add(listener);
+      return () => { listeners.get(name)!.delete(listener); };
+    },
+  };
+  const loaded = await loadExtensions([`${import.meta.dir}/../index.ts`, `${import.meta.dir}/../../ask-question/index.ts`], process.cwd(), events);
   expect(loaded.errors).toEqual([]);
   const team = loaded.extensions[0], standalone = loaded.extensions[1];
   const views: any[] = [];
@@ -20,15 +29,22 @@ async function setup() {
   const call = (args: any, signal?: AbortSignal) => team.tools.get('agent_ask')!.definition.execute('id', args, signal, undefined, ctx);
   const ask = (question: string) => standalone.tools.get('ask_user_question')!.definition.execute('id', { questions: [{ question }] }, undefined, undefined, ctx);
   const shutdown = async () => { for (const handler of team.handlers.get('session_shutdown') ?? []) await handler({} as any, ctx); };
-  return { ctx, views, widgets, statuses, call, ask, shutdown, team };
+  return { ctx, views, widgets, statuses, call, ask, shutdown, team, events };
 }
 
-test('team widget lifecycle clears above-editor UI without publishing a footer status', async () => {
+test('team publishes empty state on request and shutdown without widgets or shortcuts', async () => {
   const s = await setup();
+  const states: any[] = [];
+  s.events.on('agent-team:state', state => states.push(state));
   for (const handler of s.team.handlers.get('session_start') ?? []) await handler({} as any, s.ctx);
-  expect(s.widgets).toEqual([]);
+  s.events.emit('agent-team:request-state');
+  expect(states).toEqual([{ agents: [] }]);
+  expect(s.team.shortcuts.size).toBe(0);
   await s.shutdown();
-  expect(s.widgets).toEqual([['agent-team', undefined]]);
+  expect(states).toEqual([{ agents: [] }, { agents: [] }]);
+  s.events.emit('agent-team:request-state');
+  expect(states).toHaveLength(2);
+  expect(s.widgets).toEqual([]);
   expect(s.statuses).toEqual([]);
 });
 
@@ -83,21 +99,25 @@ test('parent shutdown cancels queued and active UI; unavailable is explicit', as
 });
 
 
-test('team panel opens without broker, shortcut toggles, shutdown closes, RPC guarded', async () => {
+test('team defaults to text status; attach is TUI guarded and rejects unknown workers', async () => {
   const s = await setup();
-  const command = s.team.commands.get('team')!;
-  const shortcut = s.team.shortcuts.get('ctrl+shift+t')!;
-  expect(shortcut).toBeDefined();
-  const pending = command.handler('', s.ctx);
-  await tick(); expect(s.views).toHaveLength(1);
-  expect(s.views[0].render(80).join('\n')).toContain('No team yet');
-  await shortcut.handler(s.ctx); await pending;
-  const second = command.handler('panel', s.ctx);
-  await tick(); expect(s.views).toHaveLength(2);
-  await s.shutdown(); await second;
-  const headless = await setup(); headless.ctx.mode = 'rpc';
-  const notices: string[] = []; headless.ctx.ui.notify = (message: string) => notices.push(message);
-  await headless.team.commands.get('team')!.handler('', headless.ctx);
-  expect(headless.views).toHaveLength(0); expect(notices[0]).toContain('TUI');
-  await headless.shutdown();
+  const notices: string[] = [];
+  s.ctx.ui.notify = (message: string) => notices.push(message);
+  for (const handler of s.team.handlers.get('session_start') ?? []) await handler({} as any, s.ctx);
+  await s.team.commands.get('team')!.handler('', s.ctx);
+  expect(notices.at(-1)).toContain('No team running');
+  await s.team.commands.get('team')!.handler('panel', s.ctx);
+  expect(notices.at(-1)).toContain('Usage:');
+  s.events.emit('agent-team:attach', { name: 'missing' });
+  await tick();
+  expect(notices.at(-1)).toContain('Unknown agent');
+  s.ctx.mode = 'rpc';
+  await s.team.commands.get('team')!.handler('attach missing', s.ctx);
+  expect(notices.at(-1)).toContain('TUI');
+  expect(s.views).toEqual([]);
+  await s.shutdown();
+  const count = notices.length;
+  s.events.emit('agent-team:attach', { name: 'missing' });
+  await tick();
+  expect(notices).toHaveLength(count);
 });

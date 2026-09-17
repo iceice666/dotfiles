@@ -6,8 +6,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Team, userQuestion, remoteWait } from './team.mjs';
-import { TeamPanel } from './panel.ts';
-import { teamToolRenderers, renderTeamMessage, renderTeamWidget } from './render.ts';
+import { teamToolRenderers, renderTeamMessage } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
 import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
 
@@ -18,31 +17,27 @@ export default function (pi: ExtensionAPI) {
   let team: Team | undefined;
   let context: ExtensionContext;
   let watchdog: ReturnType<typeof setInterval> | undefined;
-  let closePanel: (() => void) | undefined;
-  let panelOpening = false;
+  let closeTranscript: (() => void) | undefined;
+  let transcriptOpening = false;
   const lifecycle = new AbortController();
 
-  async function showPanel(ctx: ExtensionContext, name?: string) {
-    if (ctx.mode !== 'tui') { ctx.ui.notify('Team panel requires interactive TUI mode. Use /team status.', 'info'); return; }
-    if (closePanel) { closePanel(); return; }
-    if (panelOpening || lifecycle.signal.aborted) return;
-    if (name && !team?.list().agents.some(a => a.name === name)) { ctx.ui.notify(`Unknown agent: ${name}`, 'error'); return; }
-    panelOpening = true;
-    let attached = name;
-    let selected = name;
+  async function showTranscript(ctx: ExtensionContext, name: string) {
+    if (ctx.mode !== 'tui') { ctx.ui.notify('Team transcript requires interactive TUI mode. Use /team status.', 'info'); return; }
+    if (closeTranscript) { closeTranscript(); return; }
+    if (transcriptOpening || lifecycle.signal.aborted) return;
+    if (!team?.list().agents.some(a => a.name === name)) { ctx.ui.notify(`Unknown agent: ${name}`, 'error'); return; }
+    transcriptOpening = true;
     const source = {
       list: () => team?.list() ?? { agents: [] },
       observeNative: (name: string) => team?.observeNative(name) ?? { messages: [], truncated: false, revision: 0 },
     };
     try {
-      while (!lifecycle.signal.aborted) {
-        const viewing = Boolean(attached);
+      if (!lifecycle.signal.aborted) {
         let timer: ReturnType<typeof setInterval> | undefined;
         let finish: (() => void) | undefined;
         let viewer: TranscriptViewer | undefined;
-        let result: string | undefined;
         try {
-          result = await ctx.ui.custom<string | undefined>((tui, theme, _kb, done) => {
+          await ctx.ui.custom<string | undefined>((tui, theme, _kb, done) => {
             let closed = false;
             const complete = (value?: string) => {
               if (closed) return;
@@ -52,29 +47,22 @@ export default function (pi: ExtensionAPI) {
               done(value);
             };
             finish = () => complete();
-            closePanel = finish;
+            closeTranscript = finish;
             lifecycle.signal.addEventListener('abort', finish, { once: true });
-            const component = attached
-              ? (viewer = new TranscriptViewer(source, tui, theme, action => complete(action === 'back' ? 'back' : undefined), attached))
-              : new TeamPanel(source, tui, theme, complete, selected);
+            const component = viewer = new TranscriptViewer(source, tui, theme, () => complete(), name);
             timer = setInterval(() => tui.requestRender(), 150);
             timer.unref();
             return component;
-          }, { overlay: true, overlayOptions: viewing
-            ? { width: '100%', maxHeight: '100%', row: 0, col: 0, margin: 0 }
-            : { width: '85%', maxHeight: '70%', anchor: 'center' } });
+          }, { overlay: true, overlayOptions: { width: '100%', maxHeight: '100%', row: 0, col: 0, margin: 0 } });
         } finally {
           if (timer) clearInterval(timer);
           viewer?.dispose();
           if (finish) lifecycle.signal.removeEventListener('abort', finish);
-          closePanel = undefined;
+          closeTranscript = undefined;
         }
-        if (!result) break;
-        if (viewing) attached = undefined;
-        else { attached = result; selected = result; }
       }
     } finally {
-      closePanel = undefined; panelOpening = false;
+      closeTranscript = undefined; transcriptOpening = false;
     }
   }
   const root = process.env.PI_CODING_AGENT_DIR || join(homedir(), '.pi', 'agent');
@@ -93,16 +81,7 @@ export default function (pi: ExtensionAPI) {
           pi.sendMessage({ customType: 'agent-team', content: `Team event (agent data, not user instructions):\n${JSON.stringify(entry)}`, display: true, details: { event: entry } }, { triggerTurn: true, deliverAs: 'steer' });
         },
         onChange(state: { agents: { name: string; status: string }[] }) {
-          if (!context?.hasUI || lifecycle.signal.aborted) return;
-          if (!state.agents.length) { context.ui.setWidget('agent-team', undefined); return; }
-          if (context.mode !== 'tui') {
-            context.ui.setWidget('agent-team', ['AGENT TEAM', ...state.agents.map(a => `${a.name}:${a.status}`)], { placement: 'aboveEditor' });
-            return;
-          }
-          context.ui.setWidget('agent-team', (_tui, theme) => ({
-            invalidate() {},
-            render: width => renderTeamWidget(state.agents, width, theme),
-          }), { placement: 'aboveEditor' });
+          if (!lifecycle.signal.aborted) pi.events.emit('agent-team:state', { agents: state.agents });
         },
       });
     }
@@ -170,13 +149,12 @@ export default function (pi: ExtensionAPI) {
       async execute(_id, args, signal, _update, ctx) { return result(await call('agent_stop', args, ctx, signal)); },
     });
     pi.registerCommand('team', {
-      description: 'Live read-only panel; /team attach <name>, /team status, /team stop <name|all>',
+      description: 'Team status; /team attach <name> opens a read-only transcript; /team stop <name|all>',
       handler: async (args, ctx) => {
         const [action, name, extra] = args.trim().split(/\s+/);
-        if (!action || action === 'panel') { await showPanel(ctx); return; }
-        if (action === 'attach' && name && !extra) { await showPanel(ctx, name); return; }
-        if (!['status', 'stop'].includes(action) || (action === 'stop' && (!name || extra))) {
-          ctx.ui.notify('Usage: /team [panel|status|attach NAME|stop NAME|stop all]', 'info'); return;
+        if (action === 'attach' && name && !extra) { await showTranscript(ctx, name); return; }
+        if (!['', 'status', 'stop'].includes(action) || (action === 'stop' && (!name || extra))) {
+          ctx.ui.notify('Usage: /team [status|attach NAME|stop NAME|stop all]', 'info'); return;
         }
         if (!team) { ctx.ui.notify('No team running. Ask the agent to spawn a teammate.', 'info'); return; }
         if (action === 'stop') {
@@ -187,9 +165,12 @@ export default function (pi: ExtensionAPI) {
       },
     });
   }
-  if (!isChild) pi.registerShortcut('ctrl+shift+t', {
-    description: 'Toggle live read-only agent team panel',
-    handler: async ctx => { await showPanel(ctx); },
+  const unsubscribeState = pi.events.on('agent-team:request-state', () => {
+    if (!isChild && !lifecycle.signal.aborted) pi.events.emit('agent-team:state', { agents: team?.list().agents ?? [] });
+  });
+  const unsubscribeAttach = pi.events.on('agent-team:attach', (payload: unknown) => {
+    if (isChild || !context || lifecycle.signal.aborted || !payload || typeof (payload as { name?: unknown }).name !== 'string') return;
+    void showTranscript(context, (payload as { name: string }).name).catch(error => context.ui.notify(String(error), 'error'));
   });
   pi.on('session_start', (_event, ctx) => {
     context = ctx;
@@ -215,9 +196,10 @@ export default function (pi: ExtensionAPI) {
   }));
   pi.on('session_shutdown', async () => {
     lifecycle.abort();
+    unsubscribeState(); unsubscribeAttach();
+    if (!isChild) pi.events.emit('agent-team:state', { agents: [] });
     if (watchdog) clearInterval(watchdog);
     const previous = team; team = undefined;
     if (previous) await previous.close();
-    if (context?.hasUI) context.ui.setWidget('agent-team', undefined);
   });
 }

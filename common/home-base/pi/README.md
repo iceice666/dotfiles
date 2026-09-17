@@ -12,7 +12,7 @@ without taking ownership of unrelated local extensions.
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
 | `btw/` | `/btw` side questions while the main agent runs, without changing its context |
-| `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
+| `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
 
@@ -102,6 +102,20 @@ not main-agent context. `/btw cancel` stops only the side request. Additional
 model quota is consumed; see [btw/README.md](extensions/btw/README.md) for context,
 limits and a manual smoke check.
 
+## Viewing team workers
+
+Live workers appear directly in the status footer, one agent per row. Idle
+workers remain visible; stopped or failed workers disappear without deleting
+their session archives. There is no separate team widget, picker panel or
+Ctrl+Shift+T shortcut.
+
+With an empty input editor, press ↓ to select the first worker, then ↑/↓ to
+navigate and Enter to open its read-only transcript. Esc (or ↑ on the first
+row) returns to editing. Typing also returns to editing without dropping the
+character. Nonempty editor text and dialogs keep their normal key handling.
+`/team attach NAME` can still inspect an archived worker; `/team` and
+`/team status` report team state. See [agent-team/README.md](extensions/agent-team/README.md).
+
 ## Waiting for work
 
 Use `background_task({ action: "wait", id, timeout: 60 })` to wait for a
@@ -130,5 +144,5 @@ The test suite resolves the local pinned SDK, not a machine-specific global npm
 installation. Dependency lifecycle scripts are not needed. The two legacy
 real-Pi smoke tests are explicitly skipped until they use an isolated,
 fail-closed provider fixture; `--offline` alone does not block completion API
-requests. Enabled tests use no live models or credentials. `status-line.ts`
-has no dedicated behavior tests yet.
+requests. Enabled tests use no live models or credentials. Status-line tests cover
+live-agent rows, keyboard selection, event integration and cleanup.

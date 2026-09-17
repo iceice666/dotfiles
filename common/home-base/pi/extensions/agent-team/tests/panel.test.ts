@@ -4,7 +4,6 @@ const jiti = createJiti(import.meta.url, { interopDefault: true, alias: {
   '@earendil-works/pi-tui': import.meta.resolve('@earendil-works/pi-tui'),
   '@earendil-works/pi-coding-agent': import.meta.resolve('@earendil-works/pi-coding-agent'),
 } });
-const { TeamPanel } = await jiti.import('../panel.ts') as any;
 const { visibleWidth } = await jiti.import('@earendil-works/pi-tui') as any;
 const { initTheme } = await jiti.import('@earendil-works/pi-coding-agent') as any;
 initTheme('dark');
@@ -17,14 +16,11 @@ function fixture(mode = 'regular') {
   const agents = [{ name: 'alice', status: 'running', activity: 'bash', sessionFile: '/tmp/session' }];
   const source = { list: () => ({ agents }), observeNative: () => ({ messages: [{ id: '1', message: { role: 'user', content: text }, streaming: false }], truncated: false, revision }) };
   const tui = { mode, terminal: { rows: 24, write: (s: string) => writes.push(s) }, requestRender() {} };
-  const panel = new TeamPanel(source, tui, theme, (name: any) => actions.push(name));
   const viewer = new TranscriptViewer(source, tui, theme, (action: any) => actions.push(action), 'alice');
-  return { panel, viewer, tui, agents, actions, writes, update: () => { text += '\nnewest'; revision++; } };
+  return { viewer, tui, agents, actions, writes, update: () => { text += '\nnewest'; revision++; } };
 }
-test('picker only selects; fullscreen viewer follows, scrolls, and detaches locally', () => {
+test('fullscreen viewer follows, scrolls, and detaches locally', () => {
   const s = fixture();
-  expect(s.panel.render(80).join('\n')).not.toContain('line 59');
-  s.panel.handleInput('\r'); expect(s.actions).toEqual(['alice']);
   expect(s.viewer.render(80)).toHaveLength(24);
   expect(s.viewer.render(80).join('\n')).toContain('line 59');
   s.viewer.handleInput('\x1b[H');
@@ -33,10 +29,21 @@ test('picker only selects; fullscreen viewer follows, scrolls, and detaches loca
   s.viewer.handleInput('f'); expect(s.viewer.render(80).join('\n')).toContain('newest');
   s.viewer.handleInput('arbitrary text to steer'); s.viewer.handleInput('\r');
   expect(s.agents[0].status).toBe('running');
-  s.viewer.handleInput('\x1b'); expect(s.actions.at(-1)).toBe('back');
+  s.viewer.handleInput('\x1b'); expect(s.actions.at(-1)).toBe('close');
   s.viewer.handleInput('q'); expect(s.actions.at(-1)).toBe('close');
   s.viewer.dispose();
 });
+test('stopped worker transcript remains readable without reviving the worker', () => {
+  const s = fixture();
+  s.agents[0].status = 'stopped';
+  expect(s.viewer.render(80).join('\n')).toContain('stopped');
+  expect(s.viewer.render(80).join('\n')).toContain('line 59');
+  s.viewer.handleInput('\x1b');
+  expect(s.actions).toEqual(['close']);
+  expect(s.agents[0].status).toBe('stopped');
+  s.viewer.dispose();
+});
+
 test('regular SGR wheel and fullscreen normalized wheel scroll; mouse mode restored', () => {
   for (const mode of ['regular', 'fullscreen']) {
     const s = fixture(mode);
@@ -52,14 +59,12 @@ test('regular SGR wheel and fullscreen normalized wheel scroll; mouse mode resto
     if (mode === 'regular') expect(s.writes[1]).toContain('?1000l');
   }
 });
-test('both views respect widths/resize; empty picker works', () => {
+test('transcript respects widths and resize', () => {
   const s = fixture();
   for (const width of [1, 2, 10, 40, 120]) {
-    for (const component of [s.panel, s.viewer]) for (const line of component.render(width)) expect(visibleWidth(line)).toBeLessThanOrEqual(width);
+    for (const component of [s.viewer]) for (const line of component.render(width)) expect(visibleWidth(line)).toBeLessThanOrEqual(width);
   }
   s.tui.terminal.rows = 40; expect(s.viewer.render(80)).toHaveLength(40);
-  s.agents.length = 0;
-  s.panel.handleInput('\r'); expect(s.panel.render(80).join('\n')).toContain('No team yet');
   s.viewer.dispose();
 });
 

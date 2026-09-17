@@ -1,5 +1,5 @@
 import { keyHint, type Theme, type ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { Text, truncateToWidth, type Component } from '@earendil-works/pi-tui';
+import { Text, type Component } from '@earendil-works/pi-tui';
 import { safeText } from './observation.mjs';
 
 const labels: Record<string, string> = {
@@ -8,18 +8,6 @@ const labels: Record<string, string> = {
   agent_reply: 'Reply', agent_inbox: 'Team inbox', board_post: 'Post note', board_read: 'Team board',
 };
 export const teamToolNames = Object.keys(labels);
-
-export function renderTeamWidget(agents: readonly { name: string; status: string }[], width: number, theme: Theme): string[] {
-  if (width <= 0 || !agents.length) return [];
-  const terminal = (agent: { status: string }) => ['stopped', 'failed'].includes(agent.status);
-  const shown = [...agents.filter(agent => !terminal(agent)), ...agents.filter(terminal)].slice(0, 4);
-  const rows = [theme.fg('accent', 'AGENT TEAM'), ...shown.map(agent => {
-    const color = agent.status === 'failed' ? 'error' : agent.status === 'running' ? 'accent'
-      : agent.status === 'waiting' || agent.status === 'starting' ? 'warning' : 'muted';
-    return `${line(agent.name)} · ${theme.fg(color, line(agent.status))}`;
-  }), ...(agents.length > shown.length ? [theme.fg('dim', `… ${agents.length - shown.length} more · /team`)] : [])];
-  return rows.map(row => truncateToWidth(row, width));
-}
 
 const obj = (value: any): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 const text = (value: unknown): string => safeText(typeof value === 'string' ? value : value == null ? '' : String(value)).replace(/\t/g, '    ');

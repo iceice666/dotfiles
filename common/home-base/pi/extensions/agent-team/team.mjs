@@ -192,6 +192,7 @@ export class Team {
     const abort = () => { if (a.rpc) void this.stop(name); };
     signal?.addEventListener('abort', abort, { once: true });
     try {
+      this.change(a, 'starting');
       await this.ready;
       signal?.throwIfAborted();
       if (this.closing || a.status === 'stopped') throw new Error('Agent stopped during startup');

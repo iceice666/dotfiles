@@ -12,7 +12,7 @@ export class TranscriptViewer {
   private disposed = false;
   private ownsMouse = false;
   constructor(private source: { list(): any; observeNative(name: string): NativeSnapshot },
-    private tui: any, private theme: any, private done: (action: 'back' | 'close') => void, private name: string) {
+    private tui: any, private theme: any, private done: (action: 'close') => void, private name: string) {
     const agent = source.list().agents.find((a: any) => a.name === name);
     this.transcript = new NativeTranscript(tui, agent?.cwd ?? process.cwd());
     // Fullscreen Pi already owns mouse reporting and dispatches normalized events.
@@ -44,8 +44,7 @@ export class TranscriptViewer {
       if (mouse[2] === 'M' && (button & 64) && (button & 3) < 2) this.scroll((button & 1) ? 3 : -3);
       return;
     }
-    if (matchesKey(data, 'escape')) { this.done('back'); return; }
-    if (data === 'q' || matchesKey(data, 'ctrl+c') || matchesKey(data, 'ctrl+shift+t')) { this.done('close'); return; }
+    if (matchesKey(data, 'escape') || data === 'q' || matchesKey(data, 'ctrl+c')) { this.done('close'); return; }
     if (matchesKey(data, 'ctrl+o')) this.transcript.toggleExpanded();
     else if (matchesKey(data, 'ctrl+t')) this.transcript.toggleThinking();
     else if (matchesKey(data, 'home') || data === 'g') { this.offset = 0; this.follow = false; }
@@ -69,7 +68,7 @@ export class TranscriptViewer {
     while (body.length < this.pageSize) body.push('');
     const title = safeText(`${this.name} · READ ONLY · ${agent?.status ?? 'unavailable'} · ${this.follow ? 'FOLLOW' : 'SCROLL'} · ${this.offset + 1}/${lines.length}`).replace(/[\n\t]/g, ' ');
     return [this.theme.fg('accent', title), '─'.repeat(Math.max(0, width)), ...body,
-      this.theme.fg('dim', 'Wheel/↑↓/PgUp/PgDn scroll · End follow · Ctrl+O tools · Ctrl+T thinking · Esc back · q close')]
+      this.theme.fg('dim', 'Wheel/↑↓/PgUp/PgDn scroll · End follow · Ctrl+O tools · Ctrl+T thinking · Esc/q close')]
       .slice(0, height).map(line => truncateToWidth(line, Math.max(0, width), '', true));
   }
 }

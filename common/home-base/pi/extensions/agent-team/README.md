@@ -66,21 +66,17 @@ child HTTP disconnects remove broker waiters. No polling or extra worker prompts
 are used. You can continue other work instead of waiting; notifications still
 arrive automatically. Do not use repeated short waits as a polling loop.
 
-### Live panel and read-only attach
+### Footer selection and read-only attach
 
-- `/team` or `/team panel`: open a live overlay (TUI only).
-- `Ctrl+Shift+T`: open/close the panel, including while the parent is working. If your terminal does not transmit this chord, use `/team`.
-- `↑` / `↓`, then `Enter`: close the picker and open a separate full-terminal, borderless transcript view.
+- `/team` or `/team status`: textual metadata, including stopped workers (also available outside TUI).
+- With an empty editor, `↓` selects a live worker in the status-line footer; `↑` / `↓` selects workers, `Enter` opens its full-terminal, borderless transcript, and `Esc` returns to the editor.
 - `/team attach NAME`: directly open that worker's transcript.
 - In the fullscreen transcript: mouse wheel / trackpad, `↑` / `↓` (or `k` / `j`), `PageUp` / `PageDown`, `Home` scroll; `End` or `f` follows new output again. Manual scrolling pauses follow.
 - Regular Pi temporarily enables SGR mouse reporting while the viewer is open and disables it on exit. Fullscreen Pi uses its existing normalized mouse dispatch. Terminal-dependent mouse reporting must be supported; keyboard scrolling remains available.
 - `Ctrl+O`: expand/collapse tool output. `Ctrl+T`: hide/show thinking.
-- `Esc`: detach to the team list, then close. `q` / `Ctrl+C`: close immediately.
-- `/team status`: textual metadata (also available outside TUI).
+- `Esc` / `q` / `Ctrl+C`: close the transcript and return to the editor.
 
-The selection-only panel refreshes every 150 ms and displays agent name, process
-status, PID, and current activity. Enter replaces it with a separate fullscreen read-only transcript
-rendered with Pi's own `UserMessageComponent`, `AssistantMessageComponent`, and
+The fullscreen read-only transcript refreshes every 150 ms and is rendered with Pi's own `UserMessageComponent`, `AssistantMessageComponent`, and
 `ToolExecutionComponent`: Markdown, code highlighting, thinking, native built-in
 tool cards, recorded edit diffs, and streaming results—not flattened raw event text.
 The architecture follows oh-my-pi's separate `AgentTranscriptViewer` /
@@ -97,16 +93,15 @@ running. The native viewer keeps up to 500 recent records within a 1 MiB structu
 data budget (separate from the legacy 256 KiB plain-text observation); truncation is labelled and
 the worker's session path is displayed for inspecting older persisted history.
 Stopped workers remain viewable until the parent session is reloaded/replaced.
-Opening an empty panel does not create a broker or worker.
+Checking an empty team does not create a broker or worker.
 
 `/team stop NAME` and `/team stop all` stop workers without LLM requests.
-An independent, left-aligned `AGENT TEAM` widget above the input editor shows
-worker states instead of adding a footer row. It displays up to four workers plus
-an overflow count, prioritizing live workers over stopped/failed history; `/team`
-shows the full list, including stopped workers. Pi stacks
-above-editor widgets vertically, so this sits in the same area as the left-aligned
-todo widget, not in a shared two-column row. Narrow terminals truncate the widget
-to fit; it disappears when there are no workers or the session shuts down.
+The status-line footer shows live workers, including idle workers; stopped and
+failed/exited workers disappear from the footer but remain accessible by named
+attach and `/team`. No separate above-editor team widget, picker overlay, or
+team shortcut is installed. The team publishes state through `agent-team:state`,
+answers `agent-team:request-state`, and handles `agent-team:attach` events so
+status-line owns footer rendering and selection. Shutdown clears the published state.
 User Escape aborts the current parent turn, **not** all independent worker work.
 Use `/team stop all` to stop that work.
 
