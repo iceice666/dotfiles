@@ -246,6 +246,21 @@ disabled. Evidence collection and Resend delivery are unchanged; model stderr
 is saved as `pi-output.log`. `just update-pkgs` invokes Pi with the repo-local
 skill at `.agents/skills/update-pkgs/SKILL.md`.
 
+## Managed browser access
+
+m5pro and Framework explicitly import `common/home-base/browser.nix`. It installs
+`pkgs/playwright-cli` (pinned `@playwright/cli` plus `playwright-read` for rendered
+Markdown extraction), the `playwright-browser` skill, and the global Playwright
+CLI config. No MCP bridge or extra Pi extension is required. macOS uses packaged
+Helium; Framework uses packaged Chromium, with isolated profiles and the browser
+sandbox explicitly enabled. Homolab and Lumo are not enabled.
+
+Use unique task/worker session names and close only owned sessions. Never copy
+personal profiles or disable the sandbox to fix startup errors. Project config,
+environment and flags can override defaults; this is not agent isolation.
+Authentication, browser state and artifacts stay out of the store and Git.
+See `pkgs/playwright-cli/README.md` for setup, limits and test commands.
+
 ## Build, Format, and Validation Commands
 
 Run commands from the repository root.

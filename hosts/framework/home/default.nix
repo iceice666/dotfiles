@@ -10,6 +10,7 @@ let
 in
 {
   imports = [
+    (dotfiles + /common/home-base/browser.nix)
     ./gui.nix
   ];
 

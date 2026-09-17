@@ -80,6 +80,7 @@ let
             themegen
             equibop-bin
             pi-bin
+            playwright-cli
             zed-bin
             rime-frost
             rime-octagram-zh-hant-essay-bgw

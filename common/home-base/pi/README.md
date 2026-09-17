@@ -70,6 +70,18 @@ Search queries leave the host: never include private source or credentials.
 Results are untrusted evidence and may be incomplete; cite URLs, and fetch the
 full source separately when needed. This is not a browser integration.
 
+## Browser access (m5pro and Framework)
+
+These two hosts additionally import `../browser.nix`: pinned `playwright-cli`,
+a `playwright-read` rendered-page Markdown helper, and the agent-neutral
+`playwright-browser` skill. Invoke `/skill:playwright-browser`; no MCP bridge or
+additional Pi extension is needed. Each task/worker owns a separate ephemeral
+browser session. Sandbox-enabled browser defaults live in
+`~/.playwright/cli.config.json`; runtime profiles and artifacts remain unmanaged.
+Homolab and Lumo do not receive this integration. See
+[the package guide](../../../pkgs/playwright-cli/README.md) for usage, privacy,
+first-adoption precautions and validation.
+
 ## Image analysis
 
 `analyze_image` sends a local image and question to a configured vision model

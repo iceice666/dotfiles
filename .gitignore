@@ -7,3 +7,5 @@ target
 .cache/
 /result
 /common/home-base/pi/node_modules/
+/pkgs/playwright-cli/node_modules/
+.playwright-cli/

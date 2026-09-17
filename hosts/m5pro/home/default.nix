@@ -5,6 +5,7 @@ let
 in
 {
   imports = [
+    (dotfiles + /common/home-base/browser.nix)
     ./appearance.nix
     ./default-apps.nix
     ./karabiner.nix
