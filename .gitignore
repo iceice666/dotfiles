@@ -1,8 +1,7 @@
 .devenv/
 .direnv/
-.claude/*
-!.claude/workflows/
-!.claude/settings.json
+.claude/
+.omp/
 __pycache__
 target
 .cache/

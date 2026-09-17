@@ -11,8 +11,6 @@ let
     "commit/agents/openai.yaml"
     "next-milestone/SKILL.md"
     "next-milestone/agents/openai.yaml"
-    "next-milestone/workflows/omp.md"
-    "next-milestone/workflows/claude.md"
     "next-milestone/workflows/pi.md"
   ];
 
@@ -33,8 +31,7 @@ let
   # farm pointing back at the canonical `.skills/<name>` tree. Add a base here
   # to onboard another agent; SKILL.md itself must stay agent-neutral.
   skillAdapterBases = [
-    ".agents/skills" # OMP and Pi
-    ".claude/skills" # Claude Code
+    ".agents/skills" # Pi
   ];
 in
 {
@@ -42,11 +39,7 @@ in
     builtins.listToAttrs (map canonicalSkillFile managedSkillFiles)
     // builtins.listToAttrs (
       lib.flatten (map (base: map (skillAdapter base) managedSkills) skillAdapterBases)
-    )
-    // {
-      ".omp/agent/commands/next-milestone.md".source =
-        ./agent-skills/skills/next-milestone/workflows/omp.md;
-    };
+    );
 
   home.activation.cleanup-managed-skill-links = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     for skill in ${lib.concatStringsSep " " managedSkills}; do

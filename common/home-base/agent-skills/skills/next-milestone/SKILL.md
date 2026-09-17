@@ -11,7 +11,7 @@ Invoke this skill directly, or let your agent pick it up by description. To run 
 
 This skill is written to work with any coding agent — it never assumes a specific tool name. Wherever it says "search," "read," "edit," or "spawn a subagent," use whatever your environment's equivalent is.
 
-Check this skill's directory for a `workflows/<your-agent>.md` adapter (e.g. `workflows/pi.md`, `workflows/omp.md`, `workflows/claude.md`). If one matches your agent, read it — it maps the generic language below onto your environment's concrete tools, which matters most for the two optional fan-out steps. If none exists, use your own judgment to map the steps onto whatever tools you have.
+Check this skill's directory for a `workflows/<your-agent>.md` adapter (e.g. `workflows/pi.md`). If one matches your agent, read it — it maps the generic language below onto your environment's concrete tools, which matters most for the two optional fan-out steps. If none exists, use your own judgment to map the steps onto whatever tools you have.
 
 ## Operating rules
 

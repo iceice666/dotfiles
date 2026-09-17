@@ -189,6 +189,8 @@ in
             # directories shipped by this module are replaced; user-created skills stay
             # untouched. Listed upstream bundled skills are suppressed and removed.
             install -d -m 0755 -o hermes -g hermes ${dataDir}/skills
+        # Remove the retired repo-managed handoff skill after its rename.
+        ${pkgs.coreutils}/bin/rm -rf ${dataDir}/skills/oh-my-pi-handoff
         ${installManagedSkills}
             touch ${dataDir}/skills/.curator_suppressed
             chown hermes:hermes ${dataDir}/skills/.curator_suppressed

@@ -1,17 +1,17 @@
 ---
-name: oh-my-pi-handoff
-description: Use when Brian wants coding-heavy work forwarded or delegated to Oh-my-pi / Google A2A; create a precise implementation handoff with constraints, acceptance criteria, and tests.
+name: coding-agent-handoff
+description: Use when Brian wants coding-heavy work forwarded or delegated to a coding agent; create a precise implementation handoff with constraints, acceptance criteria, and tests.
 version: 1.0.0
 metadata:
   hermes:
     tags: [coding, delegation, a2a, handoff, engineering]
     category: engineering
 ---
-# Oh-my-pi Handoff
+# Coding Agent Handoff
 
 ## When to Use
 
-Use this skill when Brian wants implementation-heavy work delegated to Oh-my-pi, Google A2A, another coding agent, or an execution backend.
+Use this skill when Brian wants implementation-heavy work delegated to Pi, another coding agent, or an execution backend.
 
 ## Goal
 

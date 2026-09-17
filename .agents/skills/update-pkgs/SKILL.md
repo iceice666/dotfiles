@@ -25,7 +25,7 @@ Update every custom package under `pkgs/` and any nested local package flakes to
 
 ### GitHub release binaries (most packages)
 
-Packages: `blocky-bin`, `cliproxyapi-bin`, `codex-cli-bin`, `default-browser`, `equibop-bin`, `helium-bin`, `oh-my-pi-bin`, `utiluti`, `zed-bin`.
+Packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `helium-bin`, `pi-bin`, `utiluti`, `zed-bin`.
 
 For each:
 1. Read `pkgs/<name>/default.nix` to extract `repo`, `version`, `tag_prefix`, and platform URLs.

@@ -45,8 +45,6 @@ let
   ++ lib.optional (feat.themegen or false) (dotfiles + /common/home-gui/themegen)
   ++ lib.optional (feat.rime or false) (dotfiles + /common/home-gui/rime)
   ++ lib.optional (feat.devEnv or false) (dotfiles + /common/home-base/dev-env.nix)
-  ++ lib.optional (feat.claude or false) (dotfiles + /common/home-base/claude.nix)
-  ++ lib.optional (feat.omp or false) (dotfiles + /common/home-base/omp.nix)
   ++ lib.optional (feat.pi or false) (dotfiles + /common/home-base/pi.nix)
   ++ (host.homeModules or [ ]);
 

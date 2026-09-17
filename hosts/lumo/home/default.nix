@@ -10,13 +10,6 @@
     ./services
   ];
 
-  home.activation.claude-unlock-versions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    claude_versions="$HOME/.local/share/claude/versions"
-    if [ -d "$claude_versions" ]; then
-      chmod u+w "$claude_versions"
-    fi
-  '';
-
   home.activation.lumoDirectories = lib.hm.dag.entryAfter [ "sopsAlpine" ] ''
     install -d -m 0755 /var/log/lumo
 
