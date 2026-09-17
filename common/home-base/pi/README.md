@@ -11,6 +11,7 @@ without taking ownership of unrelated local extensions.
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
+| `btw/` | `/btw` side questions while the main agent runs, without changing its context |
 | `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
@@ -30,7 +31,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in agent-team ask-question background-task todo status-line.ts exa-search analyze-image; do
+for entry in agent-team ask-question background-task todo btw status-line.ts exa-search analyze-image; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"
@@ -91,6 +92,15 @@ sends no conversation history or tools. Images leave the host and consume model
 quota; never send sensitive images without authorization. See
 [analyze-image/README.md](extensions/analyze-image/README.md) for supported formats,
 limits, tests and activation. Pasted chat attachments are not handled automatically.
+
+## Side questions while running
+
+Use `/btw <question>` to ask the currently selected model a separate question
+without interrupting the main agent. It receives a bounded text snapshot of the
+conversation and no tools. Answers are saved as display-only transcript cards,
+not main-agent context. `/btw cancel` stops only the side request. Additional
+model quota is consumed; see [btw/README.md](extensions/btw/README.md) for context,
+limits and a manual smoke check.
 
 ## Waiting for work
 

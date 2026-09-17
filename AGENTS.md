@@ -210,14 +210,18 @@ settings, auth state, and sessions remain unmanaged. After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.
 
-The seven personal Pi extensions (`agent-team`, `ask-question`, `background-task`,
-`todo`, `status-line`, `exa-search`, and `analyze-image`) are owned by `common/home-base/pi/extensions/` and
+The eight personal Pi extensions (`agent-team`, `ask-question`, `background-task`,
+`todo`, `btw`, `status-line`, `exa-search`, and `analyze-image`) are owned by `common/home-base/pi/extensions/` and
 installed on all Pi-enabled hosts as recursive Home Manager store links. Keep
 sibling directories together: agent-team imports ask-question's service.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
 Git and Node.js. Runtime state stays unmanaged. Extensions run with the invoking
 user's full permissions, including root on lumo; they are not a sandbox.
 See `common/home-base/pi/README.md` for first-adoption backups and development.
+`/btw <question>` runs a separate tool-free call using the selected model and a
+bounded conversation snapshot while the main agent continues. Its persisted
+custom-entry answer is display-only, never main-agent context; `/btw cancel`
+cancels only the side request. See `common/home-base/pi/extensions/btw/README.md`.
 Do not force-overwrite existing unmanaged extensions or install duplicate copies
 via `pi install`.
 
