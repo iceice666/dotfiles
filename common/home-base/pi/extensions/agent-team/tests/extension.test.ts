@@ -9,16 +9,28 @@ async function setup() {
   expect(loaded.errors).toEqual([]);
   const team = loaded.extensions[0], standalone = loaded.extensions[1];
   const views: any[] = [];
+  const widgets: any[] = [];
+  const statuses: any[] = [];
   // No sessionManager: direct parent questions must not construct Team/broker.
   const ctx: any = { mode: 'tui', hasUI: true, ui: {
-    setStatus() {},
+    setStatus: (...args: any[]) => statuses.push(args),
+    setWidget: (...args: any[]) => widgets.push(args),
     custom: (factory: any) => new Promise(resolve => views.push(factory({ requestRender() {}, terminal: { rows: 24, columns: 80 } }, { fg: (_: string, text: string) => text, bg: (_: string, text: string) => text, bold: (text: string) => text }, {}, resolve))),
   } };
   const call = (args: any, signal?: AbortSignal) => team.tools.get('agent_ask')!.definition.execute('id', args, signal, undefined, ctx);
   const ask = (question: string) => standalone.tools.get('ask_user_question')!.definition.execute('id', { questions: [{ question }] }, undefined, undefined, ctx);
   const shutdown = async () => { for (const handler of team.handlers.get('session_shutdown') ?? []) await handler({} as any, ctx); };
-  return { ctx, views, call, ask, shutdown, team };
+  return { ctx, views, widgets, statuses, call, ask, shutdown, team };
 }
+
+test('team widget lifecycle clears above-editor UI without publishing a footer status', async () => {
+  const s = await setup();
+  for (const handler of s.team.handlers.get('session_start') ?? []) await handler({} as any, s.ctx);
+  expect(s.widgets).toEqual([]);
+  await s.shutdown();
+  expect(s.widgets).toEqual([['agent-team', undefined]]);
+  expect(s.statuses).toEqual([]);
+});
 
 test('all registered team tools provide display-only renderers', async () => {
   const s = await setup();

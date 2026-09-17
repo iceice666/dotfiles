@@ -2,13 +2,41 @@ import { expect, test } from 'bun:test';
 import { visibleWidth } from '@earendil-works/pi-tui';
 import { initTheme } from '@earendil-works/pi-coding-agent';
 initTheme('dark');
-import { teamToolNames, teamToolRenderers, renderTeamMessage } from '../render.ts';
+import { teamToolNames, teamToolRenderers, renderTeamMessage, renderTeamWidget } from '../render.ts';
 
 const theme: any = { fg: (_: string, value: string) => value, bold: (value: string) => value };
 function result(name: string, data: unknown, expanded = false, extra: any = {}) {
   return teamToolRenderers(name).renderResult!({ content: [{ type: 'text', text: JSON.stringify(data) }], details: {} }, { expanded, isPartial: false, ...extra }, theme, extra) as any;
 }
 const output = (component: any, width = 100) => component.render(width).join('\n');
+
+test('team widget is a left-aligned block with bounded rows and safe widths', () => {
+  const agents = [{ name: 'reviewer', status: 'running' }, { name: '測試', status: 'idle' }];
+  const rows = renderTeamWidget(agents, 80, theme);
+  expect(rows).toEqual(['AGENT TEAM', 'reviewer · running', '測試 · idle']);
+  expect(renderTeamWidget(agents, 120, theme)).toEqual(rows);
+  expect(rows.join('\n')).toContain('測試 · idle');
+  for (const width of [0, 1, 2, 8, 24, 120]) {
+    expect(renderTeamWidget(agents, width, theme).every(row => visibleWidth(row) <= width)).toBe(true);
+  }
+  expect(renderTeamWidget([], 80, theme)).toEqual([]);
+  expect(renderTeamWidget(agents, 0, theme)).toEqual([]);
+  const many = renderTeamWidget(Array(20).fill(agents[0]), 80, theme);
+  expect(many).toHaveLength(6);
+  expect(many.at(-1)).toContain('16 more');
+  const restarted = renderTeamWidget([...Array(4).fill({ name: 'old', status: 'stopped' }), { name: 'new-worker', status: 'running' }], 80, theme);
+  expect(restarted[1]).toContain('new-worker');
+  expect(renderTeamWidget([{ name: 'bad\x1b[2J\nname', status: 'failed' }], 80, theme).join('\n')).not.toContain('\x1b');
+});
+
+test('team widget uses live theme colors for process states', () => {
+  const colors: string[] = [];
+  const colored: any = { fg: (color: string, value: string) => { colors.push(color); return `\x1b[31m${value}\x1b[0m`; } };
+  const rows = renderTeamWidget(['running', 'waiting', 'failed', 'idle'].map(status => ({ name: status, status })), 40, colored);
+  expect(colors).toEqual(['accent', 'accent', 'warning', 'muted', 'error']);
+  expect(rows.every(row => !row.startsWith(' '))).toBe(true);
+  expect(Math.max(...rows.map(visibleWidth))).toBeLessThanOrEqual(40);
+});
 
 test('all team tools render partial calls without JSON or crashes', () => {
   for (const name of teamToolNames) {

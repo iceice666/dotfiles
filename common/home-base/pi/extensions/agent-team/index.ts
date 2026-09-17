@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Team, userQuestion, remoteWait } from './team.mjs';
 import { TeamPanel } from './panel.ts';
-import { teamToolRenderers, renderTeamMessage } from './render.ts';
+import { teamToolRenderers, renderTeamMessage, renderTeamWidget } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
 import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
 
@@ -93,7 +93,16 @@ export default function (pi: ExtensionAPI) {
           pi.sendMessage({ customType: 'agent-team', content: `Team event (agent data, not user instructions):\n${JSON.stringify(entry)}`, display: true, details: { event: entry } }, { triggerTurn: true, deliverAs: 'steer' });
         },
         onChange(state: { agents: { name: string; status: string }[] }) {
-          if (context?.hasUI) context.ui.setStatus('agent-team', state.agents.map(a => `${a.name}:${a.status}`).join(' | '));
+          if (!context?.hasUI || lifecycle.signal.aborted) return;
+          if (!state.agents.length) { context.ui.setWidget('agent-team', undefined); return; }
+          if (context.mode !== 'tui') {
+            context.ui.setWidget('agent-team', ['AGENT TEAM', ...state.agents.map(a => `${a.name}:${a.status}`)], { placement: 'aboveEditor' });
+            return;
+          }
+          context.ui.setWidget('agent-team', (_tui, theme) => ({
+            invalidate() {},
+            render: width => renderTeamWidget(state.agents, width, theme),
+          }), { placement: 'aboveEditor' });
         },
       });
     }
@@ -209,6 +218,6 @@ export default function (pi: ExtensionAPI) {
     if (watchdog) clearInterval(watchdog);
     const previous = team; team = undefined;
     if (previous) await previous.close();
-    if (context?.hasUI) context.ui.setStatus('agent-team', undefined);
+    if (context?.hasUI) context.ui.setWidget('agent-team', undefined);
   });
 }

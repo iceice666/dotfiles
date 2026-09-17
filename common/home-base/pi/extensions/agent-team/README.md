@@ -100,7 +100,13 @@ Stopped workers remain viewable until the parent session is reloaded/replaced.
 Opening an empty panel does not create a broker or worker.
 
 `/team stop NAME` and `/team stop all` stop workers without LLM requests.
-A small footer status shows worker states.
+An independent, left-aligned `AGENT TEAM` widget above the input editor shows
+worker states instead of adding a footer row. It displays up to four workers plus
+an overflow count, prioritizing live workers over stopped/failed history; `/team`
+shows the full list, including stopped workers. Pi stacks
+above-editor widgets vertically, so this sits in the same area as the left-aligned
+todo widget, not in a shared two-column row. Narrow terminals truncate the widget
+to fit; it disappears when there are no workers or the session shuts down.
 User Escape aborts the current parent turn, **not** all independent worker work.
 Use `/team stop all` to stop that work.
 
