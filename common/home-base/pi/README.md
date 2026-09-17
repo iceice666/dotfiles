@@ -12,7 +12,7 @@ without taking ownership of unrelated local extensions.
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
 | `status-line.ts` | Model/thinking, Git state, elapsed time and context footer |
-| `exa-search/` | Bounded public web search through Exa (`web_search`) |
+| `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
@@ -56,7 +56,11 @@ Invoke `/skill:next-milestone` to use the shared skill and its `workflows/pi.md`
 adapter. It maps the canonical review/verify/commit process to the team and todo
 extensions; no OMP-specific tools or extra slash-command alias are required.
 
-`web_search` uses Exa's fixed HTTPS search endpoint. The
+`web_search` defaults to Exa's fixed HTTPS search endpoint. Optional
+`source: "openai"` or `source: "claude"` uses native search through fixed
+CLIProxyAPI endpoints and the existing Pi provider credentials, returning
+sources and separately labeled model synthesis. No automatic fallback occurs.
+The
 `~/.pi/agent/exa-api-key` helper reads the SOPS-backed `exa_api_key` on each
 request; credentials are not stored in settings, source files, or environment
 files. A custom `PI_CODING_AGENT_DIR` needs its own helper at `exa-api-key`.

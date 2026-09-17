@@ -10,6 +10,7 @@ test("registers web_search without startup I/O or UI requirements", async () => 
   expect(tool.name).toBe("web_search");
   expect(tool.parameters.properties.query.maxLength).toBe(2000);
   expect(tool.parameters.properties.numResults.maximum).toBe(10);
+  expect(tool.parameters.properties.source.enum).toEqual(["exa", "openai", "claude"]);
   expect(tool.parameters.additionalProperties).toBe(false);
   expect(tool.promptSnippet).toContain("Exa");
   expect(tool.promptGuidelines?.every(line => line.includes("web_search"))).toBe(true);

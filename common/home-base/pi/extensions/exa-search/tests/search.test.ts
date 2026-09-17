@@ -14,6 +14,79 @@ function deps(overrides: Partial<Dependencies> = {}): Dependencies {
   };
 }
 
+describe("Native search transport", () => {
+  test("never emits partial native source URLs at the byte boundary", async () => {
+    for (const prefixLength of [0, 15_000]) {
+      const first = `https://example.com/${"a".repeat(prefixLength)}`;
+      const long = `https://example.org/${"b".repeat(30_000)}`;
+      const output = await search({ query: "q", source: "openai" }, undefined, deps({
+        getProxyKey: async () => "key",
+        fetch: async () => Response.json({ status: "completed", output: [
+          { type: "web_search_call", status: "completed", action: { sources: [{ url: first }, { url: long }] } },
+        ] }),
+      }));
+      expect(output.text).toContain(first);
+      expect(output.text).not.toContain("https://example.org/");
+      expect(output.truncated).toBe(true);
+      expect(Buffer.byteLength(output.text)).toBeLessThanOrEqual(MAX_OUTPUT_BYTES);
+    }
+  });
+  for (const source of ["openai", "claude"] as const) {
+    test(`${source} resolves only its provider at request time and uses fixed proxy endpoint`, async () => {
+      let reads = 0;
+      const dependencies = deps({
+        readKey: async () => { throw new Error("Exa helper must not run"); },
+        getProxyKey: async provider => {
+          expect(provider).toBe(source === "openai" ? "cliproxyapi" : "cliproxyapi-claude");
+          reads++;
+          return "proxy-key";
+        },
+        fetch: async (url, init) => {
+          expect(url).toBe(`https://cliproxyapi.justaslime.dev/v1/${source === "openai" ? "responses" : "messages"}`);
+          expect(init.redirect).toBe("error");
+          expect((init.headers as any).Authorization).toBe("Bearer proxy-key");
+          const body = JSON.parse(init.body as string);
+          expect(body.stream).toBe(false);
+          expect(body).not.toHaveProperty("source");
+          return Response.json(source === "openai" ? {
+            status: "completed", output: [
+              { type: "web_search_call", status: "completed", action: { sources: [{ url: result.url, title: result.title }] } },
+              { type: "message", role: "assistant", content: [{ type: "output_text", text: "A summary", annotations: [] }] },
+            ],
+          } : {
+            type: "message", role: "assistant", stop_reason: "max_tokens", content: [
+              { type: "server_tool_use", name: "web_search", id: "search-1" },
+              { type: "web_search_tool_result", tool_use_id: "search-1", content: [{ type: "web_search_result", ...result }] },
+              { type: "text", text: "A summary" },
+            ],
+          });
+        },
+      });
+      const output = await search({ query: "public query", source }, undefined, dependencies);
+      expect(output.text).toContain(result.url);
+      expect(output.text).toContain("Model synthesis");
+      expect(output.text).toContain("CLIProxyAPI");
+      expect(output.truncated).toBe(source === "claude");
+      await search({ query: "public query", source }, undefined, dependencies);
+      expect(reads).toBe(2);
+    });
+
+    test(`${source} sanitizes errors and never falls back`, async () => {
+      let calls = 0;
+      const dependencies = deps({ getProxyKey: async () => "key", fetch: async () => {
+        calls++;
+        return new Response("PRIVATE BODY", { status: 429 });
+      } });
+      await expect(search({ query: "q", source }, undefined, dependencies)).rejects.toThrow("HTTP 429");
+      expect(calls).toBe(1);
+      await expect(search({ query: "q", source }, undefined, deps({ getProxyKey: async () => { throw new Error("SECRET"); } }))).rejects.toThrow("credential resolution failed");
+      await expect(search({ query: "q", source }, undefined, deps())).rejects.toThrow("invalid key");
+      await expect(search({ query: "q", source }, undefined, deps({ getProxyKey: async () => "key", fetch: async () => Response.json({ error: "PRIVATE BODY" }) }))).rejects.toThrow("did not complete a successful web search");
+      await expect(search({ query: "q", source }, undefined, deps({ timeoutMs: 5, getProxyKey: async () => new Promise(() => {}) }))).rejects.toThrow("timed out");
+    });
+  }
+});
+
 describe("Exa search", () => {
   test("executes credential helper paths literally and sanitizes process failures", async () => {
     const directory = await mkdtemp(join(tmpdir(), "pi exa helper "));
@@ -59,7 +132,7 @@ describe("Exa search", () => {
   test("validates before credential or network access", async () => {
     let touched = false;
     const dependencies = deps({ readKey: async () => { touched = true; return "key"; } });
-    for (const input of [{ query: " " }, { query: "x".repeat(2001) }, ...[0, 11, 1.5, NaN, null].map(numResults => ({ query: "ok", numResults }))]) {
+    for (const input of [{ query: "ok", source: "invalid" }, { query: "ok", source: null }, { query: " " }, { query: "x".repeat(2001) }, ...[0, 11, 1.5, NaN, null].map(numResults => ({ query: "ok", numResults }))]) {
       await expect(search(input as any, undefined, dependencies)).rejects.toThrow();
     }
     expect(touched).toBe(false);
