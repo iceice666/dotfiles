@@ -32,8 +32,8 @@ export default function (pi: ExtensionAPI) {
     if (closed) return;
     refresh();
     if (ctx?.hasUI) ctx.ui.notify(`Background task: ${summary(task)}`, task.status === "failed" || task.status === "timed_out" ? "warning" : "info");
-    // Queue context without starting a paid model turn or interrupting the user.
-    pi.sendMessage({ customType: "background-task-finished", content: `Background shell task finished: ${summary(task)}\nLog: ${task.logPath}\nUse background_task output to inspect results.`, display: true, details: task }, { deliverAs: "nextTurn" });
+    // Wake an idle agent; otherwise deliver at the next safe tool boundary.
+    pi.sendMessage({ customType: "background-task-finished", content: `Background shell task finished: ${summary(task)}\nLog: ${task.logPath}\nUse background_task output to inspect results.`, display: true, details: task }, { triggerTurn: true, deliverAs: "steer" });
   });
   const requireOpen = () => { if (closed) throw new Error("Background task runtime has shut down."); };
   const output = (id: string, lines = 200) => {
@@ -55,7 +55,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "background_task",
     label: "Background Task",
-    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completion is queued for the next user turn, not an automatic agent wakeup.",
+    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completion automatically wakes an idle agent or is delivered after the current assistant turn's tool calls; no user message is required.",
     promptSnippet: "Run and manage background Shell commands without blocking the conversation",
     promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work, use background_task wait when completion is needed, or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval or sandbox restrictions."],
     parameters: Type.Object({

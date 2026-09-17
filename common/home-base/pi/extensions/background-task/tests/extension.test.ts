@@ -39,7 +39,7 @@ async function until(check: () => boolean) {
   const end = Date.now() + 5000;
   while (!check()) { if (Date.now() > end) throw new Error("Timed out"); await Bun.sleep(20); }
 }
-test("loads in installed Pi, starts asynchronously, queues completion without triggering model", async () => {
+test("loads in pinned Pi, starts asynchronously, requests immediate agent wakeup on completion", async () => {
   const s = await setup();
   try {
     const result: any = await s.call({ action: "start", command: "sleep 0.1; printf 'hello background'" });
@@ -47,12 +47,29 @@ test("loads in installed Pi, starts asynchronously, queues completion without tr
     expect(result.content[0].text).toContain("not a completion result");
     expect(s.statuses.get("background-task")).toBe("BG 1");
     await until(() => s.messages.length > 0);
-    expect(s.messages[0].options).toEqual({ deliverAs: "nextTurn" });
+    expect(s.messages[0].options).toEqual({ triggerTurn: true, deliverAs: "steer" });
+    expect(s.messages[0].message.customType).toBe("background-task-finished");
+    expect(s.messages).toHaveLength(1);
     expect(s.messages[0].message.details.status).toBe("completed");
     expect((await s.call({ action: "output", id })).content[0].text).toContain("hello background");
     expect(s.statuses.get("background-task")).toBeUndefined();
   } finally { await s.event("session_shutdown"); }
 });
+test.each([
+  { command: "exit 7", status: "failed", timeout: undefined },
+  { command: "sleep 30", status: "timed_out", timeout: 0.05 },
+])("$status requests agent wakeup without user input in headless mode", async ({ command, status, timeout }) => {
+  const s = await setup();
+  s.ctx.hasUI = false;
+  s.ctx.mode = "rpc";
+  s.ctx.ui = new Proxy({}, { get() { throw new Error("Unexpected UI"); } });
+  await s.call({ action: "start", command, timeout });
+  await until(() => s.messages.length > 0);
+  expect(s.messages).toHaveLength(1);
+  expect(s.messages[0].message.details.status).toBe(status);
+  expect(s.messages[0].options).toEqual({ triggerTurn: true, deliverAs: "steer" });
+});
+
 test("command preserves shell quoting and supports output/list/stop", async () => {
   const s = await setup();
   try {
@@ -64,8 +81,12 @@ test("command preserves shell quoting and supports output/list/stop", async () =
     expect(s.notices.some(t => t.includes("lines"))).toBe(true);
     await s.command(`stop ${id}`);
     expect((await s.call({ action: "list" }) as any).details.tasks[0].status).toBe("stopped");
+    const completions = s.messages.filter(m => m.message.customType === "background-task-finished");
+    expect(completions).toHaveLength(1);
+    expect(completions[0].options).toEqual({ triggerTurn: true, deliverAs: "steer" });
     await s.command("help");
     expect(s.messages.at(-1).message.content).toContain("/bg start");
+    expect(s.messages.at(-1).options).toBeUndefined();
   } finally { await s.event("session_shutdown"); }
 });
 test("abort before start prevents spawn; shutdown suppresses completion and rejects new work", async () => {

@@ -57,7 +57,8 @@
 - 停止時對程序群組發送 SIGTERM，再升級 SIGKILL。自行脫離群組的 daemon 無法保證清理；Pi 被 SIGKILL 或系統崩潰也無法執行關閉 hook。
 - 最多 8 個 active 任務、100 筆任務記錄。記憶體僅保留最近 1 MiB 輸出；每個磁碟 log 最多 10 MiB。超出限制會截斷並標示，並非無限完整紀錄。
 - stdout/stderr 合併；不同串流之間不保證精確順序。日誌存於系統暫存目錄，路徑顯示在結果中。可能含機密資訊；不自動刪除，以便離開 session 後排查。
-- footer 顯示 active 任務數。完成時顯示通知，並把結果摘要排入下一個使用者回合；**不自動喚醒模型、不產生額外模型呼叫**。
+- footer 顯示 active 任務數。工作完成、失敗、逾時或手動停止時，立即送出結果摘要：agent 閒置時自動喚醒；忙碌時透過 steering 在目前 assistant 回合的工具呼叫結束後、下一次模型請求前送入，無須等待使用者訊息。**可能產生額外模型呼叫與費用**。摘要包含 status / exit code 和 log 路徑；詳細輸出仍使用 `output` 或 `wait` 取得。
+- shutdown／reload／切換 session 清理工作時不發送完成通知、不喚醒 agent。Esc 不停止背景工作，因此工作稍後結束仍可能喚醒 agent；若不需要工作，請明確停止。
 - 支援 macOS/Linux；執行的是非互動 Bash，沒有載入 login shell 設定或 Pi 內建 Bash 的自訂 spawn hook。
 
 ## 安全
