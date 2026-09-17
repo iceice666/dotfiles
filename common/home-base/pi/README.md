@@ -11,6 +11,7 @@ without taking ownership of unrelated local extensions.
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
+| `dot-continue/` | Standalone `.` means `continue` in an idle interactive conversation |
 | `btw/` | `/btw` side questions while the main agent runs, without changing its context |
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
@@ -31,7 +32,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in agent-team ask-question background-task todo btw status-line.ts exa-search analyze-image; do
+for entry in agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"
@@ -102,6 +103,15 @@ sends no conversation history or tools. Images leave the host and consume model
 quota; never send sensitive images without authorization. See
 [analyze-image/README.md](extensions/analyze-image/README.md) for supported formats,
 limits, tests and activation. Pasted chat attachments are not handled automatically.
+
+## Continuing a stopped turn
+
+When the current interactive Pi conversation is idle (after a completed reply or
+an Escape interruption), submit `.` on its own to send `continue` instead.
+Surrounding whitespace is ignored. This is an ordinary user prompt, not an
+approval or a restart of stopped team workers. Busy/queued input, RPC and
+extension-injected messages, image attachments, paths and other text are left
+unchanged. To send a literal dot while idle, quote it or put it in a code span.
 
 ## Side questions while running
 
