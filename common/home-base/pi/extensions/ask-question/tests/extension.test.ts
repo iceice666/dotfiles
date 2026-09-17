@@ -18,9 +18,62 @@ async function setup(mode = "tui") {
       views.push(factory({ requestRender() {}, terminal }, theme, {}, resolve));
     }),
   } };
-  return { ctx, views, terminal, shutdown: async () => { for (const handler of loaded.extensions[0].handlers.get("session_shutdown") ?? []) await handler({} as any, ctx); }, call: (questions: any[], signal?: AbortSignal) => tool.execute("test", { questions }, signal, undefined, ctx) };
+  return { tool, ctx, views, terminal, shutdown: async () => { for (const handler of loaded.extensions[0].handlers.get("session_shutdown") ?? []) await handler({} as any, ctx); }, call: (questions: any[], signal?: AbortSignal) => tool.execute("test", { questions }, signal, undefined, ctx) };
 }
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+const renderTheme: any = { fg: (_: string, text: string) => text, bold: (text: string) => text };
+
+test("transcript renders readable answers without changing model JSON", async () => {
+  const s = await setup("rpc");
+  s.ctx.ui.input = async () => "第一行\n第二行";
+  const result = await s.call([{ question: "要先做哪一步？" }]);
+  expect(JSON.parse(result.content[0].text)).toEqual(result.details);
+  const call = s.tool.renderCall!({ questions: [{ question: "要先做哪一步？" }] }, renderTheme, {} as any);
+  expect(call.render(80)).toEqual([]);
+  for (const expanded of [false, true]) {
+    const component = s.tool.renderResult!(result, { expanded, isPartial: false }, renderTheme, {} as any);
+    const text = component.render(80).join("\n");
+    expect(text).not.toContain("已回答");
+    expect(text).toStartWith("1. 要先做哪一步？");
+    expect(text).toContain("1. 要先做哪一步？");
+    expect(text).toContain("自訂：第一行");
+    expect(text).not.toContain('"status"');
+    expect(text.includes("展開完整問答")).toBe(!expanded);
+    for (const width of [2, 10, 40]) expect(component.render(width).every(line => visibleWidth(line) <= width)).toBe(true);
+  }
+});
+
+test("transcript supports multiple selections, bounded previews and complete expanded answers", async () => {
+  const s = await setup();
+  const details = { status: "answered", answers: [
+    { question: "長問題".repeat(100), selected: ["選項甲", "選項乙"], customText: "自訂\u001b[2J\n答案結尾" },
+    { question: "第二題", selected: ["保留現況"] },
+  ] };
+  const render = (expanded: boolean) => s.tool.renderResult!({ content: [], details }, { expanded, isPartial: false }, renderTheme, {} as any).render(80).join("\n");
+  const collapsed = render(false);
+  expect(collapsed).not.toContain("已回答");
+  expect(collapsed).toStartWith("1. 長問題");
+  expect(collapsed).toContain("✓ 選項甲");
+  expect(collapsed).toContain("✓ 選項乙");
+  expect(collapsed).toContain("2. 第二題");
+  expect(collapsed).toContain("…");
+  expect(collapsed).not.toContain("\u001b");
+  expect(render(true).replace(/\s/g, "")).toContain("長問題".repeat(100));
+  expect(render(true)).toContain("答案結尾");
+});
+
+test("transcript distinguishes cancellation, unavailable, progress and tool errors", async () => {
+  const s = await setup();
+  for (const status of ["cancelled", "unavailable"]) {
+    const text = s.tool.renderResult!({ content: [], details: { status, answers: [] } }, { expanded: false, isPartial: false }, renderTheme, {} as any).render(80).join("\n");
+    expect(text).toContain(status === "cancelled" ? "已取消" : "無法作答");
+    expect(text).toContain("不代表同意");
+    expect(text).not.toContain("已回答");
+  }
+  const render = (isPartial: boolean) => s.tool.renderResult!({ content: [{ type: "text", text: "Invalid request" }] }, { expanded: false, isPartial }, renderTheme, {} as any).render(80).join("\n");
+  expect(render(true)).toContain("等待使用者作答");
+  expect(render(false)).toContain("Invalid request");
+});
 
 test("single selection and narrow width / IME focus", async () => {
   const s = await setup();

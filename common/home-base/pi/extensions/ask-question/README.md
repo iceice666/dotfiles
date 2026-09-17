@@ -5,7 +5,12 @@
 的選項式提問設計，採用本地實作，不需要安裝該 npm 套件。
 
 放在 `~/.pi/agent/extensions/ask-question/` 後重新啟動或 `/reload`。
-輸入 `/ask-question` 可直接預覽對話框，不需要模型呼叫；結果只顯示通知。
+輸入 `/ask-question` 可直接預覽對話框，不需要模型呼叫；結果只顯示易讀摘要通知。
+
+工具送出後，TUI 對話紀錄只顯示「各題問題 → 已選選項／自訂文字」，
+省略工具標題與回答題數，不再直接顯示 raw JSON。收合時每段文字最多 100 字元；依畫面提示使用
+工具展開快捷鍵（預設 Ctrl+O）查看完整多行問答。取消與介面不可用會明確標示，
+不視為同意。此變更僅影響 TUI 顯示；模型、RPC 與 session 仍保留原本 JSON 和完整 `details`。
 
 ```json
 {
@@ -69,4 +74,4 @@ bun test extensions/ask-question/tests
 
 測試使用 package.json / bun.lock 固定的本地 Pi 0.85.1 開發 SDK，直接操作實際元件的按鍵序列，覆蓋單/複選、
 分頁往返與草稿保留、多行/長貼上展開、IME 游標標記、明確提交與缺答阻擋、長問題換行與溢位提示、全文捲動、
-窄/矮終端、RPC、取消與 shutdown、跨 loader 排隊和輸入驗證，不需要模型請求；開發依賴只安裝於 checkout，不會部署到 Home Manager。
+窄/矮終端、結果摘要與展開、JSON 保留、RPC、取消與 shutdown、跨 loader 排隊和輸入驗證，不需要模型請求；開發依賴只安裝於 checkout，不會部署到 Home Manager。
