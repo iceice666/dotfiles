@@ -169,6 +169,18 @@ in
     max-retry-credentials: 0
     max-retry-interval: 60
     disable-cooling: false
+    routing:
+      # Bind each client session to one upstream credential. Without this every
+      # turn round-robins onto another account, so only the globally shared
+      # system prefix stays warm upstream and the per-conversation prompt cache
+      # never hits. Pi supplies the routing key through the session affinity
+      # headers enabled in common/home-base/pi.nix; Claude Code already sends
+      # its own. Bindings fail over automatically when an account is unavailable,
+      # so the account-quota reserves still apply.
+      # 1h is the binding lifetime worth keeping: upstream prompt caches expire
+      # far sooner, and a longer TTL only reduces balancing across accounts.
+      session-affinity: true
+      session-affinity-ttl: "1h"
     quota-exceeded:
       switch-project: true
       switch-preview-model: true
