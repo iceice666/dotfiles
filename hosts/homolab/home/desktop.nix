@@ -129,7 +129,7 @@
     enable = true;
     shellIntegration.enableFishIntegration = true;
     settings = {
-      font_family = "Cascadia Code";
+      font_family = "Sarasa Term TC";
       font_size = 12;
       background = "#1d2021";
       foreground = "#ebdbb2";
