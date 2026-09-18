@@ -90,7 +90,6 @@ in
   # macOS-only system packages (desktop apps, macOS-specific tools)
   environment.systemPackages = with pkgs; [
     orbstack
-    ghostty-bin
   ];
 
   nix.settings.trusted-users = [

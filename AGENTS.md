@@ -29,10 +29,10 @@ common/              # shared modules injected by mk-host into every host
     pi.nix           # Pi binary, extensions, CLIProxyAPI models and runtime SOPS key lookup (features.pi)
     pi/              # repo-owned Pi extensions, tests and development dependencies
   home-gui/          # GUI workstation baseline (features.gui)
-    default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
+    default.nix      # imports app-defaults, kitty, packages-gui, vscodium, zed
     packages-gui.nix # GUI binaries: equibop-bin, helium-bin, …
     app-defaults.nix # XDG MIME associations
-    ghostty.nix      # Ghostty config
+    kitty.nix        # Kitty config
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
     rime/            # Rime Frost setup with Traditional Chinese octagram model (features.rime)
@@ -578,7 +578,7 @@ Canonical module shape:
 - `common/system-darwin/` is injected for darwin hosts only; `common/system-nixos/` for NixOS hosts only.
 - `common/home-base/` is the CLI baseline, injected for every `features.homeManager = true` host.
 - `common/home-alpine/` adds root-only Lix, direct sops activation, and Alpine root-shell wiring for standalone Home Manager hosts.
-- `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (ghostty, vscodium, zed, rime, themegen, helium-bin, etc.) live here and are not imported by server hosts.
+- `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (kitty, vscodium, zed, rime, themegen, helium-bin, etc.) live here and are not imported by server hosts.
 - `common/home-base/agent-skills.nix` installs curated reusable skills into
   `$HOME/.skills`, then symlinks each into `$HOME/.agents/skills` for Pi discovery.
   Each skill's `SKILL.md` must stay agent-neutral prose (no tool-specific

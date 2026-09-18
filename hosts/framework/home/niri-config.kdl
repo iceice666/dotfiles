@@ -98,7 +98,7 @@ binds {
     Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen" { spawn "@lockScreen@" "lock"; }
 
     Mod+Space hotkey-overlay-title="Open launcher" { spawn "@fuzzel@"; }
-    Mod+T hotkey-overlay-title="Open Ghostty" { spawn "@ghostty@"; }
+    Mod+T hotkey-overlay-title="Open Kitty" { spawn "@kitty@"; }
     Mod+E hotkey-overlay-title="Open files" { spawn "@nautilus@"; }
 
     XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "@ewwState@" "--config-file" "@ewwStateConfig@" "audio" "volume" "speaker" "up" "--step" "0.05"; }

@@ -17,7 +17,7 @@ in
   _module.args = {
     inherit desktopWallpaper;
     avatarImage = frameworkAvatar;
-    ghosttyFontSize = 14;
+    kittyFontSize = 14;
     themegenHost = "framework";
   };
 

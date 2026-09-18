@@ -7,20 +7,29 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 ## Pipeline
 
 1. Each host chooses a wallpaper in its host Home Manager module.
-2. `common/home/themegen/default.nix` builds a host-specific `themegen-cache-<host>` derivation from the wallpaper plus `themegen/common/` and `themegen/<host>/` templates.
+2. `common/home-gui/themegen/default.nix` builds a host-specific `themegen-cache-<host>` derivation from the wallpaper plus `themegen/common/` and `themegen/<host>/` templates.
 3. Host-specific templates overwrite common templates when their relative paths match.
 4. The same module installs the derivation outputs into Home Manager using the target list known at evaluation time.
 5. On Framework, Home Manager wraps the generated GTK CSS into a named Nix GTK theme package under `share/themes` and switches between `Themegen` and `Themegen-dark`.
 
 ## File Map
 
-- `themegen/common/`: shared Ghostty, fish, starship, Zed, VSCodium, and Pi theme templates.
+- `themegen/common/`: shared Kitty, fish, starship, Zed, VSCodium, and Pi theme templates.
+  Kitty palettes render to `.config/kitty/{dark,light}-theme.auto.conf`, preserving
+  the terminal, cursor, selection, and 16 ANSI colors. `no-preference-theme.auto.conf`
+  includes the light palette. Kitty 0.38+ follows the OS color scheme automatically
+  (macOS appearance / Framework's GNOME Settings portal, updated by darkman); no theme-switch hook
+  or `kitten themes` invocation is needed. See [Kitty automatic themes](https://sw.kovidgoyal.net/kitty/kittens/themes/#auto-color-scheme).
+  Shared behavior is managed by `common/home-gui/kitty.nix`, with host-specific
+  `kittyFontSize`. Background opacity remains 0.75, with blur radius 20 where
+  supported. Unlike Ghostty's all-cell opacity, Kitty only makes the default
+  terminal background transparent; other cell backgrounds remain opaque.
   The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
   them up through global theme auto-discovery, and `common/home-base/pi.nix`
   selects `themegen-light/themegen-dark` whenever those files are installed.
 - `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and Eww bar templates. GTK templates become a standalone package on Framework.
 - `themegen/m5pro/`: macOS-only Equibop template.
-- `common/home/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
+- `common/home-gui/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
 
 ## Workflows

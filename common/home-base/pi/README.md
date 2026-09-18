@@ -54,7 +54,7 @@ the repo-owned keys (`theme`, `hideThinkingBlock`) into the existing file with
 `jq`; every other key stays runtime-owned and writable, so `/model`, `/settings`
 and `lastChangelogVersion` still persist. On hosts with `features.themegen` the
 wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
-and the theme resolves to `themegen-light/themegen-dark`, matching Ghostty;
+and the theme resolves to `themegen-light/themegen-dark`, matching Kitty's wallpaper-generated light/dark palettes;
 other hosts keep the built-in `light/dark` pair. Changing the theme via
 `/settings` is overwritten on the next switch — edit the repo instead. If
 `settings.json` is not valid JSON, activation warns and leaves it untouched.

@@ -3,7 +3,7 @@
 {
   imports = [
     ./app-defaults.nix
-    ./ghostty.nix
+    ./kitty.nix
     ./packages-gui.nix
     ./zed.nix
   ];
