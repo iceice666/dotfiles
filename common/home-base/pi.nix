@@ -90,6 +90,12 @@ in
       compat = {
         supportsDeveloperRole = true;
         supportsReasoningEffort = true;
+        # Pi only sends prompt_cache_key to api.openai.com, so a proxied provider
+        # otherwise carries no session identity and CLIProxyAPI round-robins each
+        # turn onto a different upstream account, leaving only the shared system
+        # prefix warm. These headers give routing.session-affinity a stable key.
+        sendSessionAffinityHeaders = true;
+        sessionAffinityFormat = "openai";
       };
       models = [
         (mkModel "gpt-6-astra" 1050000 128000)
@@ -102,6 +108,9 @@ in
       baseUrl = homolab.urls.cliproxyapi;
       api = "anthropic-messages";
       inherit apiKey;
+      # Same reason as above; anthropic-messages sends x-session-affinity only.
+      # Merged with each model's compat, so forceAdaptiveThinking stays intact.
+      compat.sendSessionAffinityHeaders = true;
       models = [
         (mkClaudeModel "claude-fable-5-1" 1000000 128000 true)
         (mkClaudeModel "claude-opus-5" 1000000 128000 true)
