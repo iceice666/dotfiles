@@ -45,6 +45,15 @@ in
     pkgs.bash
   ];
 
+  # Pi gates the per-session prompt_cache_key behind "long" cache retention for
+  # non-OpenAI base URLs. Without that key the upstream can only route its prompt
+  # cache by hashing the prompt head, which every concurrent agent here shares
+  # (identical system prompt and tools), so they all land on one cache shard and
+  # evict each other. A conversation whose prefix is entirely new -- after a
+  # compaction -- then never gets established and re-bills its whole context each
+  # turn. Only providers that opt in below see any effect.
+  home.sessionVariables.PI_CACHE_RETENTION = "long";
+
   home.file.".pi/agent/AGENTS.md".source = ./agent-instructions.md;
 
   home.file.".pi/agent/exa-api-key".source = pkgs.writeShellScript "pi-exa-api-key" ''
@@ -96,6 +105,12 @@ in
         # prefix warm. These headers give routing.session-affinity a stable key.
         sendSessionAffinityHeaders = true;
         sessionAffinityFormat = "openai";
+        # Opts this provider into PI_CACHE_RETENTION=long, which is what makes Pi
+        # send prompt_cache_key (the session ID) so each conversation gets its own
+        # upstream cache identity. CLIProxyAPI keeps that key and reuses it as the
+        # upstream Session-Id; it drops the accompanying prompt_cache_retention on
+        # Codex paths, so no 24h retention is actually claimed.
+        supportsLongCacheRetention = true;
       };
       models = [
         (mkModel "gpt-6-astra" 1050000 128000)
@@ -111,6 +126,10 @@ in
       # Same reason as above; anthropic-messages sends x-session-affinity only.
       # Merged with each model's compat, so forceAdaptiveThinking stays intact.
       compat.sendSessionAffinityHeaders = true;
+      # anthropic-messages defaults this to true, so PI_CACHE_RETENTION=long would
+      # silently upgrade Claude to 1h cache_control and its pricier writes. Claude's
+      # own cache behaviour is still undiagnosed, so pin the existing 5m default.
+      compat.supportsLongCacheRetention = false;
       models = [
         (mkClaudeModel "claude-fable-5-1" 1000000 128000 true)
         (mkClaudeModel "claude-opus-5" 1000000 128000 true)
