@@ -12,6 +12,7 @@
       background_opacity = 0.75;
       background_blur = 20;
       macos_option_as_alt = "both";
+      tab_title_template = "{index}  {tab.active_wd.rsplit('/', 1)[-1] or '/'} · {tab.active_exe}";
     };
     keybindings = {
       "super+c" = "copy_or_noop";
