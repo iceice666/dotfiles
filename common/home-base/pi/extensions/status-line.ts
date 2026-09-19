@@ -1,8 +1,24 @@
 import { homedir } from "node:os";
-import { CustomEditor, type ExtensionAPI, type Theme } from "@earendil-works/pi-coding-agent";
+import { CustomEditor, type ExtensionAPI, type SessionEntry, type Theme } from "@earendil-works/pi-coding-agent";
 import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 type TeamAgent = { name: string; status: string };
+type TokenUsage = { input: number; cacheRead: number; output: number; cacheWrite: number };
+
+export function sessionTokenUsage(entries: SessionEntry[]): TokenUsage {
+  const totals: TokenUsage = { input: 0, cacheRead: 0, output: 0, cacheWrite: 0 };
+  for (const entry of entries) {
+    const usage = entry.type === "message"
+      ? entry.message.role === "assistant" || entry.message.role === "toolResult" ? entry.message.usage : undefined
+      : entry.type === "compaction" || entry.type === "branch_summary" ? entry.usage : undefined;
+    if (!usage) continue;
+    totals.input += usage.input;
+    totals.cacheRead += usage.cacheRead;
+    totals.output += usage.output;
+    totals.cacheWrite += usage.cacheWrite;
+  }
+  return totals;
+}
 
 // Selection belongs to the footer, but input is handled only by the focused editor.
 export class TeamStatus {
@@ -190,7 +206,11 @@ export default function (pi: ExtensionAPI) {
           const contextText = usage && usage.tokens !== null
             ? `${fmt(usage.tokens)}/${fmt(usage.contextWindow)} ${percent == null ? "?" : percent.toFixed(0)}%`
             : "ctx ?";
-          const right = theme.fg(percent != null && percent >= 90 ? "error" : percent != null && percent >= 75 ? "warning" : "muted", contextText);
+          const tokens = sessionTokenUsage(ctx.sessionManager.getEntries());
+          const promptTokens = tokens.input + tokens.cacheRead + tokens.cacheWrite;
+          const cacheRate = promptTokens > 0 ? `${(tokens.cacheRead / promptTokens * 100).toFixed(1)}%` : "?";
+          const tokenText = `↑${fmt(promptTokens)}|↓${fmt(tokens.output)}[${cacheRate}]`;
+          const right = theme.fg(percent != null && percent >= 90 ? "error" : percent != null && percent >= 75 ? "warning" : "muted", `${contextText} · ${tokenText}`);
           const left = [
             theme.fg(started === undefined ? "dim" : "accent", time),
             theme.fg("accent", clean(ctx.model?.id ?? "no-model")) + theme.fg("muted", `:${pi.getThinkingLevel()}`),

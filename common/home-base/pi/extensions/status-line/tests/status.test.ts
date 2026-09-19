@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { visibleWidth } from '@earendil-works/pi-tui';
-import statusLine, { TeamStatus } from '../../status-line.ts';
+import statusLine, { sessionTokenUsage, TeamStatus } from '../../status-line.ts';
 
 const theme: any = { fg: (_: string, text: string) => text };
 const agents = [{ name: 'alpha', status: 'running' }, { name: 'beta', status: 'idle' }];
@@ -25,18 +25,28 @@ test('footer event bridge, editor wrapping, prompt isolation and shutdown cleanu
     exec: async () => ({ code: 0, stdout: '', killed: false }),
     getThinkingLevel: () => 'high',
   };
-  const ctx: any = { mode: 'tui', cwd: '/tmp', getContextUsage: () => undefined, ui: {
+  const ctx: any = {
+    mode: 'tui', cwd: '/tmp', model: { id: 'test-model' },
+    getContextUsage: () => ({ tokens: 5000, contextWindow: 10000, percent: 50 }),
+    sessionManager: { getEntries: () => [{
+      type: 'message', message: { role: 'assistant', usage: {
+        input: 1000, cacheRead: 3000, output: 200, cacheWrite: 500,
+      } },
+    }] },
+    ui: {
     getEditorComponent: () => factory,
     setEditorComponent: (value: any) => { factory = value; },
     setFooter: (make: any) => { footer = make({ requestRender() {} }, theme, {
       onBranchChange: () => () => {}, getExtensionStatuses: () => new Map([['other', 'other status']]),
     }); },
-  } };
+    },
+  };
   statusLine(pi); handlers.get('session_start')!({}, ctx);
   try {
     const wrapped = factory({ requestRender() {} }, theme, {});
     pi.events.emit('agent-team:state', { agents });
-    expect(footer.render(100).slice(1)).toEqual(['· alpha · running', '· beta · idle', 'other status']);
+    expect(footer.render(200)[0]).toContain('5k/10k 50% · ↑4.5k|↓200[66.7%]');
+    expect(footer.render(200).slice(1)).toEqual(['· alpha · running', '· beta · idle', 'other status']);
     wrapped.handleInput('\x1b[B'); wrapped.handleInput('\r');
     expect(attached).toBe('alpha'); expect(passed).toBe('');
     text = 'draft'; wrapped.handleInput('\x1b[B'); expect(passed).toBe('\x1b[B');
@@ -51,6 +61,17 @@ test('footer event bridge, editor wrapping, prompt isolation and shutdown cleanu
   factory({ requestRender() {} }, theme, {});
   handlers.get('session_shutdown')!();
   expect(editor.handleInput).toBe(originalInput);
+});
+
+test('session usage includes assistant, tool and summary usage', () => {
+  const usage = (input: number, cacheRead: number, output: number, cacheWrite: number) => ({ input, cacheRead, output, cacheWrite });
+  expect(sessionTokenUsage([
+    { type: 'message', message: { role: 'assistant', usage: usage(10, 20, 3, 4) } },
+    { type: 'message', message: { role: 'toolResult', usage: usage(5, 6, 7, 8) } },
+    { type: 'message', message: { role: 'user' } },
+    { type: 'compaction', usage: usage(1, 2, 3, 4) },
+    { type: 'branch_summary', usage: usage(9, 8, 7, 6) },
+  ] as any)).toEqual({ input: 25, cacheRead: 36, output: 20, cacheWrite: 22 });
 });
 
 test('one row per live worker, including idle; terminal states disappear', () => {
