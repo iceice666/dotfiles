@@ -12,6 +12,7 @@ final: prev: {
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
   framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };
   helium-bin = final.callPackage (dotfiles + /pkgs/helium-bin) { };
+  oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
   pi-bin = final.callPackage (dotfiles + /pkgs/pi-bin) { };
   playwright-cli = final.callPackage (dotfiles + /pkgs/playwright-cli) { };
   rime-frost = final.callPackage (dotfiles + /pkgs/rime-frost) { };

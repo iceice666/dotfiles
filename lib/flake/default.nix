@@ -79,6 +79,7 @@ let
           inherit (p)
             themegen
             equibop-bin
+            oh-my-pi-bin
             pi-bin
             playwright-cli
             zed-bin

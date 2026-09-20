@@ -1,4 +1,4 @@
-{ dotfiles, ... }:
+{ dotfiles, pkgs, ... }:
 
 let
   desktopWallpaper = dotfiles + /assets/win_chan.jpg;
@@ -9,9 +9,12 @@ in
     ./appearance.nix
     ./default-apps.nix
     ./karabiner.nix
+    ./omp.nix
     ./sleepguard.nix
     ./wallpaper.nix
   ];
+
+  home.packages = [ pkgs.oh-my-pi-bin ];
 
   _module.args = {
     inherit desktopWallpaper;
