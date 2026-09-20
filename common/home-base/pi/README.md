@@ -16,6 +16,8 @@ without taking ownership of unrelated local extensions.
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
+| `observational-memory/` | Upstream Observational Memory 3.1.3, pinned and installed by Nix for durable ledger-backed memory |
+| `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
@@ -32,7 +34,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image; do
+for entry in agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image observational-memory cache-safe-compaction; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"
@@ -50,14 +52,37 @@ background logs remain unmanaged. The Lumo audit explicitly disables extension
 discovery and is unaffected.
 
 `settings.json` is only partially managed. A `piSettings` activation step merges
-the repo-owned keys (`theme`, `hideThinkingBlock`) into the existing file with
-`jq`; every other key stays runtime-owned and writable, so `/model`, `/settings`
-and `lastChangelogVersion` still persist. On hosts with `features.themegen` the
+the repo-owned keys (`theme`, `hideThinkingBlock`, and the
+`observational-memory` defaults) into the existing file with `jq`; every other
+key stays runtime-owned and writable, so `/model`, `/settings` and
+`lastChangelogVersion` still persist. On hosts with `features.themegen` the
 wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
 and the theme resolves to `themegen-light/themegen-dark`, matching Kitty's wallpaper-generated light/dark palettes;
 other hosts keep the built-in `light/dark` pair. Changing the theme via
 `/settings` is overwritten on the next switch — edit the repo instead. If
 `settings.json` is not valid JSON, activation warns and leaves it untouched.
+
+## Observational memory and cache-safe compaction
+
+Nix pins upstream `pi-observational-memory` 3.1.3 and installs its `src/` as the
+managed `observational-memory/` extension. Do not also run `pi install
+npm:pi-observational-memory`; duplicate copies would register competing memory
+workers and compaction hooks. The managed defaults use
+`cliproxyapi/gpt-5.6-sol` at low thinking for background observer/reflector/dropper
+work, cap their requested output at 8192 tokens, and scale proactive compaction
+to 68% of the active model context window. Project-local Pi settings may still
+override these defaults at runtime.
+
+Observational Memory owns the content of an extension-provided compaction:
+ledger entries are folded into a deterministic memory summary. The sibling
+`cache-safe-compaction/` extension never registers `session_before_compact`; it
+waits until Pi has saved the compaction and rebuilt the foreground context, then
+sends one bounded, non-persisted warm request using the same session cache key.
+It runs only for explicitly opted-in OpenAI-compatible providers, so the managed
+Claude provider cannot receive an extra long-retention cache write. Warm-up is
+best-effort: timeout, quota, or provider failure leaves the successful compaction
+intact and the next turn proceeds normally. See
+[cache-safe-compaction/README.md](extensions/cache-safe-compaction/README.md).
 
 ## Instructions, workflows and search
 

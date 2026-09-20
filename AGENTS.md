@@ -216,10 +216,15 @@ After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.
 
-The nine personal Pi extensions (`agent-team`, `ask-question`, `background-task`,
-`todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, and `analyze-image`) are owned by `common/home-base/pi/extensions/` and
-installed on all Pi-enabled hosts as recursive Home Manager store links. Keep
-sibling directories together: agent-team imports ask-question's service.
+The repo-owned Pi extensions (`agent-team`, `ask-question`, `background-task`,
+`todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
+`cache-safe-compaction`) are owned by `common/home-base/pi/extensions/` and
+installed on all Pi-enabled hosts as recursive Home Manager store links. The
+same extension tree includes the Nix-pinned upstream `pi-observational-memory`
+source. Keep sibling directories together: agent-team imports ask-question's
+service. Observational Memory owns `session_before_compact`; the cache-safe
+extension observes only `session_compact` and must not compete for summary
+ownership.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
 Git and Node.js. Runtime state stays unmanaged. Extensions run with the invoking
 user's full permissions, including root on lumo; they are not a sandbox.

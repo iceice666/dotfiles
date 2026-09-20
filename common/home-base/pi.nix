@@ -35,7 +35,34 @@ let
   managedSettings = {
     theme = if hasThemegenThemes then "themegen-light/themegen-dark" else "light/dark";
     hideThinkingBlock = false;
+    observational-memory = {
+      # Keep background observation work off the selected foreground model, which
+      # may be a much more expensive Claude model. Ratio mode scales proactive
+      # compaction across the 272K and 1M OpenAI context windows.
+      model = {
+        provider = "cliproxyapi";
+        id = "gpt-5.6-sol";
+        thinking = "low";
+      };
+      compactAfterTokensMode = "ratio";
+      compactAfterTokensRatio = 0.68;
+      agentMaxTokens = 8192;
+    };
   };
+
+  observationalMemory = pkgs.fetchFromGitHub {
+    owner = "elpapi42";
+    repo = "pi-observational-memory";
+    rev = "3.1.3";
+    hash = "sha256-E6ldxcWo3CWM6ugCEsobesRFkn7J9AtQFd0GFXqhMLI=";
+  };
+
+  piExtensions = pkgs.runCommand "pi-extensions" { } ''
+    mkdir -p "$out"
+    cp -R ${./pi/extensions}/. "$out/"
+    mkdir -p "$out/observational-memory"
+    cp -R ${observationalMemory}/src/. "$out/observational-memory/"
+  '';
 
   settingsPath = "${config.home.homeDirectory}/.pi/agent/settings.json";
 in
@@ -67,7 +94,7 @@ in
 
   # Keep sibling imports intact and leave unrelated local extensions alone.
   home.file.".pi/agent/extensions" = {
-    source = ./pi/extensions;
+    source = piExtensions;
     recursive = true;
   };
 
