@@ -18,10 +18,8 @@ Only the parent gets `agent_spawn` and `agent_stop`.
 
 ## Tools
 
-| Tool | Purpose |
-| --- | --- |
-| `agent_spawn({name, task, cwd?, model?, thinking?})` | Spawn a worker; returns on task acceptance, not completion |
-| `agent_list({})` | Worker states, session paths, archive directory |
+| `agent_spawn({name, task, kind?, cwd?, model?, thinking?})` | Spawn a worker; `kind` selects a model/thinking preset; returns on task acceptance, not completion |
+| `agent_list({})` | Worker states, session paths, archive directory, and available kind names |
 | `agent_wait({agent, timeout?})` | Event-driven wait for worker idle; default 60 seconds, maximum 86400 |
 | `agent_send({to, message})` | Send to a sibling or `parent`; wakes idle recipients |
 | `agent_ask({to?, question, options?, multiSelect?, header?})` | Default: tracked question to `parent`; explicit `to: "user"`: real human UI |
@@ -139,6 +137,20 @@ HTTP validates question fields before queuing. Question requests are limited to
 24,000 serialized characters, 12 options, and 12,000 characters per question.
 
 ## Defaults and lifecycle
+
+### Agent kinds
+
+Workers default to `general`, which inherits the parent model and thinking level. The built-in `scout` preset uses `cliproxyapi/gpt-5.6-sol` with `low` thinking; `researcher` uses the same model with `medium` thinking. Explicit `model` and `thinking` arguments override a preset.
+
+Add or override presets with a JSON object in `PI_TEAM_KINDS` before starting Pi:
+
+```json
+{"reviewer":{"model":"cliproxyapi/gpt-6-astra","thinking":"high"},"scout":{"thinking":"minimal"}}
+```
+
+Names must be lowercase (`a-z`, digits, `_`, `-`), `parent` and `user` are reserved, and each preset may contain only `model` and `thinking`. The JSON is validated when the team broker is first created; invalid configuration fails the team operation instead of silently falling back.
+
+Automatic worker reports are persisted in `events.jsonl` but parent-session notices are bounded to a short preview plus the event ID. Use `agent_inbox({after, limit})` to load the full report deliberately.
 
 - At most 4 live workers (including idle/waiting workers).
 - Model and thinking level inherit from parent at spawn time; changes to the parent

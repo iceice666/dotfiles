@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Team } from '../team.mjs';
+import { Team, parseAgentKinds } from '../team.mjs';
 import { RpcProcess } from '../rpc.mjs';
 
 async function fixture(t) {
@@ -18,6 +18,13 @@ async function fixture(t) {
   return { team, delivered, messages };
 }
 
+test('agent kind configuration is validated and merged with defaults', () => {
+  assert.deepEqual(parseAgentKinds('{"reviewer":{"model":"custom/model","thinking":"high"}}').reviewer, { model: 'custom/model', thinking: 'high' });
+  assert.equal(parseAgentKinds('{"scout":{"thinking":"minimal"}}').scout.thinking, 'minimal');
+  assert.throws(() => parseAgentKinds('{"bad":{"unknown":true}}'), /Unknown agent kind fields/);
+  assert.throws(() => parseAgentKinds('{"bad":{"thinking":"invalid"}}'), /Invalid thinking level/);
+});
+
 test('question -> parent -> reply wakes child; identities and duplicates enforced', async t => {
   const { team, delivered, messages } = await fixture(t);
   const q = await team.call('alice', 'agent_ask', { question: 'Which API?' });
@@ -28,6 +35,32 @@ test('question -> parent -> reply wakes child; identities and duplicates enforce
   assert.match(messages[0][1].message, /v2/);
   await assert.rejects(team.call('parent', 'agent_reply', { question_id: q.id, answer: 'again' }));
   assert.match(readFileSync(join(team.directory, 'events.jsonl'), 'utf8'), /question_id/);
+});
+
+test('agent kinds route preset model and thinking while explicit values override', async t => {
+  const { team } = await fixture(t);
+  assert.deepEqual(team.list().kinds, ['general', 'scout', 'researcher']);
+  team.executable = '/nonexistent-pi-team-executable';
+  const defaults = { cwd: team.directory, model: 'parent/model', thinking: 'high' };
+  await assert.rejects(team.spawn({ name: 'scout-one', kind: 'scout', task: 'scan' }, defaults));
+  const scout = team.agents.get('scout-one');
+  assert.equal(scout.model, 'cliproxyapi/gpt-5.6-sol');
+  assert.equal(scout.thinking, 'low');
+  await assert.rejects(team.spawn({ name: 'custom-one', kind: 'researcher', model: 'custom/model', thinking: 'off', task: 'research' }, defaults));
+  const custom = team.agents.get('custom-one');
+  assert.equal(custom.model, 'custom/model');
+  assert.equal(custom.thinking, 'off');
+  await assert.rejects(team.spawn({ name: 'missing-kind', kind: 'missing', task: 'x' }, defaults), /Unknown agent kind/);
+});
+
+test('automatic worker reports are bounded while archive keeps full body', async t => {
+  const { team, delivered } = await fixture(t);
+  const worker = team.agents.get('alice');
+  const body = 'x'.repeat(4000);
+  team.event(worker, { type: 'message_end', message: { role: 'assistant', content: [{ type: 'text', text: body }], stopReason: 'stop' } });
+  assert.ok(delivered.at(-1).body.length < body.length);
+  assert.match(delivered.at(-1).body, /Preview truncated/);
+  assert.equal(team.records.at(-1).body, body);
 });
 test('peer messaging, stop authorization, missing recipients', async t => {
   const { team, messages } = await fixture(t);

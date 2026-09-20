@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Team, userQuestion, remoteWait } from './team.mjs';
+import { Team, userQuestion, remoteWait, parseAgentKinds } from './team.mjs';
 import { teamToolRenderers, renderTeamMessage } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
 import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
@@ -74,6 +74,7 @@ export default function (pi: ExtensionAPI) {
         directory: join(root, 'teams', session, randomUUID()),
         extension: fileURLToPath(import.meta.url),
         executable: process.env.PI_TEAM_EXECUTABLE || 'pi',
+        kinds: parseAgentKinds(),
         askUser(question: Question, signal: AbortSignal, from: string) {
           return askQuestions(context ?? ctx, { questions: [{ ...question, header: `Agent ${from}${question.header ? ` — ${question.header}` : ''}`.slice(0, 120) }] }, signal);
         },
@@ -131,11 +132,12 @@ export default function (pi: ExtensionAPI) {
   if (!isChild) {
     pi.registerTool({
       name: 'agent_spawn', label: 'Spawn Pi agent', ...teamToolRenderers('agent_spawn'),
-      description: 'Start a persistent independent Pi RPC session (maximum 4 live children). Returns immediately after task acceptance, not completion. Inherits model/effort, not conversation. Supply necessary context and file ownership. Costs are incurred by each child.',
+      description: 'Start a persistent independent Pi RPC session (maximum 4 live children). Returns immediately after task acceptance, not completion. Select kind for a configured model/thinking preset; built-in kinds are general, scout, and researcher, and PI_TEAM_KINDS can add or override presets. Explicit model/thinking override the kind. Inherits model/effort only when the preset has no value. Supply necessary context and file ownership. Costs are incurred by each child.',
       parameters: Type.Object({
         name: Type.String({ pattern: '^[a-z][a-z0-9_-]{0,39}$' }), task: short(),
+        kind: Type.Optional(Type.String({ pattern: '^[a-z][a-z0-9_-]{0,39}$', description: 'Agent kind preset; defaults to general' })),
         cwd: Type.Optional(Type.String({ description: 'Existing working directory or worktree; defaults to parent cwd' })),
-        model: Type.Optional(Type.String({ description: 'provider/model ID; defaults to parent model' })),
+        model: Type.Optional(Type.String({ description: 'provider/model ID; overrides the selected kind and defaults to parent model' })),
         thinking: Type.Optional(StringEnum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const)),
       }),
       async execute(_id, args, signal, _update, ctx) {

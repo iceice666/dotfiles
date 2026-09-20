@@ -6,6 +6,55 @@ import { RpcProcess } from './rpc.mjs';
 import { Observation, safeText } from './observation.mjs';
 import { NativeObservation } from './native-observation.mjs';
 
+const THINKING_LEVELS = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+const KIND_NAME = /^[a-z][a-z0-9_-]{0,39}$/;
+const DEFAULT_AGENT_KINDS = {
+  general: {},
+  scout: { model: 'cliproxyapi/gpt-5.6-sol', thinking: 'low' },
+  researcher: { model: 'cliproxyapi/gpt-5.6-sol', thinking: 'medium' },
+};
+const RESULT_NOTICE_LIMIT = 2000;
+
+function validateKindPresets(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Agent kinds must be an object');
+  const result = {};
+  for (const [kind, preset] of Object.entries(value)) {
+    if (!KIND_NAME.test(kind) || ['parent', 'user'].includes(kind)) throw new Error(`Invalid agent kind: ${kind}`);
+    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) throw new Error(`Invalid agent kind preset: ${kind}`);
+    const unknown = Object.keys(preset).filter(key => !['model', 'thinking'].includes(key));
+    if (unknown.length) throw new Error(`Unknown agent kind fields for ${kind}: ${unknown.join(', ')}`);
+    const model = preset.model;
+    const thinking = preset.thinking;
+    if (model !== undefined && (typeof model !== 'string' || !model.trim() || model.length > 200)) throw new Error(`Invalid model for agent kind: ${kind}`);
+    if (thinking !== undefined && (typeof thinking !== 'string' || !THINKING_LEVELS.has(thinking))) throw new Error(`Invalid thinking level for agent kind: ${kind}`);
+    result[kind] = { ...(model === undefined ? {} : { model }), ...(thinking === undefined ? {} : { thinking }) };
+  }
+  return result;
+}
+
+export function parseAgentKinds(raw = process.env.PI_TEAM_KINDS) {
+  if (raw === undefined || raw === '') return { ...DEFAULT_AGENT_KINDS };
+  if (typeof raw !== 'string') throw new Error('PI_TEAM_KINDS must be a JSON string');
+  const source = raw.trim();
+  if (!source) return { ...DEFAULT_AGENT_KINDS };
+  if (source.length > 16000) throw new Error('PI_TEAM_KINDS is too large');
+  let parsed;
+  try { parsed = JSON.parse(source); } catch { throw new Error('PI_TEAM_KINDS must be valid JSON'); }
+  return { ...DEFAULT_AGENT_KINDS, ...validateKindPresets(parsed) };
+}
+
+function compactResult(entry) {
+  const body = typeof entry.body === 'string' ? entry.body : String(entry.body ?? '');
+  const normalized = body.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const clipped = normalized.length > RESULT_NOTICE_LIMIT;
+  const preview = normalized.slice(0, RESULT_NOTICE_LIMIT);
+  return {
+    ...entry,
+    body: `${preview}${clipped ? '\n[Preview truncated]' : ''}\nFull result: agent_inbox event ${entry.id}`,
+    ...(clipped ? { truncated: true } : {}),
+  };
+}
+
 const active = a => !['stopped', 'failed'].includes(a.status);
 export function text(value, label = 'text', max = 12000) {
   if (typeof value !== 'string' || !value.trim() || value.length > max) throw new Error(`${label} must contain 1–${max} characters`);
@@ -67,9 +116,10 @@ export function remoteWait(url, token, args, signal) {
   });
 }
 export class Team {
-  constructor({ directory, extension, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }) }) {
+  constructor({ directory, extension, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), kinds }) {
     this.directory = directory; this.extension = extension; this.deliverParent = deliverParent;
     this.executable = executable; this.limit = limit; this.onChange = onChange;
+    this.kinds = kinds === undefined ? parseAgentKinds() : { ...DEFAULT_AGENT_KINDS, ...validateKindPresets(kinds) };
     this.askUser = askUser; this.userQuestions = new Map();
     this.agents = new Map(); this.tokens = new Map(); this.records = []; this.closing = false;
     this.waiters = new Set();
@@ -103,7 +153,7 @@ export class Team {
     this.records.push(entry); this.notifyWaiters(); return entry;
   }
   list() {
-    return { directory: this.directory, agents: [...this.agents.values()].map(({ name, status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity }) => ({ name, status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity })) };
+    return { directory: this.directory, kinds: Object.keys(this.kinds ?? {}), agents: [...this.agents.values()].map(({ name, kind, status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity }) => ({ name, ...(kind ? { kind } : {}), status, cwd, model, thinking, sessionFile, lastError, task, pid, startedAt, lastActivity, activity })) };
   }
   observe(name) {
     const a = this.agents.get(name);
@@ -178,13 +228,16 @@ export class Team {
     const task = text(args.task, 'task');
     const cwd = resolve(defaults.cwd, args.cwd ?? '.');
     if (!statSync(cwd).isDirectory()) throw new Error('cwd must be a directory');
-    const model = args.model ?? defaults.model;
+    const kind = args.kind ?? 'general';
+    if (typeof kind !== 'string' || !this.kinds[kind]) throw new Error(`Unknown agent kind: ${kind}`);
+    const preset = this.kinds[kind];
+    const model = args.model ?? preset.model ?? defaults.model;
     if (!model) throw new Error('Select a parent model or provide provider/model');
-    const thinking = args.thinking ?? defaults.thinking ?? 'off';
-    if (!['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'].includes(thinking)) throw new Error('Invalid thinking level');
+    const thinking = args.thinking ?? preset.thinking ?? defaults.thinking ?? 'off';
+    if (!THINKING_LEVELS.has(thinking)) throw new Error('Invalid thinking level');
     signal?.throwIfAborted();
     const startedAt = new Date().toISOString();
-    const a = { name, cwd, model, thinking, task, startedAt, lastActivity: startedAt, activity: 'starting', status: 'starting', observation: new Observation() };
+    const a = { name, kind, cwd, model, thinking, task, startedAt, lastActivity: startedAt, activity: 'starting', status: 'starting', observation: new Observation() };
     this.agents.set(name, a); // Reserve before awaiting: parallel spawn calls obey the limit.
     const token = `Bearer ${randomBytes(32).toString('hex')}`;
     a.token = token; this.tokens.set(token, name);
@@ -253,7 +306,7 @@ export class Team {
   report(a, kind, body) {
     try {
       const entry = this.record(kind, { from: a.name, to: 'parent', body });
-      this.deliverParent({ ...entry, body: body.slice(0, 12000) + (body.length > 12000 ? `\n[Truncated; full text: ${this.directory}/events.jsonl]` : '') });
+      this.deliverParent(compactResult(entry));
     } catch (e) { a.lastError = String(e.message); }
   }
   recipient(to) {
