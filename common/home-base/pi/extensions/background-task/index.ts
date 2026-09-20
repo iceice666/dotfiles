@@ -23,17 +23,31 @@ export default function (pi: ExtensionAPI) {
   let closed = false;
   let panel: BackgroundPanel | undefined;
   let panelOpening = false;
+  let completionNoticePending = false;
+  const completedTasks: TaskInfo[] = [];
   const refresh = () => {
     if (!ctx?.hasUI || closed) return;
     const running = manager.list().filter(t => t.status === "running" || t.status === "stopping");
     ctx.ui.setStatus("background-task", running.length ? `BG ${running.length}` : undefined);
   };
+  const completionSummary = (tasks: TaskInfo[]) => tasks.map(task => `${task.id} · ${task.status}${task.exitCode != null ? ` (exit ${task.exitCode})` : ""}`).join("\n");
+  const flushCompletions = () => {
+    if (closed || completionNoticePending || !completedTasks.length || (ctx?.isIdle && !ctx.isIdle())) return;
+    const tasks = completedTasks.splice(0);
+    completionNoticePending = true;
+    pi.sendMessage({
+      customType: "background-task-finished",
+      content: `${tasks.length} background task${tasks.length === 1 ? "" : "s"} finished:\n${completionSummary(tasks)}\nUse background_task list/output to inspect results.`,
+      display: true,
+      details: { status: tasks.length === 1 ? tasks[0].status : "completed", tasks },
+    }, { triggerTurn: true, deliverAs: "steer" });
+  };
   const manager = new TaskManager(task => {
     if (closed) return;
     refresh();
+    completedTasks.push(task);
     if (ctx?.hasUI) ctx.ui.notify(`Background task: ${summary(task)}`, task.status === "failed" || task.status === "timed_out" ? "warning" : "info");
-    // Wake an idle agent; otherwise deliver at the next safe tool boundary.
-    pi.sendMessage({ customType: "background-task-finished", content: `Background shell task finished: ${summary(task)}\nLog: ${task.logPath}\nUse background_task output to inspect results.`, display: true, details: task }, { triggerTurn: true, deliverAs: "steer" });
+    flushCompletions();
   });
   const requireOpen = () => { if (closed) throw new Error("Background task runtime has shut down."); };
   const output = (id: string, lines = 200) => {
@@ -45,6 +59,10 @@ export default function (pi: ExtensionAPI) {
     return `${summary(task)}\ncwd: ${task.cwd}\nLog (capped at 10 MiB): ${task.logPath}\n${tail.truncated ? `[Display truncated]\n${markers ? `${markers}\n` : ""}` : ""}${tail.content}`;
   };
   pi.on("session_start", (_event, context) => { ctx = context; refresh(); });
+  pi.on("agent_settled", () => {
+    completionNoticePending = false;
+    flushCompletions();
+  });
   pi.on("session_shutdown", async () => {
     closed = true;
     panel?.close();
@@ -55,7 +73,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "background_task",
     label: "Background Task",
-    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completion automatically wakes an idle agent or is delivered after the current assistant turn's tool calls; no user message is required.",
+    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Not sandboxed; same permissions as Bash. Completions are coalesced into one short wakeup while the agent is idle; inspect task output explicitly with list/output.",
     promptSnippet: "Run and manage background Shell commands without blocking the conversation",
     promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work, use background_task wait when completion is needed, or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval or sandbox restrictions."],
     parameters: Type.Object({

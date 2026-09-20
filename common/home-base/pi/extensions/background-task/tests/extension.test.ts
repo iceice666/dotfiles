@@ -69,6 +69,24 @@ test.each([
   expect(s.messages[0].message.details.status).toBe(status);
   expect(s.messages[0].options).toEqual({ triggerTurn: true, deliverAs: "steer" });
 });
+test("coalesces idle background completions into one wakeup", async () => {
+  const s = await setup();
+  try {
+    s.ctx.isIdle = () => false;
+    const first: { details: { tasks: Array<{ id: string }> } } = await s.call({ action: "start", command: "true" });
+    const firstId = first.details.tasks[0].id;
+    const second: { details: { tasks: Array<{ id: string }> } } = await s.call({ action: "start", command: "true" });
+    const secondId = second.details.tasks.find(task => task.id !== firstId)?.id;
+    if (!secondId) throw new Error("Second background task was not registered");
+    await s.call({ action: "wait", id: firstId });
+    await s.call({ action: "wait", id: secondId });
+    expect(s.messages).toHaveLength(0);
+    s.ctx.isIdle = () => true;
+    await s.event("agent_settled");
+    expect(s.messages).toHaveLength(1);
+    expect(s.messages[0].message.content).toContain("2 background tasks finished");
+  } finally { await s.event("session_shutdown"); }
+});
 
 test("command preserves shell quoting and supports output/list/stop", async () => {
   const s = await setup();
