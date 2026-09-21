@@ -1,0 +1,667 @@
+diff --git a/src/agents/stream-errors.ts b/src/agents/stream-errors.ts
+index d2b8bd0..7d74267 100644
+--- a/src/agents/stream-errors.ts
++++ b/src/agents/stream-errors.ts
+@@ -1,5 +1,6 @@
+ import type { AgentEvent } from "@earendil-works/pi-agent-core";
+ import { debugLog } from "../debug-log.js";
++import { rateLimitTracker } from "../model-fallback.js";
+ 
+ /**
+  * Surface LLM failures from an agent-loop event stream.
+@@ -15,8 +16,13 @@ export function logAgentStreamError(stage: "observer" | "reflector" | "dropper",
+ 	const message = event.message;
+ 	if (message.role !== "assistant") return;
+ 	if (message.stopReason !== "error" && message.stopReason !== "aborted") return;
++	// A throttled model must not be retried for every subsequent chunk: arm its
++	// cooldown so the resolver moves to a configured fallback (if any) and comes
++	// back to the preferred model once the window has passed.
++	const rateLimited = rateLimitTracker.noteError(message.errorMessage);
+ 	debugLog(`${stage}.stream_error`, {
+ 		stopReason: message.stopReason,
+ 		errorMessage: message.errorMessage,
++		...(rateLimited ? { rateLimitedModel: rateLimitTracker.getActive() } : {}),
+ 	});
+ }
+diff --git a/src/commands/status.ts b/src/commands/status.ts
+index a77c684..99502b5 100644
+--- a/src/commands/status.ts
++++ b/src/commands/status.ts
+@@ -1,6 +1,7 @@
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import { observationPoolMetrics } from "../agents/dropper/pool.js";
+ import { resolveCompactAfterTokens } from "../config.js";
++import { rateLimitTracker } from "../model-fallback.js";
+ import type { Runtime } from "../runtime.js";
+ import {
+ 	diffProjection,
+@@ -98,6 +99,14 @@ export function registerStatusCommand(pi: ExtensionAPI, runtime: Runtime): void
+ 				if (runtime.compactHookInFlight) lines.push("Compaction hook: running");
+ 			}
+ 
++			const coolingDown = rateLimitTracker.active();
++			if (coolingDown.length > 0) {
++				lines.push("", "── Rate limited ──");
++				for (const entry of coolingDown) {
++					lines.push(`${entry.key}: retrying in ~${Math.ceil(entry.remainingMs / 60_000).toLocaleString()} min`);
++				}
++			}
++
+ 			if (runtime.lastObserverError || runtime.lastReflectorError || runtime.lastDropperError) {
+ 				lines.push("", "── Last error ──");
+ 				if (runtime.lastObserverError) lines.push(`Observer: ${runtime.lastObserverError}`);
+diff --git a/src/config.ts b/src/config.ts
+index c678b63..1466528 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
+ import type { ModelThinkingLevel } from "@earendil-works/pi-ai";
+ import { getAgentDir } from "@earendil-works/pi-coding-agent";
++import { DEFAULT_RATE_LIMIT_COOLDOWN_MS } from "./model-fallback.js";
+ 
+ export interface ConfiguredModel {
+ 	provider: string;
+@@ -54,6 +55,14 @@ export interface Config {
+ 	 */
+ 	agentMaxTokens: number;
+ 	model?: ConfiguredModel;
++	/**
++	 * Alternates used while the preferred `model` is cooling down after a
++	 * rate-limit failure (HTTP 429, quota exhausted, upstream overloaded).
++	 * Tried in order; each entry may carry its own `thinking` level.
++	 */
++	fallbackModels?: ConfiguredModel[];
++	/** How long a rate-limited model is skipped before it is tried again. */
++	rateLimitCooldownMs: number;
+ 	showWorkerNotifications: boolean;
+ 	passive: boolean;
+ 	debugLog: boolean;
+@@ -69,6 +78,7 @@ export const DEFAULTS: Config = {
+ 	observationsPoolTargetTokens: 10_000,
+ 	agentMaxTurns: 16,
+ 	agentMaxTokens: 32_000,
++	rateLimitCooldownMs: DEFAULT_RATE_LIMIT_COOLDOWN_MS,
+ 	showWorkerNotifications: true,
+ 	passive: false,
+ 	debugLog: false,
+@@ -188,6 +198,20 @@ function normalizeModel(value: unknown): ConfiguredModel | undefined {
+ 	return model;
+ }
+ 
++/**
++ * A single malformed entry is dropped rather than failing the whole list: the
++ * remaining alternates are still better than no fallback at all. An empty or
++ * fully invalid list is treated as unset so a lower-precedence config layer
++ * (global settings under project settings) keeps its value.
++ */
++function normalizeModels(value: unknown): ConfiguredModel[] | undefined {
++	if (!Array.isArray(value)) return undefined;
++	const models = value
++		.map((entry) => normalizeModel(entry))
++		.filter((entry): entry is ConfiguredModel => entry !== undefined);
++	return models.length > 0 ? models : undefined;
++}
++
+ function normalizeSettingsConfig(value: Record<string, unknown>): Partial<Config> {
+ 	const normalized: Partial<Config> = {};
+ 	const numberKeys = [
+@@ -199,6 +223,7 @@ function normalizeSettingsConfig(value: Record<string, unknown>): Partial<Config
+ 		"observationsPoolTargetTokens",
+ 		"agentMaxTurns",
+ 		"agentMaxTokens",
++		"rateLimitCooldownMs",
+ 	] as const;
+ 	for (const key of numberKeys) {
+ 		const normalizedValue = positiveIntegerOrUndefined(value[key]);
+@@ -214,6 +239,8 @@ function normalizeSettingsConfig(value: Record<string, unknown>): Partial<Config
+ 	if (typeof value.debugLog === "boolean") normalized.debugLog = value.debugLog;
+ 	const model = normalizeModel(value.model);
+ 	if (model) normalized.model = model;
++	const fallbackModels = normalizeModels(value.fallbackModels);
++	if (fallbackModels) normalized.fallbackModels = fallbackModels;
+ 	return normalized;
+ }
+ 
+diff --git a/src/hooks/consolidation-trigger.ts b/src/hooks/consolidation-trigger.ts
+index 2ae46f6..e9a28c1 100644
+--- a/src/hooks/consolidation-trigger.ts
++++ b/src/hooks/consolidation-trigger.ts
+@@ -5,6 +5,7 @@ import { ObserverStreamError, runObserver } from "../agents/observer/agent.js";
+ import { runReflector } from "../agents/reflector/agent.js";
+ import { debugLog, withDebugLogContext } from "../debug-log.js";
+ import { resolveObserverChunkMaxTokens } from "../config.js";
++import { rateLimitTracker } from "../model-fallback.js";
+ import type { ResolveResult, Runtime } from "../runtime.js";
+ import { serializeSourceAddressedBranchEntries } from "../serialize.js";
+ import {
+@@ -115,7 +116,13 @@ function shouldNotifyWorker(runtime: Runtime, ctx: ConsolidationCtx): boolean {
+ 
+ function makeModelResolver(runtime: Runtime, ctx: ConsolidationCtx): (stage: "observer" | "reflector" | "dropper") => Promise<ResolvedModel | undefined> {
+ 	let cached: ResolveResult | undefined;
++	let cachedGeneration = rateLimitTracker.generation;
+ 	return async (stage) => {
++		// A stage that just hit a rate limit arms a cooldown mid-run; re-resolve so
++		// the later stages of the same consolidation move to the fallback model
++		// instead of reusing the throttled choice.
++		if (cached && cachedGeneration !== rateLimitTracker.generation) cached = undefined;
++		cachedGeneration = rateLimitTracker.generation;
+ 		cached ??= await runtime.resolveModel({
+ 			model: ctx.model,
+ 			modelRegistry: ctx.modelRegistry,
+@@ -334,7 +341,7 @@ async function runObserverStage(
+ 			allowedSourceEntryIds: sourceEntryIds,
+ 			maxTurns: runtime.config.agentMaxTurns,
+ 			maxOutputTokens: runtime.config.agentMaxTokens,
+-			thinkingLevel: runtime.config.model?.thinking ?? "low",
++			thinkingLevel: resolved.thinking ?? runtime.config.model?.thinking ?? "low",
+ 			modelRegistry: ctx.modelRegistry,
+ 		});
+ 	} catch (error) {
+@@ -407,7 +414,7 @@ async function runReflectorStage(
+ 		observations: folded.activeObservations,
+ 		maxTurns: runtime.config.agentMaxTurns,
+ 		maxOutputTokens: runtime.config.agentMaxTokens,
+-		thinkingLevel: runtime.config.model?.thinking ?? "low",
++		thinkingLevel: resolved.thinking ?? runtime.config.model?.thinking ?? "low",
+ 		modelRegistry: ctx.modelRegistry,
+ 	});
+ 	if (!reflections) return { outcome: "continue", sameRunReflections: [] };
+@@ -483,7 +490,7 @@ async function runDropperStage(
+ 		targetTokens: runtime.config.observationsPoolTargetTokens,
+ 		maxTurns: runtime.config.agentMaxTurns,
+ 		maxOutputTokens: runtime.config.agentMaxTokens,
+-		thinkingLevel: runtime.config.model?.thinking ?? "low",
++		thinkingLevel: resolved.thinking ?? runtime.config.model?.thinking ?? "low",
+ 		modelRegistry: ctx.modelRegistry,
+ 	});
+ 	const coversUpToId = earlierCoverageMarkerId(entries, observationCoverageId, sameRunReflectionCoverageId);
+diff --git a/src/model-fallback.ts b/src/model-fallback.ts
+new file mode 100644
+index 0000000..fe7bbcd
+--- /dev/null
++++ b/src/model-fallback.ts
+@@ -0,0 +1,128 @@
++import type { ConfiguredModel } from "./config.js";
++
++/**
++ * Background memory work is pinned to one model by `observational-memory.model`
++ * so it never rides on an expensive foreground model. When that single provider
++ * account is rate limited (HTTP 429, quota exhausted, upstream overloaded),
++ * every consolidation attempt fails for as long as the limit holds and the
++ * session silently stops accumulating memory.
++ *
++ * `fallbackModels` lists alternates to use while the preferred model is cooling
++ * down. Only rate-limit-shaped failures arm a cooldown: auth errors,
++ * oversized prompts and tool misuse are configuration problems that a second
++ * model would fail on too, and hiding them behind a silent model switch is
++ * exactly the failure mode this extension already tries to avoid.
++ */
++export const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 15 * 60_000;
++
++/**
++ * Matches the message shapes providers use for "you are being throttled":
++ * bare HTTP status text, OpenAI/Anthropic rate-limit and quota wording, gRPC
++ * RESOURCE_EXHAUSTED, and Anthropic's transient `overloaded_error`.
++ *
++ * Deliberately narrow: a false positive only parks one model for the cooldown
++ * window, but a match on, say, an auth error would mask a real misconfiguration.
++ */
++const RATE_LIMIT_PATTERN =
++	/(?:^|[^\d])429(?:[^\d]|$)|rate[\s_-]?limit|too[\s_-]?many[\s_-]?requests|quota|resource[\s_-]?exhausted|overloaded/i;
++
++export function isRateLimitError(message: string | undefined | null): boolean {
++	return typeof message === "string" && message.length > 0 && RATE_LIMIT_PATTERN.test(message);
++}
++
++/** Stable identity for a resolved or configured model: `provider/id`. */
++export function modelKey(model: { provider?: unknown; id?: unknown } | undefined | null): string | undefined {
++	if (!model) return undefined;
++	const provider = typeof model.provider === "string" ? model.provider : undefined;
++	const id = typeof model.id === "string" ? model.id : undefined;
++	if (!provider || !id) return undefined;
++	return `${provider}/${id}`;
++}
++
++export function configuredModelLabel(model: ConfiguredModel): string {
++	return `${model.provider}/${model.id}`;
++}
++
++/**
++ * Per-model rate-limit cooldowns shared by the resolver and the worker stream
++ * error path.
++ *
++ * The workers report stream failures from inside `agentLoop`, far from the
++ * `Runtime` instance that picked the model, so the tracker is a module
++ * singleton with the active model recorded at resolve time. Only one background
++ * consolidation runs at a time (`consolidationInFlight`), so a failure always
++ * belongs to the model resolved most recently.
++ */
++export class RateLimitTracker {
++	private cooldowns = new Map<string, number>();
++	private activeKey: string | undefined;
++	/**
++	 * Incremented whenever a new cooldown is armed. Callers that memoize a
++	 * resolved model for the duration of a consolidation run compare this to
++	 * detect that their cached choice may no longer be the right one.
++	 */
++	generation = 0;
++
++	constructor(
++		private cooldownMs: number = DEFAULT_RATE_LIMIT_COOLDOWN_MS,
++		private now: () => number = () => Date.now(),
++	) {}
++
++	setCooldownMs(cooldownMs: number): void {
++		if (Number.isFinite(cooldownMs) && cooldownMs > 0) this.cooldownMs = cooldownMs;
++	}
++
++	/** Record which model the next background request will use. */
++	setActive(key: string | undefined): void {
++		this.activeKey = key;
++	}
++
++	getActive(): string | undefined {
++		return this.activeKey;
++	}
++
++	/**
++	 * Arm a cooldown for `key` if `message` looks like a rate limit.
++	 * Returns true when a cooldown was armed.
++	 */
++	noteError(message: string | undefined | null, key: string | undefined = this.activeKey): boolean {
++		if (!key || !isRateLimitError(message)) return false;
++		this.cooldowns.set(key, this.now() + this.cooldownMs);
++		this.generation++;
++		return true;
++	}
++
++	isCoolingDown(key: string | undefined): boolean {
++		return this.remainingMs(key) > 0;
++	}
++
++	remainingMs(key: string | undefined): number {
++		if (!key) return 0;
++		const until = this.cooldowns.get(key);
++		if (until === undefined) return 0;
++		const remaining = until - this.now();
++		if (remaining <= 0) {
++			this.cooldowns.delete(key);
++			return 0;
++		}
++		return remaining;
++	}
++
++	/** Cooling-down models and their remaining time, for `/om:status`. */
++	active(): { key: string; remainingMs: number }[] {
++		const entries: { key: string; remainingMs: number }[] = [];
++		for (const key of Array.from(this.cooldowns.keys())) {
++			const remainingMs = this.remainingMs(key);
++			if (remainingMs > 0) entries.push({ key, remainingMs });
++		}
++		return entries;
++	}
++
++	clear(): void {
++		this.cooldowns.clear();
++		this.activeKey = undefined;
++		this.generation++;
++	}
++}
++
++export const rateLimitTracker = new RateLimitTracker();
+diff --git a/src/runtime.ts b/src/runtime.ts
+index 051bdef..3f8cce1 100644
+--- a/src/runtime.ts
++++ b/src/runtime.ts
+@@ -1,10 +1,28 @@
+-import { type Config, DEFAULTS, loadConfig } from "./config.js";
++import { type Config, type ConfiguredModel, DEFAULTS, loadConfig } from "./config.js";
+ import { debugLog } from "./debug-log.js";
++import { configuredModelLabel, modelKey, rateLimitTracker } from "./model-fallback.js";
+ 
+ export type ResolveResult =
+-	| { ok: true; model: unknown; apiKey?: string; headers?: Record<string, string>; env?: Record<string, string>; baseUrl?: string }
++	| {
++		ok: true;
++		model: unknown;
++		apiKey?: string;
++		headers?: Record<string, string>;
++		env?: Record<string, string>;
++		baseUrl?: string;
++		/** Thinking level configured for the model that was actually selected. */
++		thinking?: ConfiguredModel["thinking"];
++	}
+ 	| { ok: false; reason: string };
+ 
++/** One candidate background model, in preference order. */
++interface ModelCandidate {
++	model: unknown;
++	thinking?: ConfiguredModel["thinking"];
++	/** False for the preferred model, true for a configured fallback. */
++	isFallback: boolean;
++}
++
+ /**
+  * Mirrors pi's own request-auth acceptance rule (`AgentSession._getRequiredRequestAuth`):
+  * resolved auth is usable when it carries an apiKey OR at least one header value.
+@@ -105,6 +123,8 @@ export class Runtime {
+ 	compactInFlight = false;
+ 	compactHookInFlight = false;
+ 	resolveFailureNotified = false;
++	/** `provider/id` of the fallback the user was last told about, to notify once per switch. */
++	fallbackNotifiedKey: string | undefined;
+ 	lastObserverError: string | undefined;
+ 	lastReflectorError: string | undefined;
+ 	lastDropperError: string | undefined;
+@@ -123,20 +143,101 @@ export class Runtime {
+ 		this.configLoaded = true;
+ 	}
+ 
+-	async resolveModel(ctx: ResolveCtx): Promise<ResolveResult> {
+-		let model = ctx.model;
++	/**
++	 * Background models in preference order: the configured (or session) model
++	 * first, then each configured fallback that the registry can resolve.
++	 */
++	private modelCandidates(ctx: ResolveCtx): ModelCandidate[] {
++		const candidates: ModelCandidate[] = [];
++		let preferred = ctx.model;
+ 		if (this.config.model) {
+ 			const configured = ctx.modelRegistry.find(this.config.model.provider, this.config.model.id);
+ 			if (configured) {
+-				model = configured;
++				preferred = configured;
+ 			} else if (ctx.hasUI && ctx.ui) {
+ 				ctx.ui.notify(
+-					`Observational memory: configured model ${this.config.model.provider}/${this.config.model.id} not found, using session model`,
++					`Observational memory: configured model ${configuredModelLabel(this.config.model)} not found, using session model`,
+ 					"warning",
+ 				);
+ 			}
+ 		}
+-		if (!model) return { ok: false, reason: "no model available (session has no model and no observational-memory model configured)" };
++		if (preferred) {
++			const usesConfigured = this.config.model !== undefined && preferred !== ctx.model;
++			candidates.push({
++				model: preferred,
++				thinking: usesConfigured ? this.config.model?.thinking : undefined,
++				isFallback: false,
++			});
++		}
++		for (const fallback of this.config.fallbackModels ?? []) {
++			const found = ctx.modelRegistry.find(fallback.provider, fallback.id);
++			if (!found) {
++				debugLog("resolve.fallback_not_found", { model: configuredModelLabel(fallback) });
++				continue;
++			}
++			if (candidates.some((candidate) => modelKey(candidate.model as never) === configuredModelLabel(fallback))) continue;
++			// A fallback without its own level keeps the preferred model's: background
++			// work is the same job on a different account, not a different budget.
++			candidates.push({ model: found, thinking: fallback.thinking ?? this.config.model?.thinking, isFallback: true });
++		}
++		return candidates;
++	}
++
++	/**
++	 * Pick the first candidate that is neither rate limited nor unauthenticated.
++	 *
++	 * A rate-limited model is skipped until its cooldown expires (see
++	 * `model-fallback.ts`); an auth failure falls through to the next candidate
++	 * too, but its reason is what gets reported when every candidate fails, so
++	 * a genuinely broken configuration is still diagnosable. When every
++	 * candidate is cooling down the preferred one is attempted anyway: a stale
++	 * cooldown must not disable memory outright.
++	 */
++	async resolveModel(ctx: ResolveCtx): Promise<ResolveResult> {
++		rateLimitTracker.setCooldownMs(this.config.rateLimitCooldownMs);
++		const candidates = this.modelCandidates(ctx);
++		if (candidates.length === 0) {
++			return { ok: false, reason: "no model available (session has no model and no observational-memory model configured)" };
++		}
++		const ready = candidates.filter((candidate) => !rateLimitTracker.isCoolingDown(modelKey(candidate.model as never)));
++		const ordered = ready.length > 0 ? ready : candidates.slice(0, 1);
++		if (ready.length < candidates.length) {
++			debugLog("resolve.rate_limited_skips", {
++				coolingDown: rateLimitTracker.active().map((entry) => entry.key),
++				attempting: ordered.map((candidate) => modelKey(candidate.model as never)),
++			});
++		}
++
++		let firstFailure: ResolveResult | undefined;
++		for (const candidate of ordered) {
++			const result = await this.resolveCandidate(ctx, candidate.model);
++			if (!result.ok) {
++				firstFailure ??= result;
++				continue;
++			}
++			const key = modelKey(candidate.model as never);
++			rateLimitTracker.setActive(key);
++			this.notifyModelSelection(ctx, candidate, key);
++			return { ...result, thinking: candidate.thinking };
++		}
++		return firstFailure ?? { ok: false, reason: "no usable background model" };
++	}
++
++	/** Tell the user once when background work moves to or from a fallback model. */
++	private notifyModelSelection(ctx: ResolveCtx, candidate: ModelCandidate, key: string | undefined): void {
++		if (!candidate.isFallback) {
++			this.fallbackNotifiedKey = undefined;
++			return;
++		}
++		if (this.fallbackNotifiedKey === key) return;
++		this.fallbackNotifiedKey = key;
++		debugLog("resolve.fallback_selected", { model: key });
++		if (ctx.hasUI && ctx.ui) {
++			ctx.ui.notify(`Observational memory: preferred model rate limited, using fallback ${key}`, "warning");
++		}
++	}
++
++	private async resolveCandidate(ctx: ResolveCtx, model: unknown): Promise<ResolveResult> {
+ 		const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+ 		const provider = (model as { provider?: string }).provider ?? "unknown";
+ 		const isOAuth = ctx.modelRegistry.isUsingOAuth?.(model) === true;
+diff --git a/tests/config.test.ts b/tests/config.test.ts
+index a21cdc1..da69a65 100644
+--- a/tests/config.test.ts
++++ b/tests/config.test.ts
+@@ -45,6 +45,7 @@ describe("V3 config", () => {
+ 			observationsPoolTargetTokens: 10000,
+ 			agentMaxTurns: 16,
+ 			agentMaxTokens: 32000,
++			rateLimitCooldownMs: 900000,
+ 			showWorkerNotifications: true,
+ 			passive: false,
+ 			debugLog: false,
+diff --git a/tests/model-fallback.test.ts b/tests/model-fallback.test.ts
+new file mode 100644
+index 0000000..397b6db
+--- /dev/null
++++ b/tests/model-fallback.test.ts
+@@ -0,0 +1,186 @@
++import { beforeEach, describe, expect, it, vi } from "vitest";
++
++import { RateLimitTracker, isRateLimitError, modelKey, rateLimitTracker } from "../src/model-fallback.js";
++import { Runtime } from "../src/runtime.js";
++
++describe("rate-limit detection", () => {
++	it("matches throttling-shaped provider errors", () => {
++		for (const message of [
++			"429 Too Many Requests",
++			"HTTP 429",
++			"rate_limit_error: this request would exceed your rate limit",
++			"Rate limit reached for gpt-5.6-sol",
++			"You exceeded your current quota",
++			"RESOURCE_EXHAUSTED",
++			"overloaded_error",
++		]) {
++			expect(isRateLimitError(message), message).toBe(true);
++		}
++	});
++
++	it("does not match configuration or context failures", () => {
++		for (const message of [
++			undefined,
++			"",
++			"prompt is too long: 5198507 tokens > 1000000 maximum",
++			"401 invalid api key",
++			"no API key or auth headers for provider \"cliproxyapi\"",
++			"model 4290 is not available",
++		]) {
++			expect(isRateLimitError(message), String(message)).toBe(false);
++		}
++	});
++});
++
++describe("RateLimitTracker", () => {
++	it("arms, expires, and reports cooldowns for the active model", () => {
++		let now = 1_000;
++		const tracker = new RateLimitTracker(60_000, () => now);
++		tracker.setActive("cliproxyapi/gpt-5.6-sol");
++
++		expect(tracker.noteError("prompt is too long")).toBe(false);
++		expect(tracker.isCoolingDown("cliproxyapi/gpt-5.6-sol")).toBe(false);
++
++		const generation = tracker.generation;
++		expect(tracker.noteError("429 Too Many Requests")).toBe(true);
++		expect(tracker.generation).toBe(generation + 1);
++		expect(tracker.isCoolingDown("cliproxyapi/gpt-5.6-sol")).toBe(true);
++		expect(tracker.active()).toEqual([{ key: "cliproxyapi/gpt-5.6-sol", remainingMs: 60_000 }]);
++
++		now += 60_001;
++		expect(tracker.isCoolingDown("cliproxyapi/gpt-5.6-sol")).toBe(false);
++		expect(tracker.active()).toEqual([]);
++	});
++
++	it("ignores errors when no model is active", () => {
++		const tracker = new RateLimitTracker();
++		expect(tracker.noteError("429 Too Many Requests")).toBe(false);
++	});
++
++	it("derives model keys only from complete provider/id pairs", () => {
++		expect(modelKey({ provider: "cliproxyapi", id: "gpt-5.6-sol" })).toBe("cliproxyapi/gpt-5.6-sol");
++		expect(modelKey({ provider: "cliproxyapi" })).toBeUndefined();
++		expect(modelKey(undefined)).toBeUndefined();
++	});
++});
++
++describe("Runtime fallback model resolution", () => {
++	const preferred = { provider: "cliproxyapi", id: "gpt-5.6-sol" };
++	const fallback = { provider: "cliproxyapi-claude", id: "claude-sonnet-5" };
++
++	function registry(auth?: (model: unknown) => unknown) {
++		return {
++			find: vi.fn((provider: string, id: string) => {
++				if (provider === preferred.provider && id === preferred.id) return preferred;
++				if (provider === fallback.provider && id === fallback.id) return fallback;
++				return undefined;
++			}),
++			getApiKeyAndHeaders: vi.fn(async (model: unknown) => auth?.(model) ?? { ok: true, apiKey: "key" }),
++		};
++	}
++
++	function configure(runtime: Runtime): void {
++		runtime.config = {
++			...runtime.config,
++			model: { provider: preferred.provider, id: preferred.id, thinking: "low" },
++			fallbackModels: [{ provider: fallback.provider, id: fallback.id }],
++		};
++	}
++
++	beforeEach(() => {
++		rateLimitTracker.clear();
++	});
++
++	it("uses the preferred model and records it as active", async () => {
++		const runtime = new Runtime();
++		configure(runtime);
++
++		const result = await runtime.resolveModel({ model: undefined, modelRegistry: registry(), hasUI: false });
++
++		expect(result).toMatchObject({ ok: true, model: preferred, thinking: "low" });
++		expect(rateLimitTracker.getActive()).toBe("cliproxyapi/gpt-5.6-sol");
++	});
++
++	it("switches to the fallback while the preferred model is rate limited", async () => {
++		const runtime = new Runtime();
++		configure(runtime);
++		const notify = vi.fn();
++		rateLimitTracker.setActive("cliproxyapi/gpt-5.6-sol");
++		rateLimitTracker.noteError("429 Too Many Requests");
++
++		const result = await runtime.resolveModel({ model: undefined, modelRegistry: registry(), hasUI: true, ui: { notify } });
++
++		expect(result).toMatchObject({ ok: true, model: fallback, thinking: "low" });
++		expect(notify).toHaveBeenCalledWith(
++			"Observational memory: preferred model rate limited, using fallback cliproxyapi-claude/claude-sonnet-5",
++			"warning",
++		);
++
++		// The same fallback is not re-announced on the next stage.
++		notify.mockClear();
++		await runtime.resolveModel({ model: undefined, modelRegistry: registry(), hasUI: true, ui: { notify } });
++		expect(notify).not.toHaveBeenCalled();
++	});
++
++	it("returns to the preferred model once the cooldown expires", async () => {
++		const runtime = new Runtime();
++		configure(runtime);
++		runtime.config = { ...runtime.config, rateLimitCooldownMs: 1 };
++		rateLimitTracker.setCooldownMs(1);
++		rateLimitTracker.setActive("cliproxyapi/gpt-5.6-sol");
++		rateLimitTracker.noteError("429");
++		await new Promise((resolve) => setTimeout(resolve, 5));
++
++		const result = await runtime.resolveModel({ model: undefined, modelRegistry: registry(), hasUI: false });
++
++		expect(result).toMatchObject({ ok: true, model: preferred });
++	});
++
++	it("skips a fallback whose auth does not resolve", async () => {
++		const runtime = new Runtime();
++		runtime.config = {
++			...runtime.config,
++			model: { provider: preferred.provider, id: preferred.id },
++			fallbackModels: [
++				{ provider: "missing", id: "model" },
++				{ provider: fallback.provider, id: fallback.id, thinking: "minimal" },
++			],
++		};
++		rateLimitTracker.setActive("cliproxyapi/gpt-5.6-sol");
++		rateLimitTracker.noteError("rate limit exceeded");
++
++		const result = await runtime.resolveModel({
++			model: undefined,
++			modelRegistry: registry((model) => (model === fallback ? { ok: true, apiKey: "key" } : { ok: false })),
++			hasUI: false,
++		});
++
++		expect(result).toMatchObject({ ok: true, model: fallback, thinking: "minimal" });
++	});
++
++	it("still attempts the preferred model when every candidate is cooling down", async () => {
++		const runtime = new Runtime();
++		configure(runtime);
++		for (const key of ["cliproxyapi/gpt-5.6-sol", "cliproxyapi-claude/claude-sonnet-5"]) {
++			rateLimitTracker.setActive(key);
++			rateLimitTracker.noteError("429");
++		}
++
++		const result = await runtime.resolveModel({ model: undefined, modelRegistry: registry(), hasUI: false });
++
++		expect(result).toMatchObject({ ok: true, model: preferred });
++	});
++
++	it("reports the underlying failure when no candidate authenticates", async () => {
++		const runtime = new Runtime();
++		configure(runtime);
++
++		const result = await runtime.resolveModel({
++			model: undefined,
++			modelRegistry: registry(() => ({ ok: false })),
++			hasUI: false,
++		});
++
++		expect(result).toEqual({ ok: false, reason: 'no API key or auth headers for provider "cliproxyapi"' });
++	});
++});

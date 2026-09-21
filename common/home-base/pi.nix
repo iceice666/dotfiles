@@ -44,17 +44,34 @@ let
         id = "gpt-5.6-sol";
         thinking = "low";
       };
+      # Local patch (see pi/patches): when the preferred background model reports
+      # a rate limit, park it for the cooldown and keep consolidating on Claude
+      # instead of silently losing memory for the rest of the session.
+      fallbackModels = [
+        {
+          provider = "cliproxyapi-claude";
+          id = "claude-sonnet-5";
+        }
+      ];
+      rateLimitCooldownMs = 900000;
       compactAfterTokensMode = "ratio";
       compactAfterTokensRatio = 0.68;
       agentMaxTokens = 8192;
     };
   };
 
-  observationalMemory = pkgs.fetchFromGitHub {
-    owner = "elpapi42";
-    repo = "pi-observational-memory";
-    rev = "3.1.3";
-    hash = "sha256-E6ldxcWo3CWM6ugCEsobesRFkn7J9AtQFd0GFXqhMLI=";
+  # Upstream 3.1.3 plus the repo-owned rate-limit fallback patch. The patch is
+  # generated against this exact tag: bump both together and re-run the upstream
+  # vitest suite from a checkout before changing `rev`.
+  observationalMemory = pkgs.applyPatches {
+    name = "pi-observational-memory-3.1.3-patched";
+    src = pkgs.fetchFromGitHub {
+      owner = "elpapi42";
+      repo = "pi-observational-memory";
+      rev = "3.1.3";
+      hash = "sha256-E6ldxcWo3CWM6ugCEsobesRFkn7J9AtQFd0GFXqhMLI=";
+    };
+    patches = [ ./pi/patches/observational-memory-rate-limit-fallback.patch ];
   };
 
   piExtensions = pkgs.runCommand "pi-extensions" { } ''
