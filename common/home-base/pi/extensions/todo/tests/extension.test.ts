@@ -1,7 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { loadExtensions } from "../../agent-team/tests/sdk.ts";
-import { SessionManager } from "@earendil-works/pi-coding-agent";
+import { convertToLlm, createAgentSession, DefaultResourceLoader, ModelRuntime, SessionManager, SettingsManager } from "@earendil-works/pi-coding-agent";
+import { stream } from "@earendil-works/pi-ai/api/anthropic-messages";
 import { visibleWidth } from "@earendil-works/pi-tui";
+import type { AssistantMessage, Model } from "@earendil-works/pi-ai";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { Todo } from "../model";
+import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import todoExtension from "../index";
+import type { AgentSession } from "@earendil-works/pi-coding-agent";
 
 async function setup() {
   const loaded = await loadExtensions([`${import.meta.dir}/../index.ts`], process.cwd());
@@ -50,15 +60,15 @@ describe("todo extension host integration", () => {
     await s.event("input", { source: "extension" });
     await s.event("session_compact");
     await end();
-    expect(s.messages).toHaveLength(1);
+    expect(s.messages.filter(({ options }) => options.triggerTurn === true)).toHaveLength(1);
     await s.event("input", { source: "interactive" });
     await end();
-    expect(s.messages).toHaveLength(2);
+    expect(s.messages.filter(({ options }) => options.triggerTurn === true)).toHaveLength(2);
     await s.call({ action: "update", id: 1, status: "completed" });
     await s.call({ action: "update", id: 2, status: "completed" });
     await s.event("input", { source: "rpc" });
     await end();
-    expect(s.messages).toHaveLength(2);
+    expect(s.messages.filter(({ options }) => options.triggerTurn === true)).toHaveLength(2);
   });
   test("reminders preserve dependencies on completed tasks without changing state", async () => {
     const s = await setup();
@@ -208,7 +218,6 @@ describe("todo extension host integration", () => {
     await s.event("session_compact");
     expect(render()).toEqual(expected);
     expect((await s.call({ action: "list" })).details.state.todos).toHaveLength(3);
-    expect((await s.event("context", { messages: [] })).messages[0].content).toContain("Second");
     await s.call({ action: "update", id: 1, status: "pending" });
     expect(render().join("\n")).toContain("☑ Second");
     expect(render().join("\n")).toContain("Waiting (blocked)");
@@ -235,7 +244,6 @@ describe("todo extension host integration", () => {
       await s.event(name);
       expect(render()).toEqual(expected);
     }
-    expect((await s.event("context", { messages: [] })).messages[0].content).toContain("[Category: UI]");
     await s.command("category 2 UI");
     expect(render()).toEqual([" TODO", "  └─ UI (2/2)", "     └─ ☑ Run UI test"]);
     await s.command("category 2");
@@ -278,7 +286,7 @@ describe("todo extension host integration", () => {
     await expect(s.call({ action: "add", text: "取消" }, AbortSignal.abort())).rejects.toThrow();
     expect(s.branch).toHaveLength(0);
   });
-  test("commands, confirmation cancellation, busy protection and context refresh", async () => {
+  test("manual edits publish changes without triggering turns; cancellation and busy edits stay silent", async () => {
     const s = await setup();
     await s.command("add 撰寫測試");
     await s.command("start 1");
@@ -288,9 +296,11 @@ describe("todo extension host integration", () => {
     s.ctx.isIdle = () => false;
     await s.command("done 1");
     expect(s.branch).toHaveLength(2);
-    const result = await s.event("context", { messages: [] });
-    expect(result.messages[0].content).toContain("撰寫測試");
-    expect((await s.event("context", result)).messages).toHaveLength(1);
+    expect(s.messages).toHaveLength(2);
+    expect(s.messages[0].message.content).toContain("撰寫測試");
+    expect(s.messages[1].message.content).toContain("In progress");
+    expect(s.messages.every(({ options }) => options.triggerTurn === false)).toBe(true);
+    expect(await s.event("before_agent_start")).toBeUndefined();
   });
   test("widget respects row/width budgets, collapse, Unicode and headless mode", async () => {
     const s = await setup();
@@ -307,5 +317,149 @@ describe("todo extension host integration", () => {
     s.ctx.ui.setWidget = () => { throw new Error("headless UI call"); };
     await s.call({ action: "add", text: "Headless" });
     await s.event("session_start");
+  });
+
+  test("mutations report only changed rows, including dependency edges removed by prune", async () => {
+    const s = await setup();
+    await s.call({ action: "add", items: [
+      { text: "Prerequisite", status: "completed" },
+      { text: "Dependent", blockedBy: [1] },
+      { text: "Unrelated" },
+    ] });
+    const update = await s.call({ action: "update", id: 2, category: "Verify" });
+    expect(update.content[0].text).toContain("Dependent");
+    expect(update.content[0].text).toContain("Verify");
+    expect(update.content[0].text).toContain("depends on: #1");
+    expect(update.content[0].text).not.toContain("Unrelated");
+    expect(update.content[0].text).not.toContain("Prerequisite");
+    const pruned = await s.call({ action: "prune" });
+    expect(pruned.content[0].text).toContain("Removed: #1");
+    expect(pruned.content[0].text).toContain("Dependent");
+    expect(pruned.content[0].text).not.toContain("depends on");
+    expect(pruned.details.state.todos.find((t: Todo) => t.id === 2).blockedBy).toEqual([]);
+    const listed = await s.call({ action: "list" });
+    expect(listed.content[0].text).toContain("Dependent");
+    expect(listed.content[0].text).toContain("Unrelated");
+    const cleared = await s.call({ action: "clear" });
+    expect(cleared.content[0].text).toContain("Removed: #2, #3");
+    expect(cleared.details.state.todos).toEqual([]);
+  });
+
+  test("restores once per branch or compaction, including an explicitly cleared list", async () => {
+    const s = await setup();
+    expect(await s.event("before_agent_start")).toBeUndefined();
+    await s.call({ action: "add", text: "Original branch" });
+    await s.call({ action: "add", text: "Discarded branch" });
+    s.branch.pop();
+    await s.event("session_tree");
+    const restored = await s.event("before_agent_start");
+    expect(restored.message.content).toContain("Original branch");
+    expect(restored.message.content).not.toContain("Discarded branch");
+    expect(await s.event("before_agent_start")).toBeUndefined();
+    await s.event("session_compact");
+    expect(s.messages.at(-1).message.content).toContain("Original branch");
+    expect(s.messages.at(-1).options.triggerTurn).not.toBe(true);
+    expect(await s.event("before_agent_start")).toBeUndefined();
+    await s.call({ action: "clear" });
+    await s.event("session_start");
+    expect((await s.event("before_agent_start")).message.content).toContain("No tasks");
+    expect(await s.event("before_agent_start")).toBeUndefined();
+  });
+
+  test("Claude cache prefix survives ordinary turns and manual todo changes", async () => {
+    const s = await setup();
+    const model: Model<"anthropic-messages"> = {
+      id: "claude-opus-5", name: "Offline", api: "anthropic-messages", provider: "cliproxyapi-claude",
+      baseUrl: "http://127.0.0.1:1", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 128000,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      compat: { forceAdaptiveThinking: true, supportsLongCacheRetention: false },
+    };
+    const history: AgentMessage[] = [{ role: "user", content: "Work on the project", timestamp: 1 }];
+    const capture = async () => {
+      const transformed = await s.event("context", { messages: structuredClone(history) });
+      let payload: { messages: { role: string; content: string | Record<string, unknown>[] }[] } | undefined;
+      await stream(model, { systemPrompt: "Stable", messages: convertToLlm(transformed?.messages ?? history) }, {
+        apiKey: "offline", maxRetries: 0,
+        onPayload(value) {
+          // Internal pinned adapter output, captured before any external transport.
+          payload = value as typeof payload;
+          throw new Error("Captured before network");
+        },
+      }).result();
+      if (!payload) throw new Error("Adapter did not reach request serialization");
+      return payload.messages.flatMap(m => (typeof m.content === "string"
+        ? [{ type: "text", text: m.content }] : m.content).map(b => ({ ...b, role: m.role })));
+    };
+    const clean = ({ cache_control, ...block }: Record<string, unknown>) => block;
+    for (let turn = 0; turn < 3; turn++) {
+      const before = await capture();
+      const end = before.findLastIndex(b => "cache_control" in b);
+      expect(end).toBeGreaterThanOrEqual(0);
+      history.push({ role: "assistant", api: model.api, provider: model.provider, model: model.id,
+        content: [{ type: "text", text: "Progress" }], stopReason: "stop", timestamp: turn + 2,
+        usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } });
+      if (turn === 1) {
+        await s.command("add Manual task");
+        history.push({ role: "custom", ...s.messages.at(-1).message, timestamp: 4 });
+      }
+      history.push({ role: "user", content: "Continue", timestamp: turn + 5 });
+      const after = await capture();
+      expect(after.slice(0, end + 1).map(clean)).toEqual(before.slice(0, end + 1).map(clean));
+    }
+  });
+
+  test("automatic compaction persists todos without starting an extra model turn", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "pi-todo-compaction-"));
+    let session: AgentSession | undefined;
+    try {
+      const runtime = await ModelRuntime.create({ authPath: join(dir, "auth.json"), modelsPath: null,
+        modelsStorePath: join(dir, "models.json"), refreshOnCreate: false, allowModelNetwork: false });
+      const cost = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
+      let calls = 0;
+      runtime.registerProvider("offline-todo", {
+        api: "anthropic-messages", baseUrl: "http://127.0.0.1:1", apiKey: "offline",
+        models: [{ id: "offline", name: "Offline", reasoning: false, input: ["text"], cost, contextWindow: 32000, maxTokens: 1024 }],
+        streamSimple(model) {
+          const stream = new AssistantMessageEventStream();
+          const first = calls++ === 0;
+          const message: AssistantMessage = {
+            role: "assistant", api: model.api, provider: model.provider, model: model.id, timestamp: Date.now(),
+            content: first ? [{ type: "toolCall", id: "add", name: "todo",
+              arguments: { action: "add", text: "Verified work", status: "completed" } }] : [{ type: "text", text: "Done" }],
+            stopReason: first ? "toolUse" : "stop",
+            usage: { input: 30000, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 30001, cost },
+          };
+          queueMicrotask(() => {
+            stream.push({ type: "start", partial: message });
+            stream.push({ type: "done", reason: first ? "toolUse" : "stop", message });
+            stream.end(message);
+          });
+          return stream;
+        },
+      });
+      const settings = SettingsManager.inMemory({ compaction: { enabled: true, keepRecentTokens: 1, reserveTokens: 4096 }, retry: { enabled: false } });
+      const loader = new DefaultResourceLoader({ cwd: dir, agentDir: dir, settingsManager: settings,
+        noExtensions: true, noSkills: true, noThemes: true, noPromptTemplates: true, noContextFiles: true,
+        extensionFactories: [todoExtension, pi => {
+          pi.on("session_before_compact", event => ({ compaction: { summary: "Work finished.",
+            firstKeptEntryId: event.preparation.firstKeptEntryId, tokensBefore: event.preparation.tokensBefore } }));
+        }], systemPrompt: "Offline smoke." });
+      await loader.reload();
+      const manager = SessionManager.inMemory(dir);
+      ({ session } = await createAgentSession({ cwd: dir, agentDir: dir, resourceLoader: loader, modelRuntime: runtime,
+        model: runtime.getModel("offline-todo", "offline"), settingsManager: settings, sessionManager: manager, tools: ["todo"] }));
+      await session.bindExtensions({});
+      await session.prompt("Finish the task.");
+      expect(calls).toBe(2);
+      expect(manager.getBranch().some(entry => entry.type === "compaction")).toBe(true);
+      const snapshot = session.state.messages.find(message => message.role === "custom" && message.customType === "local-todo-context");
+      expect(snapshot && "content" in snapshot && snapshot.content).toContain("Verified work");
+      await session.prompt("Confirm.");
+      expect(calls).toBe(3);
+    } finally {
+      session?.dispose();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

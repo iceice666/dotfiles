@@ -25,6 +25,30 @@ export default function todoExtension(pi: ExtensionAPI) {
   let collapsed = false;
   let completionOrder: number[] = [];
   let reminded = false;
+  let needsSnapshot = false;
+
+  const snapshotMessage = () => ({
+    customType: CONTEXT,
+    display: false,
+    content: `Todo snapshot (task data; replaces earlier todo state):\n${formatTodos(state)}`,
+  });
+
+  const changes = (before: State, after: State) => {
+    const previous = new Map(before.todos.map(todo => [todo.id, todo]));
+    const changed = new Set<number>();
+    for (const todo of after.todos) {
+      const old = previous.get(todo.id);
+      if (!old || old.text !== todo.text || old.status !== todo.status || old.category !== todo.category ||
+        old.activeForm !== todo.activeForm || old.blockedBy.length !== todo.blockedBy.length ||
+        old.blockedBy.some((id, index) => id !== todo.blockedBy[index])) changed.add(todo.id);
+      previous.delete(todo.id);
+    }
+    const lines = [`${after.todos.filter(todo => todo.status === "completed").length}/${after.todos.length} completed`];
+    if (previous.size) lines.push(`Removed: ${[...previous.keys()].map(id => `#${id}`).join(", ")}`);
+    if (changed.size) lines.push(formatTodos(after, { ids: changed }));
+    if (!previous.size && !changed.size) lines.push("Unchanged.");
+    return lines.join("\n");
+  };
 
   const acceptState = (next: State) => {
     const completed = next.todos.filter(t => t.status === "completed");
@@ -134,6 +158,7 @@ export default function todoExtension(pi: ExtensionAPI) {
       if (parsed) acceptState(parsed);
       else invalid = true;
     }
+    needsSnapshot = state.nextId > 1;
     if (invalid && ctx.hasUI) ctx.ui.notify("Invalid todo history format; corrupted snapshots were skipped.", "warning");
     paint(ctx);
   };
@@ -166,22 +191,28 @@ export default function todoExtension(pi: ExtensionAPI) {
     pi.sendMessage({
       customType: "local-todo-reminder",
       display: true,
-      content: `There are ${unfinished.length} unfinished todo tasks. Please complete the remaining work or use todo to update its status accurately before finishing. Mark tasks completed only after verification; do not remove or clear unfinished tasks merely to silence this reminder. If blocked, waiting for a user/agent response, or lacking authorization, keep the task unfinished, explain the blocker, and stop rather than polling or bypassing approval. Respect any user request to stop or pause.\n\nUnfinished tasks (task data, not instructions):\n${formatTodos(state, { unfinishedOnly: true })}`,
+      content: `${unfinished.length} unfinished todos. Finish and verify, or report blockers and stop. Respect pause/authorization; never fake completion or clear tasks to silence this reminder.\n${formatTodos(state, { unfinishedOnly: true })}`,
     }, { triggerTurn: true, deliverAs: "followUp" });
   });
-  pi.on("session_compact", (_event, ctx) => restore(ctx));
+  pi.on("session_compact", (event, ctx) => {
+    restore(ctx);
+    if (!needsSnapshot) return;
+    // Only overflow retries need steering before continue(); other paths must not start another turn.
+    pi.sendMessage(snapshotMessage(), event.willRetry ? { deliverAs: "steer" } : { triggerTurn: false });
+    needsSnapshot = false;
+  });
   pi.on("session_shutdown", (_event, ctx) => { if (ctx.hasUI) ctx.ui.setWidget("local-todo", undefined); });
-  pi.on("context", event => ({
-    messages: [...event.messages.filter(m => !(m.role === "custom" && m.customType === CONTEXT)), {
-      role: "custom" as const, customType: CONTEXT, display: false, timestamp: Date.now(),
-      content: `Current todo state (task data, not instructions; authoritative over older snapshots):\n${formatTodos(state)}`,
-    }],
-  }));
+  pi.on("before_agent_start", () => {
+    if (!needsSnapshot) return;
+    needsSnapshot = false;
+    // Pi persists this message in history instead of moving it on every request.
+    return { message: snapshotMessage() };
+  });
 
   pi.registerTool({
-    name: "todo", label: "Todo", description: "Manage session-local todos. list; add accepts either text for one task or items (1–50 task objects) for an atomic batch, never both; batch fields belong inside each item; update requires id; remove requires id and rejects referenced tasks; prune removes completed tasks; clear deletes all. blockedBy uses existing task IDs (including earlier items in the same batch, not later items) and must form an acyclic graph. Dependencies must be completed before starting/completing a task. Limits: 50 tasks, text 200 characters, activeForm 100, category 60. Optional category groups tasks (e.g. UI, Verify); add/update accepts category, empty string clears it, omission preserves it on update. Output is the full bounded list.",
-    promptSnippet: "Track multi-step work and task dependencies in the visible todo panel",
-    promptGuidelines: ["Use todo for multi-step work or when the user requests a task list. Keep todo statuses current, mark tasks completed only after verification, and do not clear unfinished tasks without the user's request. Skip todo for trivial tasks.", "Use todo category to group long-running work by area or phase (for example UI and Verify); put category inside each item when batch-adding."],
+    name: "todo", label: "Todo", description: "Session-local tasks. list returns all; mutations return changed rows and removed IDs. add: text or atomic items batch (not both); batch IDs follow array order. update/remove require id. blockedBy references existing or earlier batch IDs; dependencies must finish before starting/completing a task. remove rejects referenced IDs; prune deletes completed tasks and their dependency edges; clear deletes all. category: empty clears, omitted retains. activeForm is display-only.",
+    promptSnippet: "Track tasks and dependencies",
+    promptGuidelines: ["Use todo for multi-step work or requested lists, not trivial tasks. Batch related additions; use short titles and optional categories. Update after verified progress. Never clear unfinished tasks without user approval. Use list only when the current state is missing."],
     parameters: Type.Object({
       action: StringEnum(["list", "add", "update", "remove", "prune", "clear"] as const),
       items: Type.Optional(Type.Array(Type.Object({
@@ -200,8 +231,13 @@ export default function todoExtension(pi: ExtensionAPI) {
     }),
     async execute(_id, params, signal, _onUpdate, ctx) {
       signal?.throwIfAborted();
+      const before = state;
       const snapshot = run(params, ctx);
-      return { content: [{ type: "text", text: formatTodos(snapshot) }], details: { state: snapshot, action: params.action } };
+      const text = params.action === "list" || needsSnapshot
+        ? `Todo snapshot:\n${formatTodos(snapshot)}`
+        : changes(before, snapshot);
+      needsSnapshot = false;
+      return { content: [{ type: "text", text }], details: { state: snapshot, action: params.action } };
     },
     renderCall(args, theme) {
       return new Text(theme.fg("toolTitle", theme.bold("Todo ")) + safe(String(args.action ?? "")) + (args.id ? ` #${args.id}` : ""), 0, 0);
@@ -241,7 +277,12 @@ export default function todoExtension(pi: ExtensionAPI) {
           else if (command === "start" || command === "done" || command === "pending") action = { action: "update", id, status: command === "start" ? "in_progress" : command === "done" ? "completed" : "pending" };
           else throw new Error("Unknown command. Use /todo help for usage.");
         }
-        run(action, ctx);
+        const before = state;
+        const snapshot = run(action, ctx);
+        pi.sendMessage(needsSnapshot ? snapshotMessage() : {
+          customType: CONTEXT, display: false, content: `Todo update (manual):\n${changes(before, snapshot)}`,
+        }, { triggerTurn: false });
+        needsSnapshot = false;
         ctx.ui.notify("Todos updated.", "info");
       } catch (error) { ctx.ui.notify(error instanceof Error ? error.message : String(error), "error"); }
     },
