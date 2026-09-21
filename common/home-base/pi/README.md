@@ -16,7 +16,7 @@ without taking ownership of unrelated local extensions.
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
-| `observational-memory/` | Upstream Observational Memory 3.1.3, pinned and installed by Nix for durable ledger-backed memory |
+| `observational-memory/` | Upstream Observational Memory 3.1.3 plus the repo-owned rate-limit fallback patch, pinned and installed by Nix for durable ledger-backed memory |
 | `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
@@ -64,14 +64,40 @@ other hosts keep the built-in `light/dark` pair. Changing the theme via
 
 ## Observational memory and cache-safe compaction
 
-Nix pins upstream `pi-observational-memory` 3.1.3 and installs its `src/` as the
-managed `observational-memory/` extension. Do not also run `pi install
-npm:pi-observational-memory`; duplicate copies would register competing memory
-workers and compaction hooks. The managed defaults use
+Nix pins upstream `pi-observational-memory` 3.1.3, applies
+`patches/observational-memory-rate-limit-fallback.patch`, and installs the
+resulting `src/` as the managed `observational-memory/` extension. Do not also
+run `pi install npm:pi-observational-memory`; duplicate copies would register
+competing memory workers and compaction hooks. The managed defaults use
 `cliproxyapi/gpt-5.6-sol` at low thinking for background observer/reflector/dropper
 work, cap their requested output at 8192 tokens, and scale proactive compaction
 to 68% of the active model context window. Project-local Pi settings may still
 override these defaults at runtime.
+
+### Rate-limit model fallback (local patch)
+
+Upstream accepts only one background model, so a 429 on that single account
+stops consolidation for as long as the limit holds. The patch adds two settings
+keys:
+
+- `fallbackModels`: ordered alternates, each optionally with its own `thinking`.
+  Managed default: `cliproxyapi-claude/claude-sonnet-5`, inheriting the
+  preferred model's thinking level.
+- `rateLimitCooldownMs`: how long a throttled model is skipped (default and
+  managed value: 900000, i.e. 15 minutes).
+
+Only rate-limit-shaped stream failures (HTTP 429, rate limit, quota,
+`RESOURCE_EXHAUSTED`, `overloaded_error`) arm a cooldown; auth errors and
+oversized prompts still fail loudly, because a second model would fail the same
+way. The switch is announced once per fallback, `/om:status` lists cooling-down
+models with the remaining time, and the preferred model is used again as soon as
+its cooldown expires. If every candidate is cooling down the preferred one is
+tried anyway, so a stale cooldown cannot disable memory.
+
+The patch is generated against the exact upstream tag in `../pi.nix`. To bump
+the pin, clone the new tag, apply the patch, resolve any conflicts, run the
+upstream suite (`npm install && npx vitest run && npx tsc --noEmit`), and
+regenerate the patch with `git diff` before changing `rev` and `hash`.
 
 Observational Memory owns the content of an extension-provided compaction:
 ledger entries are folded into a deterministic memory summary. The sibling
