@@ -42,6 +42,7 @@ in
     ];
     brews = [
       "pnpm"
+      "fnm"
     ];
     casks = [
       "termius" # nixpkgs has Linux-only build

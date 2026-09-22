@@ -28,6 +28,7 @@ let
     ssh-to-age
     ffmpeg
     nodejs_24
+    fnm
     gh
     git-lfs
     python3
