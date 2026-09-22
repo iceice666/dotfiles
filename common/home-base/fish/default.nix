@@ -62,21 +62,9 @@
       set -e NO_COLOR
       set -gx EDITOR nvim
 
-      # # ZVM
-      # set -gx ZVM_INSTALL "$HOME/.zvm/self"
 
-      # # Haskell GHC
-      # set -q GHCUP_INSTALL_BASE_PREFIX[1]; or set GHCUP_INSTALL_BASE_PREFIX $HOME
-
-      # # PATH
-      # fish_add_path -p ~/go/bin
-      # fish_add_path -p ~/.cargo/bin
-      # fish_add_path -p $HOME/.local/bin
-      # fish_add_path -p ~/bin
-      # fish_add_path -p $HOME/.dotnet/tools/
-      # fish_add_path -p $HOME/.cabal/bin
-      # fish_add_path -p $HOME/.zvm/bin
-      # fish_add_path -p $ZVM_INSTALL/
+      # PATH
+      fish_add_path -p ~/.local/share/pnpm/bin
 
       # Better directory colors for ls/eza
       if type -q dircolors

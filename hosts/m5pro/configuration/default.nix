@@ -41,9 +41,7 @@ in
       "pear-devs/pear"
     ];
     brews = [
-      "odin"
-      "ols"
-      "odinfmt"
+      "pnpm"
     ];
     casks = [
       "termius" # nixpkgs has Linux-only build
