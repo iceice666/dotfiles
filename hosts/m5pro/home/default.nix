@@ -8,6 +8,7 @@ in
     (dotfiles + /common/home-base/browser.nix)
     ./appearance.nix
     ./default-apps.nix
+    ./dsh.nix
     ./karabiner.nix
     ./omp.nix
     ./sleepguard.nix
