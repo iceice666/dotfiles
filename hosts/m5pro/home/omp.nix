@@ -42,8 +42,8 @@ let
       models = [
         (mkModel "gpt-6-astra" 1050000 128000 false)
         (mkModel "gpt-5.6-terra" 272000 16384 false)
-        (mkModel "gpt-5.6-sol" 272000 16384 false)
-        (mkModel "gpt-5.6-luna" 272000 16384 false)
+        (mkModel "gpt-6-sol" 1050000 128000 false)
+        (mkModel "gpt-6-luna" 1050000 128000 false)
         (mkModel "gpt-5.5" 272000 16384 false)
         (mkModel "gpt-5.4" 1000000 16384 false)
         (mkModel "gpt-5.4-mini" 272000 16384 false)
@@ -59,7 +59,7 @@ let
       models = [
         (mkClaudeThinkingModel "claude-fable-5-1" 1000000 64000)
         (mkClaudeThinkingModel "claude-sonnet-5" 1000000 64000)
-        (mkClaudeThinkingModel "claude-opus-5" 1000000 64000)
+        (mkClaudeThinkingModel "claude-opus-5-5" 1000000 64000)
         (mkModel "claude-haiku-4-5-20251001" 200000 16000 false)
       ];
     };

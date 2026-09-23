@@ -10,8 +10,8 @@ const THINKING_LEVELS = new Set(['off', 'minimal', 'low', 'medium', 'high', 'xhi
 const KIND_NAME = /^[a-z][a-z0-9_-]{0,39}$/;
 const DEFAULT_AGENT_KINDS = {
   general: {},
-  scout: { model: 'cliproxyapi/gpt-5.6-sol', thinking: 'low' },
-  researcher: { model: 'cliproxyapi/gpt-5.6-sol', thinking: 'medium' },
+  scout: { model: 'cliproxyapi/gpt-6-sol', thinking: 'low' },
+  researcher: { model: 'cliproxyapi/gpt-6-sol', thinking: 'medium' },
 };
 const RESULT_NOTICE_LIMIT = 2000;
 

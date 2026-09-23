@@ -44,7 +44,7 @@ test('agent kinds route preset model and thinking while explicit values override
   const defaults = { cwd: team.directory, model: 'parent/model', thinking: 'high' };
   await assert.rejects(team.spawn({ name: 'scout-one', kind: 'scout', task: 'scan' }, defaults));
   const scout = team.agents.get('scout-one');
-  assert.equal(scout.model, 'cliproxyapi/gpt-5.6-sol');
+  assert.equal(scout.model, 'cliproxyapi/gpt-6-sol');
   assert.equal(scout.thinking, 'low');
   await assert.rejects(team.spawn({ name: 'custom-one', kind: 'researcher', model: 'custom/model', thinking: 'off', task: 'research' }, defaults));
   const custom = team.agents.get('custom-one');

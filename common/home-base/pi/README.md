@@ -69,7 +69,7 @@ Nix pins upstream `pi-observational-memory` 3.1.3, applies
 resulting `src/` as the managed `observational-memory/` extension. Do not also
 run `pi install npm:pi-observational-memory`; duplicate copies would register
 competing memory workers and compaction hooks. The managed defaults use
-`cliproxyapi/gpt-5.6-sol` at low thinking for background observer/reflector/dropper
+`cliproxyapi/gpt-6-sol` at low thinking for background observer/reflector/dropper
 work, cap their requested output at 8192 tokens, and scale proactive compaction
 to 68% of the active model context window. Project-local Pi settings may still
 override these defaults at runtime.

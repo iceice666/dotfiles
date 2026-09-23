@@ -140,7 +140,7 @@ HTTP validates question fields before queuing. Question requests are limited to
 
 ### Agent kinds
 
-Workers default to `general`, which inherits the parent model and thinking level. The built-in `scout` preset uses `cliproxyapi/gpt-5.6-sol` with `low` thinking; `researcher` uses the same model with `medium` thinking. Explicit `model` and `thinking` arguments override a preset.
+Workers default to `general`, which inherits the parent model and thinking level. The built-in `scout` preset uses `cliproxyapi/gpt-6-sol` with `low` thinking; `researcher` uses the same model with `medium` thinking. Explicit `model` and `thinking` arguments override a preset.
 
 Add or override presets with a JSON object in `PI_TEAM_KINDS` before starting Pi:
 

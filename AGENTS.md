@@ -226,7 +226,7 @@ The repo-owned Pi extensions (`agent-team`, `ask-question`, `background-task`,
 installed on all Pi-enabled hosts as recursive Home Manager store links. The
 same extension tree includes the Nix-pinned upstream `pi-observational-memory`
 source, patched by `common/home-base/pi/patches/` so background memory work
-falls back from a rate-limited `cliproxyapi/gpt-5.6-sol` to
+falls back from a rate-limited `cliproxyapi/gpt-6-sol` to
 `cliproxyapi-claude/claude-sonnet-5` for a bounded cooldown. The patch is tied
 to the pinned upstream tag: regenerate and re-run the upstream test suite when
 bumping it. Keep sibling directories together: agent-team imports ask-question's
