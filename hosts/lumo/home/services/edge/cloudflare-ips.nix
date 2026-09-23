@@ -73,7 +73,12 @@ in
   home.activation.lumoCloudflareIps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     install -Dm755 ${ipsService} /etc/init.d/lumo-cloudflare-ips
     /sbin/rc-update add lumo-cloudflare-ips default
-    /sbin/rc-service dotfiles-firewall restart
+    # --nodeps: lumo-cloudflare-ips `need`s dotfiles-firewall, so a plain
+    # restart here would have OpenRC cascade-restart the already-running
+    # lumo-cloudflare-ips itself, racing with the explicit start below
+    # (flock contention, duplicate concurrent curl fetches against
+    # www.cloudflare.com).
+    /sbin/rc-service --nodeps dotfiles-firewall restart
     /sbin/rc-service lumo-cloudflare-ips start || true
   '';
 }

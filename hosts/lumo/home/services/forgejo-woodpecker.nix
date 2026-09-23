@@ -316,11 +316,17 @@ in
         /sbin/rc-update add lumo-woodpecker-server default
         /sbin/rc-update add lumo-woodpecker-agent default
 
+        # --nodeps: each service below is `need`ed by the next
+        # (forgejo -> forgejo-bootstrap -> woodpecker-server ->
+        # woodpecker-agent). A plain restart cascades to the already-running
+        # dependent, racing with the explicit restart_service call for it
+        # further down (flock contention, duplicate Forgejo API
+        # provisioning curl calls hitting a mid-restart container).
         restart_service() {
           service="$1"
-          if ! /sbin/rc-service "$service" restart; then
+          if ! /sbin/rc-service --nodeps "$service" restart; then
             sleep 5
-            /sbin/rc-service "$service" restart
+            /sbin/rc-service --nodeps "$service" restart
           fi
         }
 
