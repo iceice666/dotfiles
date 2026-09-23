@@ -75,10 +75,13 @@ in
     /sbin/rc-update add lumo-cloudflare-ips default
     # --nodeps: lumo-cloudflare-ips `need`s dotfiles-firewall, so a plain
     # restart here would have OpenRC cascade-restart the already-running
-    # lumo-cloudflare-ips itself, racing with the explicit start below
+    # lumo-cloudflare-ips itself, racing with the explicit restart below
     # (flock contention, duplicate concurrent curl fetches against
     # www.cloudflare.com).
     /sbin/rc-service --nodeps dotfiles-firewall restart
-    /sbin/rc-service lumo-cloudflare-ips start || true
+    # restart, not start: this is a oneshot service, so once it is
+    # marked started a plain `start` is a no-op and the IP-set refresh would
+    # never run again on later deploys.
+    /sbin/rc-service lumo-cloudflare-ips restart || true
   '';
 }
