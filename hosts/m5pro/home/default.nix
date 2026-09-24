@@ -8,7 +8,6 @@ in
     (dotfiles + /common/home-base/browser.nix)
     ./appearance.nix
     ./default-apps.nix
-    ./dsh.nix
     ./dsh-desktop.nix
     ./karabiner.nix
     ./omp.nix

@@ -1,5 +1,6 @@
 {
   config,
+  dotfiles,
   inputs,
   ...
 }:
@@ -15,11 +16,16 @@
     icon = ../../../assets/dsh.png;
   };
 
-  # The app keeps its own DSH home instead of ~/.dsh, so it needs its own copy
-  # of the home-layer .env that dsh.nix renders for the CLI.
+  # Declared identically in omp.nix / pi.nix; sops-nix merges equal definitions.
+  sops.secrets.exa_api_key = {
+    sopsFile = dotfiles + /sensitive/shared/exa.yaml;
+    mode = "0400";
+  };
   sops.templates."dsh-desktop-env" = {
     path = "${config.programs.dsh-desktop.dshHome}/.env";
     mode = "0600";
-    inherit (config.sops.templates."dsh-env") content;
+    content = ''
+      EXA_API_KEY=${config.sops.placeholder.exa_api_key}
+    '';
   };
 }
