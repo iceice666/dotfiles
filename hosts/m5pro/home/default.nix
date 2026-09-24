@@ -9,6 +9,7 @@ in
     ./appearance.nix
     ./default-apps.nix
     ./dsh.nix
+    ./dsh-desktop.nix
     ./karabiner.nix
     ./omp.nix
     ./sleepguard.nix

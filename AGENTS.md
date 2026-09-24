@@ -114,6 +114,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
+| `dsh-desktop` | `git+file:///Users/iceice666/code/dsh-desktop` | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 `self.submodules = true` is set so Git submodules are fetched.
 

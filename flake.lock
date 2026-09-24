@@ -22,6 +22,26 @@
         "type": "github"
       }
     },
+    "dsh-desktop": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790213145,
+        "narHash": "sha256-UQZT4IlCeRrpM7EMwGtsOrT63abqwKJSlRqw2bopf/0=",
+        "ref": "refs/heads/main",
+        "rev": "419f9629129feec256bfd93d0c01422f19bf255f",
+        "revCount": 17,
+        "type": "git",
+        "url": "file:///Users/iceice666/code/dsh-desktop"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///Users/iceice666/code/dsh-desktop"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -239,6 +259,7 @@
     "root": {
       "inputs": {
         "deploy-rs": "deploy-rs",
+        "dsh-desktop": "dsh-desktop",
         "home-manager": "home-manager",
         "niri-scratchpad-helper": "niri-scratchpad-helper",
         "nirinit": "nirinit",

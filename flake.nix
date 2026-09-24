@@ -43,6 +43,11 @@
       flake = false;
     };
 
+    dsh-desktop = {
+      url = "git+file:///Users/iceice666/code/dsh-desktop";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     reimu-on-starlit-water = {
       url = "github:iceice666/reimu_on_starlit_water";
       flake = false;
