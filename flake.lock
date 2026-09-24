@@ -29,17 +29,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1790213145,
-        "narHash": "sha256-UQZT4IlCeRrpM7EMwGtsOrT63abqwKJSlRqw2bopf/0=",
-        "ref": "refs/heads/main",
-        "rev": "419f9629129feec256bfd93d0c01422f19bf255f",
-        "revCount": 17,
-        "type": "git",
-        "url": "file:///Users/iceice666/code/dsh-desktop"
+        "lastModified": 1790227971,
+        "narHash": "sha256-nkU6AfxEjN5Yjh9nSiEupfcdQ7VuBWHG4G7+6t/CINM=",
+        "owner": "iceice666",
+        "repo": "dsh-desktop",
+        "rev": "6528c9ba2ca7c8e0aededd3bcbe8230370dfbd1f",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///Users/iceice666/code/dsh-desktop"
+        "owner": "iceice666",
+        "repo": "dsh-desktop",
+        "type": "github"
       }
     },
     "fenix": {

@@ -44,7 +44,7 @@
     };
 
     dsh-desktop = {
-      url = "git+file:///Users/iceice666/code/dsh-desktop";
+      url = "github:iceice666/dsh-desktop";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
