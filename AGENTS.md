@@ -209,10 +209,26 @@ The `apiKey` command reads the shared
 SOPS secret at request time; no plaintext key enters the Nix store. Pi's
 auth state and sessions remain unmanaged. `settings.json` is *partially*
 managed: an activation step merges the repo-owned keys (`theme`,
-`hideThinkingBlock`) into the existing file with `jq` instead of installing a
+`hideThinkingBlock`, `defaultProvider`, `defaultModel`, and observational-memory defaults)
+into the existing file with `jq` instead of installing a
 store symlink, so Pi can still persist `/model`, `/settings`, and
 `lastChangelogVersion` at runtime. On themegen hosts the theme resolves to
 `themegen-light/themegen-dark`; other hosts keep the built-in `light/dark`.
+Pi and m5pro dsh-desktop share `common/home-base/agent-model.nix` for their
+OpenAI-compatible startup model (`gpt-6-astra`), base URL, model limits, and SOPS
+key reference. Edit that profile and deploy each host to synchronize defaults;
+API key rotation stays in the referenced encrypted SOPS file. Pi retains its
+other providers. Each switch restores the shared Pi startup default; project
+settings, explicit CLI selections, and resumed sessions can override it.
+For dsh-desktop, quit the app before switching: activation merges the managed
+fields into writable `settings.yaml` (including ownership of the `cliproxyapi`
+provider's model list), preserving other providers and unrelated values and keeping a
+private `settings.yaml.pre-deploy-*` backup when it changes (YAML comments are
+not retained in the rewritten file). Its `0600` SOPS-rendered `.env` carries
+`CLIPROXYAPI_API_KEY` and Exa; inherited environment, DSH's credential store, or a
+working-directory `.env` can override the home-layer credential. Existing DSH
+sessions keep their own model selections. Restart the app and start a new session
+to use the deployed default. Neither app's auth/session state is synchronized.
 After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.

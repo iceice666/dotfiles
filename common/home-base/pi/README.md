@@ -52,10 +52,14 @@ background logs remain unmanaged. The Lumo audit explicitly disables extension
 discovery and is unaffected.
 
 `settings.json` is only partially managed. A `piSettings` activation step merges
-the repo-owned keys (`theme`, `hideThinkingBlock`, and the
-`observational-memory` defaults) into the existing file with `jq`; every other
+the repo-owned keys (`theme`, `hideThinkingBlock`, `defaultProvider`,
+`defaultModel`, and the `observational-memory` defaults) into the existing file with `jq`; every other
 key stays runtime-owned and writable, so `/model`, `/settings` and
-`lastChangelogVersion` still persist. On hosts with `features.themegen` the
+`lastChangelogVersion` still persist. Each deployment restores the startup model
+from `../agent-model.nix`, shared with m5pro dsh-desktop alongside the base URL,
+model limits, and SOPS key reference. Session/project overrides remain available;
+this is deployment-time default synchronization, not live selection syncing.
+On hosts with `features.themegen` the
 wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
 and the theme resolves to `themegen-light/themegen-dark`, matching Kitty's wallpaper-generated light/dark palettes;
 other hosts keep the built-in `light/dark` pair. Changing the theme via

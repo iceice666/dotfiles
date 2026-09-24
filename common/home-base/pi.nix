@@ -8,6 +8,8 @@
 }:
 
 let
+  agentModel = import ./agent-model.nix { inherit dotfiles homolab; };
+
   mkModel = id: contextWindow: maxTokens: {
     inherit id contextWindow maxTokens;
     reasoning = true;
@@ -24,15 +26,19 @@ let
       compat.forceAdaptiveThinking = adaptiveThinking;
     };
 
-  apiKey = "!${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.cliproxyapi_homonet_api_key.path}";
+  apiKey = "!${pkgs.coreutils}/bin/cat ${
+    lib.escapeShellArg config.sops.secrets.${agentModel.secretName}.path
+  }";
 
   # Themegen renders the wallpaper-derived Pi themes only on GUI hosts; servers
   # keep the built-in pair so the theme setting always resolves.
   hasThemegenThemes = config.home.file ? ".pi/agent/themes/themegen-dark.json";
 
-  # Keys this repo owns. Everything else in settings.json (model choice,
-  # lastChangelogVersion, /settings toggles) stays runtime-owned and writable.
+  # Deployment restores the shared startup model; session overrides stay usable.
+  # Other settings remain runtime-owned and writable.
   managedSettings = {
+    defaultProvider = "cliproxyapi";
+    defaultModel = agentModel.model;
     theme = if hasThemegenThemes then "themegen-light/themegen-dark" else "light/dark";
     hideThinkingBlock = false;
     observational-memory = {
@@ -115,11 +121,7 @@ in
     recursive = true;
   };
 
-  sops.secrets.cliproxyapi_homonet_api_key = {
-    sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;
-    key = "homonetApiKey";
-    mode = "0400";
-  };
+  sops.secrets.${agentModel.secretName} = agentModel.secret;
 
   # Merge-on-activation instead of a store symlink: Pi rewrites settings.json at
   # runtime, so a read-only link would break /model and /settings persistence.
@@ -137,7 +139,7 @@ in
 
   home.file.".pi/agent/models.json".text = builtins.toJSON {
     providers.cliproxyapi = {
-      baseUrl = "${homolab.urls.cliproxyapi}/v1";
+      baseUrl = agentModel.baseUrl;
       api = "openai-completions";
       inherit apiKey;
       compat = {
@@ -157,6 +159,9 @@ in
         supportsLongCacheRetention = true;
       };
       models = [
+        (mkModel agentModel.model agentModel.contextWindow agentModel.maxTokens)
+      ]
+      ++ builtins.filter (model: model.id != agentModel.model) [
         (mkModel "gpt-6-astra" 1050000 128000)
         (mkModel "gpt-6-sol" 1050000 128000)
         (mkModel "gpt-6-luna" 1050000 128000)
