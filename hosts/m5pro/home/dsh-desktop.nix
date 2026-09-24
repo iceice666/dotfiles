@@ -16,7 +16,7 @@
     icon = ../../../assets/dsh.png;
   };
 
-  # Declared identically in omp.nix / pi.nix; sops-nix merges equal definitions.
+  # Declared identically in pi.nix; sops-nix merges equal definitions.
   sops.secrets.exa_api_key = {
     sopsFile = dotfiles + /sensitive/shared/exa.yaml;
     mode = "0400";
