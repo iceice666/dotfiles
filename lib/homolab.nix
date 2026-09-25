@@ -81,6 +81,7 @@ rec {
   domains = rec {
     root = baseDomain;
     auth = "auth.${root}";
+    pirc = "pirc.${root}";
     dns = "dns.${root}";
     grafana = "grafana.${root}";
     cliproxyapi = "cliproxyapi.${root}";

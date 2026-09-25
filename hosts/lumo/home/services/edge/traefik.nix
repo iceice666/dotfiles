@@ -132,6 +132,12 @@ let
 
   dynamicConfig = yamlFormat.generate "traefik-dynamic.yml" {
     http.middlewares = {
+      # Only the single explicitly allowed Authelia account may reach pirc.
+      # Strip client-provided identity before forward auth, then set the daemon
+      # header after a successful two-factor check.
+      pirc-strip-identity.headers.customRequestHeaders."Remote-Email" = "";
+      pirc-use-verified-email.headers.customRequestHeaders."X-Pirc-User" = homolab.contact.adminEmail;
+
       authelia.forwardAuth = {
         address = "http://127.0.0.1:${toString homolab.ports.authelia}/api/verify?rd=https%3A%2F%2F${homolab.domains.auth}%2F";
         maxResponseBodySize = 65536;
@@ -275,6 +281,39 @@ let
         tls.certResolver = "letsencrypt";
       };
 
+      pirc-http = {
+        rule = mkPrivateHostRule homolab.domains.pirc;
+        entryPoints = [ "web" ];
+        middlewares = [ "redirect-to-https@file" ];
+        service = "noop@internal";
+      };
+
+      pirc-node = {
+        rule = mkPrivateHostPathRule homolab.domains.pirc "Path(`/node/connect`)";
+        entryPoints = [ "websecure" ];
+        priority = 1000;
+        service = "pirc-gateway";
+        tls.certResolver = "letsencrypt";
+      };
+
+      pirc-api = {
+        rule = mkPrivateHostPathRule homolab.domains.pirc "PathPrefix(`/api/`)";
+        entryPoints = [ "websecure" ];
+        # The broader private-host rule is long enough to outrank priority 100.
+        priority = 2000;
+        middlewares = [ "pirc-strip-identity@file" "authelia@file" "pirc-use-verified-email@file" ];
+        service = "pirc-gateway";
+        tls.certResolver = "letsencrypt";
+      };
+
+      pirc = {
+        rule = mkPrivateHostRule homolab.domains.pirc;
+        entryPoints = [ "websecure" ];
+        middlewares = [ "pirc-strip-identity@file" "authelia@file" "pirc-use-verified-email@file" ];
+        service = "pirc-web";
+        tls.certResolver = "letsencrypt";
+      };
+
       grafana-http = {
         rule = mkPrivateHostRule homolab.domains.grafana;
         entryPoints = [ "web" ];
@@ -337,6 +376,12 @@ let
     };
 
     http.services = {
+      pirc-gateway.loadBalancer.servers = [
+        { url = "http://127.0.0.1:18787"; }
+      ];
+      pirc-web.loadBalancer.servers = [
+        { url = "http://127.0.0.1:18788"; }
+      ];
       authelia.loadBalancer.servers = [
         { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
       ];
