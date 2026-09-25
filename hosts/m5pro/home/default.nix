@@ -10,6 +10,7 @@ in
     ./default-apps.nix
     ./dsh-desktop.nix
     ./karabiner.nix
+    ./pirc-node.nix
     ./sleepguard.nix
     ./wallpaper.nix
   ];
