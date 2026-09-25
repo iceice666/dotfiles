@@ -50,7 +50,8 @@
 
     pirc = {
       url = "github:iceice666/pirc";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # pirc's bun.lock needs Bun 1.4, which the stable channel lacks.
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     reimu-on-starlit-water = {

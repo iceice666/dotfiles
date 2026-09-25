@@ -262,15 +262,15 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-unstable"
         ]
       },
       "locked": {
-        "lastModified": 1790324008,
-        "narHash": "sha256-IzqFhKzwwxNAUtzOP5B+/bSI2v/E2AnRWzho1v5UcJo=",
+        "lastModified": 1790330311,
+        "narHash": "sha256-9zmHLD3B2/vgeEX75VToLirhLTEE4jjesi+xRis9/rk=",
         "owner": "iceice666",
         "repo": "pirc",
-        "rev": "c7fdaad7e6f2cf67cba15a43c55f281988ae9345",
+        "rev": "689b408ecef5e90c3222aaad286d85b9812e3d80",
         "type": "github"
       },
       "original": {

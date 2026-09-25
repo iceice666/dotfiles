@@ -4,9 +4,10 @@ let
   daemon = pkgs.writeText "lumo-pirc-daemon" ''
     #!/sbin/openrc-run
     name="lumo-pirc-daemon"
-    description="Pi Remote Client central daemon"
+    description="pirc central daemon"
     supervisor=supervise-daemon
-    command="${pkgs.pirc}/bin/pirc-gateway"
+    command="${pkgs.pirc}/bin/pirc"
+    command_args="gateway"
     command_user="pirc:pirc"
     directory="/var/lib/pirc"
     output_log="/var/log/lumo/pirc-daemon.log"
@@ -26,13 +27,13 @@ let
       export PIRC_ALLOWED_USERS PIRC_ALLOWED_ORIGINS PIRC_ALLOWED_HOSTS PIRC_IDENTITY_HEADER PIRC_NODE_TOKENS PIRC_DAEMON_ONLY
       supervise-daemon lumo-pirc-daemon --start --respawn-delay 5 \
         --user pirc:pirc --chdir /var/lib/pirc --stdout /var/log/lumo/pirc-daemon.log \
-        --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.pirc}/bin/pirc-gateway
+        --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.pirc}/bin/pirc gateway
     }
   '';
   web = pkgs.writeText "lumo-pirc-web" ''
     #!/sbin/openrc-run
     name="lumo-pirc-web"
-    description="Pi Remote Client static web assets"
+    description="pirc static web assets"
     supervisor=supervise-daemon
     command="${pkgs.python3}/bin/python3"
     command_args="-m http.server 18788 --bind 127.0.0.1 --directory ${pkgs.pirc}/share/pirc/web"
