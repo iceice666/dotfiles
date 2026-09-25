@@ -137,6 +137,11 @@ let
       # header after a successful two-factor check.
       pirc-strip-identity.headers.customRequestHeaders."Remote-Email" = "";
       pirc-use-verified-email.headers.customRequestHeaders."X-Pirc-User" = homolab.contact.adminEmail;
+      # The static server reports every Nix-store file as modified in 1970 and
+      # sends no Cache-Control, so browsers may heuristically keep a stale
+      # index.html pointing at the previous bundle. Always revalidate; hashed
+      # assets are still cached by the service worker.
+      pirc-revalidate.headers.customResponseHeaders."Cache-Control" = "no-cache";
 
       authelia.forwardAuth = {
         address = "http://127.0.0.1:${toString homolab.ports.authelia}/api/verify?rd=https%3A%2F%2F${homolab.domains.auth}%2F";
@@ -317,6 +322,7 @@ let
           "pirc-strip-identity@file"
           "authelia@file"
           "pirc-use-verified-email@file"
+          "pirc-revalidate@file"
         ];
         service = "pirc-web";
         tls.certResolver = "letsencrypt";
