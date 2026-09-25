@@ -81,6 +81,7 @@ let
             equibop-bin
             oh-my-pi-bin
             pi-bin
+            pirc
             playwright-cli
             zed-bin
             rime-frost

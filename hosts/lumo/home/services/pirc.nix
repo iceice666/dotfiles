@@ -6,10 +6,9 @@ let
     name="lumo-pirc-daemon"
     description="Pi Remote Client central daemon"
     supervisor=supervise-daemon
-    command="${pkgs.nodejs_24}/bin/node"
-    command_args="/opt/pirc/apps/gateway/dist/src/index.js"
+    command="${pkgs.pirc}/bin/pirc-gateway"
     command_user="pirc:pirc"
-    directory="/opt/pirc"
+    directory="/var/lib/pirc"
     output_log="/var/log/lumo/pirc-daemon.log"
     error_log="/var/log/lumo/pirc-daemon.log"
     respawn_delay=5
@@ -20,15 +19,14 @@ let
       checkpath -d -m 0700 -o pirc:pirc /var/lib/pirc
       checkpath -f -m 0640 -o pirc:root /var/log/lumo/pirc-daemon.log
       test -r /etc/pirc/daemon.env || return 1
-      test -f /opt/pirc/apps/gateway/dist/src/index.js || return 1
     }
     start() {
       . /etc/pirc/daemon.env
       export PIRC_HOST PIRC_PORT PIRC_STATE_DIR PIRC_HOST_ID PIRC_WORKSPACES PIRC_TRUSTED_PROXIES
       export PIRC_ALLOWED_USERS PIRC_ALLOWED_ORIGINS PIRC_ALLOWED_HOSTS PIRC_IDENTITY_HEADER PIRC_NODE_TOKENS PIRC_DAEMON_ONLY
       supervise-daemon lumo-pirc-daemon --start --respawn-delay 5 \
-        --user pirc:pirc --chdir /opt/pirc --stdout /var/log/lumo/pirc-daemon.log \
-        --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.nodejs_24}/bin/node /opt/pirc/apps/gateway/dist/src/index.js
+        --user pirc:pirc --chdir /var/lib/pirc --stdout /var/log/lumo/pirc-daemon.log \
+        --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.pirc}/bin/pirc-gateway
     }
   '';
   web = pkgs.writeText "lumo-pirc-web" ''
@@ -37,7 +35,7 @@ let
     description="Pi Remote Client static web assets"
     supervisor=supervise-daemon
     command="${pkgs.python3}/bin/python3"
-    command_args="-m http.server 18788 --bind 127.0.0.1 --directory /opt/pirc/apps/web/dist"
+    command_args="-m http.server 18788 --bind 127.0.0.1 --directory ${pkgs.pirc}/share/pirc/web"
     command_user="pirc:pirc"
     output_log="/var/log/lumo/pirc-web.log"
     error_log="/var/log/lumo/pirc-web.log"
@@ -45,7 +43,6 @@ let
     respawn_max=0
     start_pre() {
       checkpath -f -m 0640 -o pirc:root /var/log/lumo/pirc-web.log
-      test -f /opt/pirc/apps/web/dist/index.html || return 1
     }
   '';
 in
@@ -62,11 +59,9 @@ in
     install -Dm755 ${web} /etc/init.d/lumo-pirc-web
     /sbin/rc-update add lumo-pirc-daemon default
     /sbin/rc-update add lumo-pirc-web default
-    if test -f /etc/pirc/daemon.env && test -f /opt/pirc/apps/gateway/dist/src/index.js; then
+    if test -f /etc/pirc/daemon.env; then
       /sbin/rc-service lumo-pirc-daemon restart
     fi
-    if test -f /opt/pirc/apps/web/dist/index.html; then
-      /sbin/rc-service lumo-pirc-web restart
-    fi
+    /sbin/rc-service lumo-pirc-web restart
   '';
 }

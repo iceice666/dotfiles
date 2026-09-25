@@ -48,6 +48,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    pirc = {
+      url = "github:iceice666/pirc";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     reimu-on-starlit-water = {
       url = "github:iceice666/reimu_on_starlit_water";
       flake = false;
