@@ -23,8 +23,8 @@ let
     }
     start() {
       . /etc/pirc/daemon.env
-      export PIRC_HOST PIRC_PORT PIRC_STATE_DIR PIRC_HOST_ID PIRC_WORKSPACES PIRC_TRUSTED_PROXIES
-      export PIRC_ALLOWED_USERS PIRC_ALLOWED_ORIGINS PIRC_ALLOWED_HOSTS PIRC_IDENTITY_HEADER PIRC_NODE_TOKENS PIRC_DAEMON_ONLY
+      export PIRC_HOST PIRC_PORT PIRC_STATE_DIR PIRC_TRUSTED_PROXIES
+      export PIRC_ALLOWED_USERS PIRC_ALLOWED_ORIGINS PIRC_ALLOWED_HOSTS PIRC_IDENTITY_HEADER PIRC_NODE_TOKENS
       supervise-daemon lumo-pirc-daemon --start --respawn-delay 5 \
         --user pirc:pirc --chdir /var/lib/pirc --stdout /var/log/lumo/pirc-daemon.log \
         --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.pirc}/bin/pirc gateway
