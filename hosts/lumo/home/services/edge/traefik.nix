@@ -301,7 +301,11 @@ let
         entryPoints = [ "websecure" ];
         # The broader private-host rule is long enough to outrank priority 100.
         priority = 2000;
-        middlewares = [ "pirc-strip-identity@file" "authelia@file" "pirc-use-verified-email@file" ];
+        middlewares = [
+          "pirc-strip-identity@file"
+          "authelia@file"
+          "pirc-use-verified-email@file"
+        ];
         service = "pirc-gateway";
         tls.certResolver = "letsencrypt";
       };
@@ -309,7 +313,11 @@ let
       pirc = {
         rule = mkPrivateHostRule homolab.domains.pirc;
         entryPoints = [ "websecure" ];
-        middlewares = [ "pirc-strip-identity@file" "authelia@file" "pirc-use-verified-email@file" ];
+        middlewares = [
+          "pirc-strip-identity@file"
+          "authelia@file"
+          "pirc-use-verified-email@file"
+        ];
         service = "pirc-web";
         tls.certResolver = "letsencrypt";
       };
