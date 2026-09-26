@@ -91,10 +91,8 @@ button:active {
   padding: 1px 5px;
 }
 .battery-ring {
-  // Astal uses font-size as the Cairo stroke width, not as label typography.
-  font-size: 3px;
   color: #06b6d4;
-  background: $surfaceActive;
+  background: transparent;
   min-height: 32px;
   min-width: 32px;
 }
@@ -150,44 +148,96 @@ button:active {
 .control-panel {
   background: $surface;
   border: 1px solid $outline;
-  border-radius: 8px;
+  border-radius: 28px;
   color: $foreground;
-  padding: 12px;
-  min-width: 360px;
+  padding: 20px;
+  min-width: 408px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 .calendar-panel {
   min-width: 0;
 }
 .cc-page {
-  min-width: 360px;
+  min-width: 408px;
 }
-.cc-section {
-  background: $surfaceHover;
-  border: 1px solid $outline;
-  border-radius: 8px;
-  padding: 9px 10px;
-}
-.cc-toggle {
-  background: $surfaceHover;
-  border: 1px solid $outline;
-  border-radius: 10px;
-  padding: 8px 10px;
+.cc-header {
   min-height: 36px;
 }
-.cc-toggle.on {
-  background: $surfaceActive;
-  border-color: $primary;
-  color: $primary;
+.cc-battery {
+  color: $foregroundDim;
 }
-.cc-toggle.on:hover,
-.cc-toggle:hover {
-  background: $surfaceActive;
+.cc-battery label {
+  font-size: 12px;
 }
-.cc-toggle.split {
+.cc-header-button,
+.back {
+  background: $surfaceActive;
+  border-radius: 999px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
 }
-.cc-toggle.split button {
-  padding: 8px;
+.cc-page-title {
+  font-size: 19px;
+  font-weight: bold;
+}
+.cc-section {
+  background: $surfaceContainer;
+  border-radius: 20px;
+  padding: 14px;
+}
+.cc-toggle {
+  background: $surfaceActive;
+  border-radius: 20px;
+  min-height: 68px;
+}
+.cc-toggle button {
+  color: inherit;
+}
+.cc-toggle .tile-main {
+  border-radius: 20px;
+  padding: 12px;
+}
+.cc-toggle .tile-title {
+  font-weight: bold;
+  font-size: 12px;
+}
+.cc-toggle .secondary {
+  font-size: 11px;
+}
+.cc-toggle.on {
+  background: $primary;
+  color: $onPrimary;
+}
+.cc-toggle.on .secondary {
+  color: $onPrimary;
+  opacity: 0.8;
+}
+.cc-toggle.on button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.cc-toggle.on button:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+.cc-toggle.split .tile-main {
+  border-radius: 20px 0 0 20px;
+  padding-right: 4px;
+}
+.cc-toggle .tile-detail {
+  border-radius: 0 20px 20px 0;
+  border-left: 1px solid $outline;
+  padding: 0 9px;
+}
+.cc-toggle.on .tile-detail {
+  border-left-color: rgba(0, 0, 0, 0.12);
+}
+.cc-shortcut {
+  border: 1px solid $outline;
+  border-radius: 20px;
+  padding: 12px;
+}
+.cc-shortcut label {
+  font-weight: bold;
 }
 .cc-slider-row {
   min-height: 48px;
@@ -195,29 +245,46 @@ button:active {
 .slider-icon {
   background: $surfaceActive;
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 0;
-  min-width: 34px;
-  min-height: 34px;
+  min-width: 40px;
+  min-height: 40px;
+}
+.slider-icon image {
+  min-width: 22px;
+  min-height: 22px;
+}
+.slider-label {
+  font-size: 12px;
 }
 .cc-scale {
   min-width: 284px;
+  padding: 7px 0;
 }
 .cc-scale trough {
   background: $surfaceActive;
   border-radius: 999px;
-  min-height: 8px;
+  min-height: 12px;
 }
 .cc-scale highlight {
   background: $primary;
   border-radius: 999px;
 }
 .cc-scale slider {
-  background: $foreground;
-  border: 1px solid $outline;
+  background: $primary;
+  border: 3px solid $surfaceContainer;
   border-radius: 999px;
-  min-height: 16px;
-  min-width: 16px;
+  min-height: 20px;
+  min-width: 20px;
+  box-shadow: none;
+}
+.cc-action {
+  background: $surfaceActive;
+  border-radius: 999px;
+  padding: 9px 12px;
+}
+.cc-action label {
+  font-size: 12px;
 }
 .heading {
   color: $foreground;
@@ -227,63 +294,112 @@ button:active {
   background: $primary;
   color: $onPrimary;
 }
+.primary:hover {
+  background: $primary;
+  color: $onPrimary;
+  opacity: 0.9;
+}
+.media-art {
+  background: $surfaceActive;
+  border-radius: 16px;
+  min-width: 52px;
+  min-height: 52px;
+  color: $primary;
+}
+.cc-notifications-link {
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+.cc-count {
+  background: $surfaceActive;
+  color: $foregroundDim;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
 .back {
   color: $primary;
-  font-size: 15px;
-  font-weight: bold;
 }
 .wifi-row,
 .cc-notification-row {
-  background: $surfaceActive;
+  background: $surfaceContainer;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 6px;
+  border-radius: 16px;
+  padding: 10px;
 }
 .wifi-row.active {
   border-color: $primary;
 }
-.cc-notification-row.unread,
+.cc-notification-row button {
+  padding: 2px;
+}
+.cc-notification-row.unread {
+  border-color: $outline;
+}
 .cc-notification-row.critical {
   border-color: $critical;
 }
+.unread-dot {
+  color: $primary;
+  font-size: 9px;
+}
+.notification-body {
+  padding: 12px 4px 2px;
+}
 .wifi-error {
   color: $critical;
+  padding: 4px;
 }
 .wifi-password {
-  padding: 4px;
+  padding: 8px 4px;
 }
 entry {
   background: $surfaceActive;
   color: $foreground;
   border: 1px solid $outline;
-  border-radius: 8px;
-  padding: 5px 8px;
+  border-radius: 12px;
+  padding: 8px 10px;
 }
-entry:focus {
+entry:focus-within {
   border-color: $primary;
 }
 .scroll-area {
   min-height: 0;
 }
+.empty-state {
+  color: $foregroundDim;
+  padding: 28px 12px;
+}
+.cc-session .cc-action {
+  border-radius: 16px;
+  padding: 16px;
+}
+.session-destructive {
+  color: $critical;
+}
 calendar {
   background: transparent;
   color: $foreground;
 }
-calendar:selected {
+calendar .day-number:selected {
   background: $primary;
   color: $onPrimary;
 }
-menu {
+popover > contents {
   background: $surfaceActive;
   color: $foreground;
   border: 1px solid $outline;
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 6px;
 }
-menuitem {
-  border-radius: 6px;
-  padding: 4px 10px;
+popover modelbutton {
+  border-radius: 8px;
+  padding: 6px 10px;
 }
-menuitem:hover {
+popover modelbutton:hover {
   background: $surfaceHover;
+}
+button:focus-visible {
+  outline: 2px solid $primary;
+  outline-offset: 2px;
 }

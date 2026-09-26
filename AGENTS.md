@@ -112,6 +112,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `treefmt-nix` | `github:numtide/treefmt-nix` | yes |
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
+| `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `dsh-desktop` | `github:iceice666/dsh-desktop` | yes |
@@ -649,7 +650,7 @@ Canonical module shape:
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
-- `hosts/framework/home/ags/` runs the Framework AGS 2 / Astal GTK3 shell (`framework-ags.service`), with per-monitor bars, tray, calendar, and control center. Theme files come from `themegen/framework/.config/ags/`. `pkgs/framework-shell-state/` emits UI-neutral JSON-line state patches and handles media keys / notification tracking. See the AGS directory's README for validation and migration notes.
+- `hosts/framework/home/ags/` runs the Framework AGS 3 / Astal GTK4 shell (`framework-ags.service`), pinned through the upstream AGS flake with its matching Astal libraries. It provides per-monitor bars, StatusNotifier tray/GTK4 menus, calendar, and a Material/GNOME-inspired control center. `state.ts` adapts the Rust backend, `control-center.tsx` owns the panel, and `app.tsx` owns monitor/window lifecycle and the bar. Theme files come from `themegen/framework/.config/ags/`; Mako remains the notification daemon. `pkgs/framework-shell-state/` emits UI-neutral JSON-line state patches and handles media keys / notification tracking. See the AGS directory's README for validation and migration notes.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
 - `hosts/m5pro/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.

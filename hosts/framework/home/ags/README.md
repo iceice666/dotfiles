@@ -1,84 +1,118 @@
 # Framework AGS shell
 
-The Framework shell uses the flake-pinned **AGS 2.3 / Astal GTK3** API, not AGS 1 or
-current AGS 3 examples. No additional flake input is needed.
+The Framework shell uses **AGS 3 / Astal GTK4 / Gnim**, pinned to upstream
+**AGS v3.1.2** and its matching Astal revision through `flake.lock`. Both of the
+repo's nixpkgs inputs still package AGS 2.3, so this shell uses the upstream flake
+instead. Upstream v3.1.2 leaves `cli/version` at `3.1.0`; that version in the
+package path or CLI output does not mean the wrong revision was selected.
+The service executes the bundle at `~/.config/ags/app.js` directly. Despite the
+historical filename, AGS 3 emits a shell launcher that starts GJS with the GTK4
+layer-shell preload; it is not JavaScript input for `ags run`. A Nix-generated
+`framework-ags` wrapper supplies GTK/Astal typelibs and runtime data independently
+of the AGS CLI wrapper.
+
+## Ownership
 
 - `app.tsx`: per-monitor Niri app/workspace strip, media and performance indicators,
-  battery, Astal tray, calendar, and control-center views.
-- `style.scss`: GTK3 styling using wallpaper-derived palette variables. Battery
-  and tray retain Eww's 40×32 icon slots; the 32px battery ring uses a 3px stroke
-  (`font-size` in Astal) and equal start/end positions for a full-circle track.
-  Both hover revealers are local to each monitor.
-- `default.nix`: builds JavaScript and both CSS variants, installs runtime config,
+  battery, Astal tray, calendar, popup dismissal and monitor lifecycle.
+- `state.ts`: string-valued Rust JSON patches, shared reactive state and argv-based
+  actions. Wi-Fi failures never log passwords, argv or command stderr.
+- `control-center.tsx`: Material/GNOME-inspired two-column quick settings, audio
+  and brightness controls, media, Wi-Fi connection/password UI, Mako history,
+  and session actions. Bluetooth device settings open Overskride; detailed audio
+  settings open pavucontrol. This is an independently authored adaptation of our
+  existing shell, not a vendored Matshell or DankMaterialShell component.
+- `style.scss`: GTK4 styling using the existing wallpaper-derived Material palette.
+- `default.nix`: bundles TypeScript and both CSS variants, installs runtime config,
   and starts `framework-ags.service` with the graphical session.
 - `icons.nix`: SVG assets shared with the state helper.
 - `pkgs/framework-shell-state`: UI-neutral Rust collectors/actions. The daemon
   emits newline-delimited JSON patches; values are strings, including the encoded
   `niri_groups` and `notifications_history` arrays. Actions emit refreshed patches.
 
-AGS owns monitor/window lifecycle. Mako remains the notification daemon; the shell
-reads its active/history lists and existing hooks track unread notifications.
-Media keys invoke the helper directly, without depending on a running UI.
-Commands use argv arrays rather than interpolated shell strings. Wi-Fi errors
-must never log passwords or command argv.
+AGS owns monitor/window lifecycle. Output matching uses GTK4's monitor connector
+rather than GDK index ordering. Each monitor has its own hover revealers; opening
+one control/calendar popup closes the other monitors' popups. Escape and clicking
+the backdrop dismiss a popup, and dismissal clears password input. The panel is
+height-limited to its monitor and scrolls on small displays.
 
-## Theme and lifecycle
+Mako remains the notification daemon; the shell reads its active/history lists
+and existing hooks track unread notifications. Media keys invoke the helper
+without depending on a running UI. The lid-sleep toggle starts/stops
+`framework-lid-inhibit.service`, which is session-scoped and disabled at login.
+
+## Tray and theme
+
+Astal handles StatusNotifier discovery, icons and DBusMenu import. The GTK4 front
+end supports menu items, normal activation, middle-click secondary activation,
+right-click menus and scrolling. Dynamic menu refresh requests have a bounded
+asynchronous timeout; an unresponsive tray app must not block GTK. An open menu
+keeps the tray revealer expanded until dismissal. Passive items are hidden.
+
+Battery and tray retain 40×32 icon slots. The battery circle is now a GTK4 drawing
+area, with a 32px full-circle track and a fixed 3px stroke; it no longer relies on
+GTK3 Astal CircularProgress's font-size convention.
 
 `themegen/framework/.config/ags/theme-{light,dark}.scss` supplies palette values.
 Both stylesheets are compiled during the Framework build. The appearance installer
 selects `style.css` and `theme.scss`, then asynchronously restarts AGS. The latter
-link also lets the Rust helper choose the matching icon colors.
+link also lets the Rust helper choose the matching icon colors. There is no second
+Matugen theme generator or competing shell/notification service.
 
-The lid-sleep toggle starts/stops `framework-lid-inhibit.service`. This optional
-inhibitor belongs to the graphical session and is not enabled at login.
-
-## Migration and validation
+## Validation and activation
 
 ```sh
-nix build .#framework-shell-state
-cargo test --locked --manifest-path pkgs/framework-shell-state/Cargo.toml
 just fmt
 just build
 just check
 ```
 
-After reviewing the build, deploy with `just switch`. Home Manager replaces the
-old `framework-eww`/`framework-eww-bars` units and managed Eww config with AGS. An
-old unmanaged `~/.config/eww/theme.scss` link or old runtime caches can remain; AGS
-does not read them. No user files are forcibly deleted.
+After reviewing the build, deploy explicitly with `just switch`. Check
+`systemctl --user status framework-ags.service` and
+`journalctl --user -u framework-ags.service -b`. Verify on the real desktop:
 
-Check `systemctl --user status framework-ags.service` and
-`journalctl --user -u framework-ags.service -b` after activation. Verify:
-
-1. Each connected display gets one bar, with its own workspace/window list;
+1. Every connected display gets one bar and its own Niri workspace/window list;
    unplugging/reconnecting a display removes/recreates its windows.
-2. Tray menus, calendar, click-outside/Escape dismissal, and control-center
-   navigation work; Wi-Fi connection failures are visible without exposing secrets.
-3. Speaker/microphone/brightness controls and media keys update live.
-4. Mako notifications, unread badges, history and DND work together.
-5. Light/dark switching retains transparent surfaces and the wallpaper palette.
-6. Lid sleep is restored when the inhibitor is toggled off or the session ends.
+2. Tray applications update icons and menus, respond to all mouse buttons and
+   scrolling, and close menus cleanly without collapsing the hovered tray early.
+3. Calendar/control-center keyboard focus, Escape and click-outside dismissal work.
+4. Wi-Fi scanning, saved/open/secured connections and errors work without exposing
+   credentials; Bluetooth settings open correctly.
+5. Speaker/microphone/brightness controls and media keys update live. State updates
+   alone must not emit setter commands.
+6. Mako notifications, unread badges, history and DND work together.
+7. Both themes retain the wallpaper palette and legible active/disabled states.
+8. Lid sleep is restored when the inhibitor is toggled off or the session ends.
 
-Do not run a second shell on the live session merely to test compilation: it would
-claim the tray watcher and reserve another bar. `smoke-test.sh` uses two headless
-labwc outputs, a private home/runtime directory and D-Bus session, synthetic state,
-and mock action commands. It opens every control-center view and the calendar,
-checks battery/tray geometry and independent hover revealers, fails on startup/UI
-criticals, and cleans up its owned processes. Run once per
-palette with the built dependency paths:
+Do not run a second shell on the live session merely to test compilation: it
+would compete for the tray watcher and reserve another bar. `smoke-test.sh` uses
+two headless labwc outputs, a private home/runtime directory and D-Bus session,
+synthetic state, and mock action commands. It bundles the instrumented entry and
+executes that launcher through the built runtime wrapper, matching the deployed
+service's launch path.
+`smoke-probe.ts` checks widget/layout,
+slider command isolation, masked Wi-Fi failures/password clearing, popup behavior
+and monitor disposal/remount. `smoke-tray.js` exports isolated
+StatusNotifier/DBusMenu fixtures to exercise delayed dynamic menu updates, menu
+actions, activation, secondary activation, scrolling and removal. Run once per palette with built dependencies:
 
 ```sh
-AGS=/nix/store/…-ags-2.3.0 \
+AGS=/nix/store/…-ags-3.1.0 \
+AGS_LAUNCHER=/nix/store/…-framework-ags-assets/bin/framework-ags \
 LABWC=/nix/store/…-labwc \
 SASS=/nix/store/…-dart-sass \
 THEME_SCSS=/nix/store/…-themegen-cache-framework/.config/ags/theme-dark.scss \
 bash hosts/framework/home/ags/smoke-test.sh
 ```
 
-Set `KEEP_SMOKE_LOGS=1` to retain private fixture logs. This exercises widget
-construction, not real Wi-Fi/audio changes, physical monitor hotplug, or live
-StatusNotifierItem tray menus; those still require the post-activation checks
-above. The harness also needs Bash, Python 3, `dbus-run-session`, and coreutils.
+Set `KEEP_SMOKE_LOGS=1` to retain private fixture logs. Optionally set
+`SMOKE_GRIM=/absolute/path/to/grim` to capture the synthetic control center as
+`control-home.png` alongside the logs. This is not a substitute
+for real application tray menus, physical monitor hotplug or actual device
+operations. The harness needs Bash, Python 3, `dbus-run-session`, and coreutils;
+the AGS wrapper supplies GJS for the D-Bus fixture.
 
-Upstream API references: [AGS v2.3](https://github.com/Aylur/ags/tree/v2.3.0),
-[Astal](https://github.com/Aylur/astal).
+References: [AGS migration guide](https://aylur.github.io/ags/guide/migration-guide.html),
+[AGS Nix packaging](https://aylur.github.io/ags/guide/nix.html),
+[Astal](https://github.com/Aylur/astal),
+[Material/AGS reference Matshell](https://github.com/Neurarian/matshell).

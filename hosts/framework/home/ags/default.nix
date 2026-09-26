@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   unstablePkgs,
@@ -10,7 +11,8 @@
 
 let
   agsConfigDir = "${config.home.homeDirectory}/.config/ags";
-  ags = pkgs.ags.override { extraPackages = [ pkgs.astal.tray ]; };
+  agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
+  ags = agsPackages.ags.override { extraPackages = [ agsPackages.tray ]; };
   icons = import ./icons.nix { inherit pkgs; };
   shellAssets =
     pkgs.runCommand "framework-ags-assets"
@@ -18,12 +20,33 @@ let
         nativeBuildInputs = [
           ags
           pkgs.dart-sass
+          pkgs.gobject-introspection
+          pkgs.wrapGAppsHook3
+        ];
+        buildInputs = [
+          pkgs.gjs
+          pkgs.gtk4
+          pkgs.libadwaita
+          agsPackages.io
+          agsPackages.astal4
+          agsPackages.tray
         ];
       }
       ''
         mkdir -p "$out" work
         cp ${./app.tsx} work/app.tsx
+        cp ${./state.ts} work/state.ts
+        cp ${./control-center.tsx} work/control-center.tsx
         ags bundle work/app.tsx "$out/app.js"
+        # Bundle launchers need the GI/runtime environment independently of the CLI.
+        mkdir -p "$out/bin"
+        cat > "$out/bin/framework-ags" <<'EOF'
+        #!${pkgs.runtimeShell}
+        exec "$@"
+        EOF
+        chmod +x "$out/bin/framework-ags"
+        gappsWrapperArgsHook
+        wrapGApp "$out/bin/framework-ags"
         cp ${./style.scss} work/style.scss
         for mode in light dark; do
           cp --remove-destination ${themegenCache}/.config/ags/theme-$mode.scss work/theme.scss
@@ -197,7 +220,8 @@ in
         "GDK_BACKEND=wayland"
       ];
       WorkingDirectory = agsConfigDir;
-      ExecStart = "${ags}/bin/ags run ${agsConfigDir}/app.js";
+      # AGS 3 bundles are executable launchers, not input for `ags run`.
+      ExecStart = "${shellAssets}/bin/framework-ags ${agsConfigDir}/app.js";
       Restart = "on-failure";
       RestartSec = 2;
       KillMode = "control-group";
