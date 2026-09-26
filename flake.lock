@@ -266,11 +266,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790417269,
-        "narHash": "sha256-9IV6cdRQu11xgPD3nPckBPjhjadX5EBQTpZPBZ+ay8U=",
+        "lastModified": 1790423834,
+        "narHash": "sha256-iekpkUI1z0HOmu9Z6iY9m5TuVJmMZggvEWjURxE1PAQ=",
         "owner": "iceice666",
         "repo": "pirc",
-        "rev": "f70e907f22aba6ca7bf535381eb342a056acbf67",
+        "rev": "8923ca8b08176425a7cb428ba2283c74d186d84c",
         "type": "github"
       },
       "original": {
