@@ -726,6 +726,7 @@ in
     bc
     cliphist
     grim
+    helium-bin
     imv
     unstablePkgs.librepods
     jq
