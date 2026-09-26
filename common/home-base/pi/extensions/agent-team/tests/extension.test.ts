@@ -21,7 +21,7 @@ async function setup() {
   const widgets: any[] = [];
   const statuses: any[] = [];
   // No sessionManager: direct parent questions must not construct Team/broker.
-  const ctx: any = { mode: 'tui', hasUI: true, ui: {
+  const ctx: any = { cwd: process.cwd(), mode: 'tui', hasUI: true, ui: {
     setStatus: (...args: any[]) => statuses.push(args),
     setWidget: (...args: any[]) => widgets.push(args),
     custom: (factory: any) => new Promise(resolve => views.push(factory({ requestRender() {}, terminal: { rows: 24, columns: 80 } }, { fg: (_: string, text: string) => text, bg: (_: string, text: string) => text, bold: (text: string) => text }, {}, resolve))),

@@ -1,8 +1,17 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { closeSync, mkdtempSync, openSync, statSync, unlinkSync, writeSync } from "node:fs";
+import { closeSync, mkdtempSync, openSync, realpathSync, statSync, unlinkSync, writeSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
+import { executionPlan } from "../execution-policy/process.mjs";
+
+export interface ExecutionPlan {
+  command: string;
+  args: string[];
+  options: { cwd: string; env: NodeJS.ProcessEnv };
+  cleanup?: () => void;
+}
+export type PlanFactory = (options: { command: string; cwd: string; workspace: string }) => ExecutionPlan;
 
 export type TaskStatus = "running" | "stopping" | "completed" | "failed" | "stopped" | "timed_out";
 export interface TaskInfo {
@@ -37,6 +46,7 @@ interface RecordState {
   done: Promise<void>;
   resolve: () => void;
   waiters: Set<() => void>;
+  cleanup?: () => void;
 }
 const TAIL_LIMIT = 1024 * 1024;
 const LOG_LIMIT = 10 * 1024 * 1024;
@@ -54,7 +64,13 @@ export class TaskManager {
   private closing = false;
   private shutdownPromise?: Promise<void>;
 
-  constructor(private readonly onFinish?: (task: TaskInfo) => void) {}
+  private readonly workspace: string;
+  private readonly plan: PlanFactory;
+
+  constructor(private readonly onFinish?: (task: TaskInfo) => void, options: { workspace?: string; plan?: PlanFactory } = {}) {
+    this.workspace = realpathSync(options.workspace ?? process.env.PI_EXECUTION_WORKSPACE ?? process.cwd());
+    this.plan = options.plan ?? executionPlan;
+  }
 
   start(options: { command: string; cwd: string; timeout?: number }): TaskInfo {
     if (this.closing) throw new Error("Task manager is shut down");
@@ -82,15 +98,21 @@ export class TaskManager {
     const logPath = join(this.directory, `${id}.log`);
     const fd = openSync(logPath, "wx", 0o600);
     let child: ChildProcess;
+    let plan: ExecutionPlan | undefined;
     try {
-      child = spawn("bash", ["-c", options.command], {
-        cwd: options.cwd,
+      plan = this.plan({ command: options.command, cwd: options.cwd, workspace: this.workspace });
+      if (!plan.options.env || typeof plan.options.env !== "object") throw new Error("Execution plan must provide an explicit environment");
+      child = spawn(plan.command, plan.args, {
+        cwd: plan.options.cwd,
+        env: plan.options.env,
         detached: process.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"],
       });
     } catch (error) {
-      closeSync(fd);
-      unlinkSync(logPath);
+      try {
+        closeSync(fd);
+        unlinkSync(logPath);
+      } finally { plan?.cleanup?.(); }
       throw error;
     }
     let resolve!: () => void;
@@ -98,7 +120,7 @@ export class TaskManager {
     const record: RecordState = {
       info: { id, command: options.command, cwd: options.cwd, status: "running", pid: child.pid, logPath, startedAt: new Date().toISOString() },
       child, fd, tail: Buffer.alloc(0), bytes: 0, tailTruncated: false, logTruncated: false,
-      finished: false, done, resolve, waiters: new Set(),
+      finished: false, done, resolve, waiters: new Set(), cleanup: plan.cleanup,
     };
     this.records.set(id, record);
     child.stdout!.on("data", (data: Buffer) => this.append(record, data));
@@ -257,6 +279,9 @@ export class TaskManager {
       try { closeSync(record.fd); } catch { /* Best-effort cleanup. */ }
       record.fd = undefined;
     }
+    try { record.cleanup?.(); }
+    catch (error) { record.info.error = `Cannot clean up execution plan: ${String(error)}`; }
+    finally { record.cleanup = undefined; }
     record.info.status = record.reason ?? (record.info.exitCode === 0 && !record.info.error ? "completed" : "failed");
     record.info.endedAt = new Date().toISOString();
     record.resolve();

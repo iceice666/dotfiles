@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, mkdirSync, symlinkSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Team, parseAgentKinds } from '../team.mjs';
@@ -9,7 +9,7 @@ import { RpcProcess } from '../rpc.mjs';
 async function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-team-test-'));
   const delivered = [];
-  const team = new Team({ directory, extension: '/unused', deliverParent: e => delivered.push(e) });
+  const team = new Team({ directory, workspace: directory, extension: '/unused', deliverParent: e => delivered.push(e) });
   await team.ready;
   t.after(async () => { await team.close(); rmSync(directory, { recursive: true, force: true }); });
   const messages = [];
@@ -17,6 +17,50 @@ async function fixture(t) {
   team.tokens.set('Bearer test', 'alice');
   return { team, delivered, messages };
 }
+
+test('worker cwd rejects parent, sibling-prefix, and symlink workspace escapes', async t => {
+  const { team } = await fixture(t);
+  const outside = mkdtempSync(`${team.directory}-outside-`);
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  symlinkSync(outside, join(team.directory, 'escape'));
+  const defaults = { cwd: team.directory, model: 'test/model' };
+  for (const cwd of ['..', outside, join(team.directory, 'escape')]) {
+    await assert.rejects(team.spawn({ name: 'escape-attempt', task: 'x', cwd }, defaults), /original execution workspace/);
+    assert.equal(team.agents.has('escape-attempt'), false);
+  }
+  await assert.rejects(team.spawn({ name: 'changed-default', task: 'x' }, { ...defaults, cwd: outside }), /original execution workspace/);
+});
+
+test('workers receive captured canonical workspace, never ambient widening or project approval', async t => {
+  const { team } = await fixture(t);
+  const childCwd = join(team.directory, 'nested');
+  mkdirSync(childCwd);
+  const executable = join(team.directory, 'fake-worker');
+  writeFileSync(executable, `#!${process.execPath}
+import { createInterface } from 'node:readline';
+createInterface({ input: process.stdin }).on('line', line => {
+  const q = JSON.parse(line);
+  const data = q.type === 'get_state' ? { sessionFile: JSON.stringify({ workspace: process.env.PI_EXECUTION_WORKSPACE, cwd: process.cwd(), argv: process.argv.slice(2) }) } : {};
+  process.stdout.write(JSON.stringify({ type: 'response', id: q.id, success: true, data }) + '\\n');
+});
+`, { mode: 0o700 });
+  team.executable = executable;
+  const previous = process.env.PI_EXECUTION_WORKSPACE;
+  process.env.PI_EXECUTION_WORKSPACE = tmpdir();
+  try {
+    const worker = await team.spawn({ name: 'nested-worker', task: 'x', cwd: childCwd }, { cwd: team.directory, model: 'test/model', trusted: true });
+    const state = JSON.parse(worker.sessionFile);
+    assert.equal(state.workspace, realpathSync(team.directory));
+    assert.equal(state.cwd, realpathSync(childCwd));
+    assert.ok(state.argv.includes('--no-approve'));
+    assert.ok(!state.argv.includes('--approve'));
+    assert.ok(!state.argv.includes('-e'));
+    assert.ok(!state.argv.includes('--extension'));
+  } finally {
+    if (previous === undefined) delete process.env.PI_EXECUTION_WORKSPACE;
+    else process.env.PI_EXECUTION_WORKSPACE = previous;
+  }
+});
 
 test('agent kind configuration is validated and merged with defaults', () => {
   assert.deepEqual(parseAgentKinds('{"reviewer":{"model":"custom/model","thinking":"high"}}').reviewer, { model: 'custom/model', thinking: 'high' });

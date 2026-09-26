@@ -32,7 +32,7 @@ test.skip('real Pi worker handshake, persistent process, tool registration and H
       return {action:'handled'};
     });
   }`);
-  const team = new Team({ directory: join(directory, 'team'), extension: fileURLToPath(new URL('../index.ts', import.meta.url)), deliverParent() {} });
+  const team = new Team({ directory: join(directory, 'team'), workspace: directory, extension: fileURLToPath(new URL('../index.ts', import.meta.url)), deliverParent() {} });
   // Resolve existing default model without sending a prompt or reading credentials.
   const probe = new RpcProcess('pi', ['--mode', 'rpc', '--offline', '--no-session'], {});
   try {

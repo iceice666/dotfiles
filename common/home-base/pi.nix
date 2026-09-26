@@ -87,11 +87,77 @@ let
     cp -R ${observationalMemory}/src/. "$out/observational-memory/"
   '';
 
+  sandboxPath = lib.makeBinPath (
+    with pkgs;
+    [
+      bash
+      coreutils
+      findutils
+      gnugrep
+      gnused
+      git
+      ripgrep
+      nodejs
+      bun
+      just
+    ]
+  );
+
+  restrictedPi = pkgs.writeShellScriptBin "pi" ''
+    # Never load repository code/config into the trusted host control plane.
+    for argument in "$@"; do
+      case "$argument" in
+        --|-e|--extension|--extension=*|-e?*|-a|--approve|--approve=*|--tools|--tools=*|-t|-t?*|--no-builtin-tools=*|--no-extensions=*|install|update|remove|uninstall|config)
+          echo "Restricted Pi: extension/trust/package overrides require an external operator workflow." >&2
+          exit 2
+          ;;
+      esac
+    done
+    if [ -z "''${PI_TEAM_AGENT:-}" ]; then
+      export PI_EXECUTION_WORKSPACE="$(${pkgs.coreutils}/bin/pwd -P)"
+    fi
+    export PI_TEAM_EXECUTABLE="$(${pkgs.coreutils}/bin/realpath "$0")"
+    export PI_SANDBOX_BASH=${pkgs.bash}/bin/bash
+    export PI_SANDBOX_NODE=${pkgs.nodejs}/bin/node
+    export PI_SANDBOX_GIT=${pkgs.git}/bin/git
+    export PI_SANDBOX_ENV=${pkgs.coreutils}/bin/env
+    export PI_SANDBOX_PATH=${lib.escapeShellArg sandboxPath}
+    ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+      export PI_SANDBOX_BWRAP=${pkgs.bubblewrap}/bin/bwrap
+    ''}
+    # Host-side Git UI inspection must not execute repository fsmonitor hooks.
+    export GIT_CONFIG_COUNT=2
+    export GIT_CONFIG_KEY_0=core.fsmonitor
+    export GIT_CONFIG_VALUE_0=false
+    export GIT_CONFIG_KEY_1=core.hooksPath
+    export GIT_CONFIG_VALUE_1=/dev/null
+    exec ${pkgs.pi-bin}/bin/pi --no-approve --no-builtin-tools --no-extensions \
+      ${
+        lib.concatMapStringsSep " \\\n      " (name: "-e ${piExtensions}/${name}") [
+          "agent-team"
+          "auto-mode"
+          "ask-question"
+          "background-task"
+          "todo"
+          "dot-continue"
+          "btw"
+          "status-line.ts"
+          "exa-search"
+          "analyze-image"
+          "observational-memory"
+          "cache-safe-compaction"
+          "execution-policy/bootstrap.ts"
+        ]
+      } "$@"
+  '';
+
   settingsPath = "${config.home.homeDirectory}/.pi/agent/settings.json";
 in
 {
+  _module.args.piRestricted = restrictedPi;
+
   home.packages = [
-    pkgs.pi-bin
+    restrictedPi
     pkgs.bash
   ];
 

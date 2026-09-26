@@ -50,6 +50,7 @@ export async function loadImage(input: string, cwd: string, signal: AbortSignal)
 export async function analyzeImage(
   input: AnalyzeImageInput, cwd: string, registry: Registry, parentSignal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
+  imageLoader: typeof loadImage = loadImage,
 ) {
   if (!input.question.trim() || input.question.length > 8000) throw new Error("Question must contain 1–8000 characters.");
   const selected = input.model ?? DEFAULT_MODEL;
@@ -73,7 +74,7 @@ export async function analyzeImage(
   });
   try {
     return await Promise.race([aborted, (async () => {
-      const image = await loadImage(input.path, cwd, signal);
+      const image = await imageLoader(input.path, cwd, signal);
       signal.throwIfAborted();
       let response;
       try {

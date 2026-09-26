@@ -236,7 +236,7 @@ model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 
 The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
-`cache-safe-compaction`) are owned by `common/home-base/pi/extensions/` and
+`cache-safe-compaction`, and `execution-policy`) are owned by `common/home-base/pi/extensions/` and
 installed on all Pi-enabled hosts as recursive Home Manager store links. The
 same extension tree includes the Nix-pinned upstream `pi-observational-memory`
 source, patched by `common/home-base/pi/patches/` so background memory work
@@ -249,7 +249,15 @@ extension observes only `session_compact` and must not compete for summary
 ownership.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
 Git and Node.js. Runtime state stays unmanaged. Extensions run with the invoking
-user's full permissions, including root on lumo; they are not a sandbox.
+user's full permissions, including root on lumo, as a trusted control plane.
+The managed `pi` wrapper restricts file/shell execution with Seatbelt (Darwin) or
+bubblewrap (Linux), pins the repo extension tree, and disables project executable
+resources. Background jobs, verification, and worker tools inherit the same
+workspace boundary. Auto Mode approval does not lift it; there is no escalation
+path in this version. See `common/home-base/pi/extensions/execution-policy/README.md`
+for limits, Linux validation requirements, and operator handoff. Todo tasks with
+explicit human-approved `checks` require fresh sandbox-captured evidence before
+completion; see `common/home-base/pi/extensions/todo/README.md`.
 Auto Mode defaults on for new sessions, reviews nontrivial tools through the current
 model, and routes single-use human approvals from workers through the authenticated
 team broker. `/auto off` requires parent TUI confirmation and does not disable
@@ -283,8 +291,9 @@ Images leave the host; do not send sensitive content without authorization.
 See `common/home-base/pi/extensions/analyze-image/README.md` for details.
 
 The active lumo daily audit reporter uses Pi with `cliproxyapi/gpt-6-astra`,
-`/root/.pi/agent`, read-only `read`/`ls`/`find` tools, and extension/skill/context discovery
-disabled. Evidence collection and Resend delivery are unchanged; model stderr
+`/root/.pi/agent`, and the managed restricted launcher with
+`PI_EXECUTION_TOOLS=read,ls`. Extension/skill/context discovery stays disabled;
+mandatory managed extensions are loaded explicitly by the launcher. Evidence collection and Resend delivery are unchanged; model stderr
 is saved as `pi-output.log`. `just update-pkgs` invokes Pi with the repo-local
 skill at `.agents/skills/update-pkgs/SKILL.md`.
 

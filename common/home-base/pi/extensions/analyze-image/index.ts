@@ -1,6 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { analyzeImage } from "./analyze.ts";
+import { resolve } from "node:path";
+import { analyzeImage, imageMime, MAX_IMAGE_BYTES, TIMEOUT_MS } from "./analyze.ts";
+import { sandboxRead } from "../execution-policy/io.ts";
+import { executionWorkspace } from "../execution-policy/process.mjs";
 
 export type { AnalyzeImageInput } from "./analyze.ts";
 
@@ -20,7 +23,12 @@ export default function (pi: ExtensionAPI) {
       model: Type.Optional(Type.String({ minLength: 3, maxLength: 256, description: "Configured provider/model-id with declared image input; default cliproxyapi-claude/claude-sonnet-5" })),
     }, { additionalProperties: false }),
     async execute(_id, params, signal, _onUpdate, ctx) {
-      return analyzeImage(params, ctx.cwd, ctx.modelRegistry, signal);
+      return analyzeImage(params, ctx.cwd, ctx.modelRegistry, signal, TIMEOUT_MS, async (input, cwd, abort) => {
+        const path = resolve(cwd, input.replace(/^@/, ""));
+        const data = await sandboxRead(path, cwd, executionWorkspace(), abort);
+        if (!data.length || data.length > MAX_IMAGE_BYTES) throw new Error("Image must be nonempty and at most 5 MiB.");
+        return { path, bytes: data.length, mimeType: imageMime(data), data: data.toString("base64") };
+      });
     },
   });
 }

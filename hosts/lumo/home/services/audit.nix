@@ -3,6 +3,7 @@
   dotfiles,
   lib,
   pkgs,
+  piRestricted,
   ...
 }:
 
@@ -130,7 +131,7 @@ let
       coreutils
       curl
       jq
-      pkgs.pi-bin
+      piRestricted
       sops
     ];
     text = ''
@@ -178,12 +179,12 @@ let
       export HOME=/root
       export NO_COLOR=1
       export PI_CODING_AGENT_DIR=/root/.pi/agent
+      export PI_EXECUTION_TOOLS=read,ls
 
       cd "$run_dir"
       pi --print \
         --no-session \
         --model cliproxyapi/gpt-6-astra \
-        --tools read,ls,find \
         --no-extensions \
         --no-skills \
         --no-prompt-templates \

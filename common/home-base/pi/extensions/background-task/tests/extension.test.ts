@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
-import { rmSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { stripVTControlCharacters } from "node:util";
 
 const cleanups: Array<() => Promise<void>> = [];
@@ -8,7 +9,7 @@ afterEach(async () => { for (const cleanup of cleanups.splice(0)) await cleanup(
 import { loadExtensions } from "../../agent-team/tests/sdk.ts";
 
 async function setup() {
-  const loaded = await loadExtensions([`${import.meta.dir}/../index.ts`], process.cwd());
+  const loaded = await loadExtensions([`${import.meta.dir}/fixture.ts`], process.cwd());
   expect(loaded.errors).toEqual([]);
   const ext = loaded.extensions[0];
   const messages: any[] = [], notices: string[] = [];
@@ -39,6 +40,27 @@ async function until(check: () => boolean) {
   const end = Date.now() + 5000;
   while (!check()) { if (Date.now() > end) throw new Error("Timed out"); await Bun.sleep(20); }
 }
+test("tool and slash command preserve the workspace captured at session start", async () => {
+  const s = await setup();
+  const original = realpathSync(process.env.PI_EXECUTION_WORKSPACE ?? s.ctx.cwd);
+  const alternate = mkdtempSync(join(tmpdir(), "pi-task-cwd-"));
+  try {
+    s.ctx.cwd = alternate;
+    const started: any = await s.call({ action: "start", command: 'printf "%s" "$FIXTURE_WORKSPACE"' });
+    const first = started.details.tasks[0].id;
+    await s.call({ action: "wait", id: first });
+    expect((await s.call({ action: "output", id: first })).content[0].text.endsWith(original)).toBe(true);
+    await s.command('start printf "%s" "$FIXTURE_WORKSPACE"');
+    const listed: any = await s.call({ action: "list" });
+    const second = listed.details.tasks.find((task: any) => task.id !== first).id;
+    await s.call({ action: "wait", id: second });
+    expect((await s.call({ action: "output", id: second })).content[0].text.endsWith(original)).toBe(true);
+  } finally {
+    await s.event("session_shutdown");
+    rmSync(alternate, { recursive: true, force: true });
+  }
+});
+
 test("loads in pinned Pi, starts asynchronously, requests immediate agent wakeup on completion", async () => {
   const s = await setup();
   try {

@@ -7,7 +7,7 @@ import { Team, autoModeActionId, remoteAutoModeApproval } from '../team.mjs';
 
 async function fixture(t, askUser) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-approval-test-'));
-  const team = new Team({ directory, extension: '/unused', deliverParent() {}, askUser });
+  const team = new Team({ directory, workspace: directory, extension: '/unused', deliverParent() {}, askUser });
   await team.ready;
   team.agents.set('alice', { name: 'alice', status: 'running', token: 'Bearer test', rpc: { request: async () => assert.fail('Approval must not use model messages'), stop: async () => {} } });
   team.tokens.set('Bearer test', 'alice');

@@ -8,7 +8,7 @@ import { Team } from '../team.mjs';
 async function fixture(t, askUser) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-human-test-'));
   const messages = [];
-  const team = new Team({ directory, extension: '/unused', deliverParent() {}, askUser });
+  const team = new Team({ directory, workspace: directory, extension: '/unused', deliverParent() {}, askUser });
   await team.ready;
   team.agents.set('alice', { name: 'alice', status: 'idle', token: 'Bearer test', rpc: { request: async (...args) => messages.push(args), stop: async () => {} } });
   team.tokens.set('Bearer test', 'alice');

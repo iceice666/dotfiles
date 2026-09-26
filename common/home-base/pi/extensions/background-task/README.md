@@ -63,7 +63,7 @@
 
 ## 安全
 
-任務具有目前使用者完整權限，**不是 sandbox**。此工具名稱為 `background_task`，僅攔截內建 `bash` 的權限或 sandbox extension 不會自動涵蓋它；如有此類政策，必須另外整合後才啟用。不要用背景執行繞過批准流程。
+任務透過 `execution-policy` 的共用 execution plan 執行：macOS Seatbelt／Linux bubblewrap、原始 workspace、私有暫存目錄、無 shell 網路、無繼承的主機憑證。缺少 backend／設定時拒絕執行，沒有未隔離 fallback。Auto Mode 仍審查啟動意圖，其同意不會解除 OS 邊界。管理器本身是可信主機端程式，不是隔離容器；詳見 `../execution-policy/README.md`。不要用背景執行繞過批准流程。
 
 ## 驗證
 

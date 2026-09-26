@@ -1,9 +1,11 @@
 # Auto Mode
 
 Repo-owned pre-execution guardrail, enabled by default on every fresh Pi session.
-It is **not a sandbox**: extensions, subprocesses, and the agent share the user's
-permissions. It reduces routine approval prompts without treating the model as
-an authorization authority or providing a confidentiality guarantee.
+It is **not a sandbox**: it reduces routine approval prompts without treating the
+model as an authorization authority or providing a confidentiality guarantee.
+The managed launcher separately confines file/shell subprocesses through
+`../execution-policy/README.md`; Auto Mode approval or `/auto off` never disables
+that OS boundary. Pi and trusted extension internals remain on the host.
 
 ## Controls
 
@@ -85,7 +87,8 @@ model quota; this initial hook does not add that usage to Pi's displayed tool to
   Tool fast paths assume repo-owned tools
   and built-ins retain their documented semantics.
 - No durable consent ledger is inferred from agent messages, session roles,
-  compaction, or classifier prose. Default-on workers are not sandboxed.
+  compaction, or classifier prose. Worker control planes remain on the host; their managed file/shell tools use the
+  same restricted execution boundary.
 
 ## Validation
 

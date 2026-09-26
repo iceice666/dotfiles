@@ -1,7 +1,7 @@
 import { createServer, request } from 'node:http';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
-import { mkdirSync, appendFileSync, writeFileSync, statSync } from 'node:fs';
-import { join, resolve, isAbsolute } from 'node:path';
+import { mkdirSync, appendFileSync, writeFileSync, statSync, realpathSync } from 'node:fs';
+import { join, resolve, isAbsolute, relative, sep } from 'node:path';
 import { RpcProcess } from './rpc.mjs';
 import { Observation, safeText } from './observation.mjs';
 import { NativeObservation } from './native-observation.mjs';
@@ -161,7 +161,8 @@ export function remoteAutoModeApproval(url, token, args, signal) {
   });
 }
 export class Team {
-  constructor({ directory, extension, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), kinds }) {
+  constructor({ directory, extension, workspace, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), kinds }) {
+    this.workspace = realpathSync(workspace ?? process.env.PI_EXECUTION_WORKSPACE ?? process.cwd());
     this.directory = directory; this.extension = extension; this.deliverParent = deliverParent;
     this.executable = executable; this.limit = limit; this.onChange = onChange;
     this.kinds = kinds === undefined ? parseAgentKinds() : { ...DEFAULT_AGENT_KINDS, ...validateKindPresets(kinds) };
@@ -271,8 +272,10 @@ export class Team {
     if (this.agents.has(name)) throw new Error('Name already used in this team');
     if ([...this.agents.values()].filter(active).length >= this.limit) throw new Error(`Limit of ${this.limit} live agents reached`);
     const task = text(args.task, 'task');
-    const cwd = resolve(defaults.cwd, args.cwd ?? '.');
+    const cwd = realpathSync(resolve(defaults.cwd, args.cwd ?? '.'));
     if (!statSync(cwd).isDirectory()) throw new Error('cwd must be a directory');
+    const within = relative(this.workspace, cwd);
+    if (within === '..' || within.startsWith(`..${sep}`) || isAbsolute(within)) throw new Error('Worker cwd must remain inside the original execution workspace');
     const kind = args.kind ?? 'general';
     if (typeof kind !== 'string' || !this.kinds[kind]) throw new Error(`Unknown agent kind: ${kind}`);
     const preset = this.kinds[kind];
@@ -294,11 +297,10 @@ export class Team {
       await this.ready;
       signal?.throwIfAborted();
       if (this.closing || a.status === 'stopped') throw new Error('Agent stopped during startup');
-      const cli = ['--mode', 'rpc', '--offline', '--model', model, '--thinking', thinking, '--session-dir', dir, '--name', `team:${name}`, '-e', this.extension];
-      // Do not grant a different working directory the parent's temporary trust.
-      if (cwd === resolve(defaults.cwd)) cli.push(defaults.trusted ? '--approve' : '--no-approve');
-      else cli.push('--no-approve');
-      a.rpc = new RpcProcess(this.executable, cli, { cwd, env: { ...process.env, PI_TEAM_URL: this.url, PI_TEAM_TOKEN: token, PI_TEAM_AGENT: name, PI_TEAM_PARENT_PID: String(process.pid) } }, e => this.event(a, e));
+      // The managed executable loads trusted extensions; project resources never
+      // execute in the worker's privileged control plane.
+      const cli = ['--mode', 'rpc', '--offline', '--model', model, '--thinking', thinking, '--session-dir', dir, '--name', `team:${name}`, '--no-approve'];
+      a.rpc = new RpcProcess(this.executable, cli, { cwd, env: { ...process.env, PI_EXECUTION_WORKSPACE: this.workspace, PI_TEAM_URL: this.url, PI_TEAM_TOKEN: token, PI_TEAM_AGENT: name, PI_TEAM_PARENT_PID: String(process.pid) } }, e => this.event(a, e));
       a.pid = a.rpc.child.pid;
       const state = await a.rpc.request('get_state');
       if (this.closing || a.status === 'stopped') throw new Error('Agent stopped during startup');

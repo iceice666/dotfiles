@@ -11,7 +11,8 @@ without taking ownership of unrelated local extensions.
 | `auto-mode/` | Default-on tool review using the current model, with single-use human approval and worker routing |
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
-| `todo/` | Session-backed task tracking and progress UI |
+| `todo/` | Session-backed tasks, human-approved required checks, and fingerprint-bound completion evidence |
+| `execution-policy/` | Mandatory OS-confined file/shell execution, shared by background jobs and verification |
 | `dot-continue/` | Standalone `.` means `continue` in an idle interactive conversation |
 | `btw/` | `/btw` side questions while the main agent runs, without changing its context |
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
@@ -23,8 +24,14 @@ without taking ownership of unrelated local extensions.
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
 Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
-the invoking user's permissions, including root on lumo. These extensions are
-not a sandbox. Auto Mode adds a pre-execution review guardrail, not OS isolation.
+the invoking user's permissions, including root on lumo: they are the trusted host
+control plane, not sandboxed plugins. The managed `pi` launcher now pins this
+extension tree and restricts file/shell operations with Seatbelt on macOS or
+bubblewrap on Linux. Auto Mode approval never lifts that OS boundary. See
+[execution-policy/README.md](extensions/execution-policy/README.md) for scope,
+compatibility changes, validation and limitations; `/sandbox` shows the boundary.
+User-selected CLI attachments and trusted configuration are host inputs, not
+agent tool operations. No automatic deployment/escalation path is provided.
 
 ## Auto Mode
 
@@ -48,7 +55,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in auto-mode agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image observational-memory cache-safe-compaction; do
+for entry in auto-mode agent-team ask-question background-task todo execution-policy dot-continue btw status-line.ts exa-search analyze-image observational-memory cache-safe-compaction; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"
@@ -62,8 +69,10 @@ build/switch workflows; edit the repo sources, not the installed store links.
 Do not use `pi install` to install a second copy of these extensions.
 
 Authentication, trust decisions, sessions, team archives and temporary
-background logs remain unmanaged. The Lumo audit explicitly disables extension
-discovery and is unaffected.
+background logs remain unmanaged. The Lumo audit uses the same managed launcher
+with `PI_EXECUTION_TOOLS=read,ls`; extension discovery remains disabled while the
+launcher explicitly loads the required managed tree. The audit's collection and
+delivery stay outside the agent and are unchanged.
 
 `settings.json` is only partially managed. A `piSettings` activation step merges
 the repo-owned keys (`theme`, `hideThinkingBlock`, `defaultProvider`,
@@ -71,7 +80,8 @@ the repo-owned keys (`theme`, `hideThinkingBlock`, `defaultProvider`,
 key stays runtime-owned and writable, so `/model`, `/settings` and
 `lastChangelogVersion` still persist. Each deployment restores the startup model
 from `../agent-model.nix`, shared with m5pro dsh-desktop alongside the base URL,
-model limits, and SOPS key reference. Session/project overrides remain available;
+model limits, and SOPS key reference. Session model overrides remain available;
+the managed launcher disables project settings and executable extensions;
 this is deployment-time default synchronization, not live selection syncing.
 On hosts with `features.themegen` the
 wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
@@ -152,6 +162,11 @@ Results are untrusted evidence and may be incomplete; cite URLs, and fetch the
 full source separately when needed. This is not a browser integration.
 
 ## Browser access (m5pro and Framework)
+
+The managed restricted shell cannot currently launch the host browser or reach its
+network/daemon. Browser work requires human execution outside this Pi session;
+no auto-approved fallback is provided. The installed tooling remains available
+to the operator.
 
 These two hosts additionally import `../browser.nix`: pinned `playwright-cli`,
 a `playwright-read` rendered-page Markdown helper, and the agent-neutral

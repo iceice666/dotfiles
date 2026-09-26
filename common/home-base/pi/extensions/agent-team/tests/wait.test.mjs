@@ -7,7 +7,7 @@ import { Team, remoteWait } from '../team.mjs';
 
 async function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-wait-'));
-  const team = new Team({ directory, extension: '/unused', deliverParent() {} });
+  const team = new Team({ directory, workspace: directory, extension: '/unused', deliverParent() {} });
   await team.ready;
   t.after(async () => { await team.close(); rmSync(directory, { recursive: true, force: true }); });
   for (const name of ['alice', 'bob', 'carol']) {

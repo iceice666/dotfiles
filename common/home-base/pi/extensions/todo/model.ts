@@ -1,4 +1,11 @@
+import { isAbsolute, normalize } from "node:path";
+
 export type Status = "pending" | "in_progress" | "completed";
+
+export interface Check {
+  name: string;
+  command: string;
+}
 
 export interface Todo {
 	id: number;
@@ -7,6 +14,8 @@ export interface Todo {
 	activeForm?: string;
 	category?: string;
 	blockedBy: number[];
+  checks?: Check[];
+  declaration?: { cwd: string; approvedAt: string };
 }
 
 export interface State {
@@ -16,6 +25,7 @@ export interface State {
 }
 
 export interface AddItem {
+  checks?: Check[];
 	text: string;
 	status?: Status;
 	activeForm?: string;
@@ -24,7 +34,8 @@ export interface AddItem {
 }
 
 export interface Action {
-	action: "list" | "add" | "update" | "remove" | "clear" | "prune";
+  action: "list" | "add" | "update" | "remove" | "clear" | "prune" | "verify";
+  checks?: Check[];
 	id?: number;
 	items?: AddItem[];
 	text?: string;
@@ -82,6 +93,23 @@ function dependencies(value: unknown): number[] {
 	return result;
 }
 
+export function checkedChecks(value: unknown): Check[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 10) {
+    throw new Error("checks must contain 1–10 named commands");
+  }
+  const names = new Set<string>();
+  return value.map(item => {
+    if (!record(item) || Object.keys(item).some(key => !["name", "command"].includes(key))) {
+      throw new Error("Each check must contain only name and command");
+    }
+    const name = boundedText(item.name, "check name", 100);
+    const command = boundedText(item.command, "check command", 4000);
+    if (names.has(name)) throw new Error("Check names must be unique");
+    names.add(name);
+    return { name, command };
+  });
+}
+
 /** Validate and copy every field; callers never retain mutable input references. */
 function checkedState(value: unknown): State {
 	if (!record(value) || value.version !== 1 || !positiveId(value.nextId)) {
@@ -102,6 +130,16 @@ function checkedState(value: unknown): State {
 			status: validStatus(item.status),
 			blockedBy: dependencies(item.blockedBy),
 		};
+    if (item.checks !== undefined) todo.checks = checkedChecks(item.checks);
+    if (item.declaration !== undefined) {
+      const declaration = item.declaration;
+      if (!todo.checks || !record(declaration) || typeof declaration.cwd !== "string" || controls.test(declaration.cwd) ||
+        !isAbsolute(declaration.cwd) || normalize(declaration.cwd) !== declaration.cwd ||
+        typeof declaration.approvedAt !== "string" || !Number.isFinite(Date.parse(declaration.approvedAt))) {
+        throw new Error("Invalid check declaration approval");
+      }
+      todo.declaration = { cwd: declaration.cwd, approvedAt: declaration.approvedAt };
+    }
 		if (item.activeForm !== undefined) todo.activeForm = boundedText(item.activeForm, "activeForm", 100);
 		if (item.category !== undefined) todo.category = boundedText(item.category, "category", 60);
 		todos.push(todo);
@@ -144,12 +182,16 @@ export function parseState(value: unknown): State | undefined {
 }
 
 /** Every action is an atomic transaction, including reverse dependency checks. */
-export function applyAction(state: State, action: Action): State {
+export function applyAction(state: State, action: Action, verified: ReadonlySet<number> = new Set()): State {
 	const next = checkedState(state);
 	if (!record(action)) throw new Error("Invalid task action");
+  if (Object.keys(action).some(key => !["action", "id", "items", "text", "status", "activeForm", "category", "blockedBy", "checks"].includes(key))) {
+    throw new Error("Unknown task action field (verification evidence cannot be supplied)");
+  }
+  if (action.checks !== undefined && action.action !== "add") throw new Error("Checks are immutable and only supported on add");
 	if (action.items !== undefined) {
 		if (action.action !== "add") throw new Error("items is only supported for add");
-		if ([action.id, action.text, action.status, action.activeForm, action.category, action.blockedBy].some(value => value !== undefined)) {
+		if ([action.id, action.text, action.status, action.activeForm, action.category, action.blockedBy, action.checks].some(value => value !== undefined)) {
 			throw new Error("items cannot be combined with single-task fields");
 		}
 		if (!Array.isArray(action.items) || !action.items.length || action.items.length > MAX_TODOS) {
@@ -159,10 +201,10 @@ export function applyAction(state: State, action: Action): State {
 		if (next.nextId + action.items.length > 1_000_000) throw new Error("Task IDs exhausted");
 		let batch = next;
 		for (const item of action.items) {
-			if (!record(item) || Object.keys(item).some(key => !["text", "status", "activeForm", "category", "blockedBy"].includes(key))) {
-				throw new Error("Each entry in items must be a task object containing only text, status, activeForm, category, and blockedBy");
+			if (!record(item) || Object.keys(item).some(key => !["text", "status", "activeForm", "category", "blockedBy", "checks"].includes(key))) {
+				throw new Error("Each entry in items must be a task object containing only text, status, activeForm, category, blockedBy, and checks");
 			}
-			batch = applyAction(batch, { action: "add", text: item.text, status: item.status, activeForm: item.activeForm, category: item.category, blockedBy: item.blockedBy });
+			batch = applyAction(batch, { action: "add", text: item.text, status: item.status, activeForm: item.activeForm, category: item.category, blockedBy: item.blockedBy, checks: item.checks }, verified);
 		}
 		return batch;
 	}
@@ -183,12 +225,18 @@ export function applyAction(state: State, action: Action): State {
 				const category = actionCategory(action.category);
 				if (category !== undefined) todo.category = category;
 			}
+      if (action.checks !== undefined) {
+        todo.checks = checkedChecks(action.checks);
+        if (todo.status === "completed") throw new Error("A gated task must be verified before completion");
+      }
 			next.todos.push(todo);
 			break;
 		}
 		case "update": {
 			const todo = next.todos.find((item) => item.id === action.id);
 			if (!positiveId(action.id) || !todo) throw new Error("Task ID not found");
+      if (todo.checks && action.text !== undefined && action.text !== todo.text) throw new Error("A gated task's approved description is immutable");
+      if (todo.checks && action.status === "completed" && !verified.has(todo.id)) throw new Error("Run todo verify successfully on the current worktree before completing this task");
 			if (action.text !== undefined) todo.text = boundedText(action.text, "text", 200);
 			if (action.status !== undefined) todo.status = validStatus(action.status);
 			if (action.activeForm !== undefined) todo.activeForm = boundedText(action.activeForm, "activeForm", 100);
@@ -204,6 +252,8 @@ export function applyAction(state: State, action: Action): State {
 			if (!positiveId(action.id) || !next.todos.some((todo) => todo.id === action.id)) {
 				throw new Error("Task ID not found");
 			}
+      const target = next.todos.find(todo => todo.id === action.id)!;
+      if (target.checks && (target.status !== "completed" || !verified.has(target.id))) throw new Error("Cannot remove an unverified gated task");
 			if (next.todos.some((todo) => todo.blockedBy.includes(action.id!))) {
 				throw new Error("Cannot delete a task that other tasks still depend on");
 			}
@@ -211,9 +261,11 @@ export function applyAction(state: State, action: Action): State {
 			break;
 		}
 		case "clear":
+      if (next.todos.some(todo => todo.checks && (todo.status !== "completed" || !verified.has(todo.id)))) throw new Error("Cannot clear unverified gated tasks");
 			next.todos = [];
 			break;
 		case "prune": {
+      if (next.todos.some(todo => todo.checks && todo.status === "completed" && !verified.has(todo.id))) throw new Error("Cannot prune unverified gated tasks");
 			const removed = new Set(next.todos.filter((todo) => todo.status === "completed").map((todo) => todo.id));
 			next.todos = next.todos.filter((todo) => !removed.has(todo.id));
 			for (const todo of next.todos) todo.blockedBy = todo.blockedBy.filter((id) => !removed.has(id));
@@ -234,6 +286,6 @@ export function formatTodos(state: State, options: { unfinishedOnly?: boolean; i
 	return todos.map((todo) => {
 		const blocked = todo.blockedBy.length ? `; depends on: ${todo.blockedBy.map((id) => `#${id}`).join(", ")}` : "";
 		const category = todo.category === undefined ? "" : ` [Category: ${todo.category}]`;
-		return `#${todo.id} [${labels[todo.status]}]${category} ${todo.text}${blocked}`;
+		return `#${todo.id} [${labels[todo.status]}]${category} ${todo.text}${blocked}${todo.checks ? `; verification required: ${todo.checks.map(check => check.name).join(", ")}${todo.declaration ? ` (approved cwd: ${todo.declaration.cwd})` : " (blocked: missing declaration approval)"}` : ""}`;
 	}).join("\n");
 }

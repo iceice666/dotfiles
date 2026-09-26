@@ -3,12 +3,13 @@ import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, 
 import { getEventListeners } from "node:events";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { TaskManager, type TaskInfo } from "../manager";
+import { TaskManager, type TaskInfo, type PlanFactory } from "../manager";
+import { fixturePlan } from "./fixture";
 
 const managers: TaskManager[] = [];
 const logDirectories = new Set<string>();
-function manager(callback?: (task: TaskInfo) => void): TaskManager {
-  const instance = new TaskManager(callback);
+function manager(callback?: (task: TaskInfo) => void, plan: PlanFactory = fixturePlan): TaskManager {
+  const instance = new TaskManager(callback, { workspace: tmpdir(), plan });
   managers.push(instance);
   return instance;
 }
@@ -36,6 +37,64 @@ afterEach(async () => {
 });
 
 describe("TaskManager", () => {
+  test("uses the plan's executable, arguments, environment, and immutable workspace", async () => {
+    let cleaned = 0;
+    const inputs: Array<{ workspace: string }> = [];
+    const instance = manager(undefined, input => {
+      inputs.push(input);
+      return {
+        command: "/bin/bash", args: ["-c", 'printf "%s|%s" "$PLANNED" "${PI_TEAM_TOKEN-unset}"'],
+        options: { cwd: input.cwd, env: { PLANNED: "only-plan" } },
+        cleanup: () => { cleaned++; },
+      };
+    });
+    const previous = process.env.PI_TEAM_TOKEN;
+    process.env.PI_TEAM_TOKEN = "must-not-leak";
+    try {
+      const task = instance.start({ command: "ignored by fixture", cwd: tmpdir() });
+      expect((await instance.wait(task.id)).task.status).toBe("completed");
+      expect(instance.output(task.id)).toBe("only-plan|unset");
+      expect(inputs[0].workspace).toBe(realpathSync(tmpdir()));
+      expect(cleaned).toBe(1);
+      await instance.shutdown();
+      expect(cleaned).toBe(1);
+    } finally {
+      if (previous === undefined) delete process.env.PI_TEAM_TOKEN;
+      else process.env.PI_TEAM_TOKEN = previous;
+    }
+  });
+
+  test("plan failures fail closed and clean up synchronous and asynchronous spawn failures", async () => {
+    const denied = manager(undefined, () => { throw new Error("backend unavailable"); });
+    expect(() => denied.start({ command: "true", cwd: tmpdir() })).toThrow("backend unavailable");
+    expect(denied.list()).toEqual([]);
+    for (const command of ["invalid\0executable", "/nonexistent-pi-task-executable"]) {
+      let cleaned = 0;
+      const instance = manager(undefined, input => ({
+        command, args: [], options: { cwd: input.cwd, env: {} }, cleanup: () => { cleaned++; },
+      }));
+      if (command.includes("\0")) expect(() => instance.start({ command: "true", cwd: tmpdir() })).toThrow();
+      else {
+        const task = instance.start({ command: "true", cwd: tmpdir() });
+        expect((await instance.wait(task.id)).task.status).toBe("failed");
+      }
+      expect(cleaned).toBe(1);
+      await instance.shutdown();
+      expect(cleaned).toBe(1);
+    }
+  });
+
+  test("plan cleanup runs once after timeout and shutdown", async () => {
+    let cleaned = 0;
+    const instance = manager(undefined, input => ({ ...fixturePlan(input), cleanup: () => { cleaned++; } }));
+    const first = instance.start({ command: "sleep 30", cwd: tmpdir(), timeout: 0.01 });
+    expect((await instance.wait(first.id)).task.status).toBe("timed_out");
+    expect(cleaned).toBe(1);
+    instance.start({ command: "sleep 30", cwd: tmpdir() });
+    await instance.shutdown();
+    expect(cleaned).toBe(2);
+  });
+
   test("wait observes completion and failure, including already finished jobs", async () => {
     const instance = manager();
     const task = instance.start({ command: "printf ready; exit 7", cwd: tmpdir() });
@@ -100,7 +159,7 @@ describe("TaskManager", () => {
     expect((instance as any).records.get(task.id).waiters.size).toBe(0);
   });
 
-  test("resolves Bash from PATH instead of assuming /bin/bash", async () => {
+  test("fixture plan resolves Bash from its explicit PATH", async () => {
     const directory = mkdtempSync(join(tmpdir(), "pi-task-path-"));
     const previousPath = process.env.PATH;
     const executable = Bun.which("bash");
