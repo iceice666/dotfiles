@@ -234,7 +234,7 @@ After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5`.
 
-The repo-owned Pi extensions (`agent-team`, `ask-question`, `background-task`,
+The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
 `cache-safe-compaction`) are owned by `common/home-base/pi/extensions/` and
 installed on all Pi-enabled hosts as recursive Home Manager store links. The
@@ -250,6 +250,11 @@ ownership.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
 Git and Node.js. Runtime state stays unmanaged. Extensions run with the invoking
 user's full permissions, including root on lumo; they are not a sandbox.
+Auto Mode defaults on for new sessions, reviews nontrivial tools through the current
+model, and routes single-use human approvals from workers through the authenticated
+team broker. `/auto off` requires parent TUI confirmation and does not disable
+workers. It has no persistent approval cache or writable policy config; see
+`common/home-base/pi/extensions/auto-mode/README.md` for privacy and enforcement limits.
 See `common/home-base/pi/README.md` for first-adoption backups and development.
 `/btw <question>` runs a separate tool-free call using the selected model and a
 bounded conversation snapshot while the main agent continues. Its persisted

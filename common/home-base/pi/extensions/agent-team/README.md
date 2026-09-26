@@ -136,6 +136,26 @@ team questions and prevents stale answers from reaching a replacement session.
 HTTP validates question fields before queuing. Question requests are limited to
 24,000 serialized characters, 12 options, and 12,000 characters per question.
 
+### Internal auto-mode approval bridge
+
+The repo-owned auto-mode gate uses the authenticated, internal
+`auto_mode_approve` broker operation for worker approvals. It is **not a model
+tool** and does not use `agent_reply` or model-visible messages as authorization.
+The worker waits for the real parent's shared question UI; the first option is
+reject. Only the exact, single “allow this operation once” selection approves.
+Custom text, refusal, unavailable UI, errors, disconnect, worker stop, shutdown,
+and the five-minute deadline deny the operation. Ordinary `agent_ask` remains
+asynchronous and unchanged.
+
+`team.mjs` exports `autoModeActionId(toolName, input, cwd)` and
+`remoteAutoModeApproval(url, token, { actionId, toolName, input, cwd }, signal)`.
+The action ID is SHA-256 over `JSON.stringify({ toolName, input, cwd })`. The
+broker validates it and displays the complete original arguments, tool, cwd,
+worker identity, and ID. Requests exceeding the 12,000-character question limit
+are rejected, never truncated. The response is `{ approved, actionId }`; the
+gate must match its original action ID and recheck cancellation before execution.
+This bridges human approval, not filesystem or process isolation.
+
 ## Defaults and lifecycle
 
 ### Agent kinds

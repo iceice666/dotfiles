@@ -8,6 +8,7 @@ without taking ownership of unrelated local extensions.
 | Extension | Purpose |
 |---|---|
 | `agent-team/` | Persistent Pi RPC workers, team messaging, explicit waits and observation UI |
+| `auto-mode/` | Default-on tool review using the current model, with single-use human approval and worker routing |
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed task tracking and progress UI |
@@ -23,7 +24,20 @@ The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm instal
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
 Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
 the invoking user's permissions, including root on lumo. These extensions are
-not a sandbox or automatic command-approval system.
+not a sandbox. Auto Mode adds a pre-execution review guardrail, not OS isolation.
+
+## Auto Mode
+
+Auto Mode is enabled by default in new sessions and follows the selected session
+model for independent, tool-free review. Ordinary workspace reads/writes and local
+coordination pass locally; shell commands, background command starts, external
+requests, and unknown tools receive review. Ambiguous actions request one real
+human approval, including worker requests through the team broker. Rejected,
+cancelled, unavailable, or timed-out approvals do not execute. `/auto status`,
+`/auto on`, and parent-only confirmed `/auto off` control the current session.
+No approval cache or writable policy configuration is used. See
+[auto-mode/README.md](extensions/auto-mode/README.md) for data transmission,
+limits, test commands, and required manual smoke checks.
 
 ## First adoption
 
@@ -34,7 +48,7 @@ these managed entries outside the auto-discovery directory. For example:
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup"
-for entry in agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image observational-memory cache-safe-compaction; do
+for entry in auto-mode agent-team ask-question background-task todo dot-continue btw status-line.ts exa-search analyze-image observational-memory cache-safe-compaction; do
   source="$HOME/.pi/agent/extensions/$entry"
   if [ -e "$source" ] || [ -L "$source" ]; then
     mv "$source" "$backup/"

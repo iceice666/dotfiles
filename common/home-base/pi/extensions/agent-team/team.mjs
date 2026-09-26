@@ -1,7 +1,7 @@
 import { createServer, request } from 'node:http';
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { mkdirSync, appendFileSync, writeFileSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, isAbsolute } from 'node:path';
 import { RpcProcess } from './rpc.mjs';
 import { Observation, safeText } from './observation.mjs';
 import { NativeObservation } from './native-observation.mjs';
@@ -115,12 +115,57 @@ export function remoteWait(url, token, args, signal) {
     req.end(JSON.stringify({ operation: 'agent_wait', args }));
   });
 }
+const AUTO_MODE_APPROVAL_TIMEOUT = 300000;
+const APPROVE_ONCE = '僅允許這次操作';
+export function autoModeActionId(toolName, input, cwd) {
+  return createHash('sha256').update(JSON.stringify({ toolName, input, cwd })).digest('hex');
+}
+function approvalQuestion(args, who) {
+  if (!args || typeof args.toolName !== 'string' || !/^[a-z][a-z0-9_]{0,79}$/.test(args.toolName)) throw new Error('Invalid approval tool name');
+  if (typeof args.cwd !== 'string' || !isAbsolute(args.cwd) || args.cwd.length > 4096) throw new Error('Approval cwd must be an absolute path');
+  if (!args.input || typeof args.input !== 'object' || Array.isArray(args.input)) throw new Error('Approval input must be an object');
+  if (typeof args.actionId !== 'string' || !/^[a-f0-9]{64}$/.test(args.actionId) || args.actionId !== autoModeActionId(args.toolName, args.input, args.cwd)) throw new Error('Approval action ID does not match the exact action');
+  // Never truncate: the human must see every argument that will execute.
+  return userQuestion({
+    question: `Auto-mode 操作批准\nWorker: ${who}\nTool: ${args.toolName}\nCwd: ${args.cwd}\nAction ID: ${args.actionId}\n完整工具參數：\n${JSON.stringify(args.input, null, 2)}`,
+    options: [{ label: '拒絕' }, { label: APPROVE_ONCE }],
+  });
+}
+/** Internal extension transport, deliberately not registered as a model tool. */
+export function remoteAutoModeApproval(url, token, args, signal) {
+  const actionId = args?.actionId;
+  const denied = { approved: false, actionId };
+  return new Promise(resolve => {
+    if (signal?.aborted) { resolve(denied); return; }
+    let req, timer;
+    const finish = value => { clearTimeout(timer); resolve(value); };
+    try {
+      approvalQuestion(args, process.env.PI_TEAM_AGENT || 'worker');
+      req = request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: token }, signal }, res => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', chunk => { body += chunk; if (body.length > 4096) req.destroy(new Error('Approval response too large')); });
+        res.on('error', () => finish(denied));
+        res.on('end', () => {
+          try {
+            const { result } = JSON.parse(body);
+            finish(res.statusCode === 200 && !signal?.aborted && result?.approved === true && result.actionId === actionId
+              ? { approved: true, actionId } : denied);
+          } catch { finish(denied); }
+        });
+      });
+      timer = setTimeout(() => req.destroy(new Error('Approval timed out')), AUTO_MODE_APPROVAL_TIMEOUT);
+      req.on('error', () => finish(denied));
+      req.end(JSON.stringify({ operation: 'auto_mode_approve', args }));
+    } catch { req?.destroy(); finish(denied); }
+  });
+}
 export class Team {
   constructor({ directory, extension, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), kinds }) {
     this.directory = directory; this.extension = extension; this.deliverParent = deliverParent;
     this.executable = executable; this.limit = limit; this.onChange = onChange;
     this.kinds = kinds === undefined ? parseAgentKinds() : { ...DEFAULT_AGENT_KINDS, ...validateKindPresets(kinds) };
-    this.askUser = askUser; this.userQuestions = new Map();
+    this.askUser = askUser; this.userQuestions = new Map(); this.approvals = new Map();
     this.agents = new Map(); this.tokens = new Map(); this.records = []; this.closing = false;
     this.waiters = new Set();
     mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -381,13 +426,49 @@ export class Team {
     try { await this.deliver(reply); this.record('accepted', { message_id: reply.id }); }
     catch (error) { this.record('delivery_failed', { message_id: reply.id, error: String(error.message) }); }
   }
+  async approveAction(who, args, signal) {
+    const question = approvalQuestion(args, who);
+    const actionId = args.actionId;
+    if (this.approvals.size >= 32) throw new Error('Too many pending approvals');
+    const controller = new AbortController();
+    const id = randomUUID();
+    const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+    const pending = { from: who, controller };
+    this.approvals.set(id, pending);
+    const timer = setTimeout(() => controller.abort(), AUTO_MODE_APPROVAL_TIMEOUT);
+    let onAbort;
+    pending.task = (async () => {
+      try {
+        if (combined.aborted) return { approved: false, actionId };
+        const response = await Promise.race([
+          Promise.resolve().then(() => combined.aborted ? undefined : this.askUser(question, combined, who)),
+          new Promise(resolve => { onAbort = () => resolve(undefined); combined.addEventListener('abort', onAbort, { once: true }); }),
+        ]);
+        const answer = response?.answers?.[0];
+        const approved = !combined.aborted && !this.closing
+          && (who === 'parent' || active(this.agents.get(who) ?? { status: 'stopped' }))
+          && response?.status === 'answered' && response.answers.length === 1
+          && answer?.question === question.question && Array.isArray(answer.selected)
+          && answer.selected.length === 1 && answer.selected[0] === APPROVE_ONCE
+          && answer.customText === undefined;
+        return { approved, actionId };
+      } catch { return { approved: false, actionId }; }
+      finally {
+        clearTimeout(timer);
+        if (onAbort) combined.removeEventListener('abort', onAbort);
+        this.approvals.delete(id);
+      }
+    })();
+    return pending.task;
+  }
   cancelUserQuestions(who) {
-    for (const pending of this.userQuestions.values()) if (!who || pending.from === who) pending.controller.abort();
+    for (const pending of [...this.userQuestions.values(), ...this.approvals.values()]) if (!who || pending.from === who) pending.controller.abort();
   }
   async call(who, operation, args = {}, signal) {
     if (this.closing) throw new Error('Team shutting down');
     if (who !== 'parent' && !active(this.agents.get(who) ?? { status: 'stopped' })) throw new Error('Unknown sender');
     switch (operation) {
+      case 'auto_mode_approve': return this.approveAction(who, args, signal);
       case 'agent_list': return this.list();
       case 'agent_wait': return this.wait(who, args, signal);
       case 'agent_send': return this.send(who, args.to, args.message);
@@ -441,7 +522,7 @@ export class Team {
     this.closing = true;
     this.notifyWaiters();
     this.cancelUserQuestions();
-    await Promise.all([...this.userQuestions.values()].map(p => p.task));
+    await Promise.all([...this.userQuestions.values(), ...this.approvals.values()].map(p => p.task));
     await this.ready;
     await Promise.all([...this.agents.keys()].map(name => this.stop(name)));
     this.server.closeAllConnections();

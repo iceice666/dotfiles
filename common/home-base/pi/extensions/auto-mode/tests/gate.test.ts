@@ -36,7 +36,10 @@ describe("local policy", () => {
   });
   test("alternate SDK paths are rejected rather than misclassified", () => {
     for (const path of ["file:///tmp/outside", "file:///tmp/%2epi/auth.json", "@file:///tmp/outside", "space\u00a0name"]) {
-      expect(() => evaluatePolicy(action("write", { path, content: "x" }))).toThrow();
+      let blocked = false;
+      try { blocked = evaluatePolicy(action("write", { path, content: "x" })).decision === "block"; }
+      catch { blocked = true; }
+      expect(blocked).toBe(true);
     }
   });
   test("outside-workspace controls still require explicit human review", () => {
