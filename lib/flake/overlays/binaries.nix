@@ -10,7 +10,7 @@ final: prev: {
   ) { };
   default-browser = final.callPackage (dotfiles + /pkgs/default-browser) { };
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
-  framework-eww-state = final.callPackage (dotfiles + /pkgs/framework-eww-state) { };
+  framework-shell-state = final.callPackage (dotfiles + /pkgs/framework-shell-state) { };
   helium-bin = final.callPackage (dotfiles + /pkgs/helium-bin) { };
   oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
   pi-bin = final.callPackage (dotfiles + /pkgs/pi-bin) { };

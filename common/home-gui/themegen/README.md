@@ -27,7 +27,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
   The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
   them up through global theme auto-discovery, and `common/home-base/pi.nix`
   selects `themegen-light/themegen-dark` whenever those files are installed.
-- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and Eww bar templates. GTK templates become a standalone package on Framework.
+- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and AGS bar templates. GTK templates become a standalone package on Framework.
 - `themegen/m5pro/`: macOS-only Equibop template.
 - `common/home-gui/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.

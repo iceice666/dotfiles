@@ -99,7 +99,7 @@ let
             blocky-bin
             cliproxyapi-bin
             cliproxyapi-account-quota
-            framework-eww-state
+            framework-shell-state
             ;
         };
     }) systems

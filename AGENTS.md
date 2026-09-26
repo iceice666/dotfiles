@@ -41,7 +41,7 @@ common/              # shared modules injected by mk-host into every host
 themegen/            # root-level plain theme templates, split by common/host
   common/            # shared $HOME-relative templates for shells/editors/terminal
   m5pro/             # macOS-only $HOME-relative templates
-  framework/         # Linux-only $HOME-relative templates for GTK/Qt/fuzzel/Eww
+  framework/         # Linux-only $HOME-relative templates for GTK/Qt/fuzzel/AGS
   preview.html       # HTML palette preview template
 
 hosts/               # per-host entrypoints
@@ -54,7 +54,7 @@ hosts/               # per-host entrypoints
     host.nix         # feature manifest
     overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
-    home/            # GUI/Niri/Eww Home Manager modules
+    home/            # GUI/Niri/AGS Home Manager modules
     wallpaper.png    # symlink → assets/mzen.png
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
@@ -82,7 +82,7 @@ pkgs/                # overlay packages
   cliproxyapi-bin/    # official prebuilt CLIProxyAPI releases
   default-browser/   # macOS default browser helper
   equibop-bin/       # Equibop binary
-  framework-eww-state/ # Rust state daemon/action helper for Framework Eww
+  framework-shell-state/ # Rust state daemon/action helper for Framework AGS
   helium-bin/        # Helium Browser package (macOS DMG / Linux AppImage)
   pi-bin/           # official prebuilt Pi coding agent, including Linux loader wrapper
   rime-frost/        # Rime Frost schema data
@@ -175,8 +175,8 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 The overlay is split into four focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
-- `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`, `eww` transparency patch. Attributes are omitted (not thrown) on non-Linux.
+- `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-shell-state`, `helium-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 
 The Framework-only kernel pin (`linux_zen_7_0`, `linuxPackages_zen_7_0`) lives in
@@ -608,7 +608,7 @@ Canonical module shape:
 
 - Register custom packages once in the overlay in `flake.nix`.
 - New derivations live under `pkgs/<name>/default.nix`.
-- Current overlay packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-eww-state`, `helium-bin`, `kaguya-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
+- Current overlay packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-shell-state`, `helium-bin`, `kaguya-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - Derivations should set `meta.mainProgram` and `meta.platforms`.
 - Respect `runHook pre*` and `runHook post*` in custom phases.
 - Use `lib.optionals` for platform-specific inputs.
@@ -649,7 +649,7 @@ Canonical module shape:
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
-- `hosts/framework/home/eww/` runs the Framework Eww status bar; theme files come from `themegen/framework/.config/eww/`.
+- `hosts/framework/home/ags/` runs the Framework AGS 2 / Astal GTK3 shell (`framework-ags.service`), with per-monitor bars, tray, calendar, and control center. Theme files come from `themegen/framework/.config/ags/`. `pkgs/framework-shell-state/` emits UI-neutral JSON-line state patches and handles media keys / notification tracking. See the AGS directory's README for validation and migration notes.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
 - `hosts/m5pro/home/appearance.nix` builds and launches the macOS Swift appearance scheduler from `appearance-scheduler.swift`.

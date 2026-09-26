@@ -6,11 +6,11 @@
   unstablePkgs,
   avatarImage ? null,
   desktopWallpaper,
-  ewwNotificationMarkRead,
-  ewwNotificationMarkUnread,
-  ewwReload,
-  ewwState,
-  ewwStateConfig,
+  shellNotificationMarkRead,
+  shellNotificationMarkUnread,
+  agsReload,
+  shellState,
+  shellStateConfig,
   ...
 }:
 
@@ -518,8 +518,9 @@ let
     '';
 
   installThemegenAppearance = mode: ''
-    mkdir -p "$HOME/.config/eww" "$HOME/.config/fuzzel" "$HOME/.config/niri" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
-    ln -sfn "theme-${mode}.scss" "$HOME/.config/eww/theme.scss"
+    mkdir -p "$HOME/.config/ags" "$HOME/.config/fuzzel" "$HOME/.config/niri" "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+    ln -sfn "theme-${mode}.scss" "$HOME/.config/ags/theme.scss"
+    ln -sfn "style-${mode}.css" "$HOME/.config/ags/style.css"
     ln -sfn "themegen-${mode}.ini" "$HOME/.config/fuzzel/fuzzel.ini"
     ln -sfn "theme-${mode}.kdl" "$HOME/.config/niri/theme.kdl"
     ln -sfn "themegen-${mode}.conf" "$HOME/.config/qt5ct/colors/themegen.conf"
@@ -547,7 +548,7 @@ let
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-size ${toString cursorThemeSize}
 
       ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service >/dev/null 2>&1 || true
-      ${ewwReload}
+      ${agsReload}
     '';
 
   frameworkPostSwitch = pkgs.writeShellApplication {
@@ -604,8 +605,8 @@ let
         "@brightnessctl@"
         "@clipboardManager@"
         "@equibop@"
-        "@ewwState@"
-        "@ewwStateConfig@"
+        "@shellState@"
+        "@shellStateConfig@"
         "@fuzzel@"
         "@kitty@"
         "@grim@"
@@ -622,8 +623,8 @@ let
         "${pkgs.brightnessctl}/bin/brightnessctl"
         (toString clipboardManager)
         (lib.getExe pkgs.equibop-bin)
-        ewwState
-        (toString ewwStateConfig)
+        shellState
+        (toString shellStateConfig)
         "${pkgs.fuzzel}/bin/fuzzel"
         "${openKitty}/bin/open-niri-kitty"
         "${pkgs.grim}/bin/grim"
@@ -639,7 +640,7 @@ let
       (builtins.readFile ./niri-config.kdl);
 in
 {
-  imports = [ ./eww ];
+  imports = [ ./ags ];
 
   _module.args.lockScreen = lockScreen;
 
@@ -696,12 +697,12 @@ in
       ConditionEnvironment = [ "WAYLAND_DISPLAY" ];
       PartOf = [ "graphical-session.target" ];
       After = [
-        "framework-eww.service"
+        "framework-ags.service"
         "niri.service"
         "graphical-session.target"
       ];
       Wants = [
-        "framework-eww.service"
+        "framework-ags.service"
         "graphical-session.target"
       ];
     };
@@ -850,8 +851,6 @@ in
         }}
         ;;
     esac
-
-    ${ewwReload}
   '';
 
   xdg = {
@@ -971,10 +970,10 @@ in
         max-history = 50;
         icons = true;
         max-icon-size = 24;
-        on-button-left = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
-        on-button-right = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
-        on-notify = "exec ${ewwNotificationMarkUnread} \"$id\"";
-        on-touch = "exec ${ewwNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-button-left = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
+        on-button-right = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
+        on-notify = "exec ${shellNotificationMarkUnread} \"$id\"";
+        on-touch = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
         "mode=do-not-disturb" = {
           invisible = true;
         };

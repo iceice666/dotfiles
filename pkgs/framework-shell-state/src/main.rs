@@ -21,7 +21,6 @@ use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 type Vars = BTreeMap<String, String>;
-const FORCE_RESYNC_VAR: &str = "__force_resync";
 const NOTIFICATION_PREVIEW_CHARS: usize = 96;
 
 #[derive(Debug, Parser)]
@@ -36,8 +35,6 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum CliCommand {
     Daemon,
-    Reload,
-    SeedNiriGroups,
     Refresh {
         domain: RefreshDomain,
     },
@@ -128,7 +125,6 @@ enum NotificationCommand {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Config {
-    eww_config_dir: PathBuf,
     home: PathBuf,
     preferred_interface: Option<String>,
     commands: CommandPaths,
@@ -138,7 +134,6 @@ struct Config {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CommandPaths {
-    eww: PathBuf,
     niri: PathBuf,
     wpctl: PathBuf,
     pactl: PathBuf,
@@ -149,7 +144,6 @@ struct CommandPaths {
     nmcli: PathBuf,
     makoctl: PathBuf,
     pavucontrol: PathBuf,
-    systemctl: PathBuf,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -189,7 +183,6 @@ struct NiriWindow {
 #[derive(Debug)]
 struct NiriSnapshot {
     groups: Vec<NiriGroup>,
-    outputs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -252,8 +245,6 @@ fn main() -> Result<()> {
 
     match cli.command {
         CliCommand::Daemon => run_daemon(cfg),
-        CliCommand::Reload => reload_eww(&cfg),
-        CliCommand::SeedNiriGroups => seed_niri_groups(),
         CliCommand::Refresh { domain } => refresh_domain(&cfg, domain),
         CliCommand::FocusWindow { id } => {
             status(
@@ -277,13 +268,6 @@ fn main() -> Result<()> {
     }
 }
 
-fn seed_niri_groups() -> Result<()> {
-    println!("[]");
-    loop {
-        thread::sleep(Duration::from_secs(3600));
-    }
-}
-
 fn read_config(path: &Path) -> Result<Config> {
     let text = fs::read_to_string(path)
         .with_context(|| format!("failed to read config {}", path.display()))?;
@@ -292,8 +276,6 @@ fn read_config(path: &Path) -> Result<Config> {
 }
 
 fn run_daemon(cfg: Arc<Config>) -> Result<()> {
-    wait_for_eww(&cfg)?;
-
     let (tx, rx) = mpsc::channel::<Vars>();
     spawn_niri_thread(cfg.clone(), tx.clone());
     spawn_audio_thread(cfg.clone(), tx.clone());
@@ -306,69 +288,51 @@ fn run_daemon(cfg: Arc<Config>) -> Result<()> {
     spawn_theme_thread(cfg.clone(), tx.clone());
     spawn_notifications_thread(cfg.clone(), tx);
 
-    update_loop(cfg, rx)
+    update_loop(rx, &mut std::io::stdout().lock())
 }
 
-fn update_loop(cfg: Arc<Config>, rx: mpsc::Receiver<Vars>) -> Result<()> {
-    let mut desired = Vars::new();
+fn update_loop(rx: mpsc::Receiver<Vars>, writer: &mut impl Write) -> Result<()> {
     let mut applied = Vars::new();
-    let mut force_resync = false;
 
-    loop {
-        match rx.recv_timeout(Duration::from_millis(250)) {
-            Ok(vars) => {
-                force_resync |= merge_desired_vars(&mut desired, vars);
-                while let Ok(vars) = rx.try_recv() {
-                    force_resync |= merge_desired_vars(&mut desired, vars);
-                }
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
-            Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(()),
+    while let Ok(mut vars) = rx.recv() {
+        while let Ok(pending) = rx.try_recv() {
+            vars.extend(pending);
         }
-
-        if force_resync {
-            applied.clear();
-            force_resync = false;
-        }
-
-        let changed = desired
-            .iter()
-            .filter(|(name, value)| applied.get(*name) != Some(*value))
-            .map(|(name, value)| (name.clone(), value.clone()))
-            .collect::<Vars>();
-
-        if changed.is_empty() {
-            continue;
-        }
-
-        if !eww_ping(&cfg) {
-            thread::sleep(Duration::from_millis(500));
-            continue;
-        }
-
-        match eww_update(&cfg, &changed) {
-            Ok(()) => applied.extend(changed),
-            Err(error) => {
-                eprintln!("failed to update eww variables: {error:#}");
-                thread::sleep(Duration::from_millis(500));
-            }
-        }
+        let changed = changed_vars(&applied, vars);
+        write_patch(writer, &changed)?;
+        applied.extend(changed);
     }
+    Ok(())
 }
 
-fn merge_desired_vars(desired: &mut Vars, mut vars: Vars) -> bool {
-    let force_resync = vars.remove(FORCE_RESYNC_VAR).is_some();
-    desired.extend(vars);
-    force_resync
+fn changed_vars(applied: &Vars, vars: Vars) -> Vars {
+    vars.into_iter()
+        .filter(|(name, value)| applied.get(name) != Some(value))
+        .collect()
+}
+
+fn emit_patch(vars: &Vars) -> Result<()> {
+    write_patch(&mut std::io::stdout().lock(), vars)
+}
+
+fn write_patch(writer: &mut impl Write, vars: &Vars) -> Result<()> {
+    if vars.is_empty() {
+        return Ok(());
+    }
+    let mut line = serde_json::to_vec(vars)?;
+    line.push(b'\n');
+    writer
+        .write_all(&line)
+        .context("failed to write state patch")?;
+    writer.flush().context("failed to flush state patch")
 }
 
 fn spawn_niri_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
     thread::spawn(move || {
         let mut resolver = IconResolver::new(cfg.clone());
-        let mut last_outputs = Vec::<String>::new();
 
         loop {
-            niri_refresh(&cfg, &tx, &mut resolver, &mut last_outputs);
+            niri_refresh(&cfg, &tx, &mut resolver);
 
             let (event_tx, event_rx) = mpsc::channel::<Option<String>>();
             start_niri_event_reader(cfg.clone(), event_tx);
@@ -392,11 +356,11 @@ fn spawn_niri_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
                 }
 
                 if dirty && dirty_since.elapsed() >= Duration::from_millis(200) {
-                    niri_refresh(&cfg, &tx, &mut resolver, &mut last_outputs);
+                    niri_refresh(&cfg, &tx, &mut resolver);
                     dirty = false;
                     last_snapshot = Instant::now();
                 } else if last_snapshot.elapsed() >= Duration::from_secs(30) {
-                    niri_refresh(&cfg, &tx, &mut resolver, &mut last_outputs);
+                    niri_refresh(&cfg, &tx, &mut resolver);
                     dirty = false;
                     last_snapshot = Instant::now();
                 }
@@ -444,24 +408,9 @@ fn start_niri_event_reader(cfg: Arc<Config>, tx: mpsc::Sender<Option<String>>) {
     });
 }
 
-fn niri_refresh(
-    cfg: &Arc<Config>,
-    tx: &mpsc::Sender<Vars>,
-    resolver: &mut IconResolver,
-    last_outputs: &mut Vec<String>,
-) {
-    match niri_snapshot(cfg, resolver) {
-        Ok(snapshot) => {
-            let bars_reopened = open_bars_if_needed(cfg, &snapshot.outputs, last_outputs);
-            if let Ok(groups) = serde_json::to_string(&snapshot.groups) {
-                let mut vars = Vars::new();
-                vars.insert("niri_groups".to_string(), groups);
-                if bars_reopened {
-                    vars.insert(FORCE_RESYNC_VAR.to_string(), "1".to_string());
-                }
-                send_vars(tx, vars);
-            }
-        }
+fn niri_refresh(cfg: &Arc<Config>, tx: &mpsc::Sender<Vars>, resolver: &mut IconResolver) {
+    match niri_vars(cfg, resolver) {
+        Ok(vars) => send_vars(tx, vars),
         Err(error) => {
             eprintln!("failed to read niri state: {error:#}");
             let mut vars = Vars::new();
@@ -631,7 +580,7 @@ fn spawn_notifications_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
 fn send_result(tx: &mpsc::Sender<Vars>, vars: Result<Vars>) {
     match vars {
         Ok(vars) => send_vars(tx, vars),
-        Err(error) => eprintln!("failed to collect eww state: {error:#}"),
+        Err(error) => eprintln!("failed to collect shell state: {error:#}"),
     }
 }
 
@@ -654,6 +603,7 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
             vars.extend(media_vars(cfg)?);
             vars.extend(network_vars(cfg)?);
             vars.extend(datetime_vars());
+            vars.extend(theme_vars(cfg));
             vars.extend(notification_vars(cfg, true)?);
         }
         RefreshDomain::Niri => {
@@ -673,7 +623,7 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
         RefreshDomain::Notifications => vars.extend(notification_vars(cfg, true)?),
     }
 
-    eww_update(cfg, &vars)
+    emit_patch(&vars)
 }
 
 fn niri_vars(cfg: &Arc<Config>, resolver: &mut IconResolver) -> Result<Vars> {
@@ -722,7 +672,7 @@ fn run_audio_command(cfg: &Arc<Config>, command: AudioCommand) -> Result<()> {
     }
 
     thread::sleep(Duration::from_millis(40));
-    eww_update(cfg, &audio_vars(cfg)?)
+    emit_patch(&audio_vars(cfg)?)
 }
 
 fn run_brightness_command(cfg: &Arc<Config>, command: BrightnessCommand) -> Result<()> {
@@ -738,7 +688,7 @@ fn run_brightness_command(cfg: &Arc<Config>, command: BrightnessCommand) -> Resu
     }
 
     thread::sleep(Duration::from_millis(40));
-    eww_update(cfg, &brightness_vars(cfg)?)
+    emit_patch(&brightness_vars(cfg)?)
 }
 
 fn run_media_command(cfg: &Arc<Config>, action: MediaAction) -> Result<()> {
@@ -750,19 +700,19 @@ fn run_media_command(cfg: &Arc<Config>, action: MediaAction) -> Result<()> {
     };
     let _ = status(cfg, &cfg.commands.playerctl, [action]);
     thread::sleep(Duration::from_millis(40));
-    eww_update(cfg, &media_vars(cfg)?)
+    emit_patch(&media_vars(cfg)?)
 }
 
 fn run_notification_command(cfg: &Arc<Config>, command: NotificationCommand) -> Result<()> {
     match command {
         NotificationCommand::Action => {
             notification_action(cfg)?;
-            eww_update(cfg, &notification_vars(cfg, true)?)
+            emit_patch(&notification_vars(cfg, true)?)
         }
         NotificationCommand::MarkRead { id } => {
             if let Some(id) = id.or_else(|| env::var("id").ok()) {
                 notification_mark_read(cfg, &id)?;
-                eww_update(cfg, &notification_vars(cfg, false)?)
+                emit_patch(&notification_vars(cfg, false)?)
             } else {
                 Ok(())
             }
@@ -770,129 +720,12 @@ fn run_notification_command(cfg: &Arc<Config>, command: NotificationCommand) -> 
         NotificationCommand::MarkUnread { id } => {
             if let Some(id) = id.or_else(|| env::var("id").ok()) {
                 notification_mark_unread(cfg, &id)?;
-                eww_update(cfg, &notification_vars(cfg, false)?)
+                emit_patch(&notification_vars(cfg, false)?)
             } else {
                 Ok(())
             }
         }
     }
-}
-
-fn reload_eww(cfg: &Arc<Config>) -> Result<()> {
-    if eww_ping(cfg) {
-        let _ = status(
-            cfg,
-            &cfg.commands.eww,
-            ["--config", config_dir_arg(cfg), "reload"],
-        );
-        let _ = status(
-            cfg,
-            &cfg.commands.systemctl,
-            ["--user", "try-restart", "framework-eww-bars.service"],
-        );
-    } else {
-        let _ = status(
-            cfg,
-            &cfg.commands.systemctl,
-            [
-                "--user",
-                "try-restart",
-                "framework-eww.service",
-                "framework-eww-bars.service",
-            ],
-        );
-    }
-    Ok(())
-}
-
-fn wait_for_eww(cfg: &Config) -> Result<()> {
-    for _ in 0..100 {
-        if eww_ping(cfg) {
-            return Ok(());
-        }
-        thread::sleep(Duration::from_millis(100));
-    }
-    Err(anyhow!("eww daemon did not become reachable"))
-}
-
-fn eww_ping(cfg: &Config) -> bool {
-    command(cfg, &cfg.commands.eww)
-        .args(["--config", config_dir_arg(cfg), "ping"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false)
-}
-
-fn eww_update(cfg: &Config, vars: &Vars) -> Result<()> {
-    if vars.is_empty() {
-        return Ok(());
-    }
-
-    let mappings = vars
-        .iter()
-        .map(|(name, value)| format!("{name}={}", sanitize_update_value(value)))
-        .collect::<Vec<_>>();
-
-    let mut cmd = command(cfg, &cfg.commands.eww);
-    cmd.args(["--config", config_dir_arg(cfg), "update"]);
-    cmd.args(mappings);
-
-    let output = cmd.output().context("failed to run eww update")?;
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(anyhow!(
-            "eww update failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
-        ))
-    }
-}
-
-fn sanitize_update_value(value: &str) -> String {
-    value.replace(['\n', '\r'], " ")
-}
-
-fn open_bars_if_needed(cfg: &Config, outputs: &[String], last_outputs: &mut Vec<String>) -> bool {
-    let mut outputs = outputs.to_vec();
-    outputs.sort();
-    outputs.dedup();
-    if outputs.is_empty() {
-        outputs.push("0".to_string());
-    }
-
-    if outputs == *last_outputs {
-        return false;
-    }
-    *last_outputs = outputs.clone();
-
-    let _ = status(
-        cfg,
-        &cfg.commands.eww,
-        ["--config", config_dir_arg(cfg), "close-all"],
-    );
-    for output in outputs {
-        let id = sanitize_id(&output);
-        let window_id = format!("bar_{id}");
-        let monitor_arg = format!("monitor={output}");
-        let _ = status(
-            cfg,
-            &cfg.commands.eww,
-            [
-                "--config",
-                config_dir_arg(cfg),
-                "open",
-                "--id",
-                window_id.as_str(),
-                "--arg",
-                monitor_arg.as_str(),
-                "bar",
-            ],
-        );
-    }
-
-    true
 }
 
 fn niri_snapshot(cfg: &Arc<Config>, resolver: &mut IconResolver) -> Result<NiriSnapshot> {
@@ -935,10 +768,7 @@ fn niri_snapshot(cfg: &Arc<Config>, resolver: &mut IconResolver) -> Result<NiriS
         })
         .collect();
 
-    Ok(NiriSnapshot {
-        groups,
-        outputs: monitors,
-    })
+    Ok(NiriSnapshot { groups })
 }
 
 fn niri_json(cfg: &Config, message: &str, fallback: Value) -> Result<Value> {
@@ -1655,7 +1485,10 @@ fn theme_vars(cfg: &Config) -> Vars {
         "cc_icon".to_string(),
         theme_color(cfg, "foreground", "#e5e5e5"),
     );
-    vars.insert("cc_accent".to_string(), theme_color(cfg, "primary", "#60a5fa"));
+    vars.insert(
+        "cc_accent".to_string(),
+        theme_color(cfg, "primary", "#60a5fa"),
+    );
     vars.insert(
         "cc_on_accent".to_string(),
         theme_color(cfg, "onPrimary", "#0b0f17"),
@@ -1666,8 +1499,9 @@ fn theme_vars(cfg: &Config) -> Vars {
 fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
     let foreground = theme_color(cfg, "foreground", "#e5e5e5");
     let critical = theme_color(cfg, "critical", "#ef4444");
-    let active_notifications = mako_notifications(cfg, "list").unwrap_or_default();
-    let history_notifications = mako_notifications(cfg, "history").unwrap_or_default();
+    // Never prune unread markers against an unavailable or malformed snapshot.
+    let active_notifications = mako_notifications(cfg, "list")?;
+    let history_notifications = mako_notifications(cfg, "history")?;
     let state = notification_state()?;
     let _guard = state.lock()?;
 
@@ -1717,13 +1551,13 @@ fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
 }
 
 fn mako_notifications(cfg: &Config, command_name: &str) -> Result<Vec<MakoNotification>> {
-    let text = output(cfg, &cfg.commands.makoctl, [command_name, "-j"])?.unwrap_or_default();
-    if text.trim().is_empty() {
-        Ok(Vec::new())
-    } else {
-        serde_json::from_str(&text)
-            .with_context(|| format!("failed to parse makoctl {command_name} JSON"))
-    }
+    parse_notification_snapshot(output(cfg, &cfg.commands.makoctl, [command_name, "-j"])?)
+        .with_context(|| format!("failed to read makoctl {command_name} JSON"))
+}
+
+fn parse_notification_snapshot(text: Option<String>) -> Result<Vec<MakoNotification>> {
+    let text = text.context("makoctl snapshot unavailable")?;
+    serde_json::from_str(&text).context("invalid makoctl snapshot")
 }
 
 fn notification_rows(
@@ -1872,7 +1706,7 @@ impl NotificationState {
 }
 
 fn notification_state() -> Result<NotificationState> {
-    let dir = runtime_dir().join("eww-notifications");
+    let dir = runtime_dir().join("framework-shell-notifications");
     fs::create_dir_all(&dir)?;
     let unread_file = dir.join("unread");
     let lock_file = dir.join("unread.lock");
@@ -1965,7 +1799,7 @@ fn parse_mako_history_ids(text: &str) -> Vec<String> {
 
 impl IconResolver {
     fn new(cfg: Arc<Config>) -> Self {
-        let cache_dir = runtime_dir().join("eww-icon-cache");
+        let cache_dir = runtime_dir().join("framework-shell-icon-cache");
         let _ = fs::create_dir_all(&cache_dir);
         Self {
             cfg,
@@ -1975,11 +1809,7 @@ impl IconResolver {
     }
 
     fn resolve(&mut self, app_id: &str, title: &str) -> PathBuf {
-        let key = if app_id.is_empty() {
-            format!("title:{title}")
-        } else {
-            format!("app:{app_id}")
-        };
+        let key = icon_cache_key(&self.cfg.home, app_id, title);
 
         if let Some(path) = self.memory.get(&key) {
             return path.clone();
@@ -2093,8 +1923,17 @@ fn data_dirs(home: &Path) -> Vec<PathBuf> {
     dirs
 }
 
+fn icon_cache_key(home: &Path, app_id: &str, title: &str) -> String {
+    let theme = icon_themes(home)[0];
+    if app_id.is_empty() {
+        format!("{theme}:title:{title}")
+    } else {
+        format!("{theme}:app:{app_id}")
+    }
+}
+
 fn icon_themes(home: &Path) -> Vec<&'static str> {
-    let active_theme = fs::read_link(home.join(".config/eww/theme.scss"))
+    let active_theme = fs::read_link(home.join(".config/ags/theme.scss"))
         .ok()
         .map(|path| path.display().to_string())
         .unwrap_or_default();
@@ -2209,7 +2048,7 @@ fn cache_key(value: &str) -> String {
 }
 
 fn theme_color(cfg: &Config, name: &str, fallback: &str) -> String {
-    let theme_file = cfg.home.join(".config/eww/theme.scss");
+    let theme_file = cfg.home.join(".config/ags/theme.scss");
     let Ok(text) = fs::read_to_string(theme_file) else {
         return fallback.to_string();
     };
@@ -2258,7 +2097,10 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let status = command(cfg, program).args(args).status()?;
+    let status = command(cfg, program)
+        .args(args)
+        .stdout(Stdio::null())
+        .status()?;
     if status.success() {
         Ok(())
     } else {
@@ -2294,23 +2136,6 @@ fn runtime_dir() -> PathBuf {
     env::var_os("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("/tmp"))
-}
-
-fn config_dir_arg(cfg: &Config) -> &str {
-    cfg.eww_config_dir.to_str().unwrap_or(".")
-}
-
-fn sanitize_id(value: &str) -> String {
-    value
-        .chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() || ch == '_' {
-                ch
-            } else {
-                '_'
-            }
-        })
-        .collect()
 }
 
 #[cfg(test)]
@@ -2385,6 +2210,78 @@ mod tests {
     }
 
     #[test]
+    fn unavailable_notification_snapshots_are_not_empty_history() {
+        assert!(parse_notification_snapshot(None).is_err());
+        assert!(parse_notification_snapshot(Some(String::new())).is_err());
+        assert!(parse_notification_snapshot(Some("invalid JSON".to_string())).is_err());
+        assert!(
+            parse_notification_snapshot(Some("[]".to_string()))
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn notification_markers_survive_reopening_state() {
+        let dir = TestDirectory::new("notifications");
+        let state = NotificationState {
+            unread_file: dir.0.join("unread"),
+            lock_file: dir.0.join("unread.lock"),
+        };
+        {
+            let _guard = state.lock().unwrap();
+            state
+                .write_unread(&["42".to_string(), "9".to_string()])
+                .unwrap();
+        }
+        let reopened = NotificationState {
+            unread_file: state.unread_file.clone(),
+            lock_file: state.lock_file.clone(),
+        };
+        let _guard = reopened.lock().unwrap();
+        assert_eq!(reopened.read_unread().unwrap(), vec!["9", "42"]);
+    }
+
+    #[test]
+    fn icon_cache_keys_follow_active_ags_theme() {
+        let home = TestDirectory::new("icons");
+        let config = home.0.join(".config/ags");
+        fs::create_dir_all(&config).unwrap();
+        let theme = config.join("theme.scss");
+        std::os::unix::fs::symlink("theme-dark.scss", &theme).unwrap();
+        let dark_key = icon_cache_key(&home.0, "app", "title");
+        assert_eq!(dark_key, "Papirus-Dark:app:app");
+        fs::remove_file(&theme).unwrap();
+        std::os::unix::fs::symlink("theme-light.scss", &theme).unwrap();
+        assert_eq!(icon_cache_key(&home.0, "app", "title"), "Papirus:app:app");
+        assert_ne!(icon_cache_key(&home.0, "app", "title"), dark_key);
+        assert_eq!(icon_cache_key(&home.0, "", "title"), "Papirus:title:title");
+    }
+
+    struct TestDirectory(PathBuf);
+
+    impl TestDirectory {
+        fn new(name: &str) -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path = env::temp_dir().join(format!(
+                "framework-shell-test-{name}-{}-{nonce}",
+                std::process::id()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
     fn parses_mako_json_history() {
         let text = r#"[{"id":42,"app_name":"Ghostty","summary":"Build","body":"Done","urgency":"normal"}]"#;
         let notifications = serde_json::from_str::<Vec<MakoNotification>>(text).unwrap();
@@ -2431,6 +2328,29 @@ mod tests {
     }
 
     #[test]
+    fn marker_changes_update_history_even_with_the_same_unread_count() {
+        let notifications =
+            serde_json::from_str::<Vec<MakoNotification>>(r#"[{"id":1},{"id":2}]"#).unwrap();
+        let snapshot = |unread: &str| {
+            Vars::from([
+                ("notifications_count".to_string(), "1".to_string()),
+                (
+                    "notifications_history".to_string(),
+                    serde_json::to_string(&notification_rows(
+                        &notifications,
+                        &[],
+                        &[unread.to_string()],
+                    ))
+                    .unwrap(),
+                ),
+            ])
+        };
+        let changed = changed_vars(&snapshot("1"), snapshot("2"));
+        assert!(changed.contains_key("notifications_history"));
+        assert!(!changed.contains_key("notifications_count"));
+    }
+
+    #[test]
     fn caps_notification_preview() {
         assert_eq!(notification_preview(""), "No details");
         assert_eq!(cap_text("hello", 8), "hello");
@@ -2451,26 +2371,91 @@ mod tests {
     }
 
     #[test]
-    fn merges_desired_vars_with_resync_sentinel() {
-        let mut desired = Vars::new();
-        desired.insert("battery_value".to_string(), "42".to_string());
-
-        let mut vars = Vars::new();
-        vars.insert(FORCE_RESYNC_VAR.to_string(), "1".to_string());
-        vars.insert("battery_color".to_string(), "#ffffff".to_string());
-
-        assert!(merge_desired_vars(&mut desired, vars));
-        assert_eq!(desired.get("battery_value").map(String::as_str), Some("42"));
-        assert_eq!(
-            desired.get("battery_color").map(String::as_str),
-            Some("#ffffff")
-        );
-        assert!(!desired.contains_key(FORCE_RESYNC_VAR));
+    fn writes_single_line_json_patches_without_losing_text() {
+        let vars = Vars::from([
+            (
+                "media_text".to_string(),
+                "a\nquoted \"title\"\r\\路".to_string(),
+            ),
+            (
+                "niri_groups".to_string(),
+                "[{\"monitor\":\"eDP-1\"}]".to_string(),
+            ),
+            ("battery_value".to_string(), "42".to_string()),
+        ]);
+        let mut bytes = Vec::new();
+        write_patch(&mut bytes, &vars).unwrap();
+        assert_eq!(bytes.iter().filter(|byte| **byte == b'\n').count(), 1);
+        assert_eq!(bytes.last(), Some(&b'\n'));
+        assert_eq!(serde_json::from_slice::<Vars>(&bytes).unwrap(), vars);
+        write_patch(&mut bytes, &Vars::new()).unwrap();
+        assert_eq!(bytes.iter().filter(|byte| **byte == b'\n').count(), 1);
     }
 
     #[test]
-    fn sanitizes_bar_ids() {
-        assert_eq!(sanitize_id("eDP-1"), "eDP_1");
-        assert_eq!(sanitize_id("HDMI A 1"), "HDMI_A_1");
+    fn patches_contain_only_changed_fields_and_allow_empty_values() {
+        let applied = Vars::from([
+            ("media_text".to_string(), "Playing".to_string()),
+            ("battery_value".to_string(), "42".to_string()),
+        ]);
+        let next = Vars::from([
+            ("media_text".to_string(), String::new()),
+            ("battery_value".to_string(), "42".to_string()),
+            ("niri_groups".to_string(), "[]".to_string()),
+        ]);
+        assert_eq!(
+            changed_vars(&applied, next),
+            Vars::from([
+                ("media_text".to_string(), String::new()),
+                ("niri_groups".to_string(), "[]".to_string()),
+            ])
+        );
+    }
+
+    #[test]
+    fn update_loop_merges_pending_patches_before_disconnect() {
+        let (tx, rx) = mpsc::channel();
+        tx.send(Vars::from([(
+            "battery_value".to_string(),
+            "42".to_string(),
+        )]))
+        .unwrap();
+        tx.send(Vars::from([
+            ("battery_value".to_string(), "43".to_string()),
+            ("niri_groups".to_string(), "[]".to_string()),
+        ]))
+        .unwrap();
+        drop(tx);
+        let mut bytes = Vec::new();
+        update_loop(rx, &mut bytes).unwrap();
+        assert_eq!(bytes.iter().filter(|byte| **byte == b'\n').count(), 1);
+        assert_eq!(
+            serde_json::from_slice::<Vars>(&bytes).unwrap(),
+            Vars::from([
+                ("battery_value".to_string(), "43".to_string()),
+                ("niri_groups".to_string(), "[]".to_string()),
+            ])
+        );
+    }
+
+    #[test]
+    fn broken_output_stops_the_stream() {
+        struct BrokenWriter;
+        impl Write for BrokenWriter {
+            fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::ErrorKind::BrokenPipe.into())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let (tx, rx) = mpsc::channel();
+        tx.send(Vars::from([(
+            "media_text".to_string(),
+            "Playing".to_string(),
+        )]))
+        .unwrap();
+        drop(tx);
+        assert!(update_loop(rx, &mut BrokenWriter).is_err());
     }
 }

@@ -1,0 +1,289 @@
+@use "theme" as *;
+* {
+  font-family: "Sarasa Mono TC", "Noto Sans", sans-serif;
+  font-size: 13px;
+}
+window,
+.bar,
+.bar-window,
+.popup-window,
+.backdrop {
+  background: transparent;
+  color: $foreground;
+}
+button {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: $foreground;
+  padding: 4px 6px;
+  box-shadow: none;
+}
+button:hover {
+  background: $surfaceHover;
+}
+button:active {
+  background: $surfaceActive;
+}
+.bar {
+  padding: 0 3px;
+}
+.bar-right {
+  margin-right: 2px;
+}
+.island {
+  background: $surface;
+  border: 1px solid $outline;
+  border-radius: 14px;
+  margin-right: 4px;
+  padding: 3px 7px;
+}
+.app-button.focused {
+  background: $surfaceHover;
+  border-color: $primary;
+  color: $primary;
+}
+.workspace-label {
+  font-weight: bold;
+  padding: 4px 8px;
+}
+.media {
+  padding: 5px 8px;
+}
+.perf {
+  color: $primary;
+  font-size: 11px;
+}
+.secondary {
+  color: $foregroundDim;
+  font-size: 11px;
+}
+.battery,
+.tray {
+  padding: 1px 4px;
+}
+.battery:hover,
+.tray:hover {
+  background: $surfaceHover;
+}
+.battery:active,
+.tray:active {
+  background: $surfaceActive;
+}
+.battery-device,
+.tray-device {
+  border-radius: 999px;
+  color: $foreground;
+  min-height: 32px;
+  min-width: 40px;
+}
+.ring-slot,
+.tray-slot {
+  min-height: 32px;
+  min-width: 40px;
+}
+.battery-device-label {
+  background: $surfaceHover;
+  border: 0 solid transparent;
+  border-radius: 8px;
+  color: $foreground;
+  font-size: 11px;
+  padding: 1px 5px;
+}
+.battery-ring {
+  // Astal uses font-size as the Cairo stroke width, not as label typography.
+  font-size: 3px;
+  color: #06b6d4;
+  background: $surfaceActive;
+  min-height: 32px;
+  min-width: 32px;
+}
+.battery-icon {
+  color: $foreground;
+}
+.battery.critical .battery-ring {
+  color: #ef4444;
+}
+.battery.low .battery-ring {
+  color: #f97316;
+}
+.battery.medium .battery-ring {
+  color: #eab308;
+}
+.battery.good .battery-ring {
+  color: #22c55e;
+}
+.battery.full .battery-ring {
+  color: #06b6d4;
+}
+.battery.charging .battery-ring {
+  color: $primary;
+}
+.tray-icons {
+  padding: 0 2px 0 4px;
+}
+.tray button {
+  padding: 0;
+}
+.datetime {
+  padding: 1px 8px;
+}
+.clock {
+  color: $primary;
+  font-size: 16px;
+  font-weight: bold;
+}
+.notification-badge {
+  background: $critical;
+  border-radius: 999px;
+  color: $onCritical;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 0 4px;
+}
+.popup-anchor {
+  margin: 42px 12px 0 0;
+}
+.calendar-anchor {
+  margin-right: 56px;
+}
+.control-panel {
+  background: $surface;
+  border: 1px solid $outline;
+  border-radius: 8px;
+  color: $foreground;
+  padding: 12px;
+  min-width: 360px;
+}
+.calendar-panel {
+  min-width: 0;
+}
+.cc-page {
+  min-width: 360px;
+}
+.cc-section {
+  background: $surfaceHover;
+  border: 1px solid $outline;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+.cc-toggle {
+  background: $surfaceHover;
+  border: 1px solid $outline;
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-height: 36px;
+}
+.cc-toggle.on {
+  background: $surfaceActive;
+  border-color: $primary;
+  color: $primary;
+}
+.cc-toggle.on:hover,
+.cc-toggle:hover {
+  background: $surfaceActive;
+}
+.cc-toggle.split {
+  padding: 0;
+}
+.cc-toggle.split button {
+  padding: 8px;
+}
+.cc-slider-row {
+  min-height: 48px;
+}
+.slider-icon {
+  background: $surfaceActive;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  min-width: 34px;
+  min-height: 34px;
+}
+.cc-scale {
+  min-width: 284px;
+}
+.cc-scale trough {
+  background: $surfaceActive;
+  border-radius: 999px;
+  min-height: 8px;
+}
+.cc-scale highlight {
+  background: $primary;
+  border-radius: 999px;
+}
+.cc-scale slider {
+  background: $foreground;
+  border: 1px solid $outline;
+  border-radius: 999px;
+  min-height: 16px;
+  min-width: 16px;
+}
+.heading {
+  color: $foreground;
+  font-weight: bold;
+}
+.primary {
+  background: $primary;
+  color: $onPrimary;
+}
+.back {
+  color: $primary;
+  font-size: 15px;
+  font-weight: bold;
+}
+.wifi-row,
+.cc-notification-row {
+  background: $surfaceActive;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px;
+}
+.wifi-row.active {
+  border-color: $primary;
+}
+.cc-notification-row.unread,
+.cc-notification-row.critical {
+  border-color: $critical;
+}
+.wifi-error {
+  color: $critical;
+}
+.wifi-password {
+  padding: 4px;
+}
+entry {
+  background: $surfaceActive;
+  color: $foreground;
+  border: 1px solid $outline;
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+entry:focus {
+  border-color: $primary;
+}
+.scroll-area {
+  min-height: 0;
+}
+calendar {
+  background: transparent;
+  color: $foreground;
+}
+calendar:selected {
+  background: $primary;
+  color: $onPrimary;
+}
+menu {
+  background: $surfaceActive;
+  color: $foreground;
+  border: 1px solid $outline;
+  border-radius: 8px;
+  padding: 6px;
+}
+menuitem {
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+menuitem:hover {
+  background: $surfaceHover;
+}
