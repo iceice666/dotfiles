@@ -142,6 +142,11 @@ let
       # index.html pointing at the previous bundle. Always revalidate; hashed
       # assets are still cached by the service worker.
       pirc-revalidate.headers.customResponseHeaders."Cache-Control" = "no-cache";
+      # Phone app device-token requests authenticate with the gateway's own
+      # `pirc_dev_…` bearer token and never go through Authelia. Always strip
+      # any client-supplied identity header so a device token cannot also
+      # smuggle a spoofed identity; the gateway verifies the token itself.
+      pirc-clear-identity.headers.customRequestHeaders."X-Pirc-User" = "";
 
       authelia.forwardAuth = {
         address = "http://127.0.0.1:${toString homolab.ports.authelia}/api/verify?rd=https%3A%2F%2F${homolab.domains.auth}%2F";
@@ -297,6 +302,18 @@ let
         rule = mkPrivateHostPathRule homolab.domains.pirc "Path(`/node/connect`)";
         entryPoints = [ "websecure" ];
         priority = 1000;
+        service = "pirc-gateway";
+        tls.certResolver = "letsencrypt";
+      };
+
+      # Device-token requests (Android app) skip Authelia entirely: the
+      # gateway validates its own `pirc_dev_…` bearer token. This router must
+      # outrank pirc-api so matching requests never reach forward auth.
+      pirc-device = {
+        rule = mkPrivateHostPathRule homolab.domains.pirc "PathPrefix(`/api/`) && HeaderRegexp(`Authorization`, `^Bearer pirc_dev_`)";
+        entryPoints = [ "websecure" ];
+        priority = 3000;
+        middlewares = [ "pirc-clear-identity@file" ];
         service = "pirc-gateway";
         tls.certResolver = "letsencrypt";
       };
