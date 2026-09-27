@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, username, ... }:
 
 let
   squirrelTraditionalInputSources = [
@@ -104,6 +104,13 @@ in
 
   # Touch ID for sudo
   security.pam.services.sudo_local.touchIdAuth = true;
+
+  # Passwordless sudo for `just switch` (darwin-rebuild only, any arguments;
+  # nix-darwin has no security.sudo.extraRules, so this appends directly to
+  # sudoers via security.sudo.extraConfig -> /etc/sudoers.d/10-nix-darwin-extra-config)
+  security.sudo.extraConfig = ''
+    ${username} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild
+  '';
 
   # Disable automatic macOS updates
   system.defaults.SoftwareUpdate.AutomaticallyInstallMacOSUpdates = false;
