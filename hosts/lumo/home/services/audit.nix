@@ -30,6 +30,15 @@ let
       set -euo pipefail
       umask 0027
 
+      # crond runs jobs with a stripped-down PATH (typically /usr/bin:/bin,
+      # without /sbin or /usr/sbin). OpenRC's own tooling (rc-status,
+      # rc-update) and the system busybox applets it internally shells out to
+      # live under /sbin and /usr/sbin, so without this the "openrc-*" and
+      # "system-log" records below silently fail every run. writeShellApplication
+      # inherits the caller's $PATH, so make sure the full system PATH is present
+      # regardless of how this script was invoked.
+      export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+
       runs_dir=${auditBaseDir}/runs
       timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
       run_dir="$runs_dir/$timestamp"

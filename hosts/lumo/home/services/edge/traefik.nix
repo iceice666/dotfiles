@@ -429,13 +429,31 @@ let
     };
   };
 
+  # Passing the Cloudflare token via `supervise_daemon_args="-e VAR=<value>"`
+  # (as authelia.nix does with *_FILE paths) is not viable here: lego's
+  # Cloudflare DNS provider only reads the token from an env var, not a file,
+  # and `-e VAR=<value>` becomes literal argv on supervise-daemon's own
+  # command line, which is visible to any local reader of `ps`/`/proc`. Read
+  # the secret and `exec` traefik from a small wrapper instead, so the token
+  # only ever lives in traefik's own environment, never in argv.
+  traefikWrapper = pkgs.writeShellScript "lumo-traefik-wrapper" ''
+    set -eu
+    token="$(tr -d '\r\n' < '${cfKeyPath}')"
+    if [ -z "$token" ]; then
+      echo "Cloudflare API token is empty" >&2
+      exit 1
+    fi
+    export CF_DNS_API_TOKEN="$token"
+    export CLOUDFLARE_DNS_API_TOKEN="$token"
+    exec ${traefikPackage}/bin/traefik --configFile=${staticConfig}
+  '';
+
   traefikService = pkgs.writeText "lumo-traefik" ''
     #!/sbin/openrc-run
     name="lumo-traefik"
     description="Lumo Traefik reverse proxy"
     supervisor=supervise-daemon
-    command="${traefikPackage}/bin/traefik"
-    command_args="--configFile=${staticConfig}"
+    command="${traefikWrapper}"
     directory="/var/lib/traefik"
     output_log="/var/log/lumo/traefik.log"
     error_log="/var/log/lumo/traefik.log"
@@ -451,14 +469,6 @@ let
       checkpath -d -m 0755 -o root:root /var/log/lumo
       checkpath -d -m 0700 -o root:root /var/lib/traefik
       checkpath -f -m 0640 -o root:root /var/log/lumo/traefik.log
-
-      token="$(tr -d '\r\n' < '${cfKeyPath}')"
-      if [ -z "$token" ]; then
-        eend 1 "Cloudflare API token is empty"
-        return 1
-      fi
-      # Pass token via supervise-daemon -e flag (Cloudflare tokens are alphanumeric).
-      supervise_daemon_args="-e CF_DNS_API_TOKEN=$token -e CLOUDFLARE_DNS_API_TOKEN=$token"
     }
   '';
 in

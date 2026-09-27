@@ -8,7 +8,8 @@ reports. It intentionally avoids decrypted secret content.
 | Surface | Expected reachability | Notes |
 | --- | --- | --- |
 | `:80`, `:443` | LAN and Cloudflare on `enp7s0`; tailnet if explicitly trusted | Traefik terminates TLS and forwards to protected services. |
-| `:2222` | LAN host SSH | Password auth disabled, root login disabled. |
+| `:22` | LAN host SSH (Alpine `sshd`, `AllowUsers root git`) | Password auth disabled, root login disabled (`prohibit-password`). This is the real host-management SSH service; see `scripts/alpine-bootstrap`. |
+| `:2222` | Forgejo container's built-in Git SSH server, LAN-restricted to homolab and lumo only | `FORGEJO__server__SSH_PORT`/`SSH_LISTEN_HOST=0.0.0.0` in `hosts/lumo/home/services/forgejo-woodpecker.nix`; firewalled to `192.168.1.127`/`.128` only (see `hosts/lumo/home/services/edge/nftables.nix`). Not a host-management SSH service — do not flag as one on its own. |
 | `:53` | LAN DNS only | Technitium may listen broadly; firewall is the boundary. |
 | Internal service ports | Loopback only or dropped on `enp7s0` | Authelia, Multica, Grafana, Prometheus, Traefik metrics. |
 

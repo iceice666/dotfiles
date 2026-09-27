@@ -71,6 +71,7 @@ apk add --no-cache \
   nftables \
   openssh \
   shadow \
+  sysklogd \
   tailscale \
   tzdata \
   util-linux \
@@ -240,9 +241,13 @@ rc-update add cgroups default
 rc-update del nftables default 2>/dev/null || true
 rc-update add dotfiles-firewall default
 rc-update add sshd default
+rc-update add syslog boot
 rc-update add tailscale default
 rc-service cgroups start || rc-service cgroups restart
 rc-service sshd restart
+# Without a running syslog daemon, `busybox logread` has no ring buffer to
+# read from, so audit collection of the system log fails every run.
+rc-service syslog restart || rc-service syslog start
 rc-service tailscale start || true
 rc-service dotfiles-firewall restart
 if tailscale status >/dev/null 2>&1; then
