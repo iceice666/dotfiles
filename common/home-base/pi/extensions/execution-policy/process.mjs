@@ -20,8 +20,10 @@ function inside(root, path) {
 
 export function executionWorkspace() { return START_WORKSPACE; }
 
+const UNMANAGED = "Restricted execution unavailable: the pinned /nix/store toolchain is missing or invalid, so this Pi process was probably not started by the managed `pi` launcher; no host fallback. This is a security boundary, not a transient fault: do not run the operation through other tools, background jobs or workers. Ask the human to exit and restart Pi with the managed launcher (check `type -a pi`).";
+
 function immutablePath(path) {
-  if (!path || !isAbsolute(path) || !path.startsWith("/nix/store/")) throw new Error("Restricted execution requires a pinned /nix/store toolchain; no host fallback.");
+  if (!path || !isAbsolute(path) || !path.startsWith("/nix/store/")) throw new Error(UNMANAGED);
   const resolved = realpathSync(path);
   if (!resolved.startsWith("/nix/store/")) throw new Error("Toolchain symlink escapes /nix/store.");
   return resolved;
@@ -37,8 +39,21 @@ export function trustedExecutable(name) {
 
 function trustedPath() {
   const entries = START_ENV.PI_SANDBOX_PATH?.split(":");
-  if (!entries?.length || entries.some(path => !path)) throw new Error("Missing immutable PI_SANDBOX_PATH.");
+  if (!entries?.length || entries.some(path => !path)) throw new Error(UNMANAGED);
   return entries.map(immutablePath).join(":");
+}
+
+/** Non-throwing readiness probe for status and Auto Mode attestation. Operations still revalidate. */
+export function boundaryStatus() {
+  try {
+    if (!["darwin", "linux"].includes(process.platform)) throw new Error("Restricted execution is unsupported on this platform; no fallback.");
+    for (const name of ["bash", "node", "git", ...(process.platform === "linux" ? ["env", "bwrap"] : [])]) trustedExecutable(name);
+    trustedPath();
+    if (process.platform === "darwin") accessSync("/usr/bin/sandbox-exec", constants.X_OK);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 // This preflight rejects inode aliases to host files and special devices/FIFOs.

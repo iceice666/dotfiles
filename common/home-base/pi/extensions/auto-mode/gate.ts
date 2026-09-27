@@ -7,42 +7,55 @@ export interface GateServices {
   policy?: (action: Action) => PolicyDecision;
   isCurrent?: () => boolean | Promise<boolean>;
   scope?: (action: Action, signal: AbortSignal) => Promise<(() => boolean | Promise<boolean>) | undefined>;
+  /** A reason here forces single-use human approval; the classifier may still deny but never allow. */
+  escalate?: (action: Action) => string | undefined;
 }
-export type GateResult = undefined | { block: true; reason: string };
+/** `denied` marks refusals of the requested effect (not procedural failures) for the caller's ledger. */
+export type GateResult = undefined | { block: true; reason: string; denied?: true };
 
 /** Every approval is consumed by this call; nothing is cached across executions. */
 export async function guardTool(
   toolName: string, input: Record<string, unknown>, cwd: string,
   services: GateServices, signal: AbortSignal,
 ): Promise<GateResult> {
-  const blocked = (reason: string): GateResult => ({ block: true, reason: `Auto Mode: ${reason} Do not retry equivalent actions through another tool or agent to evade review.` });
+  const blocked = (reason: string, denied = false): GateResult => ({
+    block: true, reason: `Auto Mode: ${reason} Do not retry equivalent actions through another tool or agent to evade review.`,
+    ...(denied ? { denied: true as const } : {}),
+  });
   try {
     signal.throwIfAborted();
     const original = JSON.stringify(input);
     const action = actionForTool(toolName, input, cwd);
     const policy = (services.policy ?? evaluatePolicy)(action);
-    let allowed = policy.decision === "allow";
-    if (policy.decision === "block") return blocked(policy.reason);
-    const scoped = policy.decision !== "allow" ? await services.scope?.(action, signal) : undefined;
-    if (scoped) allowed = true;
-    if (!scoped && policy.decision === "ask") allowed = await services.approve(action, policy.reason, signal);
-    if (!scoped && policy.decision === "review") {
-      let verdict: Verdict;
-      try {
-        verdict = await services.classify(action, signal);
-      } catch {
+    if (policy.decision === "block") return blocked(policy.reason, policy.denial === true);
+    const escalation = services.escalate?.(action);
+    const review = async (): Promise<Verdict> => {
+      try { return await services.classify(action, signal); }
+      catch {
         signal.throwIfAborted();
-        verdict = { decision: "ask", reason: "Automatic review was unavailable or invalid. Inspect the complete action before approving." };
+        return { decision: "ask", reason: "Automatic review was unavailable or invalid. Inspect the complete action before approving." };
       }
-      if (verdict.decision === "deny") return blocked("Reviewer rejected this action. Ask the user for a different approach.");
+    };
+    let allowed = false;
+    const scoped = !escalation && policy.decision !== "allow" ? await services.scope?.(action, signal) : undefined;
+    if (scoped) allowed = true;
+    // Local "ask" actions are never sent to the classifier, including escalated ones.
+    else if (policy.decision === "ask") allowed = await services.approve(action, escalation ? `${escalation} ${policy.reason}` : policy.reason, signal);
+    else if (escalation) {
+      const verdict = await review();
+      if (verdict.decision === "deny") return blocked("Reviewer rejected this action. Ask the user for a different approach.", true);
+      allowed = await services.approve(action, `${escalation} Reviewer: ${verdict.reason}`, signal);
+    } else if (policy.decision === "review") {
+      const verdict = await review();
+      if (verdict.decision === "deny") return blocked("Reviewer rejected this action. Ask the user for a different approach.", true);
       allowed = verdict.decision === "allow" || (verdict.decision === "ask" && await services.approve(action, verdict.reason, signal));
-    }
+    } else allowed = true;
     signal.throwIfAborted();
     if (scoped && !await scoped()) return blocked("Task scope was revoked or changed before execution.");
     if (services.isCurrent && !await services.isCurrent()) return blocked("Task, session, or branch changed during review; a fresh review is required.");
     signal.throwIfAborted();
     if (JSON.stringify(input) !== original || JSON.stringify(action.input) !== original) return blocked("Arguments changed during review.");
-    return allowed ? undefined : blocked("No explicit approval for this action (rejected, cancelled, unavailable, or expired).");
+    return allowed ? undefined : blocked("No explicit approval for this action (rejected, cancelled, unavailable, or expired).", true);
   } catch {
     return blocked("Review cancelled or failed; action was not executed.");
   }

@@ -2,7 +2,7 @@
 
 參考 [@juicesharp/rpiv-todo](https://www.npmjs.com/package/@juicesharp/rpiv-todo) 的工作流程，針對目前安裝的 `@earendil-works/pi-coding-agent` API 獨立實作。
 
-位於 `~/.pi/agent/extensions/todo/index.ts`，Pi 會自動探索；在目前 session 執行 `/reload` 即可載入。不需安装 npm 套件，也不修改現有 footer。
+由受管 `pi` launcher 從 Nix store 載入（見 `../../README.md`），部署後重新啟動 Pi。不需安裝 npm 套件，也不修改現有 footer。
 
 ## 用法
 

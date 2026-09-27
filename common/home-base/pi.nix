@@ -181,11 +181,12 @@ in
     mode = "0400";
   };
 
-  # Keep sibling imports intact and leave unrelated local extensions alone.
-  home.file.".pi/agent/extensions" = {
-    source = piExtensions;
-    recursive = true;
-  };
+  # The launcher loads the pinned tree from the store with --no-extensions. The
+  # auto-discovery directory only matters to an unmanaged Pi (which would run the
+  # tree without its sandbox and can mix versions across a switch), so it gets a
+  # guard that blocks every tool instead. Unrelated local extensions are left alone.
+  home.file.".pi/agent/extensions/unmanaged-pi-guard.ts".source =
+    ./pi/extensions/unmanaged-pi-guard/index.ts;
 
   sops.secrets.${agentModel.secretName} = agentModel.secret;
 

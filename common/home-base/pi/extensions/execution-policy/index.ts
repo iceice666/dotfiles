@@ -2,7 +2,7 @@ import { realpathSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createReadToolDefinition, createWriteToolDefinition, createEditToolDefinition, createBashToolDefinition, createLsToolDefinition } from "@earendil-works/pi-coding-agent";
 import { fileOperation, sandboxRead, shellOperations } from "./io.ts";
-import { executionWorkspace } from "./process.mjs";
+import { boundaryStatus, executionWorkspace } from "./process.mjs";
 
 // Only these repo-owned capabilities have an audited execution path. Unknown tools
 // cannot become unrestricted merely because an intent classifier approves them.
@@ -66,11 +66,18 @@ export default function executionPolicy(pi: ExtensionAPI) {
       // Tools still enforce their captured boundary independently.
       if (ctx.hasUI) ctx.ui.notify("Session cwd is missing or outside the original sandbox workspace; start a new Pi process in the intended workspace.", "warning");
     }
-    if (ctx.hasUI) ctx.ui.setStatus("execution-policy", "sandbox:workspace / offline");
+    if (!ctx.hasUI) return;
+    // Report actual readiness: a missing launcher toolchain must not look like a working sandbox.
+    const status = boundaryStatus();
+    ctx.ui.setStatus("execution-policy", status.ok ? "sandbox:workspace / offline" : "sandbox:UNAVAILABLE");
+    if (!status.ok) ctx.ui.notify(`Restricted execution is unavailable; file and shell tools fail closed. ${status.reason}`, "error");
   });
-  pi.on("before_agent_start", event => ({ systemPrompt: `${event.systemPrompt}\n\nRestricted execution is mandatory: file and shell tools execute inside the OS sandbox. Writes are limited to the original workspace and private scratch; shell has no network or host credentials. Background jobs, verification and workers inherit this boundary. Auto Mode approvals never lift it. Unknown/unadapted tools are unavailable. Use sandboxed bash with rg/find for recursive search. Nix daemon builds, downloads, SSH/deploy and browser CLI may require a human's external terminal. Do not retry a blocked action through a different capability. Trusted model and public-search requests remain on the host.` }));
+  pi.on("before_agent_start", event => ({ systemPrompt: `${event.systemPrompt}\n\nRestricted execution is mandatory: file and shell tools execute inside the OS sandbox. Writes are limited to the original workspace and private scratch; shell has no network or host credentials. Background jobs, verification and workers inherit this boundary. Auto Mode approvals never lift it. Unknown/unadapted tools are unavailable. Use sandboxed bash with rg/find for recursive search. Nix daemon builds, downloads, SSH/deploy and browser CLI may require a human's external terminal. Restricted-execution errors are security boundaries, not environment faults: stop and report them to the human instead of probing other tools. Do not retry a blocked action through a different capability. Trusted model and public-search requests remain on the host.` }));
   pi.registerCommand("sandbox", {
     description: "Show the immutable restricted execution boundary (no disable or escalation command)",
-    handler: async (_args, ctx) => ctx.ui.notify(`Workspace: ${workspace}\nBackend: ${process.platform === "darwin" ? "Seatbelt" : process.platform === "linux" ? "bubblewrap" : "unsupported (fail closed)"}\nNo shell network, no host credentials, no approval-based sandbox escalation. Trusted extensions run on the host.`, "info"),
+    handler: async (_args, ctx) => {
+      const status = boundaryStatus();
+      ctx.ui.notify(`Workspace: ${workspace}\nBackend: ${process.platform === "darwin" ? "Seatbelt" : process.platform === "linux" ? "bubblewrap" : "unsupported (fail closed)"}\nStatus: ${status.ok ? "ready" : `UNAVAILABLE — ${status.reason}`}\nNo shell network, no host credentials, no approval-based sandbox escalation. Trusted extensions run on the host.`, status.ok ? "info" : "error");
+    },
   });
 }

@@ -238,7 +238,11 @@ model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
 `cache-safe-compaction`, and `execution-policy`) are owned by `common/home-base/pi/extensions/` and
-installed on all Pi-enabled hosts as recursive Home Manager store links. The
+built into one Nix store tree on all Pi-enabled hosts; only the managed `pi` launcher
+loads it (`--no-extensions` plus explicit store paths). `~/.pi/agent/extensions/`
+receives only `unmanaged-pi-guard.ts`, which blocks every tool in an unmanaged Pi
+(e.g. a Bun/npm global install earlier on `PATH`; `dev-env.nix` appends
+`~/.bun/bin` so it cannot shadow the launcher). Restart Pi after switching. The
 same extension tree includes the Nix-pinned upstream `pi-observational-memory`
 source, patched by `common/home-base/pi/patches/` so background memory work
 falls back from a rate-limited `cliproxyapi/gpt-6-sol` to
@@ -271,6 +275,13 @@ Parent `/yolo on` skips Auto Mode for the whole team, not OS sandbox or verifica
 gates. `/yolo off` or parent `/auto on` restores review; reload/restart/branch
 navigation resets YOLO off. Workers query the authenticated parent per action and
 never assume YOLO when it is unavailable.
+Auto Mode attests the managed store tree, sandbox readiness and tool sources before
+every non-coordination call; when unattested (`auto:UNCONFINED`) it blocks those
+tools even under `/auto off` or YOLO and refuses `/yolo on`. After a sandbox or
+Auto Mode refusal, substitute execution (Bash, background starts, worker
+spawn/delegation) needs single-use human approval until the next human turn, and
+parent TUI answers to the agent's own questions reach the reviewer as trusted
+`task.decisions`.
 It has no persistent approval cache or writable policy config; see
 `common/home-base/pi/extensions/auto-mode/README.md` for privacy and enforcement limits.
 See `common/home-base/pi/README.md` for first-adoption backups and development.

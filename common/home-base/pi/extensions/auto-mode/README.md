@@ -7,12 +7,38 @@ The managed launcher separately confines file/shell subprocesses through
 `../execution-policy/README.md`; Auto Mode approval or `/auto off` never disables
 that OS boundary. Pi and trusted extension internals remain on the host.
 
+## Execution boundary attestation
+
+Review is only meaningful when file/shell tools are OS-confined, so Auto Mode
+verifies that instead of assuming it. Before every tool call other than local
+coordination (todo, team messaging, questions, background list/output/wait/stop)
+it checks that:
+
+- its own module was loaded from the content-addressed `/nix/store/*-pi-extensions`
+  tree (not a mutable `~/.pi/agent/extensions` copy, a checkout, or an SDK embedding);
+- the execution policy reports a ready sandbox (`boundaryStatus()`: pinned
+  toolchain from the managed launcher and an available backend);
+- `read`/`bash` come from that tree's `execution-policy/`, and the called tool
+  comes from the same tree (built-ins, SDK tools and foreign extensions fail).
+
+On failure the footer shows `auto:UNCONFINED`, the human gets an error notice, and
+the call is blocked with `terminate` so the agent stops instead of probing other
+tools. This holds even after `/auto off` or under YOLO, and `/yolo on` is
+refused. The fix is operational: exit and start the managed launcher (`type -a pi`).
+
+Motivating incident: an unmanaged Bun-global Pi auto-discovered the installed tree;
+after a switch, `/new` reused cached old modules (unsandboxed `background_task`, an
+Auto Mode without context) next to a freshly loaded execution policy that failed
+closed. The agent then deployed through `background_task` and the old gate allowed
+it. The auto-discovery install has been replaced by `unmanaged-pi-guard`.
+
 ## Controls
 
-- `/auto status`: current session state; classifier follows the current model.
+- `/auto status`: current session state and boundary attestation; classifier follows the current model.
 - `/auto on`: enable this session.
 - `/auto off`: parent TUI only, after explicit human confirmation. Workers cannot
   disable their gate through this command. Existing and new workers remain on.
+  Boundary attestation keeps running.
 - `/auto grant PATH`: parent TUI only; approve read/write/edit within an existing
   repository file or directory for this parent session and its workers.
 - `/auto scopes`: list active scope IDs and canonical paths.
@@ -39,6 +65,8 @@ It does **not** change the independent OS sandbox, allowed-tool enforcement,
 secret/network isolation, or todo verification gates. Explicit check-declaration
 approval through `approveAction` is unchanged. Therefore YOLO is not unrestricted
 host execution and does not suppress all possible questions or sandbox failures.
+For the same reason `/yolo on` is refused, and YOLO does not skip attestation,
+while the execution boundary is unattested.
 
 Workers query the authenticated parent before each tool call and recheck a true
 YOLO result before releasing the call; no environment or cached flag grants it.
@@ -70,6 +98,24 @@ and compaction do not reset it. `/auto off` remains parent-only and is independe
    automatic execution. Missing UI, cancellation, rejection, timeout, oversized
    requests, and policy errors block. A blocked action must not be retried through
    another tool or worker to evade the decision.
+5. Refusal ledger: Auto Mode records trusted refusals itself — credential blocks,
+   classifier denies, rejected/unavailable approvals, and plan-level sandbox
+   refusals seen in tool results (`Restricted execution…`, backend/workspace
+   refusals; ordinary file errors do not count). Until the next human TUI turn (or,
+   in a worker, the next coordinator message), `bash`, `background_task start`,
+   `agent_spawn`, and `agent_send`/`agent_ask` to a teammate always need a
+   single-use human approval whose reason names the earlier refusal. The classifier
+   may still deny but never allow them; local-`ask` actions stay off the classifier.
+   The last four refusals are sent as trusted `boundary.recentDenials`, and the
+   prompt treats reaching a refused effect another way as a bypass. Worker dialogs
+   in the parent show the exact action but not the worker-local reason.
+6. Live human decisions: answers the human types in the parent TUI to the agent's
+   own `ask_user_question` or `agent_ask` to `user` are published in-process
+   (`askHumanDecision`) and sent as trusted `task.decisions` (last four, bounded)
+   until the next input. Because the agent wrote the question, a decision authorizes
+   only what the question explicitly described but can always narrow the task.
+   RPC/print answers, relayed worker questions, and Auto Mode's own dialogs are not
+   published; historical answers in context remain lower-trust evidence.
 
 Human dialogs display the full original tool arguments and cwd, not a shortened
 command. Actions too large for the UI are refused rather than approved unseen.

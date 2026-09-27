@@ -89,6 +89,17 @@ describe("sandbox planner", () => {
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("pinned /nix/store");
   });
+  test("readiness probe reports a missing launcher toolchain without throwing", () => {
+    const missing = host(`console.log(JSON.stringify(p.boundaryStatus()));`, { PI_SANDBOX_BASH: "" });
+    expect(missing.status).toBe(0);
+    const status = JSON.parse(missing.stdout);
+    expect(status.ok).toBe(false);
+    expect(status.reason).toContain("managed `pi` launcher");
+    expect(status.reason).toContain("security boundary");
+    if (process.platform === "darwin") {
+      expect(JSON.parse(host(`console.log(JSON.stringify(p.boundaryStatus()));`).stdout)).toEqual({ ok: true });
+    }
+  });
   test("refuses widening scope and escaping cwd", () => {
     for (const options of [{ cwd: outside }, { cwd: root, workspace: root }]) {
       const result = host(`p.sandboxPlan({executable:p.trustedExecutable('node'),...${JSON.stringify(options)}});`);

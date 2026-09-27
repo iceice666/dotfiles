@@ -1,9 +1,13 @@
 # Pi extensions
 
-`../pi.nix` installs `extensions/` for every host with `features.pi = true`
-(m5pro, framework, homolab, and lumo). Home Manager recursively links the files
-from the Nix store into `~/.pi/agent/extensions/`, preserving sibling imports
-without taking ownership of unrelated local extensions.
+`../pi.nix` builds `extensions/` into one Nix store tree for every host with
+`features.pi = true` (m5pro, framework, homolab, and lumo). Only the managed `pi`
+launcher loads it, with `--no-extensions` and explicit store paths. The
+auto-discovery directory `~/.pi/agent/extensions/` receives just
+`unmanaged-pi-guard.ts`: an unmanaged Pi (for example a Bun/npm global install
+earlier on `PATH`) would otherwise run the tree without its sandbox, and after a
+switch its per-path extension cache can mix old and new modules. The guard blocks
+every tool in such a process. Unrelated local extensions are left alone.
 
 | Extension | Purpose |
 |---|---|
@@ -13,6 +17,7 @@ without taking ownership of unrelated local extensions.
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed tasks, human-approved required checks, and fingerprint-bound completion evidence |
 | `execution-policy/` | Mandatory OS-confined file/shell execution, shared by background jobs and verification |
+| `unmanaged-pi-guard/` | Installed alone into `~/.pi/agent/extensions/`; blocks every tool when Pi was not started by the managed launcher |
 | `dot-continue/` | Standalone `.` means `continue` in an idle interactive conversation |
 | `btw/` | `/btw` side questions while the main agent runs, without changing its context |
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
@@ -41,6 +46,14 @@ reload, or branch navigation resets it. OS sandbox and verification gates remain
 enabled. Workers check the parent before every action and fail closed if unreachable.
 Use `/yolo status` to inspect the team switch; no second confirmation is required.
 
+Auto Mode first attests that it runs from the managed store tree with a ready
+sandbox and managed tool sources; otherwise (`auto:UNCONFINED`) every
+non-coordination tool is blocked regardless of `/auto off` or YOLO, and `/yolo on`
+is refused. After a sandbox or Auto Mode refusal, substitute execution (Bash,
+background starts, worker spawn/delegation) needs single-use human approval until
+the next human turn. Parent TUI answers to the agent's own questions are passed to
+the reviewer as trusted `task.decisions`.
+
 Auto Mode is enabled by default in new sessions and follows the selected session
 model for independent, tool-free review. Ordinary workspace reads/writes and local
 coordination pass locally; shell commands, background command starts, external
@@ -60,11 +73,17 @@ alongside the Nix OM source pin. No approval cache or writable policy configurat
 [auto-mode/README.md](extensions/auto-mode/README.md) for data transmission,
 limits, test commands, and required manual smoke checks.
 
-## First adoption
+## First adoption and launcher check
+
+`type -a pi` must list the Home Manager launcher (e.g.
+`/etc/profiles/per-user/$USER/bin/pi`) first; remove global package-manager
+copies such as `bun remove -g @earendil-works/pi-coding-agent`. Restart Pi after
+every switch: `/new` in a running process does not reload extension code.
 
 Existing unmanaged files are deliberately **not** force-overwritten. Before the
-first switch, quit Pi (including team workers and background jobs) and move only
-these managed entries outside the auto-discovery directory. For example:
+first switch, quit Pi (including team workers and background jobs) and move any
+unmanaged copies of these entries outside the auto-discovery directory (Home
+Manager removes the links it created itself). For example:
 
 ```sh
 backup="$HOME/.pi/extensions-backup-$(date +%Y%m%d-%H%M%S)"

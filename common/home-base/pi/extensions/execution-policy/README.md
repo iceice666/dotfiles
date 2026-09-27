@@ -23,7 +23,12 @@ Do not load untrusted plugins into that control plane.
 - Missing configuration, missing backend, unsupported platforms, denied operations,
   or bounded safety-scan failures never fall back to unsandboxed execution.
 
-`/sandbox` displays the boundary. There is no off switch, escalation tool, or
+`/sandbox` displays the boundary and its readiness. At session start the footer
+shows `sandbox:workspace / offline` only when `boundaryStatus()` finds the pinned
+launcher toolchain and backend; otherwise it shows `sandbox:UNAVAILABLE` with an
+error notice. Refusal messages state that they are a security boundary and point
+to the managed launcher, and Auto Mode uses the same probe to block every
+non-coordination tool when the boundary is not attested. There is no off switch, escalation tool, or
 approval cache. Auto Mode remains an independent **intent/approval gate**; neither
 its `allow` verdict nor `/auto off` expands kernel permissions. A needed download,
 SSH/deploy operation, Nix daemon build, or browser action must be performed by the
@@ -36,7 +41,10 @@ It pins the toolchain and explicitly loads the repo-owned extension tree from th
 Nix store, disables built-in tools and project extension/config loading, and rejects
 CLI extension/trust/package overrides. The raw standalone package is still a
 normal upstream Pi binary; do not confuse it or SDK embeddings with the managed
-entrypoint. Trusted user/global configuration, credentials, and deliberate human
+entrypoint. The tree is not installed into `~/.pi/agent/extensions/`; that
+directory only receives `unmanaged-pi-guard.ts`, which blocks every tool in a Pi
+that was not started by the launcher (for example a global npm/Bun install found
+earlier on `PATH`). Check `type -a pi` if tools report the launcher missing. Trusted user/global configuration, credentials, and deliberate human
 CLI attachments remain host inputs, not agent tool operations. `--tools` is
 rejected because upstream Pi lets it reactivate built-in tools; operators can
 narrow the managed tool set with `PI_EXECUTION_TOOLS=read,ls` instead.

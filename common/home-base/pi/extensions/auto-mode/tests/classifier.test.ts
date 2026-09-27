@@ -316,3 +316,37 @@ describe("auto-mode classifier", () => {
     expect(requestSignal?.aborted).toBe(false);
   });
 });
+
+describe("trusted boundary metadata and human decisions", () => {
+  const boundary = { recentDenials: [{ toolName: "read", source: "sandbox" as const, reason: "Restricted execution unavailable" }] };
+  const decided: Task = { ...task, decisions: [{ question: "Tools fail. What now?", selected: ["Investigate first"] }] };
+  test("serializes decisions and boundary exactly, with bypass rules in the prompt", async () => {
+    const ctx = context();
+    let seen: any;
+    ctx.modelRegistry.complete = async (_model, request) => {
+      seen = request;
+      return reply();
+    };
+    await classifyAction(ctx, action, decided, undefined, undefined, reviewContext(), boundary);
+    const text = (seen.messages[0].content as { text: string }[])[0].text;
+    expect(text).toBe(JSON.stringify({ action, task: decided, boundary, context: reviewContext() }));
+    for (const rule of ["task.decisions", "authorizes only what its question explicitly and specifically described",
+      "boundary.recentDenials", "guardrail bypass: deny it", "works as a workaround"]) expect(seen.systemPrompt).toContain(rule);
+  });
+  test("rejects malformed or oversized decisions and boundary before any request", async () => {
+    let calls = 0;
+    const ctx = context();
+    ctx.modelRegistry.complete = async () => { calls++; return reply(); };
+    const bad: unknown[][] = [
+      [{ ...task, extra: true }, undefined],
+      [{ ...task, decisions: [{ question: "q", selected: "yes" }] }, undefined],
+      [{ ...task, decisions: Array(5).fill({ question: "q", selected: [] }) }, undefined],
+      [task, { recentDenials: [{ toolName: "read", source: "agent", reason: "x" }] }],
+      [task, { recentDenials: [], note: "agent text" }],
+    ];
+    for (const [t, b] of bad) await expect(classifyAction(ctx, action, t as Task, undefined, undefined, undefined, b as any)).rejects.toThrow("losslessly");
+    await expect(classifyAction(ctx, action, { ...task, decisions: [{ question: "q".repeat(5000), selected: [] }] })).rejects.toThrow("4 KiB");
+    await expect(classifyAction(ctx, action, task, undefined, undefined, undefined, { recentDenials: [{ toolName: "read", source: "sandbox", reason: "x".repeat(3000) }] })).rejects.toThrow("2 KiB");
+    expect(calls).toBe(0);
+  });
+});

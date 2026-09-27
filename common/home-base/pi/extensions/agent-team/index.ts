@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { Team, userQuestion, remoteWait, parseAgentKinds } from './team.mjs';
 import { teamToolRenderers, renderTeamMessage } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
-import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
+import { askHumanDecision, askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
 import { requestParentContext } from '../auto-mode/service.ts';
 
 export default function (pi: ExtensionAPI) {
@@ -101,7 +101,8 @@ export default function (pi: ExtensionAPI) {
     // A parent asking the real user needs neither a broker nor a worker.
     if (!isChild && operation === 'agent_ask' && (args as { to?: string }).to === 'user') {
       const combined = signal ? AbortSignal.any([signal, lifecycle.signal]) : lifecycle.signal;
-      return askQuestions(ctx, { questions: [userQuestion(args)] }, combined);
+      // The parent's own question: TUI answers become live human decisions for Auto Mode.
+      return askHumanDecision(ctx, { questions: [userQuestion(args)] }, combined);
     }
     signal?.throwIfAborted();
     const combined = signal ? AbortSignal.any([signal, lifecycle.signal]) : lifecycle.signal;

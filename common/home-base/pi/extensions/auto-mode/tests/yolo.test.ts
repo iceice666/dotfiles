@@ -3,6 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import extension from "../index.ts";
+// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
+const confined = { attest: () => ({ confined: true, reason: "" }) };
 import { requestParentContext } from "../service.ts";
 import { executionDecision } from "../../execution-policy/index.ts";
 import { approveAction } from "../index.ts";
@@ -19,7 +21,7 @@ function setup(mode = "tui") {
   const ctx: any = { mode, hasUI: false, cwd: process.cwd(), sessionManager: { getSessionId: () => "test", getBranch: () => [], getLeafId: () => null },
     model: { provider: "test", id: "test", maxTokens: 2048 }, modelRegistry: { complete: async () => { modelCalls++; return { stopReason: "stop", content: [{ type: "text", text: '{"decision":"deny","reason":"unsafe"}' }] }; } },
     ui: { setStatus() {}, notify() {} } };
-  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any);
+  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any, confined);
   const event = (n: string, e: any = {}) => handlers.get(n)?.(e, ctx);
   cleanup.push(async () => { await event("session_shutdown"); });
   return { ctx, event, command: (text: string) => commands.get("yolo").handler(text, ctx), auto: (text: string) => commands.get("auto").handler(text, ctx), calls: () => modelCalls };

@@ -3,8 +3,24 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export interface Action { toolName: string; input: Record<string, unknown>; cwd: string }
-export interface PolicyDecision { decision: "allow" | "review" | "ask" | "block"; reason: string }
+/** `denial` marks a refusal of the requested effect, as opposed to a malformed request. */
+export interface PolicyDecision { decision: "allow" | "review" | "ask" | "block"; reason: string; denial?: true }
 const localTools = new Set(["todo", "agent_list", "agent_wait", "agent_inbox", "agent_send", "agent_ask", "agent_reply", "board_read", "board_post", "ask_user_question", "agent_stop"]);
+
+/** Coordination and existing-job inspection that start no new execution. */
+export function isLocalCoordination(toolName: string, input: Record<string, unknown>): boolean {
+  return localTools.has(toolName) || (toolName === "background_task" && ["list", "output", "wait", "stop"].includes(String(input.action)));
+}
+
+/** Tools that could reach an effect refused earlier through another execution path or teammate. */
+export function isExecutionSubstitute(action: Action): boolean {
+  const { toolName, input } = action;
+  if (toolName === "bash" || toolName === "agent_spawn") return true;
+  if (toolName === "background_task") return input.action === "start";
+  // Reporting to the parent or asking the human is the expected response to a refusal.
+  if (toolName === "agent_send" || toolName === "agent_ask") return !["user", "parent"].includes(String(input.to ?? "parent"));
+  return false;
+}
 const fileTools = new Set(["read", "write", "edit", "grep", "find", "ls"]);
 const secretPath = /(?:^|[/\\])(?:\.env(?:\.[^/\\]+)?|auth\.json|credentials(?:\.json)?|id_(?:rsa|ed25519|ecdsa)|keys\.txt)(?:$|[/\\])|[/\\](?:run\/secrets|\.aws|\.gnupg)(?:$|[/\\])/i;
 const controlPath = /(?:^|[/\\])(?:\.pi|\.git|\.agents)(?:$|[/\\])|(?:^|[/\\])(?:AGENTS\.md|SYSTEM\.md|\.bashrc|\.zshrc|\.profile)$/i;
@@ -39,13 +55,13 @@ export function evaluatePolicy(action: Action): PolicyDecision {
   const { toolName, input, cwd } = action;
   const serialized = JSON.stringify(input);
   if (Buffer.byteLength(serialized, "utf8") > 32 * 1024) return { decision: "block", reason: "Action exceeds the review limit; split it into smaller actions." };
-  if (literalSecret.test(serialized)) return { decision: "block", reason: "Possible literal credential in tool arguments; withheld from the classifier." };
+  if (literalSecret.test(serialized)) return { decision: "block", reason: "Possible literal credential in tool arguments; withheld from the classifier.", denial: true };
   if (localTools.has(toolName)) return { decision: "allow", reason: "Local task coordination (not human authorization)." };
   if (toolName === "background_task" && ["list", "output", "wait", "stop"].includes(String(input.action))) return { decision: "allow", reason: "Inspect or stop an existing session job." };
   if (fileTools.has(toolName) || toolName === "analyze_image") {
     const value = input.path;
     if (value !== undefined && typeof value !== "string") return { decision: "block", reason: "Invalid file path." };
-    if (secretPath.test(String(value ?? "."))) return { decision: "block", reason: "Protected credential path; no content is sent for review." };
+    if (secretPath.test(String(value ?? "."))) return { decision: "block", reason: "Protected credential path; no content is sent for review.", denial: true };
     if (toolName === "read") {
       // Pi may retry missing read paths with macOS filename variants. Do not approve an unseen fallback target.
       let exact = String(value ?? ".").replace(/^@/, "");
@@ -54,7 +70,7 @@ export function evaluatePolicy(action: Action): PolicyDecision {
     }
     const path = canonicalPath(value ?? ".", cwd);
     const lexical = resolve(cwd, String(value ?? ".").replace(/^@/, ""));
-    if (secretPath.test(path) || secretPath.test(lexical)) return { decision: "block", reason: "Protected credential path; no content is sent for review." };
+    if (secretPath.test(path) || secretPath.test(lexical)) return { decision: "block", reason: "Protected credential path; no content is sent for review.", denial: true };
     if (toolName === "analyze_image") return { decision: "review", reason: "Image transmission requires review." };
     const root = canonicalPath(cwd, cwd);
     if (toolName === "write" || toolName === "edit") {
