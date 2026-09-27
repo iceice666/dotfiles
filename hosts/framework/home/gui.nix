@@ -585,14 +585,14 @@ let
         dbus-update-activation-environment --systemd ${frameworkSessionEnvironmentList}
         systemctl --user start xdg-document-portal.service xdg-permission-store.service || true
         systemctl --user restart xdg-desktop-portal.service || true
-        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service || true
+        systemctl --user start pipewire.service pipewire-pulse.service wireplumber.service || true
       else
         cat >&2 <<'EOF'
       User systemd is not available in this shell.
       After logging into a normal user session, run:
         systemctl --user start xdg-document-portal.service xdg-permission-store.service
         systemctl --user restart xdg-desktop-portal.service
-        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+        systemctl --user start pipewire.service pipewire-pulse.service wireplumber.service
       EOF
       fi
 
