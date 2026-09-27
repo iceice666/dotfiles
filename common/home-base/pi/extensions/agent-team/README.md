@@ -156,6 +156,18 @@ are rejected, never truncated. The response is `{ approved, actionId }`; the
 gate must match its original action ID and recheck cancellation before execution.
 This bridges human approval, not filesystem or process isolation.
 
+The separate authenticated `auto_mode_context` operation returns a bounded current
+parent memory snapshot and optional matching file-scope ID for an exact action.
+It calls the parent Auto Mode's in-process service; workers cannot create grants
+or supply parent state. `remoteAutoModeContext(url, token, args, signal)` uses a
+10-second deadline and a 32 KiB response limit. `args` contains the same exact
+`actionId`, tool, input, and cwd plus optional `includeContext`. The result is
+`{ revision, yolo?, scopeId?, context? }`. The optional boolean `yolo` is
+parent-owned; omitted values never enable bypass. Workers query team mode on every
+tool preflight, and recheck revision/scope before execution;
+disconnect, worker stop, parent reload/shutdown, or missing service fails closed.
+This operation emits no model messages and does not log memory or create approval.
+
 ## Defaults and lifecycle
 
 ### Agent kinds

@@ -261,7 +261,16 @@ completion; see `common/home-base/pi/extensions/todo/README.md`.
 Auto Mode defaults on for new sessions, reviews nontrivial tools through the current
 model, and routes single-use human approvals from workers through the authenticated
 team broker. `/auto off` requires parent TUI confirmation and does not disable
-workers. It has no persistent approval cache or writable policy config; see
+workers. Parent-only `/auto grant PATH` confirms session-local read/write/edit
+scopes; `/auto scopes` lists them and `/auto revoke ID` or `/auto revoke all`
+revokes them. Workers query the authenticated parent for bounded OM context and
+scope matches, never inherit permission from memory text. Scopes exclude shell,
+deployment, secrets and live controls; reload/restart/branch navigation expires them.
+Parent `/yolo on` skips Auto Mode for the whole team, not OS sandbox or verification
+gates. `/yolo off` or parent `/auto on` restores review; reload/restart/branch
+navigation resets YOLO off. Workers query the authenticated parent per action and
+never assume YOLO when it is unavailable.
+It has no persistent approval cache or writable policy config; see
 `common/home-base/pi/extensions/auto-mode/README.md` for privacy and enforcement limits.
 See `common/home-base/pi/README.md` for first-adoption backups and development.
 `/btw <question>` runs a separate tool-free call using the selected model and a

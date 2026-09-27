@@ -5,6 +5,8 @@ export interface GateServices {
   classify(action: Action, signal: AbortSignal): Promise<Verdict>;
   approve(action: Action, reason: string, signal: AbortSignal): Promise<boolean>;
   policy?: (action: Action) => PolicyDecision;
+  isCurrent?: () => boolean | Promise<boolean>;
+  scope?: (action: Action, signal: AbortSignal) => Promise<(() => boolean | Promise<boolean>) | undefined>;
 }
 export type GateResult = undefined | { block: true; reason: string };
 
@@ -21,8 +23,10 @@ export async function guardTool(
     const policy = (services.policy ?? evaluatePolicy)(action);
     let allowed = policy.decision === "allow";
     if (policy.decision === "block") return blocked(policy.reason);
-    if (policy.decision === "ask") allowed = await services.approve(action, policy.reason, signal);
-    if (policy.decision === "review") {
+    const scoped = policy.decision !== "allow" ? await services.scope?.(action, signal) : undefined;
+    if (scoped) allowed = true;
+    if (!scoped && policy.decision === "ask") allowed = await services.approve(action, policy.reason, signal);
+    if (!scoped && policy.decision === "review") {
       let verdict: Verdict;
       try {
         verdict = await services.classify(action, signal);
@@ -33,6 +37,9 @@ export async function guardTool(
       if (verdict.decision === "deny") return blocked("Reviewer rejected this action. Ask the user for a different approach.");
       allowed = verdict.decision === "allow" || (verdict.decision === "ask" && await services.approve(action, verdict.reason, signal));
     }
+    signal.throwIfAborted();
+    if (scoped && !await scoped()) return blocked("Task scope was revoked or changed before execution.");
+    if (services.isCurrent && !await services.isCurrent()) return blocked("Task, session, or branch changed during review; a fresh review is required.");
     signal.throwIfAborted();
     if (JSON.stringify(input) !== original || JSON.stringify(action.input) !== original) return blocked("Arguments changed during review.");
     return allowed ? undefined : blocked("No explicit approval for this action (rejected, cancelled, unavailable, or expired).");

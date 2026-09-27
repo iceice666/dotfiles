@@ -10,6 +10,7 @@ import { Team, userQuestion, remoteWait, parseAgentKinds } from './team.mjs';
 import { teamToolRenderers, renderTeamMessage } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
 import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
+import { requestParentContext } from '../auto-mode/service.ts';
 
 export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer('agent-team', renderTeamMessage);
@@ -80,6 +81,9 @@ export default function (pi: ExtensionAPI) {
         extension: fileURLToPath(import.meta.url),
         executable: process.env.PI_TEAM_EXECUTABLE || 'pi',
         kinds: parseAgentKinds(),
+        getAutoModeContext(who: string, args: any, signal: AbortSignal) {
+          return requestParentContext(who, args, signal);
+        },
         askUser(question: Question, signal: AbortSignal, from: string) {
           return askQuestions(context ?? ctx, { questions: [{ ...question, header: `Agent ${from}${question.header ? ` — ${question.header}` : ''}`.slice(0, 120) }] }, signal);
         },

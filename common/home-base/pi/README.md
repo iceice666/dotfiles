@@ -35,6 +35,12 @@ agent tool operations. No automatic deployment/escalation path is provided.
 
 ## Auto Mode
 
+`/yolo on` skips Auto Mode for the parent and all existing/new workers until
+`/yolo off` (or parent `/auto on`). Only the parent TUI can toggle it; restart,
+reload, or branch navigation resets it. OS sandbox and verification gates remain
+enabled. Workers check the parent before every action and fail closed if unreachable.
+Use `/yolo status` to inspect the team switch; no second confirmation is required.
+
 Auto Mode is enabled by default in new sessions and follows the selected session
 model for independent, tool-free review. Ordinary workspace reads/writes and local
 coordination pass locally; shell commands, background command starts, external
@@ -42,7 +48,15 @@ requests, and unknown tools receive review. Ambiguous actions request one real
 human approval, including worker requests through the team broker. Rejected,
 cancelled, unavailable, or timed-out approvals do not execute. `/auto status`,
 `/auto on`, and parent-only confirmed `/auto off` control the current session.
-No approval cache or writable policy configuration is used. See
+Review context combines the pinned Observational Memory full branch projection,
+recent raw inputs/question answers, and bounded source evidence. Memories provide
+task continuity, not permissions. Workers supplement their own branch with a
+bounded parent snapshot through the authenticated broker. Parent-only `/auto grant
+PATH` creates a confirmed in-memory read/write/edit scope; `/auto scopes` lists it
+and `/auto revoke ID` or `/auto revoke all` removes it. Scopes exclude secrets,
+shell/deployment and live controls, and expire on reload, restart, or branch navigation. The exact OM
+dev dependency is used only for offline adapter compatibility tests. Update it
+alongside the Nix OM source pin. No approval cache or writable policy configuration is used. See
 [auto-mode/README.md](extensions/auto-mode/README.md) for data transmission,
 limits, test commands, and required manual smoke checks.
 

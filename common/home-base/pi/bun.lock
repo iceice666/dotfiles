@@ -8,6 +8,7 @@
         "@earendil-works/pi-coding-agent": "0.85.1",
         "@earendil-works/pi-tui": "0.85.1",
         "jiti": "2.7.0",
+        "pi-observational-memory": "3.1.3",
       },
     },
   },
@@ -289,6 +290,8 @@
     "partial-json": ["partial-json@0.1.7", "", {}, "sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA=="],
 
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
+
+    "pi-observational-memory": ["pi-observational-memory@3.1.3", "", { "peerDependencies": { "@earendil-works/pi-agent-core": "*", "@earendil-works/pi-ai": "*", "@earendil-works/pi-coding-agent": "*", "@earendil-works/pi-tui": "*" } }, "sha512-ofbD8YLkMeoE1KnGvXjsqO7RheVwm4Yv/QxL9YpdWS3sTF3Rv74VfolEamsXbeqpIpgL/VIlVdXWT+T+rQzX0g=="],
 
     "proper-lockfile": ["proper-lockfile@4.1.2", "", { "dependencies": { "graceful-fs": "^4.2.4", "retry": "^0.12.0", "signal-exit": "^3.0.2" } }, "sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA=="],
 

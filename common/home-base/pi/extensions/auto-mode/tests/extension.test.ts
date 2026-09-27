@@ -14,6 +14,7 @@ function setup(mode = "print") {
   const pi: any = { on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c) };
   const ctx: any = {
     cwd: process.cwd(), mode, hasUI: mode !== "print",
+    sessionManager: { getSessionId: () => "test-session", getLeafId: () => null, getBranch: () => [] },
     model: { provider: "test", id: "reviewer", maxTokens: 4096 },
     modelRegistry: { complete: async (...args: any[]) => { calls.push(args); return { stopReason: "stop", content: [{ type: "text", text: '{"decision":"allow","reason":"routine"}' }] }; } },
     ui: { notify() {}, setStatus() {} },

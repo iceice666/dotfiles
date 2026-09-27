@@ -160,13 +160,77 @@ export function remoteAutoModeApproval(url, token, args, signal) {
     } catch { req?.destroy(); finish(denied); }
   });
 }
+const AUTO_MODE_CONTEXT_LIMIT = 32 * 1024;
+const AUTO_MODE_CONTEXT_TIMEOUT = 10000;
+const contextError = () => new Error('Auto-mode context unavailable');
+function contextArgs(args) {
+  if (!args || typeof args.toolName !== 'string' || !/^[a-z][a-z0-9_]{0,79}$/.test(args.toolName)
+    || typeof args.cwd !== 'string' || !isAbsolute(args.cwd) || args.cwd.length > 4096 || /[\u0000-\u001f\u007f-\u009f]/.test(args.cwd)
+    || !args.input || typeof args.input !== 'object' || Array.isArray(args.input)
+    || (args.includeContext !== undefined && typeof args.includeContext !== 'boolean')) throw contextError();
+  const serialized = JSON.stringify(args.input);
+  if (Buffer.byteLength(serialized) > AUTO_MODE_CONTEXT_LIMIT) throw contextError();
+  const input = JSON.parse(serialized);
+  if (typeof args.actionId !== 'string' || !/^[a-f0-9]{64}$/.test(args.actionId)
+    || args.actionId !== autoModeActionId(args.toolName, input, args.cwd)) throw contextError();
+  return { actionId: args.actionId, toolName: args.toolName, input, cwd: args.cwd,
+    ...(args.includeContext === undefined ? {} : { includeContext: args.includeContext }) };
+}
+function contextResult(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || !Number.isSafeInteger(value.revision) || value.revision < 0
+    || (value.yolo !== undefined && typeof value.yolo !== 'boolean')
+    || (value.scopeId !== undefined && (typeof value.scopeId !== 'string' || !value.scopeId || value.scopeId.length > 1024))
+    || (value.context !== undefined && (!value.context || typeof value.context !== 'object' || Array.isArray(value.context)))) throw contextError();
+  const result = { revision: value.revision, ...(value.yolo === undefined ? {} : { yolo: value.yolo }), ...(value.scopeId === undefined ? {} : { scopeId: value.scopeId }),
+    ...(value.context === undefined ? {} : { context: value.context }) };
+  const serialized = JSON.stringify({ result });
+  if (Buffer.byteLength(serialized) > AUTO_MODE_CONTEXT_LIMIT) throw contextError();
+  return JSON.parse(serialized).result;
+}
+/** Read-only internal context lookup; never creates an approval or prompts the user. */
+export function remoteAutoModeContext(url, token, args, signal) {
+  return new Promise((resolve, reject) => {
+    let req, timer, settled = false;
+    const finish = (result, failed = false) => {
+      if (settled) return;
+      settled = true; clearTimeout(timer);
+      if (failed || signal?.aborted) reject(contextError()); else resolve(result);
+    };
+    try {
+      if (signal?.aborted) throw contextError();
+      const validated = contextArgs(args);
+      req = request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: token }, signal }, res => {
+        let body = '', bytes = 0;
+        res.setEncoding('utf8');
+        res.on('data', chunk => {
+          bytes += Buffer.byteLength(chunk);
+          if (bytes > AUTO_MODE_CONTEXT_LIMIT) { req.destroy(); finish(undefined, true); return; }
+          body += chunk;
+        });
+        res.on('error', () => finish(undefined, true));
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            if (res.statusCode !== 200 || data.error || signal?.aborted) throw contextError();
+            finish(contextResult(data.result));
+          } catch { finish(undefined, true); }
+        });
+      });
+      timer = setTimeout(() => { req.destroy(); finish(undefined, true); }, AUTO_MODE_CONTEXT_TIMEOUT);
+      req.on('error', () => finish(undefined, true));
+      req.end(JSON.stringify({ operation: 'auto_mode_context', args: validated }));
+    } catch { req?.destroy(); finish(undefined, true); }
+  });
+}
 export class Team {
-  constructor({ directory, extension, workspace, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), kinds }) {
+  constructor({ directory, extension, workspace, deliverParent, executable = 'pi', limit = 4, onChange = () => {}, askUser = async () => ({ status: 'unavailable', answers: [] }), getAutoModeContext, kinds }) {
     this.workspace = realpathSync(workspace ?? process.env.PI_EXECUTION_WORKSPACE ?? process.cwd());
     this.directory = directory; this.extension = extension; this.deliverParent = deliverParent;
     this.executable = executable; this.limit = limit; this.onChange = onChange;
     this.kinds = kinds === undefined ? parseAgentKinds() : { ...DEFAULT_AGENT_KINDS, ...validateKindPresets(kinds) };
     this.askUser = askUser; this.userQuestions = new Map(); this.approvals = new Map();
+    this.getAutoModeContext = getAutoModeContext; this.contextRequests = new Map();
     this.agents = new Map(); this.tokens = new Map(); this.records = []; this.closing = false;
     this.waiters = new Set();
     mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -463,14 +527,46 @@ export class Team {
     })();
     return pending.task;
   }
+  async autoModeContext(who, args, signal) {
+    let validated;
+    try { validated = contextArgs(args); } catch { throw contextError(); }
+    if (signal?.aborted || typeof this.getAutoModeContext !== 'function' || this.contextRequests.size >= 32) throw contextError();
+    const id = randomUUID();
+    const controller = new AbortController();
+    const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+    const pending = { from: who, controller };
+    this.contextRequests.set(id, pending);
+    const timer = setTimeout(() => controller.abort(), AUTO_MODE_CONTEXT_TIMEOUT);
+    let onAbort;
+    pending.task = (async () => {
+      try {
+        const response = await Promise.race([
+          Promise.resolve().then(() => {
+            if (combined.aborted) throw contextError();
+            return this.getAutoModeContext(who, validated, combined);
+          }),
+          new Promise((_, reject) => { onAbort = () => reject(contextError()); combined.addEventListener('abort', onAbort, { once: true }); }),
+        ]);
+        if (combined.aborted || this.closing || (who !== 'parent' && !active(this.agents.get(who) ?? { status: 'stopped' }))) throw contextError();
+        return contextResult(response);
+      } catch { throw contextError(); }
+      finally {
+        clearTimeout(timer);
+        if (onAbort) combined.removeEventListener('abort', onAbort);
+        this.contextRequests.delete(id);
+      }
+    })();
+    return pending.task;
+  }
   cancelUserQuestions(who) {
-    for (const pending of [...this.userQuestions.values(), ...this.approvals.values()]) if (!who || pending.from === who) pending.controller.abort();
+    for (const pending of [...this.userQuestions.values(), ...this.approvals.values(), ...this.contextRequests.values()]) if (!who || pending.from === who) pending.controller.abort();
   }
   async call(who, operation, args = {}, signal) {
     if (this.closing) throw new Error('Team shutting down');
     if (who !== 'parent' && !active(this.agents.get(who) ?? { status: 'stopped' })) throw new Error('Unknown sender');
     switch (operation) {
       case 'auto_mode_approve': return this.approveAction(who, args, signal);
+      case 'auto_mode_context': return this.autoModeContext(who, args, signal);
       case 'agent_list': return this.list();
       case 'agent_wait': return this.wait(who, args, signal);
       case 'agent_send': return this.send(who, args.to, args.message);
@@ -524,7 +620,10 @@ export class Team {
     this.closing = true;
     this.notifyWaiters();
     this.cancelUserQuestions();
-    await Promise.all([...this.userQuestions.values(), ...this.approvals.values()].map(p => p.task));
+    await Promise.all([
+      ...[...this.userQuestions.values(), ...this.approvals.values()].map(p => p.task),
+      ...[...this.contextRequests.values()].map(p => p.task.catch(() => undefined)),
+    ]);
     await this.ready;
     await Promise.all([...this.agents.keys()].map(name => this.stop(name)));
     this.server.closeAllConnections();

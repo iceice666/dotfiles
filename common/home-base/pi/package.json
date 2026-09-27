@@ -10,6 +10,7 @@
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "0.85.1",
     "@earendil-works/pi-tui": "0.85.1",
-    "jiti": "2.7.0"
+    "jiti": "2.7.0",
+    "pi-observational-memory": "3.1.3"
   }
 }
