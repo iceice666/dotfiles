@@ -7,6 +7,7 @@ window,
 .bar,
 .bar-window,
 .popup-window,
+.notification-popup-window,
 .backdrop {
   background: transparent;
   color: $foreground;
@@ -321,7 +322,7 @@ button:active {
   color: $primary;
 }
 .wifi-row,
-.cc-notification-row {
+.notification-card {
   background: $surfaceContainer;
   border: 1px solid transparent;
   border-radius: 16px;
@@ -330,21 +331,40 @@ button:active {
 .wifi-row.active {
   border-color: $primary;
 }
-.cc-notification-row button {
-  padding: 2px;
+.notification-popups {
+  margin: 8px 12px 0 0;
 }
-.cc-notification-row.unread {
+.notification-card.popup {
+  background: $surface;
+  border-color: $outline;
+  min-width: 360px;
+}
+.notification-card.unread {
   border-color: $outline;
 }
-.cc-notification-row.critical {
+.notification-card.critical {
   border-color: $critical;
+}
+.notification-card.low .heading {
+  color: $foregroundDim;
+}
+.notification-close {
+  padding: 2px;
+}
+.notification-image {
+  border-radius: 8px;
+}
+.notification-actions button {
+  background: $surfaceActive;
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+.notification-actions button:hover {
+  background: $surfaceHover;
 }
 .unread-dot {
   color: $primary;
   font-size: 9px;
-}
-.notification-body {
-  padding: 12px 4px 2px;
 }
 .wifi-error {
   color: $critical;

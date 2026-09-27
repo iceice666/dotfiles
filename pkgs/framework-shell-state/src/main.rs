@@ -1,8 +1,8 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     env,
     ffi::OsStr,
-    fs::{self, File, OpenOptions},
+    fs,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Command as ProcessCommand, Stdio},
@@ -14,15 +14,12 @@ use std::{
 use anyhow::{Context, Result, anyhow};
 use chrono::{Datelike, Local, Timelike};
 use clap::{Parser, Subcommand, ValueEnum};
-use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 type Vars = BTreeMap<String, String>;
-const NOTIFICATION_PREVIEW_CHARS: usize = 96;
-
 #[derive(Debug, Parser)]
 struct Cli {
     #[arg(long)]
@@ -53,10 +50,6 @@ enum CliCommand {
     Media {
         action: MediaAction,
     },
-    Notifications {
-        #[command(subcommand)]
-        command: NotificationCommand,
-    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -70,7 +63,6 @@ enum RefreshDomain {
     Media,
     Datetime,
     Network,
-    Notifications,
 }
 
 #[derive(Debug, Subcommand)]
@@ -115,13 +107,6 @@ enum MediaAction {
     Next,
 }
 
-#[derive(Debug, Subcommand)]
-enum NotificationCommand {
-    Action,
-    MarkRead { id: Option<String> },
-    MarkUnread { id: Option<String> },
-}
-
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Config {
@@ -142,7 +127,6 @@ struct CommandPaths {
     playerctl: PathBuf,
     brightnessctl: PathBuf,
     nmcli: PathBuf,
-    makoctl: PathBuf,
     pavucontrol: PathBuf,
 }
 
@@ -210,35 +194,6 @@ struct IconResolver {
     memory: HashMap<String, PathBuf>,
 }
 
-#[derive(Debug, Deserialize)]
-struct MakoNotification {
-    id: u64,
-    #[serde(default)]
-    app_name: Option<String>,
-    #[serde(default)]
-    desktop_entry: Option<String>,
-    #[serde(default)]
-    summary: String,
-    #[serde(default)]
-    body: String,
-    #[serde(default)]
-    urgency: String,
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq)]
-struct NotificationRow {
-    key: String,
-    id: String,
-    source: String,
-    class: String,
-    app: String,
-    summary: String,
-    preview: String,
-    body: String,
-    urgency: String,
-    unread: bool,
-}
-
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let cfg = Arc::new(read_config(&cli.config_file)?);
@@ -264,7 +219,6 @@ fn main() -> Result<()> {
         CliCommand::Audio { command } => run_audio_command(&cfg, command),
         CliCommand::Brightness { command } => run_brightness_command(&cfg, command),
         CliCommand::Media { action } => run_media_command(&cfg, action),
-        CliCommand::Notifications { command } => run_notification_command(&cfg, command),
     }
 }
 
@@ -285,8 +239,7 @@ fn run_daemon(cfg: Arc<Config>) -> Result<()> {
     spawn_media_thread(cfg.clone(), tx.clone());
     spawn_network_thread(cfg.clone(), tx.clone());
     spawn_datetime_thread(tx.clone());
-    spawn_theme_thread(cfg.clone(), tx.clone());
-    spawn_notifications_thread(cfg.clone(), tx);
+    spawn_theme_thread(cfg.clone(), tx);
 
     update_loop(rx, &mut std::io::stdout().lock())
 }
@@ -568,15 +521,6 @@ fn spawn_theme_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
     });
 }
 
-fn spawn_notifications_thread(cfg: Arc<Config>, tx: mpsc::Sender<Vars>) {
-    thread::spawn(move || {
-        loop {
-            send_result(&tx, notification_vars(&cfg, true));
-            thread::sleep(Duration::from_secs(5));
-        }
-    });
-}
-
 fn send_result(tx: &mpsc::Sender<Vars>, vars: Result<Vars>) {
     match vars {
         Ok(vars) => send_vars(tx, vars),
@@ -604,7 +548,6 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
             vars.extend(network_vars(cfg)?);
             vars.extend(datetime_vars());
             vars.extend(theme_vars(cfg));
-            vars.extend(notification_vars(cfg, true)?);
         }
         RefreshDomain::Niri => {
             let mut resolver = IconResolver::new(cfg.clone());
@@ -620,7 +563,6 @@ fn refresh_domain(cfg: &Arc<Config>, domain: RefreshDomain) -> Result<()> {
         RefreshDomain::Media => vars.extend(media_vars(cfg)?),
         RefreshDomain::Datetime => vars.extend(datetime_vars()),
         RefreshDomain::Network => vars.extend(network_vars(cfg)?),
-        RefreshDomain::Notifications => vars.extend(notification_vars(cfg, true)?),
     }
 
     emit_patch(&vars)
@@ -701,31 +643,6 @@ fn run_media_command(cfg: &Arc<Config>, action: MediaAction) -> Result<()> {
     let _ = status(cfg, &cfg.commands.playerctl, [action]);
     thread::sleep(Duration::from_millis(40));
     emit_patch(&media_vars(cfg)?)
-}
-
-fn run_notification_command(cfg: &Arc<Config>, command: NotificationCommand) -> Result<()> {
-    match command {
-        NotificationCommand::Action => {
-            notification_action(cfg)?;
-            emit_patch(&notification_vars(cfg, true)?)
-        }
-        NotificationCommand::MarkRead { id } => {
-            if let Some(id) = id.or_else(|| env::var("id").ok()) {
-                notification_mark_read(cfg, &id)?;
-                emit_patch(&notification_vars(cfg, false)?)
-            } else {
-                Ok(())
-            }
-        }
-        NotificationCommand::MarkUnread { id } => {
-            if let Some(id) = id.or_else(|| env::var("id").ok()) {
-                notification_mark_unread(cfg, &id)?;
-                emit_patch(&notification_vars(cfg, false)?)
-            } else {
-                Ok(())
-            }
-        }
-    }
 }
 
 fn niri_snapshot(cfg: &Arc<Config>, resolver: &mut IconResolver) -> Result<NiriSnapshot> {
@@ -1496,307 +1413,6 @@ fn theme_vars(cfg: &Config) -> Vars {
     vars
 }
 
-fn notification_vars(cfg: &Config, prune: bool) -> Result<Vars> {
-    let foreground = theme_color(cfg, "foreground", "#e5e5e5");
-    let critical = theme_color(cfg, "critical", "#ef4444");
-    // Never prune unread markers against an unavailable or malformed snapshot.
-    let active_notifications = mako_notifications(cfg, "list")?;
-    let history_notifications = mako_notifications(cfg, "history")?;
-    let state = notification_state()?;
-    let _guard = state.lock()?;
-
-    if prune {
-        let history_ids = active_notifications
-            .iter()
-            .chain(history_notifications.iter())
-            .map(|notification| notification.id.to_string())
-            .collect::<Vec<_>>();
-        let unread = state.read_unread()?;
-        let retained = unread
-            .into_iter()
-            .filter(|id| history_ids.iter().any(|history_id| history_id == id))
-            .collect::<Vec<_>>();
-        state.write_unread(&retained)?;
-    }
-
-    let unread = state.read_unread()?;
-    let count = unread.len();
-    let label = if count > 99 {
-        "99+".to_string()
-    } else {
-        count.to_string()
-    };
-    let mut class = "island notifications".to_string();
-    let mut color = foreground;
-    if count > 0 {
-        class.push_str(" active");
-        color = critical;
-    }
-
-    let rows = notification_rows(&active_notifications, &history_notifications, &unread);
-    let mut vars = Vars::new();
-    vars.insert("notifications_count".to_string(), count.to_string());
-    vars.insert("notifications_label".to_string(), label);
-    vars.insert("notifications_class".to_string(), class);
-    vars.insert("notifications_color".to_string(), color);
-    vars.insert(
-        "notifications_history_count".to_string(),
-        rows.len().to_string(),
-    );
-    vars.insert(
-        "notifications_history".to_string(),
-        serde_json::to_string(&rows)?,
-    );
-    Ok(vars)
-}
-
-fn mako_notifications(cfg: &Config, command_name: &str) -> Result<Vec<MakoNotification>> {
-    parse_notification_snapshot(output(cfg, &cfg.commands.makoctl, [command_name, "-j"])?)
-        .with_context(|| format!("failed to read makoctl {command_name} JSON"))
-}
-
-fn parse_notification_snapshot(text: Option<String>) -> Result<Vec<MakoNotification>> {
-    let text = text.context("makoctl snapshot unavailable")?;
-    serde_json::from_str(&text).context("invalid makoctl snapshot")
-}
-
-fn notification_rows(
-    active: &[MakoNotification],
-    history: &[MakoNotification],
-    unread: &[String],
-) -> Vec<NotificationRow> {
-    let unread = unread.iter().cloned().collect::<HashSet<_>>();
-    let mut seen = HashSet::new();
-    let mut rows = Vec::new();
-
-    for (source, notifications) in [("active", active), ("history", history)] {
-        for notification in notifications {
-            if !seen.insert(notification.id) {
-                continue;
-            }
-            if rows.len() >= 6 {
-                return rows;
-            }
-            rows.push(notification_row(notification, source, &unread));
-        }
-    }
-
-    rows
-}
-
-fn notification_row(
-    notification: &MakoNotification,
-    source: &str,
-    unread: &HashSet<String>,
-) -> NotificationRow {
-    let id = notification.id.to_string();
-    let app = notification
-        .app_name
-        .as_deref()
-        .filter(|value| !value.is_empty())
-        .or(notification.desktop_entry.as_deref())
-        .filter(|value| !value.is_empty())
-        .unwrap_or("Notification")
-        .to_string();
-    let summary = if notification.summary.trim().is_empty() {
-        app.clone()
-    } else {
-        notification.summary.trim().to_string()
-    };
-    let body = notification
-        .body
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-    let preview = notification_preview(&body);
-    let urgency = if notification.urgency.trim().is_empty() {
-        "normal".to_string()
-    } else {
-        notification.urgency.trim().to_string()
-    };
-
-    let mut class = format!("cc-notification-row {source} {urgency}");
-    let is_unread = unread.contains(&id);
-    if is_unread {
-        class.push_str(" unread");
-    }
-
-    NotificationRow {
-        key: format!("{source}-{id}"),
-        id,
-        source: source.to_string(),
-        class,
-        app,
-        summary,
-        preview,
-        body,
-        urgency,
-        unread: is_unread,
-    }
-}
-
-fn notification_preview(body: &str) -> String {
-    if body.is_empty() {
-        return "No details".to_string();
-    }
-
-    cap_text(body, NOTIFICATION_PREVIEW_CHARS)
-}
-
-fn cap_text(text: &str, max_chars: usize) -> String {
-    let mut iter = text.chars();
-    let preview = iter.by_ref().take(max_chars).collect::<String>();
-    if iter.next().is_some() {
-        format!("{preview}...")
-    } else {
-        preview
-    }
-}
-
-struct NotificationState {
-    unread_file: PathBuf,
-    lock_file: PathBuf,
-}
-
-struct NotificationLock {
-    file: File,
-}
-
-impl Drop for NotificationLock {
-    fn drop(&mut self) {
-        let _ = self.file.unlock();
-    }
-}
-
-impl NotificationState {
-    fn lock(&self) -> Result<NotificationLock> {
-        let file = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .write(true)
-            .open(&self.lock_file)?;
-        file.lock_exclusive()?;
-        Ok(NotificationLock { file })
-    }
-
-    fn read_unread(&self) -> Result<Vec<String>> {
-        let text = fs::read_to_string(&self.unread_file).unwrap_or_default();
-        let mut ids = text
-            .lines()
-            .map(str::trim)
-            .filter(|line| !line.is_empty())
-            .map(str::to_string)
-            .collect::<Vec<_>>();
-        ids.sort_by_key(|id| id.parse::<u64>().unwrap_or(u64::MAX));
-        ids.dedup();
-        Ok(ids)
-    }
-
-    fn write_unread(&self, ids: &[String]) -> Result<()> {
-        let tmp = self.unread_file.with_extension("tmp");
-        {
-            let mut file = File::create(&tmp)?;
-            for id in ids {
-                writeln!(file, "{id}")?;
-            }
-        }
-        fs::rename(tmp, &self.unread_file)?;
-        Ok(())
-    }
-}
-
-fn notification_state() -> Result<NotificationState> {
-    let dir = runtime_dir().join("framework-shell-notifications");
-    fs::create_dir_all(&dir)?;
-    let unread_file = dir.join("unread");
-    let lock_file = dir.join("unread.lock");
-    OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&unread_file)?;
-    Ok(NotificationState {
-        unread_file,
-        lock_file,
-    })
-}
-
-fn notification_mark_read(cfg: &Config, id: &str) -> Result<()> {
-    let _ = cfg;
-    let state = notification_state()?;
-    let _guard = state.lock()?;
-    let ids = state
-        .read_unread()?
-        .into_iter()
-        .filter(|unread_id| unread_id != id)
-        .collect::<Vec<_>>();
-    state.write_unread(&ids)
-}
-
-fn notification_mark_unread(cfg: &Config, id: &str) -> Result<()> {
-    let _ = cfg;
-    let state = notification_state()?;
-    let _guard = state.lock()?;
-    let mut ids = state
-        .read_unread()?
-        .into_iter()
-        .filter(|unread_id| unread_id != id)
-        .collect::<Vec<_>>();
-    ids.push(id.to_string());
-    ids.sort_by_key(|id| id.parse::<u64>().unwrap_or(u64::MAX));
-    ids.dedup();
-    state.write_unread(&ids)
-}
-
-fn notification_action(cfg: &Config) -> Result<()> {
-    loop {
-        let state = notification_state()?;
-        let guard = state.lock()?;
-        let history = mako_history_ids(cfg)?;
-        let restore_id = history.first().cloned();
-        let unread = state.read_unread()?;
-        let has_unread = unread
-            .iter()
-            .any(|id| history.iter().any(|history_id| history_id == id));
-        let restore_is_unread = restore_id
-            .as_ref()
-            .is_some_and(|restore_id| unread.iter().any(|id| id == restore_id));
-        drop(guard);
-
-        if !has_unread {
-            break;
-        }
-        let Some(restore_id) = restore_id else {
-            break;
-        };
-
-        if status(cfg, &cfg.commands.makoctl, ["restore"]).is_err() {
-            break;
-        }
-
-        if restore_is_unread {
-            notification_mark_read(cfg, &restore_id)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn mako_history_ids(cfg: &Config) -> Result<Vec<String>> {
-    let history = output(cfg, &cfg.commands.makoctl, ["history"])?.unwrap_or_default();
-    Ok(parse_mako_history_ids(&history))
-}
-
-fn parse_mako_history_ids(text: &str) -> Vec<String> {
-    text.lines()
-        .filter_map(|line| {
-            let line = line.trim();
-            let rest = line.strip_prefix("Notification ")?;
-            let id = rest.split_once(':')?.0;
-            (!id.is_empty()).then_some(id.to_string())
-        })
-        .collect()
-}
-
 impl IconResolver {
     fn new(cfg: Arc<Config>) -> Self {
         let cache_dir = runtime_dir().join("framework-shell-icon-cache");
@@ -2204,42 +1820,18 @@ mod tests {
     }
 
     #[test]
-    fn parses_mako_history() {
-        let text = "Notification 42:\n  App name: test\nNotification 100:\n";
-        assert_eq!(parse_mako_history_ids(text), vec!["42", "100"]);
-    }
-
-    #[test]
-    fn unavailable_notification_snapshots_are_not_empty_history() {
-        assert!(parse_notification_snapshot(None).is_err());
-        assert!(parse_notification_snapshot(Some(String::new())).is_err());
-        assert!(parse_notification_snapshot(Some("invalid JSON".to_string())).is_err());
-        assert!(
-            parse_notification_snapshot(Some("[]".to_string()))
-                .unwrap()
-                .is_empty()
-        );
-    }
-
-    #[test]
-    fn notification_markers_survive_reopening_state() {
-        let dir = TestDirectory::new("notifications");
-        let state = NotificationState {
-            unread_file: dir.0.join("unread"),
-            lock_file: dir.0.join("unread.lock"),
-        };
-        {
-            let _guard = state.lock().unwrap();
-            state
-                .write_unread(&["42".to_string(), "9".to_string()])
-                .unwrap();
-        }
-        let reopened = NotificationState {
-            unread_file: state.unread_file.clone(),
-            lock_file: state.lock_file.clone(),
-        };
-        let _guard = reopened.lock().unwrap();
-        assert_eq!(reopened.read_unread().unwrap(), vec!["9", "42"]);
+    fn changed_vars_emit_only_changed_keys() {
+        let applied = Vars::from([
+            ("a".to_string(), "1".to_string()),
+            ("b".to_string(), "2".to_string()),
+        ]);
+        let next = Vars::from([
+            ("a".to_string(), "1".to_string()),
+            ("b".to_string(), "3".to_string()),
+        ]);
+        let changed = changed_vars(&applied, next);
+        assert_eq!(changed.get("b").map(String::as_str), Some("3"));
+        assert!(!changed.contains_key("a"));
     }
 
     #[test]
@@ -2279,82 +1871,6 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
-    }
-
-    #[test]
-    fn parses_mako_json_history() {
-        let text = r#"[{"id":42,"app_name":"Ghostty","summary":"Build","body":"Done","urgency":"normal"}]"#;
-        let notifications = serde_json::from_str::<Vec<MakoNotification>>(text).unwrap();
-        assert_eq!(notifications[0].id, 42);
-        assert_eq!(notifications[0].app_name.as_deref(), Some("Ghostty"));
-        assert_eq!(notifications[0].summary, "Build");
-    }
-
-    #[test]
-    fn builds_notification_rows_active_first() {
-        let active = vec![MakoNotification {
-            id: 2,
-            app_name: Some("Chat".to_string()),
-            desktop_entry: None,
-            summary: "Message".to_string(),
-            body: "hello\nthere".to_string(),
-            urgency: "normal".to_string(),
-        }];
-        let history = vec![
-            MakoNotification {
-                id: 2,
-                app_name: Some("Chat".to_string()),
-                desktop_entry: None,
-                summary: "Message".to_string(),
-                body: "duplicate".to_string(),
-                urgency: "normal".to_string(),
-            },
-            MakoNotification {
-                id: 1,
-                app_name: None,
-                desktop_entry: Some("app.desktop".to_string()),
-                summary: String::new(),
-                body: "old".to_string(),
-                urgency: String::new(),
-            },
-        ];
-        let rows = notification_rows(&active, &history, &["2".to_string()]);
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].key, "active-2");
-        assert!(rows[0].class.contains("unread"));
-        assert_eq!(rows[0].body, "hello there");
-        assert_eq!(rows[0].preview, "hello there");
-        assert_eq!(rows[1].summary, "app.desktop");
-    }
-
-    #[test]
-    fn marker_changes_update_history_even_with_the_same_unread_count() {
-        let notifications =
-            serde_json::from_str::<Vec<MakoNotification>>(r#"[{"id":1},{"id":2}]"#).unwrap();
-        let snapshot = |unread: &str| {
-            Vars::from([
-                ("notifications_count".to_string(), "1".to_string()),
-                (
-                    "notifications_history".to_string(),
-                    serde_json::to_string(&notification_rows(
-                        &notifications,
-                        &[],
-                        &[unread.to_string()],
-                    ))
-                    .unwrap(),
-                ),
-            ])
-        };
-        let changed = changed_vars(&snapshot("1"), snapshot("2"));
-        assert!(changed.contains_key("notifications_history"));
-        assert!(!changed.contains_key("notifications_count"));
-    }
-
-    #[test]
-    fn caps_notification_preview() {
-        assert_eq!(notification_preview(""), "No details");
-        assert_eq!(cap_text("hello", 8), "hello");
-        assert_eq!(cap_text("hello world", 5), "hello...");
     }
 
     #[test]

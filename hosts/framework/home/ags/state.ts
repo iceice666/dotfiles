@@ -22,7 +22,6 @@ export const config: Config = JSON.parse(
 );
 export const [state, setState] = createState<Values>({});
 export const [groupsState, setGroups] = createState("[]");
-export const [historyState, setHistory] = createState("[]");
 const switchStates = Object.fromEntries(
   ["wifi", "bt", "dnd", "dark", "lid"].map((key) => [key, createState("off")]),
 );
@@ -43,8 +42,6 @@ export function patch(line: string) {
       ) as Values;
       setState((current) => ({ ...current, ...values }));
       if (typeof values.niri_groups === "string") setGroups(values.niri_groups);
-      if (typeof values.notifications_history === "string")
-        setHistory(values.notifications_history);
     }
   } catch {
     console.error("invalid shell-state event");
@@ -70,12 +67,24 @@ export function command(
 }
 export const shell = (...args: string[]) =>
   command([config.stateBinary, "--config-file", config.stateConfig, ...args]);
+// Switches owned in-process (e.g. AstalNotifd DND) bypass the shell helper.
+const localToggles = new Map<string, () => void>();
+export function localSwitch(key: string, toggle: () => void) {
+  localToggles.set(key, toggle);
+}
+export const isLocalSwitch = (key: string) => localToggles.has(key);
+export function setSwitch(key: string, next: string) {
+  switchStates[key][1](next);
+}
 export function refreshSwitch(key: string) {
+  if (localToggles.has(key)) return Promise.resolve();
   return command([config.ccCtl, "state", key], (out) =>
     switchStates[key][1](out.trim()),
   );
 }
 export function toggleSwitch(key: string) {
+  const local = localToggles.get(key);
+  if (local) return Promise.resolve(local());
   return command([config.ccCtl, "toggle", key], () => {
     void refreshSwitch(key);
   });

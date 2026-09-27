@@ -2,9 +2,14 @@ import { Accessor, createState, For, With } from "ags";
 import Gtk from "gi://Gtk?version=4.0";
 import Gio from "gi://Gio";
 import {
+  markAllRead,
+  dismissAll,
+  notifications,
+  NotificationCard,
+} from "./notifications";
+import {
   command,
   config,
-  historyState,
   icon,
   shell,
   state,
@@ -20,15 +25,6 @@ type Network = {
   security: string;
   signal: number;
 };
-type Notification = {
-  key: string;
-  class: string;
-  summary: string;
-  preview: string;
-  source: string;
-  body: string;
-  unread: boolean;
-};
 const vertical = Gtk.Orientation.VERTICAL;
 const [view, setView] = createState("home");
 const [networks, setNetworks] = createState<Network[]>([]);
@@ -36,7 +32,7 @@ const [wifiTarget, setWifiTarget] = createState("");
 const [wifiPassword, setWifiPassword] = createState("");
 const [wifiError, setWifiError] = createState("");
 const [wifiBusy, setWifiBusy] = createState(false);
-const [expanded, setExpanded] = createState("");
+const notificationCount = notifications((list) => String(list.length));
 
 function wifi(args: string[], clearError = true) {
   if (wifiBusy()) return;
@@ -70,11 +66,11 @@ export function openView(name: string) {
   }
   setView(name);
   if (name === "wifi") wifi(["scan"]);
+  if (name === "notifications") markAllRead();
 }
 export function resetControl() {
   setWifiPassword("");
   setWifiTarget("");
-  setExpanded("");
   setView("home");
 }
 function connectWifi(ssid: string) {
@@ -376,10 +372,7 @@ function Home() {
         <box spacing={12}>
           <Picture name="notification" size={20} />
           <label hexpand xalign={0} label="Notifications" />
-          <label
-            cssClasses={["cc-count"]}
-            label={value("notifications_history_count", "0")}
-          />
+          <label cssClasses={["cc-count"]} label={notificationCount} />
           <image iconName="go-next-symbolic" pixelSize={16} />
         </box>
       </button>
@@ -523,14 +516,6 @@ function Wifi() {
   );
 }
 function Notifications() {
-  const rows = historyState((snapshot): Notification[] => {
-    try {
-      const parsed = JSON.parse(snapshot || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
   return (
     <box cssClasses={["cc-page"]} orientation={vertical} spacing={12}>
       <box spacing={8}>
@@ -540,15 +525,8 @@ function Notifications() {
           xalign={0}
           label="Recent notifications"
         />
-        <label
-          cssClasses={["cc-count"]}
-          label={value("notifications_history_count", "0")}
-        />
-        <Action
-          label="Clear"
-          iconName="clear"
-          click={() => command([config.ccCmd, "clear-notifications"])}
-        />
+        <label cssClasses={["cc-count"]} label={notificationCount} />
+        <Action label="Clear" iconName="clear" click={dismissAll} />
       </box>
       <scrolledwindow
         cssClasses={["scroll-area"]}
@@ -558,76 +536,11 @@ function Notifications() {
         <box orientation={vertical} spacing={8}>
           <label
             cssClasses={["empty-state"]}
-            visible={rows((items) => !items.length)}
+            visible={notifications((items) => !items.length)}
             label="You're all caught up"
           />
-          <For each={rows}>
-            {(item) => (
-              <box
-                cssClasses={(item.class || "cc-notification-row").split(" ")}
-                orientation={vertical}
-              >
-                <button
-                  onClicked={() =>
-                    setExpanded(expanded() === item.key ? "" : item.key)
-                  }
-                >
-                  <box spacing={10}>
-                    <label
-                      cssClasses={["unread-dot"]}
-                      visible={item.unread}
-                      label="●"
-                    />
-                    <box orientation={vertical} hexpand spacing={5}>
-                      <label
-                        cssClasses={["secondary"]}
-                        xalign={0}
-                        label={item.source === "active" ? "Now" : "History"}
-                      />
-                      <label
-                        cssClasses={["heading"]}
-                        xalign={0}
-                        maxWidthChars={36}
-                        ellipsize={3}
-                        label={item.summary}
-                      />
-                      <label
-                        xalign={0}
-                        maxWidthChars={42}
-                        lines={2}
-                        ellipsize={3}
-                        wrap
-                        label={item.preview}
-                      />
-                    </box>
-                    <image
-                      iconName={expanded((key) =>
-                        key === item.key
-                          ? "pan-up-symbolic"
-                          : "pan-down-symbolic",
-                      )}
-                      pixelSize={16}
-                    />
-                  </box>
-                </button>
-                <With value={expanded}>
-                  {(key) =>
-                    key === item.key ? (
-                      <label
-                        cssClasses={["notification-body"]}
-                        xalign={0}
-                        maxWidthChars={46}
-                        wrap
-                        selectable
-                        label={item.body || "No details"}
-                      />
-                    ) : (
-                      <box />
-                    )
-                  }
-                </With>
-              </box>
-            )}
+          <For each={notifications}>
+            {(n) => <NotificationCard n={n} mode="center" />}
           </For>
         </box>
       </scrolledwindow>

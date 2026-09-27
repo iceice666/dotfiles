@@ -1,4 +1,7 @@
 // Injected only into the private smoke copy; never included by the production app.
+import { notifications } from "./notifications";
+import { switches, toggleSwitch } from "./state";
+
 export async function runSmoke({
   app,
   Gtk,
@@ -302,6 +305,100 @@ export async function runSmoke({
     outsideClick.emit("released", 1, 0, 0);
     assert(!calendar.visible, "backdrop click did not dismiss calendar");
     print("SMOKE_WIDGET_PASS");
+
+    // Real Notify calls on the private bus exercise AstalNotifd ownership.
+    const notify = (summary, actions = [], hints = {}) =>
+      new Promise<number>((resolve, reject) => {
+        Gio.DBus.session.call(
+          "org.freedesktop.Notifications",
+          "/org/freedesktop/Notifications",
+          "org.freedesktop.Notifications",
+          "Notify",
+          new GLib.Variant("(susssasa{sv}i)", [
+            "Smoke",
+            0,
+            "",
+            summary,
+            "Body with <b>markup</b> & <a href='https://x'>link</a>",
+            actions,
+            hints,
+            -1,
+          ]),
+          new GLib.VariantType("(u)"),
+          Gio.DBusCallFlags.NONE,
+          2000,
+          null,
+          (connection, result) => {
+            try {
+              resolve(connection.call_finish(result).deep_unpack()[0]);
+            } catch (error) {
+              reject(error);
+            }
+          },
+        );
+      });
+    const popupWindow = app
+      .get_windows()
+      .find((w) => w.name === "notification-popups");
+    assert(popupWindow, "missing notification popup window");
+    assert(!popupWindow.visible, "popup window visible without notifications");
+    const cards = (widget) =>
+      all(widget, (w) => w.has_css_class("notification-card"));
+    const badge = find(bars[0], "notification-badge");
+    await notify("Smoke one", ["default", "Open", "reply", "Reply"]);
+    await notify("Smoke two");
+    await delay(300);
+    assert(popupWindow.visible, "notification popup did not appear");
+    assert(cards(popupWindow).length === 2, "expected two popup cards");
+    assert(
+      badge.visible && badge.get_label() === "2",
+      `unread badge mismatch: ${badge.get_label()}`,
+    );
+    assert(notifications().length === 2, "center did not record both");
+    const tallHeight = popupWindow.get_height();
+    const reply = all(popupWindow, (w) => w instanceof Gtk.Button).find((b) =>
+      all(b, (w) => w instanceof Gtk.Label).some(
+        (l) => l.get_label() === "Reply",
+      ),
+    );
+    assert(reply, "notification action button missing");
+    reply.emit("clicked");
+    await delay(300);
+    assert(notifications().length === 1, "invoked action did not resolve");
+    assert(cards(popupWindow).length === 1, "invoked popup remained");
+    assert(badge.get_label() === "1", "invoked notification stayed unread");
+    assert(
+      popupWindow.get_height() < tallHeight,
+      `popup surface did not shrink: ${tallHeight} -> ${popupWindow.get_height()}`,
+    );
+    toggle(first, "control");
+    openView("notifications");
+    await delay();
+    assert(!badge.visible, "opening notifications did not mark them read");
+    assert(cards(panel).length === 1, "center card missing");
+    toggleSwitch("dnd");
+    await delay();
+    assert(switches.dnd() === "on", "DND toggle did not reach AstalNotifd");
+    await notify("Smoke quiet");
+    await delay(300);
+    assert(notifications().length === 2, "DND dropped a notification");
+    assert(
+      cards(popupWindow).length === 0 && !popupWindow.visible,
+      "DND still showed a popup",
+    );
+    assert(badge.get_label() === "1", "DND notification was not unread");
+    toggleSwitch("dnd");
+    const clear = all(panel, (w) => w.has_css_class("cc-action")).find(
+      (b) => b.get_tooltip_text() === "Clear",
+    );
+    assert(clear, "missing clear-notifications action");
+    clear.emit("clicked");
+    await delay(300);
+    assert(notifications().length === 0, "clear did not dismiss all");
+    assert(cards(panel).length === 0, "cleared center cards remain");
+    assert(!badge.visible, "badge remained after clearing");
+    close(first);
+    print("SMOKE_NOTIFICATIONS_PASS");
 
     hover(widgets[0].tray, true);
     await delay(400);

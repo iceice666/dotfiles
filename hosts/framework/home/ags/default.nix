@@ -12,7 +12,12 @@
 let
   agsConfigDir = "${config.home.homeDirectory}/.config/ags";
   agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
-  ags = agsPackages.ags.override { extraPackages = [ agsPackages.tray ]; };
+  ags = agsPackages.ags.override {
+    extraPackages = [
+      agsPackages.notifd
+      agsPackages.tray
+    ];
+  };
   icons = import ./icons.nix { inherit pkgs; };
   shellAssets =
     pkgs.runCommand "framework-ags-assets"
@@ -29,6 +34,7 @@ let
           pkgs.libadwaita
           agsPackages.io
           agsPackages.astal4
+          agsPackages.notifd
           agsPackages.tray
         ];
       }
@@ -37,6 +43,7 @@ let
         cp ${./app.tsx} work/app.tsx
         cp ${./state.ts} work/state.ts
         cp ${./control-center.tsx} work/control-center.tsx
+        cp ${./notifications.tsx} work/notifications.tsx
         ags bundle work/app.tsx "$out/app.js"
         # Bundle launchers need the GI/runtime environment independently of the CLI.
         mkdir -p "$out/bin"
@@ -67,13 +74,11 @@ let
         playerctl = "${pkgs.playerctl}/bin/playerctl";
         brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
         nmcli = "${pkgs.networkmanager}/bin/nmcli";
-        makoctl = "${unstablePkgs.mako}/bin/makoctl";
         pavucontrol = "${pkgs.pavucontrol}/bin/pavucontrol";
       };
       icons = builtins.mapAttrs (_: toString) icons;
     }
   );
-  stateCommand = "${stateBinary} --config-file ${stateConfig}";
   agsReload = "${pkgs.systemd}/bin/systemctl --user --no-block try-restart framework-ags.service";
 
   ccCtl = pkgs.writeShellScript "framework-cc-ctl" ''
@@ -81,7 +86,6 @@ let
     export LC_ALL=C
     nmcli=${pkgs.networkmanager}/bin/nmcli
     bluetoothctl=${pkgs.bluez}/bin/bluetoothctl
-    makoctl=${unstablePkgs.mako}/bin/makoctl
     darkman=${pkgs.darkman}/bin/darkman
     grep=${pkgs.gnugrep}/bin/grep
     systemctl=${pkgs.systemd}/bin/systemctl
@@ -89,7 +93,6 @@ let
       case "$1" in
         wifi) [ "$("$nmcli" -t radio wifi 2>/dev/null)" = enabled ] && echo on || echo off ;;
         bt) "$bluetoothctl" show 2>/dev/null | "$grep" -q "Powered: yes" && echo on || echo off ;;
-        dnd) "$makoctl" mode 2>/dev/null | "$grep" -q "do-not-disturb" && echo on || echo off ;;
         dark) [ "$("$darkman" get 2>/dev/null)" = dark ] && echo on || echo off ;;
         lid) "$systemctl" --user is-active --quiet framework-lid-inhibit.service && echo off || echo on ;;
         *) exit 2 ;;
@@ -101,7 +104,6 @@ let
         case "''${2:-}" in
           wifi) if [ "$(state wifi)" = on ]; then "$nmcli" radio wifi off; else "$nmcli" radio wifi on; fi ;;
           bt) if [ "$(state bt)" = on ]; then "$bluetoothctl" power off; else "$bluetoothctl" power on; fi ;;
-          dnd) "$makoctl" mode -t do-not-disturb ;;
           dark) "$darkman" toggle ;;
           lid)
             if [ "$(state lid)" = off ]; then
@@ -124,7 +126,6 @@ let
       reboot) exec ${pkgs.systemd}/bin/systemctl reboot ;;
       shutdown) exec ${pkgs.systemd}/bin/systemctl poweroff ;;
       logout) exec ${unstablePkgs.niri}/bin/niri msg action quit ;;
-      clear-notifications) exec ${unstablePkgs.mako}/bin/makoctl dismiss --all ;;
       open-bluetooth) exec ${pkgs.overskride}/bin/overskride ;;
       open-audio) exec ${pkgs.pavucontrol}/bin/pavucontrol ;;
       *) exit 2 ;;
@@ -176,14 +177,21 @@ let
 in
 {
   _module.args = {
-    shellNotificationMarkRead = "${stateCommand} notifications mark-read";
-    shellNotificationMarkUnread = "${stateCommand} notifications mark-unread";
     inherit agsReload;
     shellState = stateBinary;
     shellStateConfig = stateConfig;
   };
 
   home.packages = [ ags ];
+
+  # AGS owns org.freedesktop.Notifications through AstalNotifd; early senders
+  # activate the shell unit instead of failing before the session is ready.
+  xdg.dataFile."dbus-1/services/org.freedesktop.Notifications.service".text = ''
+    [D-BUS Service]
+    Name=org.freedesktop.Notifications
+    Exec=${pkgs.coreutils}/bin/false
+    SystemdService=framework-ags.service
+  '';
 
   xdg.configFile = {
     "ags/app.js".source = "${shellAssets}/app.js";

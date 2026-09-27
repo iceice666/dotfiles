@@ -12,6 +12,12 @@ import ControlContents, {
   refreshWifi,
 } from "./control-center";
 import {
+  initNotifications,
+  NotificationPopups,
+  unreadCount,
+  unreadLabel,
+} from "./notifications";
+import {
   config,
   directory,
   state,
@@ -21,6 +27,7 @@ import {
   patch,
   shell,
   switches,
+  isLocalSwitch,
   refreshSwitch,
 } from "./state";
 
@@ -520,8 +527,8 @@ function Bar(mon: Gdk.Monitor) {
               <Picture name="controlCenter" size={23} />
               <label
                 class="notification-badge"
-                visible={state((s) => Number(s.notifications_count || 0) > 0)}
-                label={value("notifications_label", "0")}
+                visible={unreadCount((count) => count > 0)}
+                label={unreadLabel}
               />
             </box>
           </button>
@@ -565,6 +572,9 @@ function syncMonitors() {
 app.start({
   css: GLib.build_filenamev([directory, "style.css"]),
   main() {
+    // Claim the notification bus name before the bars subscribe to its state.
+    onCleanup(initNotifications());
+    NotificationPopups();
     syncMonitors();
     const monitorSignal = app.connect("notify::monitors", syncMonitors);
     onCleanup(() => {
@@ -587,11 +597,12 @@ app.start({
       daemon.disconnect(exitSignal);
       daemon.kill();
     });
-    const timers = Object.keys(switches).map((key) => {
+    const polled = Object.keys(switches).filter((key) => !isLocalSwitch(key));
+    const timers = polled.map((key) => {
       void refreshSwitch(key);
       return GLib.timeout_add_seconds(
         GLib.PRIORITY_DEFAULT,
-        key === "dnd" ? 4 : key === "lid" ? 10 : 6,
+        key === "lid" ? 10 : 6,
         () => {
           void refreshSwitch(key);
           return GLib.SOURCE_CONTINUE;

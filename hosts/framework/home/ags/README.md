@@ -18,17 +18,19 @@ of the AGS CLI wrapper.
 - `state.ts`: string-valued Rust JSON patches, shared reactive state and argv-based
   actions. Wi-Fi failures never log passwords, argv or command stderr.
 - `control-center.tsx`: Material/GNOME-inspired two-column quick settings, audio
-  and brightness controls, media, Wi-Fi connection/password UI, Mako history,
-  and session actions. Bluetooth device settings open Overskride; detailed audio
+  and brightness controls, media, Wi-Fi connection/password UI, notification
+  center, and session actions. Bluetooth device settings open Overskride; detailed audio
   settings open pavucontrol. This is an independently authored adaptation of our
   existing shell, not a vendored Matshell or DankMaterialShell component.
+- `notifications.tsx`: AstalNotifd daemon ownership, popups, notification cards,
+  in-memory unread tracking, history cap and Do Not Disturb.
 - `style.scss`: GTK4 styling using the existing wallpaper-derived Material palette.
 - `default.nix`: bundles TypeScript and both CSS variants, installs runtime config,
   and starts `framework-ags.service` with the graphical session.
 - `icons.nix`: SVG assets shared with the state helper.
 - `pkgs/framework-shell-state`: UI-neutral Rust collectors/actions. The daemon
   emits newline-delimited JSON patches; values are strings, including the encoded
-  `niri_groups` and `notifications_history` arrays. Actions emit refreshed patches.
+  `niri_groups` array. Actions emit refreshed patches. It has no notification role.
 
 AGS owns monitor/window lifecycle. Output matching uses GTK4's monitor connector
 rather than GDK index ordering. Each monitor has its own hover revealers; opening
@@ -36,8 +38,29 @@ one control/calendar popup closes the other monitors' popups. Escape and clickin
 the backdrop dismiss a popup, and dismissal clears password input. The panel is
 height-limited to its monitor and scrolls on small displays.
 
-Mako remains the notification daemon; the shell reads its active/history lists
-and existing hooks track unread notifications. Media keys invoke the helper
+## Notifications
+
+AGS is the notification daemon: `AstalNotifd` owns `org.freedesktop.Notifications`
+inside `framework-ags.service`, and a user D-Bus activation file
+(`SystemdService=framework-ags.service`) starts the shell for early senders. There
+is no Mako or other fallback daemon; if AGS is down, notifications wait for
+activation/restart.
+
+- The daemon never expires entries (`ignore-timeout`, `default-timeout = -1`).
+  Popups hide after 7 s in the UI (critical popups stay), but entries remain in
+  the center until dismissed, invoked, or closed by the sending app. Only the
+  newest 50 are kept; older ones are dismissed automatically.
+- Entries persist across AGS restarts and reboots through AstalNotifd's
+  `io.astal.notifd` GSettings keys (dconf). Unread state is in memory only.
+- The bar badge counts unread notifications. Clicking/acting on a popup or opening
+  the Notifications page marks them read. Left click runs a popup's default action;
+  right click or the close button dismisses.
+- The DND tile toggles `dont-disturb`: new notifications are still recorded and
+  counted but show no popup.
+- Popups use one layer surface without a fixed output, so Niri places it on the
+  focused output.
+
+Media keys invoke the helper
 without depending on a running UI. The lid-sleep toggle starts/stops
 `framework-lid-inhibit.service`, which is session-scoped and disabled at login.
 
@@ -80,7 +103,8 @@ After reviewing the build, deploy explicitly with `just switch`. Check
    credentials; Bluetooth settings open correctly.
 5. Speaker/microphone/brightness controls and media keys update live. State updates
    alone must not emit setter commands.
-6. Mako notifications, unread badges, history and DND work together.
+6. `notify-send` popups, actions, unread badge, center history, DND, and
+   persistence across `systemctl --user restart framework-ags` work together.
 7. Both themes retain the wallpaper palette and legible active/disabled states.
 8. Lid sleep is restored when the inhibitor is toggled off or the session ends.
 
@@ -91,6 +115,7 @@ synthetic state, and mock action commands. It bundles the instrumented entry and
 executes that launcher through the built runtime wrapper, matching the deployed
 service's launch path.
 `smoke-probe.ts` checks widget/layout,
+real Notify calls through AstalNotifd (popups, actions, unread, DND, clear),
 slider command isolation, masked Wi-Fi failures/password clearing, popup behavior
 and monitor disposal/remount. `smoke-tray.js` exports isolated
 StatusNotifier/DBusMenu fixtures to exercise delayed dynamic menu updates, menu

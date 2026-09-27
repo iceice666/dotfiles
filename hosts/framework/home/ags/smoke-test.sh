@@ -36,7 +36,7 @@ cp "$THEME_SCSS" "$XDG_CONFIG_HOME/ags/theme.scss"
 "$SASS/bin/sass" --no-source-map "$XDG_CONFIG_HOME/ags/style.scss" "$XDG_CONFIG_HOME/ags/style.css" > "$work/sass.log" 2>&1
 
 # Copy the shared modules, then inject a probe into the private entrypoint only.
-cp "$source_dir/state.ts" "$source_dir/control-center.tsx" "$source_dir/smoke-probe.ts" "$XDG_CONFIG_HOME/ags/"
+cp "$source_dir/state.ts" "$source_dir/control-center.tsx" "$source_dir/notifications.tsx" "$source_dir/smoke-probe.ts" "$XDG_CONFIG_HOME/ags/"
 cp "$source_dir/smoke-tray.js" "$work/"
 python3 - "$XDG_CONFIG_HOME/ags/app.tsx" <<'PYPROBE'
 import sys
@@ -50,7 +50,8 @@ with open(path, 'w') as fh:
     fh.write('import { runSmoke } from "./smoke-probe";\n' + source.replace(marker, probe + marker))
 PYPROBE
 
-# Use safe local fixtures; no Niri, audio, Wi-Fi, notifications or real tray access.
+# Use safe local fixtures; no Niri, audio, Wi-Fi or real tray access. Notifications
+# go through AstalNotifd on the private bus with in-memory GSettings.
 python3 - "$work/patch.json" "$XDG_CONFIG_HOME/ags/config.json" "$work" <<'PY'
 import json,sys
 patch,config,work=sys.argv[1:]
@@ -59,10 +60,7 @@ with open(patch,'w') as fh:
       'battery_tooltip':'Battery 50 percent','network_label':'Network test','audio_speaker_value':'55',
       'audio_speaker_percent':'55%','brightness_value':'65','brightness_text':'65%',
       'perf_cpu':'12%','perf_ram':'4.2G','perf_gpu':'45°','perf_up':'2K','perf_down':'84K',
-      'notifications_count':'1','notifications_label':'1 notification','notifications_history_count':'1','media_text':'Synthetic Artist — Synthetic Song',
-      'notifications_history':json.dumps([{'key':'synthetic:1','class':'normal','app':'Mock',
-        'summary':'Test notification','preview':'Test notification preview','body':'Test body',
-        'source':'history','unread':True}]),
+      'media_text':'Synthetic Artist — Synthetic Song',
       'niri_groups':json.dumps([{'monitor':f'HEADLESS-{i}','workspaces':[{'label':str(i),
         'windows':[{'id':i,'title':'Synthetic Window','focused':i==1,
         'icon_path':work+'/mock-symbolic.svg'}]}]} for i in (1,2)])},fh)
@@ -129,7 +127,7 @@ if [[ "$status" != 0 ]]; then
   tail -n 80 "$work/ags.log" "$work/tray.log" >&2
   exit 1
 fi
-for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_PASS; do
+for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_NOTIFICATIONS_PASS SMOKE_PASS; do
   if ! grep -q "$marker" "$work/ags.log"; then
     printf 'Missing UI assertion: %s\n' "$marker" >&2
     tail -n 80 "$work/ags.log" "$work/tray.log" >&2
@@ -147,4 +145,4 @@ if grep -E 'CRITICAL|JS ERROR|TypeError|ReferenceError|SMOKE_FAIL|smoke-private-
   printf 'AGS or tray fixture emitted an error\n' >&2
   exit 1
 fi
-printf 'AGS GTK4 smoke passed (2 monitors; all control views; isolated hover; slider alignment; DBusMenu and tray actions/removal).\n'
+printf 'AGS GTK4 smoke passed (2 monitors; all control views; isolated hover; slider alignment; notifications/DND; DBusMenu and tray actions/removal).\n'

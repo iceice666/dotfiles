@@ -6,8 +6,6 @@
   unstablePkgs,
   avatarImage ? null,
   desktopWallpaper,
-  shellNotificationMarkRead,
-  shellNotificationMarkUnread,
   agsReload,
   shellState,
   shellStateConfig,
@@ -50,7 +48,6 @@ let
   '';
 
   niriPkg = unstablePkgs.niri;
-  makoPkg = unstablePkgs.mako;
   niriScratchpadHelper = pkgs.niri-scratchpad-helper;
 
   frameworkDarkman = pkgs.darkman.overrideAttrs (oldAttrs: {
@@ -951,35 +948,6 @@ in
       };
     };
     gnome-keyring.enable = true;
-
-    mako = {
-      enable = true;
-      package = makoPkg;
-      settings = {
-        anchor = "top-right";
-        width = 360;
-        height = 120;
-        margin = "12";
-        padding = "12";
-        border-size = 2;
-        border-radius = 8;
-        background-color = "#171717f2";
-        text-color = "#e5e5e5ff";
-        border-color = "#60a5faff";
-        default-timeout = 7000;
-        font = "Noto Sans 12";
-        max-history = 50;
-        icons = true;
-        max-icon-size = 24;
-        on-button-left = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl invoke -n \"$id\"";
-        on-button-right = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
-        on-notify = "exec ${shellNotificationMarkUnread} \"$id\"";
-        on-touch = "exec ${shellNotificationMarkRead} \"$id\"; ${makoPkg}/bin/makoctl dismiss --no-history -n \"$id\"";
-        "mode=do-not-disturb" = {
-          invisible = true;
-        };
-      };
-    };
 
     swayidle = {
       enable = true;
