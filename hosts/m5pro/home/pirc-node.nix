@@ -20,6 +20,8 @@ in
         ''
           export PATH="/etc/profiles/per-user/${config.home.username}/bin:/run/current-system/sw/bin:/usr/bin:/bin:/usr/sbin:/sbin"
           set -a; source "${stateDir}/agent.env"; set +a
+          export PIRC_BROWSER_EXECUTABLE="/Applications/Chromium.app/Contents/MacOS/Chromium"
+          export PIRC_FFMPEG="${pkgs.ffmpeg}/bin/ffmpeg"
           exec ${pkgs.pirc}/bin/pirc node
         ''
       ];

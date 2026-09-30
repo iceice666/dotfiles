@@ -11,6 +11,7 @@ let
   # Providers for every pirc node. The gateway resolves the key and pushes
   # them over the node link; the file itself holds no secret.
   keyPath = config.sops.secrets.pirc-cliproxyapi-key.path;
+  exaKeyPath = config.sops.secrets.exa-api-key.path;
   models = pkgs.writeText "pirc-models.json" (
     builtins.toJSON (
       import (dotfiles + /common/home-base/pirc-models.nix) { inherit dotfiles homolab; } {
@@ -38,6 +39,7 @@ let
       checkpath -f -m 0640 -o pirc:root /var/log/lumo/pirc-daemon.log
       test -r /etc/pirc/daemon.env || return 1
       test -r ${keyPath} || return 1
+      test -r ${exaKeyPath} || return 1
     }
     start() {
       . /etc/pirc/daemon.env
@@ -46,7 +48,8 @@ let
       # Read as root; the pirc account cannot read the sops secret itself.
       PIRC_CLIPROXYAPI_KEY=$(cat ${keyPath})
       PIRC_MODELS_FILE=${models}
-      export PIRC_CLIPROXYAPI_KEY PIRC_MODELS_FILE
+      EXA_API_KEY=$(cat ${exaKeyPath})
+      export PIRC_CLIPROXYAPI_KEY PIRC_MODELS_FILE EXA_API_KEY
       supervise-daemon lumo-pirc-daemon --start --respawn-delay 5 \
         --user pirc:pirc --chdir /var/lib/pirc --stdout /var/log/lumo/pirc-daemon.log \
         --stderr /var/log/lumo/pirc-daemon.log -- ${pkgs.pirc}/bin/pirc gateway
@@ -74,6 +77,11 @@ in
   sops.secrets.pirc-cliproxyapi-key = {
     sopsFile = dotfiles + /sensitive/hosts/lumo/cliproxyapi.yaml;
     key = "homonetApiKey";
+    mode = "0400";
+  };
+  sops.secrets.exa-api-key = {
+    sopsFile = dotfiles + /sensitive/shared/exa.yaml;
+    key = "exa_api_key";
     mode = "0400";
   };
 
