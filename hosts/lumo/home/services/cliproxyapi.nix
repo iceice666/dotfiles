@@ -194,12 +194,19 @@ in
         - "claude-opus-4-5-20251101"
         - "claude-opus-4-6"
         - "claude-opus-4-7"
+        - "claude-opus-5"
+        - "claude-sonnet-5"
         - "claude-sonnet-4-6"
         - "claude-sonnet-4-20250514"
         - "claude-sonnet-4-5-20250929"
       codex:
         - "gpt-5.4"
+        - "gpt-6-sol"
         - "gpt-image-1.5"
+        - "gpt-image-2"
+        - "gpt-5.6-terra"
+        - "gpt-5.6-sol"
+        - "gpt-5.6-luna"
     EOF
 
         chown cliproxyapi:cliproxyapi ${configPath}
