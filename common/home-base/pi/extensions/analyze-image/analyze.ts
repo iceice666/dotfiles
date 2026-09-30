@@ -4,7 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { truncateHead, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-export const DEFAULT_MODEL = "cliproxyapi-claude/claude-sonnet-5";
+export const DEFAULT_MODEL = "cliproxyapi-claude/claude-sonnet-5-5";
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const TIMEOUT_MS = 120_000;
 export interface AnalyzeImageInput { path: string; question: string; model?: string }

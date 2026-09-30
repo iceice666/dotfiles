@@ -11,7 +11,7 @@ local image. It does not switch the main model or change its image capability.
 ```
 
 Optional `model` selects an exact `provider/model-id`; the default is
-`cliproxyapi-claude/claude-sonnet-5`. The model must exist in Pi's registry and
+`cliproxyapi-claude/claude-sonnet-5-5`. The model must exist in Pi's registry and
 explicitly declare image input. Missing configuration or authentication fails;
 there is no automatic fallback. Authentication is resolved by the model registry
 at request time, including the existing SOPS-backed provider key command.

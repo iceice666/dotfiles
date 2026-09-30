@@ -130,7 +130,7 @@ Nix pins upstream `pi-observational-memory` 3.1.3, applies
 resulting `src/` as the managed `observational-memory/` extension. Do not also
 run `pi install npm:pi-observational-memory`; duplicate copies would register
 competing memory workers and compaction hooks. The managed defaults use
-`cliproxyapi/gpt-6-sol` at low thinking for background observer/reflector/dropper
+`cliproxyapi/gpt-6.1-sol` at low thinking for background observer/reflector/dropper
 work, cap their requested output at 8192 tokens, and scale proactive compaction
 to 68% of the active model context window. Project-local Pi settings may still
 override these defaults at runtime.
@@ -142,7 +142,7 @@ stops consolidation for as long as the limit holds. The patch adds two settings
 keys:
 
 - `fallbackModels`: ordered alternates, each optionally with its own `thinking`.
-  Managed default: `cliproxyapi-claude/claude-sonnet-5`, inheriting the
+  Managed default: `cliproxyapi-claude/claude-sonnet-5-5`, inheriting the
   preferred model's thinking level.
 - `rateLimitCooldownMs`: how long a throttled model is skipped (default and
   managed value: 900000, i.e. 15 minutes).
@@ -214,7 +214,7 @@ first-adoption precautions and validation.
 ## Image analysis
 
 `analyze_image` sends a local image and question to a configured vision model
-(default `cliproxyapi-claude/claude-sonnet-5`) and returns text to the current
+(default `cliproxyapi-claude/claude-sonnet-5-5`) and returns text to the current
 model, including text-only models. It uses registry-managed authentication and
 sends no conversation history or tools. Images leave the host and consume model
 quota; never send sensitive images without authorization. See

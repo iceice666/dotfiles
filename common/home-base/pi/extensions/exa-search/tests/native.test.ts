@@ -20,7 +20,7 @@ describe("native requests", () => {
   });
   test("Claude limits native tool uses", () => {
     expect(nativeRequest("claude", "example", 3)).toMatchObject({
-      model: "claude-sonnet-5", stream: false, max_tokens: 4096,
+      model: "claude-sonnet-5-5", stream: false, max_tokens: 4096,
       tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }],
     });
   });

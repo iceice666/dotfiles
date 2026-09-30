@@ -11,13 +11,13 @@
       # Keep background observation off the (possibly Claude) foreground model.
       model = {
         provider = "cliproxyapi";
-        id = "gpt-6-sol";
+        id = "gpt-6.1-sol";
         thinking = "low";
       };
       fallbackModels = [
         {
           provider = "cliproxyapi-claude";
-          id = "claude-sonnet-5";
+          id = "claude-sonnet-5-5";
         }
       ];
       rateLimitCooldownMs = 900000;

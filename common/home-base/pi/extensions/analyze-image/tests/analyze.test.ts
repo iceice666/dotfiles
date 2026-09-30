@@ -10,7 +10,7 @@ import extension from "../index.ts";
 const dirs: string[] = [];
 afterEach(async () => { await Promise.all(dirs.splice(0).map(dir => rm(dir, { recursive: true, force: true }))); });
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQAAAABJRU5ErkJggg==", "base64");
-const model = { provider: "cliproxyapi-claude", id: "claude-sonnet-5", input: ["text", "image"], maxTokens: 128000 } as Model<Api>;
+const model = { provider: "cliproxyapi-claude", id: "claude-sonnet-5-5", input: ["text", "image"], maxTokens: 128000 } as Model<Api>;
 const usage = { input: 10, output: 5, cacheRead: 0, cacheWrite: 0, totalTokens: 15, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } };
 function reply(overrides: Partial<AssistantMessage> = {}): AssistantMessage {
   return { role: "assistant", api: "anthropic-messages", provider: model.provider, model: model.id, timestamp: 0, stopReason: "stop", content: [{ type: "text", text: "A white pixel." }], usage, ...overrides };

@@ -233,7 +233,7 @@ sessions keep their own model selections. Restart the app and start a new sessio
 to use the deployed default. Neither app's auth/session state is synchronized.
 After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
-`pi --model cliproxyapi-claude/claude-sonnet-5`.
+`pi --model cliproxyapi-claude/claude-sonnet-5-5`.
 
 The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
@@ -245,8 +245,8 @@ receives only `unmanaged-pi-guard.ts`, which blocks every tool in an unmanaged P
 `~/.bun/bin` so it cannot shadow the launcher). Restart Pi after switching. The
 same extension tree includes the Nix-pinned upstream `pi-observational-memory`
 source, patched by `common/home-base/pi/patches/` so background memory work
-falls back from a rate-limited `cliproxyapi/gpt-6-sol` to
-`cliproxyapi-claude/claude-sonnet-5` for a bounded cooldown. The patch is tied
+falls back from a rate-limited `cliproxyapi/gpt-6.1-sol` to
+`cliproxyapi-claude/claude-sonnet-5-5` for a bounded cooldown. The patch is tied
 to the pinned upstream tag: regenerate and re-run the upstream test suite when
 bumping it. Keep sibling directories together: agent-team imports ask-question's
 service. Observational Memory owns `session_before_compact`; the cache-safe
@@ -305,7 +305,7 @@ separately from sources; there is no extension-level retry or automatic fallback
 Unmanaged settings keys, auth state, and session state are left alone.
 
 `analyze_image` delegates local PNG/JPEG/GIF/WebP analysis to a configured vision
-model (default `cliproxyapi-claude/claude-sonnet-5`) and returns text for text-only
+model (default `cliproxyapi-claude/claude-sonnet-5-5`) and returns text for text-only
 models. It uses registry-managed auth, sends only the image and question (no
 history/tools), and enforces file/output limits plus cancellation/deadlines.
 Images leave the host; do not send sensitive content without authorization.

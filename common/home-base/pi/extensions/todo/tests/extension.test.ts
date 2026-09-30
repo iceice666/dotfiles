@@ -369,7 +369,7 @@ describe("todo extension host integration", () => {
   test("Claude cache prefix survives ordinary turns and manual todo changes", async () => {
     const s = await setup();
     const model: Model<"anthropic-messages"> = {
-      id: "claude-opus-5", name: "Offline", api: "anthropic-messages", provider: "cliproxyapi-claude",
+      id: "claude-opus-5-5", name: "Offline", api: "anthropic-messages", provider: "cliproxyapi-claude",
       baseUrl: "http://127.0.0.1:1", reasoning: true, input: ["text"], contextWindow: 1000000, maxTokens: 128000,
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       compat: { forceAdaptiveThinking: true, supportsLongCacheRetention: false },

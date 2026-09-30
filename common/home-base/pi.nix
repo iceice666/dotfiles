@@ -47,7 +47,7 @@ let
       # compaction to the active model's context window.
       model = {
         provider = "cliproxyapi";
-        id = "gpt-6-sol";
+        id = "gpt-6.1-sol";
         thinking = "low";
       };
       # Local patch (see pi/patches): when the preferred background model reports
@@ -56,7 +56,7 @@ let
       fallbackModels = [
         {
           provider = "cliproxyapi-claude";
-          id = "claude-sonnet-5";
+          id = "claude-sonnet-5-5";
         }
       ];
       rateLimitCooldownMs = 900000;
@@ -230,7 +230,7 @@ in
       ]
       ++ builtins.filter (model: model.id != agentModel.model) [
         (mkModel "gpt-6-astra" 1050000 128000)
-        (mkModel "gpt-6-sol" 1050000 128000)
+        (mkModel "gpt-6.1-sol" 1050000 128000)
         (mkModel "gpt-6-luna" 1050000 128000)
       ];
     };
@@ -249,8 +249,7 @@ in
       models = [
         (mkClaudeModel "claude-fable-5-1" 1000000 128000 true)
         (mkClaudeModel "claude-opus-5-5" 1000000 128000 true)
-        (mkClaudeModel "claude-opus-5" 1000000 128000 true)
-        (mkClaudeModel "claude-sonnet-5" 1000000 128000 true)
+        (mkClaudeModel "claude-sonnet-5-5" 1000000 128000 true)
         (mkClaudeModel "claude-haiku-4-5-20251001" 200000 64000 false)
       ];
     };

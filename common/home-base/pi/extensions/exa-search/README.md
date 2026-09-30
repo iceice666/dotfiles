@@ -15,7 +15,7 @@ web_search({ query: "NixOS release announcement", source: "claude" })
 ```
 
 Exa retains its existing behavior. OpenAI uses `gpt-6-astra` through
-CLIProxyAPI's `/v1/responses`; Claude uses `claude-sonnet-5` through
+CLIProxyAPI's `/v1/responses`; Claude uses `claude-sonnet-5-5` through
 `/v1/messages`. Both use native server-side search. Successful search execution
 is required: a model answer without search evidence is an error. Source URLs
 are deduplicated, and model synthesis is labeled separately from source text.
