@@ -81,7 +81,9 @@ let
             equibop-bin
             oh-my-pi-bin
             pi-bin
-            pirc
+            pirc-gateway
+            pirc-chat
+            pirc-node
             playwright-cli
             zed-bin
             rime-frost

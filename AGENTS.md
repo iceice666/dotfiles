@@ -116,7 +116,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `dsh-desktop` | `github:iceice666/dsh-desktop` | yes |
-| `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc` for lumo's `pirc.nix`; bump with `just update pirc`) | yes |
+| `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway`, `pkgs.pirc-chat` and `pkgs.pirc-node`; lumo's `pirc.nix` uses `pirc-gateway`; bump with `just update pirc`) | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 `self.submodules = true` is set so Git submodules are fetched.
 
