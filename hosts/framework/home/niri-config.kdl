@@ -169,6 +169,9 @@ binds {
     Alt+Print hotkey-overlay-title="Screenshot window" { screenshot-window; }
     Shift+Print hotkey-overlay-title="Screenshot region" { spawn-sh "@grim@ -g \"$(@slurp@)\" - | @swappy@ -f -"; }
 
+    Mod+P repeat=false hotkey-overlay-title="Mirror focused output" { spawn-sh "wl-mirror $(niri msg --json focused-output | jq -r .name)"; }
+    Mod+Shift+P repeat=false hotkey-overlay-title="Stop output mirror" { spawn "pkill" "wl-mirror"; }
+
     Mod+Escape allow-inhibiting=false hotkey-overlay-title="Toggle shortcut inhibition" { toggle-keyboard-shortcuts-inhibit; }
 
 }

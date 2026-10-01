@@ -749,6 +749,7 @@ in
     wev
     wf-recorder
     wl-clipboard
+    wl-mirror
     wlr-randr
     xwayland-satellite
     xdg-desktop-portal-gnome
