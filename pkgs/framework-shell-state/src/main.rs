@@ -979,33 +979,19 @@ fn battery_vars(cfg: &Config) -> Result<Vars> {
         .clamp(0, 100);
     let state = upower_field(cfg, &device, "state")?.unwrap_or_default();
     let on_battery = daemon_on_battery(cfg)?.unwrap_or_default();
-    let mode = tlp_mode(cfg)?.unwrap_or_default();
+    let profile = tlp_profile(cfg)?.unwrap_or("Unknown");
+    let on_ac = battery_on_ac(&state, &on_battery);
 
     let mut class = "island battery".to_string();
-    let mut icon = cfg.icons.battery_unknown.display().to_string();
-    let mut profile = "Unknown".to_string();
-
-    match mode.as_str() {
-        "AC" => {
-            icon = cfg.icons.battery_ac.display().to_string();
-            profile = "AC".to_string();
-        }
-        "BAT" => {
-            icon = cfg.icons.battery_bat.display().to_string();
-            profile = "Battery".to_string();
-        }
-        _ if state == "charging" || state == "fully-charged" || on_battery == "no" => {
-            icon = cfg.icons.battery_ac.display().to_string();
-            profile = "AC".to_string();
-        }
-        _ if on_battery == "yes" => {
-            icon = cfg.icons.battery_bat.display().to_string();
-            profile = "Battery".to_string();
-        }
-        _ => {}
+    let icon = match on_ac {
+        Some(true) => &cfg.icons.battery_ac,
+        Some(false) => &cfg.icons.battery_bat,
+        None => &cfg.icons.battery_unknown,
     }
+    .display()
+    .to_string();
 
-    if state == "charging" || state == "fully-charged" || mode == "AC" || on_battery == "no" {
+    if on_ac == Some(true) {
         class.push_str(" charging");
     } else if capacity < 10 {
         class.push_str(" critical");
@@ -1073,17 +1059,41 @@ fn daemon_on_battery(cfg: &Config) -> Result<Option<String>> {
     Ok(parse_colon_field(&dump, "on-battery"))
 }
 
-fn tlp_mode(cfg: &Config) -> Result<Option<String>> {
+fn tlp_profile(cfg: &Config) -> Result<Option<&'static str>> {
     let status = output(cfg, &cfg.commands.tlp_stat, ["-s"])?.unwrap_or_default();
-    for line in status.lines() {
-        let Some((key, value)) = line.split_once('=') else {
-            continue;
-        };
-        if key.trim() == "Mode" {
-            return Ok(Some(value.trim().to_string()));
-        }
+    Ok(parse_tlp_profile(&status))
+}
+
+fn parse_tlp_profile(status: &str) -> Option<&'static str> {
+    let value = ["TLP profile", "Power profile", "Mode"]
+        .into_iter()
+        .find_map(|field| {
+            status.lines().find_map(|line| {
+                let (key, value) = line.split_once('=')?;
+                (key.trim() == field).then_some(value.trim())
+            })
+        })?;
+    let profile = value.split_whitespace().next()?.split('/').next()?;
+    match profile {
+        "performance" => Some("Performance"),
+        "balanced" => Some("Balanced"),
+        "power-saver" => Some("Power Saver"),
+        "AC" => Some("AC"),
+        "BAT" | "battery" => Some("Battery"),
+        _ => None,
     }
-    Ok(None)
+}
+
+fn battery_on_ac(state: &str, on_battery: &str) -> Option<bool> {
+    match on_battery {
+        "no" => Some(true),
+        "yes" => Some(false),
+        _ => match state {
+            "charging" | "fully-charged" => Some(true),
+            "discharging" | "empty" => Some(false),
+            _ => None,
+        },
+    }
 }
 
 fn parse_colon_field(text: &str, field: &str) -> Option<String> {
@@ -1810,6 +1820,75 @@ mod tests {
             parse_colon_field(text, "state").as_deref(),
             Some("discharging")
         );
+    }
+
+    #[test]
+    fn parses_modern_tlp_profiles() {
+        for field in ["Power profile", "TLP profile"] {
+            for (value, label) in [
+                ("performance/AC", "Performance"),
+                ("balanced/BAT", "Balanced"),
+                ("power-saver/SAV", "Power Saver"),
+                ("performance", "Performance"),
+                ("balanced", "Balanced"),
+                ("power-saver", "Power Saver"),
+            ] {
+                for suffix in ["", " (manual)", " (default)"] {
+                    let status = format!(
+                        "+++ TLP Status\nState = enabled\n  {field}  = {value}{suffix}\nPower source = AC\n"
+                    );
+                    assert_eq!(parse_tlp_profile(&status), Some(label), "{status}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn parses_legacy_tlp_modes() {
+        for (value, label) in [("AC", "AC"), ("battery", "Battery"), ("BAT", "Battery")] {
+            for suffix in ["", " (manual)", " (persistent)"] {
+                assert_eq!(
+                    parse_tlp_profile(&format!("Mode = {value}{suffix}\n")),
+                    Some(label)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn tlp_profile_prefers_modern_fields_without_guessing_from_power_source() {
+        assert_eq!(
+            parse_tlp_profile("Mode = AC\nPower profile = balanced/BAT\n"),
+            Some("Balanced")
+        );
+        assert_eq!(
+            parse_tlp_profile("Power profile = performance/AC\nTLP profile = power-saver/SAV\n"),
+            Some("Power Saver")
+        );
+        for status in [
+            "",
+            "Power source = AC\n",
+            "Power source = battery\n",
+            "Mode = unknown\n",
+            "Power profile = unknown\n",
+            "TLP profile =\n",
+            "TLP profile = future-profile/NEW\n",
+            "TLP profile = unknown\nMode = AC\n",
+        ] {
+            assert_eq!(parse_tlp_profile(status), None, "{status}");
+        }
+    }
+
+    #[test]
+    fn battery_power_source_uses_upower_not_profile() {
+        assert_eq!(battery_on_ac("discharging", "yes"), Some(false));
+        assert_eq!(battery_on_ac("pending-charge", "no"), Some(true));
+        assert_eq!(battery_on_ac("fully-charged", "yes"), Some(false));
+        assert_eq!(battery_on_ac("charging", ""), Some(true));
+        assert_eq!(battery_on_ac("fully-charged", ""), Some(true));
+        assert_eq!(battery_on_ac("discharging", ""), Some(false));
+        assert_eq!(battery_on_ac("empty", ""), Some(false));
+        assert_eq!(battery_on_ac("unknown", ""), None);
     }
 
     #[test]

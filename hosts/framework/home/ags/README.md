@@ -75,6 +75,11 @@ keeps the tray revealer expanded until dismissal. Passive items are hidden.
 Battery and tray retain 40×32 icon slots. The battery circle is now a GTK4 drawing
 area, with a 32px full-circle track and a fixed 3px stroke; it no longer relies on
 GTK3 Astal CircularProgress's font-size convention.
+The battery label reads TLP's `Power profile` (1.9) or `TLP profile` (1.10+)
+field and displays Performance, Balanced, or Power Saver; legacy `Mode` output
+keeps AC/Battery labels. Missing or unrecognized profiles display Unknown rather
+than guessing from the power source. Icons and charging styling use UPower's
+supply state independently of the selected profile.
 
 `themegen/framework/.config/ags/theme-{light,dark}.scss` supplies palette values.
 Both stylesheets are compiled during the Framework build. The appearance installer
