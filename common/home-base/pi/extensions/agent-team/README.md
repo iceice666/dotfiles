@@ -188,11 +188,10 @@ Automatic worker reports are persisted in `events.jsonl` but parent-session noti
 - Model and thinking level inherit from parent at spawn time; changes to the parent
   later do not alter existing workers. `model` override uses `provider/model`.
 - Independent context: parent conversation is not cloned. Put necessary context in `task`.
-- Default cwd is the parent's. Child cwd must resolve inside the original canonical
-  workspace; alternate worktrees outside it require a separate managed Pi session.
+- Default cwd is the parent's. Any existing directory is accepted and canonicalized,
+  including alternate worktrees and symlink paths. Auto Mode reviews spawn intent.
   The extension does not create worktrees or merge changes.
-- All workers start with `--no-approve` and inherit the original
-  `PI_EXECUTION_WORKSPACE`. The managed launcher pins its own executable for workers
+- All workers start with `--no-approve`. The managed launcher pins its own executable for workers
   and explicitly loads managed extensions, not repository executable resources.
 - Workers reuse global Pi configuration, credentials, skills and extensions. Runtime-only
   provider registrations/CLI extension choices in the parent are not copied.
@@ -236,11 +235,9 @@ request timeouts and process exits. No shell interpolation is used for spawning.
 ## Safety / limitations
 
 The team broker and worker Pi processes are **trusted host control planes**, not
-isolated plugin runtimes. Managed worker file/shell tools use the shared mandatory
-OS sandbox; Auto Mode approval cannot widen it. See `../execution-policy/README.md`.
-A hostile host process with the same permissions remains outside this boundary.
-Shared workspaces still require coordinated file ownership; sandboxing is not
-write-conflict prevention.
+isolated plugin runtimes. Workers run with the invoking user's permissions; Auto
+Mode reviews tools and obtains required human approvals, but is not OS isolation.
+Shared workspaces require coordinated file ownership to prevent write conflicts.
 Agent messages are labelled as agent data, not user/system instructions.
 
 Each worker can incur model costs and trigger parent responses; there is no aggregate

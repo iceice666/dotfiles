@@ -1,15 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync, mkdirSync, symlinkSync, realpathSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, symlinkSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { Team, parseAgentKinds } from '../team.mjs';
 import { RpcProcess } from '../rpc.mjs';
 
 async function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-team-test-'));
   const delivered = [];
-  const team = new Team({ directory, workspace: directory, extension: '/unused', deliverParent: e => delivered.push(e) });
+  const team = new Team({ directory, extension: '/unused', deliverParent: e => delivered.push(e) });
   await team.ready;
   t.after(async () => { await team.close(); rmSync(directory, { recursive: true, force: true }); });
   const messages = [];
@@ -18,47 +18,42 @@ async function fixture(t) {
   return { team, delivered, messages };
 }
 
-test('worker cwd rejects parent, sibling-prefix, and symlink workspace escapes', async t => {
+test('worker cwd rejects missing paths and non-directories before starting a worker', async t => {
+  const { team } = await fixture(t);
+  const file = join(team.directory, 'file');
+  writeFileSync(file, 'not a directory');
+  const defaults = { cwd: team.directory, model: 'test/model' };
+  for (const cwd of [join(team.directory, 'missing'), file]) {
+    await assert.rejects(team.spawn({ name: 'invalid-cwd', task: 'x', cwd }, defaults), /ENOENT|cwd must be a directory/);
+    assert.equal(team.agents.has('invalid-cwd'), false);
+  }
+});
+
+test('workers accept and canonicalize outside, sibling and symlink cwd without project approval', async t => {
   const { team } = await fixture(t);
   const outside = mkdtempSync(`${team.directory}-outside-`);
   t.after(() => rmSync(outside, { recursive: true, force: true }));
-  symlinkSync(outside, join(team.directory, 'escape'));
-  const defaults = { cwd: team.directory, model: 'test/model' };
-  for (const cwd of ['..', outside, join(team.directory, 'escape')]) {
-    await assert.rejects(team.spawn({ name: 'escape-attempt', task: 'x', cwd }, defaults), /original execution workspace/);
-    assert.equal(team.agents.has('escape-attempt'), false);
-  }
-  await assert.rejects(team.spawn({ name: 'changed-default', task: 'x' }, { ...defaults, cwd: outside }), /original execution workspace/);
-});
-
-test('workers receive captured canonical workspace, never ambient widening or project approval', async t => {
-  const { team } = await fixture(t);
-  const childCwd = join(team.directory, 'nested');
-  mkdirSync(childCwd);
+  const link = join(team.directory, 'outside-link');
+  symlinkSync(outside, link);
   const executable = join(team.directory, 'fake-worker');
   writeFileSync(executable, `#!${process.execPath}
 import { createInterface } from 'node:readline';
 createInterface({ input: process.stdin }).on('line', line => {
   const q = JSON.parse(line);
-  const data = q.type === 'get_state' ? { sessionFile: JSON.stringify({ workspace: process.env.PI_EXECUTION_WORKSPACE, cwd: process.cwd(), argv: process.argv.slice(2) }) } : {};
+  const data = q.type === 'get_state' ? { sessionFile: JSON.stringify({ cwd: process.cwd(), argv: process.argv.slice(2) }) } : {};
   process.stdout.write(JSON.stringify({ type: 'response', id: q.id, success: true, data }) + '\\n');
 });
 `, { mode: 0o700 });
   team.executable = executable;
-  const previous = process.env.PI_EXECUTION_WORKSPACE;
-  process.env.PI_EXECUTION_WORKSPACE = tmpdir();
-  try {
-    const worker = await team.spawn({ name: 'nested-worker', task: 'x', cwd: childCwd }, { cwd: team.directory, model: 'test/model', trusted: true });
+  for (const [index, cwd] of ['..', outside, link].entries()) {
+    const worker = await team.spawn({ name: `cwd-worker-${index}`, task: 'x', cwd }, { cwd: team.directory, model: 'test/model', trusted: true });
     const state = JSON.parse(worker.sessionFile);
-    assert.equal(state.workspace, realpathSync(team.directory));
-    assert.equal(state.cwd, realpathSync(childCwd));
+    assert.equal(state.cwd, realpathSync(resolve(team.directory, cwd)));
     assert.ok(state.argv.includes('--no-approve'));
     assert.ok(!state.argv.includes('--approve'));
     assert.ok(!state.argv.includes('-e'));
     assert.ok(!state.argv.includes('--extension'));
-  } finally {
-    if (previous === undefined) delete process.env.PI_EXECUTION_WORKSPACE;
-    else process.env.PI_EXECUTION_WORKSPACE = previous;
+    await team.stop(worker.name);
   }
 });
 

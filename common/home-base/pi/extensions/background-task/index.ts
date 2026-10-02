@@ -14,7 +14,7 @@ const HELP = `/bg or /bg panel — Live task panel (Ctrl+Shift+B)
 /bg stop <id> — Stop the process group
 /bg stop-all — Stop all tasks
 Esc does not stop background tasks; exiting, switching sessions, or /reload does.
-Tasks require the managed workspace execution sandbox.`;
+Tasks run as local processes with the invoking user's permissions.`;
 const clean = (text: string) => stripVTControlCharacters(text).replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "");
 const summary = (task: TaskInfo) => `${task.id} · ${task.status}${task.exitCode != null ? ` (exit ${task.exitCode})` : ""} · ${clean(task.command).replace(/\s+/g, " ").slice(0, 180)}`;
 
@@ -25,7 +25,6 @@ export default function (pi: ExtensionAPI) {
 export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanFactory } = {}) {
   let ctx: ExtensionContext | undefined;
   let manager: TaskManager;
-  const inheritedWorkspace = process.env.PI_EXECUTION_WORKSPACE;
   let closed = false;
   let panel: BackgroundPanel | undefined;
   let panelOpening = false;
@@ -48,13 +47,13 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
       details: { status: tasks.length === 1 ? tasks[0].status : "completed", tasks },
     }, { triggerTurn: true, deliverAs: "steer" });
   };
-  const initialize = (context: ExtensionContext) => manager ??= new TaskManager(task => {
+  const initialize = () => manager ??= new TaskManager(task => {
     if (closed) return;
     refresh();
     completedTasks.push(task);
     if (ctx?.hasUI) ctx.ui.notify(`Background task: ${summary(task)}`, task.status === "failed" || task.status === "timed_out" ? "warning" : "info");
     flushCompletions();
-  }, { workspace: inheritedWorkspace ?? context.cwd, plan: options.plan });
+  }, { plan: options.plan });
   const requireOpen = () => { if (closed) throw new Error("Background task runtime has shut down."); };
   const output = (id: string, lines = 200) => {
     if (!Number.isInteger(lines) || lines < 1 || lines > 2000) throw new Error("lines must be an integer from 1 to 2000.");
@@ -64,7 +63,7 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
     const tail = truncateTail(raw, { maxLines: lines, maxBytes: 48 * 1024 });
     return `${summary(task)}\ncwd: ${task.cwd}\nLog (capped at 10 MiB): ${task.logPath}\n${tail.truncated ? `[Display truncated]\n${markers ? `${markers}\n` : ""}` : ""}${tail.content}`;
   };
-  pi.on("session_start", (_event, context) => { ctx = context; initialize(context); refresh(); });
+  pi.on("session_start", (_event, context) => { ctx = context; initialize(); refresh(); });
   pi.on("agent_settled", () => {
     completionNoticePending = false;
     flushCompletions();
@@ -79,9 +78,9 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
   pi.registerTool({
     name: "background_task",
     label: "Background Task",
-    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Uses the managed workspace execution sandbox; unavailable backends fail closed. Completions are coalesced into one short wakeup while the agent is idle; inspect task output explicitly with list/output.",
+    description: "Start/list/output/wait/stop background Bash jobs. Start returns immediately. Wait blocks until a job finishes or its wait timeout expires (default 60 seconds); timeout or Esc cancels only the wait, not the job. Session-local; Esc does not stop jobs, shutdown/reload/session switch does. Maximum 8 active jobs. Output is a bounded tail (up to 2000 lines/48 KiB); log files cap at 10 MiB. No stdin/PTY. Runs local processes with the invoking user's permissions and inherited environment. Completions are coalesced into one short wakeup while the agent is idle; inspect task output explicitly with list/output.",
     promptSnippet: "Run and manage background Shell commands without blocking the conversation",
-    promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work, use background_task wait when completion is needed, or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval or sandbox restrictions."],
+    promptGuidelines: ["Use background_task for long-running tests, builds or development servers. Do not busy-poll; continue other work, use background_task wait when completion is needed, or let the user know the task is running. Use background_task stop explicitly when finished with a server. Never use background_task to bypass command approval."],
     parameters: Type.Object({
       action: StringEnum(["start", "list", "output", "wait", "stop"] as const),
       command: Type.Optional(Type.String({ minLength: 1, maxLength: 16000 })),
@@ -94,7 +93,7 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
       signal?.throwIfAborted();
       requireOpen();
       ctx = context;
-      initialize(context);
+      initialize();
       let text: string;
       let wait: WaitResult | undefined;
       if (params.action === "start") {
@@ -120,7 +119,7 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
   });
   const showPanel = async (context: ExtensionContext) => {
     requireOpen();
-    initialize(context);
+    initialize();
     if (context.mode !== "tui") {
       if (context.hasUI) context.ui.notify("The live panel requires TUI mode. Use /bg list or /bg output <id>.", "warning");
       return;
@@ -153,7 +152,7 @@ export function registerBackgroundTask(pi: ExtensionAPI, options: { plan?: PlanF
       ctx = context;
       try {
         requireOpen();
-        initialize(context);
+        initialize();
         const match = args.trim().match(/^(\S+)(?:\s+([\s\S]*))?$/);
         const action = match?.[1] ?? (context.mode === "tui" ? "panel" : "list");
         if (action === "panel") { await showPanel(context); return; }

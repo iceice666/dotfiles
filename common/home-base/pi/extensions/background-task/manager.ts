@@ -1,9 +1,9 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { closeSync, mkdtempSync, openSync, realpathSync, statSync, unlinkSync, writeSync } from "node:fs";
+import { closeSync, mkdtempSync, openSync, statSync, unlinkSync, writeSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
-import { executionPlan } from "../execution-policy/process.mjs";
+import { executionPlan } from "../local-process.mjs";
 
 export interface ExecutionPlan {
   command: string;
@@ -11,7 +11,7 @@ export interface ExecutionPlan {
   options: { cwd: string; env: NodeJS.ProcessEnv };
   cleanup?: () => void;
 }
-export type PlanFactory = (options: { command: string; cwd: string; workspace: string }) => ExecutionPlan;
+export type PlanFactory = (options: { command: string; cwd: string }) => ExecutionPlan;
 
 export type TaskStatus = "running" | "stopping" | "completed" | "failed" | "stopped" | "timed_out";
 export interface TaskInfo {
@@ -64,11 +64,9 @@ export class TaskManager {
   private closing = false;
   private shutdownPromise?: Promise<void>;
 
-  private readonly workspace: string;
   private readonly plan: PlanFactory;
 
-  constructor(private readonly onFinish?: (task: TaskInfo) => void, options: { workspace?: string; plan?: PlanFactory } = {}) {
-    this.workspace = realpathSync(options.workspace ?? process.env.PI_EXECUTION_WORKSPACE ?? process.cwd());
+  constructor(private readonly onFinish?: (task: TaskInfo) => void, options: { plan?: PlanFactory } = {}) {
     this.plan = options.plan ?? executionPlan;
   }
 
@@ -100,7 +98,7 @@ export class TaskManager {
     let child: ChildProcess;
     let plan: ExecutionPlan | undefined;
     try {
-      plan = this.plan({ command: options.command, cwd: options.cwd, workspace: this.workspace });
+      plan = this.plan({ command: options.command, cwd: options.cwd });
       if (!plan.options.env || typeof plan.options.env !== "object") throw new Error("Execution plan must provide an explicit environment");
       child = spawn(plan.command, plan.args, {
         cwd: plan.options.cwd,

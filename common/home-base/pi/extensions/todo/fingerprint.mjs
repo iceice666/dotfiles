@@ -1,4 +1,4 @@
-// This fixed program runs inside the read-only execution sandbox, never on the host.
+// Fixed local fingerprint program; Git hooks/fsmonitor and optional writes are disabled.
 function fingerprintProgram() {
   const fs = require("node:fs");
   const path = require("node:path");
@@ -10,8 +10,8 @@ function fingerprintProgram() {
   let count = 0;
   const add = value => hash.update(JSON.stringify(value)).update("\n");
   const git = (args, allowEmpty = false) => {
-    const result = spawnSync(process.env.PI_SANDBOX_GIT, [
-      "--no-pager", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
+    const result = spawnSync(process.env.PI_TOOL_GIT || "git", [
+      "--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
       "-c", "core.untrackedCache=false", "-c", "core.quotePath=false", ...args,
     ], {
       cwd, encoding: "utf8", timeout: 15000, maxBuffer: 16 * 1024 * 1024,
@@ -24,7 +24,6 @@ function fingerprintProgram() {
     if (result.error || result.signal || (result.status !== 0 && !(allowEmpty && result.status === 1 && !result.stdout && !result.stderr))) throw new Error("Git fingerprint failed: " + (result.error?.message || result.stderr));
     return result.stdout;
   };
-  if (!process.env.PI_SANDBOX_GIT || !path.isAbsolute(process.env.PI_SANDBOX_GIT)) throw new Error("Pinned Git executable unavailable");
   if (!fs.lstatSync(path.join(cwd, ".git")).isDirectory()) throw new Error("Verification requires a Git root with a local .git directory (no linked worktrees)");
   if (fs.realpathSync(git(["rev-parse", "--show-toplevel"]).trim()) !== cwd) throw new Error("Verification must run at the Git root");
   const stage = git(["ls-files", "--stage", "-z"]);

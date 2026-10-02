@@ -3,8 +3,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import extension from "../index.ts";
-// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
-const confined = { attest: () => ({ confined: true, reason: "" }) };
+// Tests run from the repository checkout; production attests managed tool provenance.
+const managed = { attest: () => ({ managed: true, reason: "" }) };
 import { evaluatePolicy } from "../policy.ts";
 import type { ReviewContext } from "../classifier.ts";
 import { Team, autoModeActionId } from "../../agent-team/team.mjs";
@@ -74,7 +74,7 @@ async function setup(provider: (request: any, call: number, team: Team) => Promi
     modelRegistry: { complete: async (...args: any[]) => { completions.push(args); return allowedModelReply(); } },
     ui: { setStatus() {}, notify() {} },
   };
-  extension({ on: (name: string, handler: any) => handlers.set(name, handler), registerCommand() {}, getAllTools: () => [] } as any, confined);
+  extension({ on: (name: string, handler: any) => handlers.set(name, handler), registerCommand() {}, getAllTools: () => [] } as any, managed);
   const event = (name: string, data: any = {}) => handlers.get(name)?.(data, ctx);
   cleanup.push(async () => { await event("session_shutdown"); });
   await event("session_start");

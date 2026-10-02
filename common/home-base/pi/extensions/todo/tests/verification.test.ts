@@ -33,10 +33,10 @@ const state = () => ({ version: 1 as const, nextId: 2, todos: [task()] });
       expect((await gate.verify(task(), cwd)).passed).toBe(false);
       expect((await gate.current(state(), cwd)).size).toBe(0);
     }
-    const gate = new VerificationGate({ fingerprint: async () => "one", run: async () => { throw new Error("sandbox unavailable"); } });
+    const gate = new VerificationGate({ fingerprint: async () => "one", run: async () => { throw new Error("backend unavailable"); } });
     const evidence = await gate.verify(task(), cwd);
     expect(evidence.passed).toBe(false);
-    expect(evidence.runs[0].result.error).toBe("sandbox unavailable");
+    expect(evidence.runs[0].result.error).toBe("backend unavailable");
     expect(evidence.runs[0].result.exitCode).toBeNull();
   });
 

@@ -87,51 +87,22 @@ let
     cp -R ${observationalMemory}/src/. "$out/observational-memory/"
   '';
 
-  sandboxPath = lib.makeBinPath (
-    with pkgs;
-    [
-      bash
-      coreutils
-      findutils
-      gnugrep
-      gnused
-      git
-      ripgrep
-      nodejs
-      bun
-      just
-    ]
-  );
-
-  restrictedPi = pkgs.writeShellScriptBin "pi" ''
-    # Never load repository code/config into the trusted host control plane.
+  managedPi = pkgs.writeShellScriptBin "pi" ''
+    # Keep one pinned extension tree and leave project executable resources disabled.
     for argument in "$@"; do
       case "$argument" in
-        --|-e|--extension|--extension=*|-e?*|-a|--approve|--approve=*|--tools|--tools=*|-t|-t?*|--no-builtin-tools=*|--no-extensions=*|install|update|remove|uninstall|config)
-          echo "Restricted Pi: extension/trust/package overrides require an external operator workflow." >&2
+        --) break ;;
+        -e|--extension|--extension=*|-e?*|-a|--approve|--approve=*|--no-extensions=*|install|update|remove|uninstall|config)
+          echo "Managed Pi: extension/trust/package overrides require an external operator workflow." >&2
           exit 2
           ;;
       esac
     done
-    if [ -z "''${PI_TEAM_AGENT:-}" ]; then
-      export PI_EXECUTION_WORKSPACE="$(${pkgs.coreutils}/bin/pwd -P)"
-    fi
     export PI_TEAM_EXECUTABLE="$(${pkgs.coreutils}/bin/realpath "$0")"
-    export PI_SANDBOX_BASH=${pkgs.bash}/bin/bash
-    export PI_SANDBOX_NODE=${pkgs.nodejs}/bin/node
-    export PI_SANDBOX_GIT=${pkgs.git}/bin/git
-    export PI_SANDBOX_ENV=${pkgs.coreutils}/bin/env
-    export PI_SANDBOX_PATH=${lib.escapeShellArg sandboxPath}
-    ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
-      export PI_SANDBOX_BWRAP=${pkgs.bubblewrap}/bin/bwrap
-    ''}
-    # Host-side Git UI inspection must not execute repository fsmonitor hooks.
-    export GIT_CONFIG_COUNT=2
-    export GIT_CONFIG_KEY_0=core.fsmonitor
-    export GIT_CONFIG_VALUE_0=false
-    export GIT_CONFIG_KEY_1=core.hooksPath
-    export GIT_CONFIG_VALUE_1=/dev/null
-    exec ${pkgs.pi-bin}/bin/pi --no-approve --no-builtin-tools --no-extensions \
+    export PI_TOOL_BASH=${pkgs.bash}/bin/bash
+    export PI_TOOL_NODE=${pkgs.nodejs}/bin/node
+    export PI_TOOL_GIT=${pkgs.git}/bin/git
+    exec ${pkgs.pi-bin}/bin/pi --no-approve --no-extensions \
       ${
         lib.concatMapStringsSep " \\\n      " (name: "-e ${piExtensions}/${name}") [
           "agent-team"
@@ -146,7 +117,6 @@ let
           "analyze-image"
           "observational-memory"
           "cache-safe-compaction"
-          "execution-policy/bootstrap.ts"
         ]
       } "$@"
   '';
@@ -154,10 +124,10 @@ let
   settingsPath = "${config.home.homeDirectory}/.pi/agent/settings.json";
 in
 {
-  _module.args.piRestricted = restrictedPi;
+  _module.args.piManaged = managedPi;
 
   home.packages = [
-    restrictedPi
+    managedPi
     pkgs.bash
   ];
 
@@ -183,8 +153,8 @@ in
 
   # The launcher loads the pinned tree from the store with --no-extensions. The
   # auto-discovery directory only matters to an unmanaged Pi (which would run the
-  # tree without its sandbox and can mix versions across a switch), so it gets a
-  # guard that blocks every tool instead. Unrelated local extensions are left alone.
+  # tree without expected review hooks and can mix versions across a switch), so
+  # it gets a guard that blocks every tool. Unrelated local extensions stay untouched.
   home.file.".pi/agent/extensions/unmanaged-pi-guard.ts".source =
     ./pi/extensions/unmanaged-pi-guard/index.ts;
 

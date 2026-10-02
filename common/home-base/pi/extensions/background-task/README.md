@@ -63,7 +63,7 @@
 
 ## 安全
 
-任務透過 `execution-policy` 的共用 execution plan 執行：macOS Seatbelt／Linux bubblewrap、原始 workspace、私有暫存目錄、無 shell 網路、無繼承的主機憑證。缺少 backend／設定時拒絕執行，沒有未隔離 fallback。Auto Mode 仍審查啟動意圖，其同意不會解除 OS 邊界。管理器本身是可信主機端程式，不是隔離容器；詳見 `../execution-policy/README.md`。不要用背景執行繞過批准流程。
+任務透過 `../local-process.mjs` 的共用 process plan 執行，使用 launcher 固定的 Bash（開發環境則從 PATH 尋找），繼承目前程序的環境與使用者權限。沒有 Pi OS sandbox、網路隔離或原始 workspace 限制；指定 cwd 只決定工作目錄，不是權限邊界。Auto Mode 仍審查啟動意圖，輸出上限、取消、逾時及 process-group 清理機制維持不變。不要用背景執行繞過批准流程。
 
 ## 驗證
 

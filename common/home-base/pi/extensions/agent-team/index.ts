@@ -2,7 +2,6 @@ import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-a
 import { Type } from 'typebox';
 import { StringEnum } from '@earendil-works/pi-ai';
 import { randomUUID } from 'node:crypto';
-import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,9 +16,6 @@ export default function (pi: ExtensionAPI) {
   const childName = process.env.PI_TEAM_AGENT;
   const isChild = Boolean(childName && process.env.PI_TEAM_URL && process.env.PI_TEAM_TOKEN);
   let team: Team | undefined;
-  const inheritedWorkspace = process.env.PI_EXECUTION_WORKSPACE;
-  let workspace: string | undefined;
-  const captureWorkspace = (ctx: ExtensionContext) => workspace ??= realpathSync(inheritedWorkspace ?? ctx.cwd);
   let context: ExtensionContext;
   let watchdog: ReturnType<typeof setInterval> | undefined;
   let closeTranscript: (() => void) | undefined;
@@ -77,7 +73,6 @@ export default function (pi: ExtensionAPI) {
       const session = ctx.sessionManager.getSessionId().replace(/[^a-zA-Z0-9_-]/g, '_');
       team = new Team({
         directory: join(root, 'teams', session, randomUUID()),
-        workspace: captureWorkspace(ctx),
         extension: fileURLToPath(import.meta.url),
         executable: process.env.PI_TEAM_EXECUTABLE || 'pi',
         kinds: parseAgentKinds(),
@@ -146,7 +141,7 @@ export default function (pi: ExtensionAPI) {
       parameters: Type.Object({
         name: Type.String({ pattern: '^[a-z][a-z0-9_-]{0,39}$' }), task: short(),
         kind: Type.Optional(Type.String({ pattern: '^[a-z][a-z0-9_-]{0,39}$', description: 'Agent kind preset; defaults to general' })),
-        cwd: Type.Optional(Type.String({ description: 'Existing directory inside the original execution workspace; defaults to parent cwd' })),
+        cwd: Type.Optional(Type.String({ description: 'Existing directory; defaults to parent cwd' })),
         model: Type.Optional(Type.String({ description: 'provider/model ID; overrides the selected kind and defaults to parent model' })),
         thinking: Type.Optional(StringEnum(['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const)),
       }),
@@ -186,7 +181,6 @@ export default function (pi: ExtensionAPI) {
   });
   pi.on('session_start', (_event, ctx) => {
     context = ctx;
-    captureWorkspace(ctx);
     const parentPid = Number(process.env.PI_TEAM_PARENT_PID);
     if (isChild && Number.isInteger(parentPid) && parentPid > 1) {
       watchdog = setInterval(() => {

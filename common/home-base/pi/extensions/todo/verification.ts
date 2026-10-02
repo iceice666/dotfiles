@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { realpath } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { executionPlan, sandboxPlan, trustedExecutable } from "../execution-policy/process.mjs";
+import { executionPlan, processPlan, executable } from "../local-process.mjs";
 import { FINGERPRINT_SCRIPT } from "./fingerprint.mjs";
 import type { Check, State, Todo } from "./model.js";
 
@@ -22,7 +22,7 @@ interface Plan {
   cleanup?: () => void;
 }
 
-/** Bounded process-group wait and output; no shell bypass or host fallback. */
+/** Bounded local process-group wait and output capture. */
 export async function runPlan(plan: Plan, signal?: AbortSignal, timeoutMs = 120_000): Promise<RunResult> {
   const result: RunResult = { exitCode: null, signal: null, timedOut: false, aborted: false, overflow: false, output: "" };
   try {
@@ -75,10 +75,9 @@ export const excerpt = (output: string) => {
 };
 
 export async function worktreeFingerprint(cwd: string, signal?: AbortSignal): Promise<string> {
-  const executable = trustedExecutable("node");
-  const result = await runPlan(sandboxPlan({ executable, args: ["-e", FINGERPRINT_SCRIPT], cwd, workspace: cwd, readOnly: true }), signal, 30_000);
+  const result = await runPlan(processPlan({ executable: executable("node"), args: ["-e", FINGERPRINT_SCRIPT], cwd }), signal, 30_000);
   if (!successful(result) || !/^[a-f0-9]{64}$/.test(result.output)) {
-    throw new Error(`Cannot fingerprint worktree: ${result.error ?? excerpt(result.output) ?? "sandbox failure"}`);
+    throw new Error(`Cannot fingerprint worktree: ${result.error || excerpt(result.output) || "process failure"}`);
   }
   return result.output;
 }
@@ -114,7 +113,7 @@ export class VerificationGate {
   private generation = 0;
   constructor(private backend: Backend = {
     fingerprint: worktreeFingerprint,
-    run: (command, cwd, signal) => runPlan(executionPlan({ command, cwd, workspace: cwd }), signal),
+    run: (command, cwd, signal) => runPlan(executionPlan({ command, cwd }), signal),
   }) {}
 
   reset() { this.generation++; this.evidence.clear(); }

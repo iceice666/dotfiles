@@ -3,8 +3,8 @@ let workerEnv: string | undefined;
 beforeEach(() => { workerEnv = process.env.PI_TEAM_AGENT; delete process.env.PI_TEAM_AGENT; });
 afterEach(() => { if (workerEnv === undefined) delete process.env.PI_TEAM_AGENT; else process.env.PI_TEAM_AGENT = workerEnv; });
 import extension from "../index.ts";
-// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
-const confined = { attest: () => ({ confined: true, reason: "" }) };
+// Tests run from the repository checkout; production attests managed tool provenance.
+const managed = { attest: () => ({ managed: true, reason: "" }) };
 import { guardTool } from "../gate.ts";
 
 function setup() {
@@ -18,7 +18,7 @@ function setup() {
     modelRegistry: { complete: async (...args: any[]) => { calls.push(args); return { stopReason: "stop", content: [{ type: "text", text: '{"decision":"allow","reason":"routine"}' }] }; } },
     ui: { notify() {}, setStatus() {} },
   };
-  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand() {} } as any, confined);
+  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand() {} } as any, managed);
   return { ctx, calls, event: (n: string, data: any = {}) => handlers.get(n)?.(data, ctx),
     setEntries: (value: any[]) => { entries = value; }, setSession: (id: string) => { sessionId = id; } };
 }

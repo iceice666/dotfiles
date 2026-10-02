@@ -1,15 +1,19 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { getEventListeners } from "node:events";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { TaskManager, type TaskInfo, type PlanFactory } from "../manager";
-import { fixturePlan } from "./fixture";
+// Test the manager independently of launcher-pinned executables and SDK loading.
+const fixturePlan: PlanFactory = ({ command, cwd }) => ({
+  command: Bun.which("bash", { PATH: process.env.PATH })!, args: ["--noprofile", "--norc", "-c", command],
+  options: { cwd, env: { PATH: process.env.PATH } },
+});
 
 const managers: TaskManager[] = [];
 const logDirectories = new Set<string>();
 function manager(callback?: (task: TaskInfo) => void, plan: PlanFactory = fixturePlan): TaskManager {
-  const instance = new TaskManager(callback, { workspace: tmpdir(), plan });
+  const instance = new TaskManager(callback, { plan });
   managers.push(instance);
   return instance;
 }
@@ -37,13 +41,13 @@ afterEach(async () => {
 });
 
 describe("TaskManager", () => {
-  test("uses the plan's executable, arguments, environment, and immutable workspace", async () => {
+  test("uses the plan's executable, arguments, environment, and requested cwd", async () => {
     let cleaned = 0;
-    const inputs: Array<{ workspace: string }> = [];
+    const inputs: Array<{ command: string; cwd: string }> = [];
     const instance = manager(undefined, input => {
       inputs.push(input);
       return {
-        command: "/bin/bash", args: ["-c", 'printf "%s|%s" "$PLANNED" "${PI_TEAM_TOKEN-unset}"'],
+        command: Bun.which("bash")!, args: ["-c", 'printf "%s|%s" "$PLANNED" "${PI_TEAM_TOKEN-unset}"'],
         options: { cwd: input.cwd, env: { PLANNED: "only-plan" } },
         cleanup: () => { cleaned++; },
       };
@@ -54,7 +58,7 @@ describe("TaskManager", () => {
       const task = instance.start({ command: "ignored by fixture", cwd: tmpdir() });
       expect((await instance.wait(task.id)).task.status).toBe("completed");
       expect(instance.output(task.id)).toBe("only-plan|unset");
-      expect(inputs[0].workspace).toBe(realpathSync(tmpdir()));
+      expect(inputs[0]).toEqual({ command: "ignored by fixture", cwd: tmpdir() });
       expect(cleaned).toBe(1);
       await instance.shutdown();
       expect(cleaned).toBe(1);
@@ -164,14 +168,14 @@ describe("TaskManager", () => {
     const previousPath = process.env.PATH;
     const executable = Bun.which("bash");
     expect(executable).not.toBeNull();
-    symlinkSync(executable!, join(directory, "bash"));
+    writeFileSync(join(directory, "bash"), `#!${executable}\nprintf 'fixture-path-marker'\n`, { mode: 0o700 });
     try {
       process.env.PATH = directory;
       const instance = manager();
       const task = instance.start({ command: 'printf "%s" "$BASH"', cwd: directory });
       process.env.PATH = previousPath;
       expect((await finish(instance, task.id)).status).toBe("completed");
-      expect(instance.output(task.id)).toBe(join(directory, "bash"));
+      expect(instance.output(task.id)).toBe("fixture-path-marker");
     } finally {
       if (previousPath === undefined) delete process.env.PATH;
       else process.env.PATH = previousPath;

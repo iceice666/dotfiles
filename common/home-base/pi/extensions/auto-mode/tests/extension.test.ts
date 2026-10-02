@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import extension, { approveAction } from "../index.ts";
-// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
-const confined = { attest: () => ({ confined: true, reason: "" }) };
+// Tests run from the repository checkout; production attests managed tool provenance.
+const managed = { attest: () => ({ managed: true, reason: "" }) };
 import { loadExtensions } from "../../agent-team/tests/sdk.ts";
 
 const teamKeys = ["PI_TEAM_AGENT", "PI_TEAM_URL", "PI_TEAM_TOKEN"] as const;
@@ -21,7 +21,7 @@ function setup(mode = "print") {
     modelRegistry: { complete: async (...args: any[]) => { calls.push(args); return { stopReason: "stop", content: [{ type: "text", text: '{"decision":"allow","reason":"routine"}' }] }; } },
     ui: { notify() {}, setStatus() {} },
   };
-  extension(pi, confined);
+  extension(pi, managed);
   return { ctx, calls, handlers, commands, event: (n: string, e: any = {}) => handlers.get(n)?.(e, ctx) };
 }
 

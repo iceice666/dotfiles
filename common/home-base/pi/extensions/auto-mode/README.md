@@ -3,42 +3,37 @@
 Repo-owned pre-execution guardrail, enabled by default on every fresh Pi session.
 It is **not a sandbox**: it reduces routine approval prompts without treating the
 model as an authorization authority or providing a confidentiality guarantee.
-The managed launcher separately confines file/shell subprocesses through
-`../execution-policy/README.md`; Auto Mode approval or `/auto off` never disables
-that OS boundary. Pi and trusted extension internals remain on the host.
+Tools execute with the invoking user's normal host permissions, environment,
+network and filesystem access. No Pi OS sandbox is installed. Model review and
+preflight path checks are guardrails, not process or confidentiality isolation.
 
-## Execution boundary attestation
+## Tool provenance checks
 
-Review is only meaningful when file/shell tools are OS-confined, so Auto Mode
-verifies that instead of assuming it. Before every tool call other than local
-coordination (todo, team messaging, questions, background list/output/wait/stop)
-it checks that:
+Before every tool call other than local coordination (todo, team messaging,
+questions, background list/output/wait/stop), Auto Mode checks that:
 
 - its own module was loaded from the content-addressed `/nix/store/*-pi-extensions`
   tree (not a mutable `~/.pi/agent/extensions` copy, a checkout, or an SDK embedding);
-- the execution policy reports a ready sandbox (`boundaryStatus()`: pinned
-  toolchain from the managed launcher and an available backend);
-- `read`/`bash` come from that tree's `execution-policy/`, and the called tool
-  comes from the same tree (built-ins, SDK tools and foreign extensions fail).
+- the called tool is an upstream built-in with the expected source/name/path, or
+  comes from the same managed tree. SDK tools and foreign extensions fail.
 
-On failure the footer shows `auto:UNCONFINED`, the human gets an error notice, and
+These checks do not require a sandbox backend or overridden read/bash tools.
+On failure the footer shows `auto:UNMANAGED`, the human gets an error notice, and
 the call is blocked with `terminate` so the agent stops instead of probing other
 tools. This holds even after `/auto off` or under YOLO, and `/yolo on` is
 refused. The fix is operational: exit and start the managed launcher (`type -a pi`).
 
-Motivating incident: an unmanaged Bun-global Pi auto-discovered the installed tree;
-after a switch, `/new` reused cached old modules (unsandboxed `background_task`, an
-Auto Mode without context) next to a freshly loaded execution policy that failed
-closed. The agent then deployed through `background_task` and the old gate allowed
-it. The auto-discovery install has been replaced by `unmanaged-pi-guard`.
+The managed launcher avoids mixing cached extension versions across a switch.
+The auto-discovery directory contains `unmanaged-pi-guard` instead of a second
+copy of the tree. Restart the managed Pi after deploying updates.
 
 ## Controls
 
-- `/auto status`: current session state and boundary attestation; classifier follows the current model.
+- `/auto status`: current session state and tool provenance; classifier follows the current model.
 - `/auto on`: enable this session.
 - `/auto off`: parent TUI only, after explicit human confirmation. Workers cannot
   disable their gate through this command. Existing and new workers remain on.
-  Boundary attestation keeps running.
+  Tool provenance checks keep running.
 - `/auto grant PATH`: parent TUI only; approve read/write/edit within an existing
   repository file or directory for this parent session and its workers.
 - `/auto scopes`: list active scope IDs and canonical paths.
@@ -59,14 +54,12 @@ These explicit commands control a session-local team switch. Only the parent TUI
 can change it; `/yolo on` needs no second confirmation. It bypasses **the entire
 Auto Mode tool hook**, including local Auto Mode policy, model classification,
 and per-action Auto Mode prompts, for the parent and existing/new workers.
-The footer shows `YOLO · sandbox on`.
+The footer shows `YOLO · host access`.
 
-It does **not** change the independent OS sandbox, allowed-tool enforcement,
-secret/network isolation, or todo verification gates. Explicit check-declaration
-approval through `approveAction` is unchanged. Therefore YOLO is not unrestricted
-host execution and does not suppress all possible questions or sandbox failures.
-For the same reason `/yolo on` is refused, and YOLO does not skip attestation,
-while the execution boundary is unattested.
+Tools have normal host access; there is no OS sandbox or secret/network isolation.
+YOLO does **not** disable tool provenance checks or todo verification gates.
+Explicit check-declaration approval through `approveAction` is unchanged.
+`/yolo on` is refused while tool provenance is unattested.
 
 Workers query the authenticated parent before each tool call and recheck a true
 YOLO result before releasing the call; no environment or cached flag grants it.
@@ -99,8 +92,8 @@ and compaction do not reset it. `/auto off` remains parent-only and is independe
    requests, and policy errors block. A blocked action must not be retried through
    another tool or worker to evade the decision.
 5. Refusal ledger: Auto Mode records trusted refusals itself — credential blocks,
-   classifier denies, rejected/unavailable approvals, and plan-level sandbox
-   refusals seen in tool results (`Restricted execution…`, backend/workspace
+   classifier denies, rejected/unavailable approvals, and recognized external
+   sandbox refusals seen in tool results (`Restricted execution…`, backend/workspace
    refusals; ordinary file errors do not count). Until the next human TUI turn (or,
    in a worker, the next coordinator message), `bash`, `background_task start`,
    `agent_spawn`, and `agent_send`/`agent_ask` to a teammate always need a
@@ -196,7 +189,7 @@ older reviews. Worker RPC inputs do not become human grants.
 For repo extension development without approving every edit, the human can run:
 
 ```text
-/auto grant common/home-base/pi/extensions/execution-policy
+/auto grant common/home-base/pi/extensions/background-task
 /auto scopes
 /auto revoke all
 ```
@@ -212,7 +205,7 @@ Scopes can skip repetitive file-policy asks only for `read`, `write`, and `edit`
 They never cover shell/background commands, deployments, network tools, secrets,
 Git/agent metadata, shell startup files, or live managed extension roots. Local
 hard blocks run first. Lexical and canonical boundaries, symlink retargets, and
-hardlinks are checked; a scope does not expand the OS sandbox. Source extensions
+hardlinks are checked; scopes are not OS access controls. Source extensions
 in the repository are eligible only when not part of the loaded runtime tree.
 Default deployment loads an immutable Nix tree, leaving repository source editable.
 Arbitrary externally loaded tool-less extensions are outside this managed-layout
@@ -221,7 +214,7 @@ claim; do not use repo scopes with untracked runtime extension locations.
 Revocation invalidates pending scope checks rather than reusing cached allows.
 There remains a small preflight-to-execution race, like the existing file checks;
 this is not atomic OS capability revocation. Scope permission is not authorization
-to do unrelated work: task intent and the underlying sandbox remain applicable.
+to do unrelated work: task intent and normal user permissions remain applicable.
 
 ## Boundaries and deliberate limitations
 
@@ -244,8 +237,8 @@ to do unrelated work: task intent and the underlying sandbox remain applicable.
   Tool fast paths assume repo-owned tools
   and built-ins retain their documented semantics.
 - No durable consent ledger is inferred from agent messages, session roles,
-  compaction, or classifier prose. Worker control planes remain on the host; their managed file/shell tools use the
-  same restricted execution boundary.
+  compaction, or classifier prose. Workers and their file/shell tools run with the
+  invoking user's permissions; shared workspaces are not isolation.
 
 ## Validation
 

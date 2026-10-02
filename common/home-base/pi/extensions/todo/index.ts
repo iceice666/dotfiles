@@ -222,7 +222,7 @@ export function registerTodo(pi: ExtensionAPI, dependencies: { gate?: Verificati
         const cwd = await realpath(ctx.cwd);
         const approved = await approve(ctx, {
           toolName: "todo", input: { action: "add", items: added.map(({ text, checks }) => ({ text, checks })) }, cwd,
-        }, "Approve these immutable completion checks. Declared commands run only in the restricted sandbox. Approval declares requirements, not a host/network permission grant.", signal ?? lifecycle.signal);
+        }, "Approve these immutable completion checks. Declared commands run as local processes with the invoking user's permissions and inherited environment. Approval declares requirements, not permission for unrelated actions.", signal ?? lifecycle.signal);
         if (!approved) throw new Error("Declaring completion checks requires explicit human approval; unavailable or cancelled approval is not consent");
         signal?.throwIfAborted();
         if (await realpath(ctx.cwd) !== cwd) throw new Error("Working directory changed during approval; declare the checks again");
@@ -287,7 +287,7 @@ export function registerTodo(pi: ExtensionAPI, dependencies: { gate?: Verificati
   });
 
   pi.registerTool({
-    name: "todo", label: "Todo", description: "Session-local tasks. list returns all; mutations return changed rows and removed IDs. add: text or atomic items batch (not both); batch IDs follow array order. update/remove require id. blockedBy references existing or earlier batch IDs; dependencies must finish before starting/completing a task. remove rejects referenced IDs; prune deletes completed tasks and their dependency edges; clear deletes ordinary tasks but cannot bypass incomplete declared checks. Optional checks on add are immutable human-approved {name,command} requirements; verify {id} actually runs them sandboxed (120s/check, 10MiB capture, 12KB/200-line excerpt). Only fresh successful evidence permits completing/removing/pruning gated tasks; ordinary tasks are unchanged. category: empty clears, omitted retains. activeForm is display-only.",
+    name: "todo", label: "Todo", description: "Session-local tasks. list returns all; mutations return changed rows and removed IDs. add: text or atomic items batch (not both); batch IDs follow array order. update/remove require id. blockedBy references existing or earlier batch IDs; dependencies must finish before starting/completing a task. remove rejects referenced IDs; prune deletes completed tasks and their dependency edges; clear deletes ordinary tasks but cannot bypass incomplete declared checks. Optional checks on add are immutable human-approved {name,command} requirements; verify {id} actually runs them as local processes (120s/check, 10MiB capture, 12KB/200-line excerpt). Only fresh successful evidence permits completing/removing/pruning gated tasks; ordinary tasks are unchanged. category: empty clears, omitted retains. activeForm is display-only.",
     promptSnippet: "Track tasks and dependencies",
     promptGuidelines: ["Use todo for multi-step work or requested lists, not trivial tasks. Batch related additions; use short titles and optional categories. Update after verified progress. Never clear unfinished tasks without user approval. Use list only when the current state is missing."],
     parameters: Type.Object({

@@ -1,38 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import extension from "../index.ts";
-import { attestRuntime, managedRoot } from "../boundary.ts";
 import { guardTool } from "../gate.ts";
 import { askHumanDecision } from "../../ask-question/service.ts";
-
-const root = `/nix/store/${"a".repeat(32)}-pi-extensions`;
-const managedTools = [
-  { name: "read", sourceInfo: { path: `${root}/execution-policy/bootstrap.ts` } },
-  { name: "bash", sourceInfo: { path: `${root}/execution-policy/bootstrap.ts` } },
-  { name: "background_task", sourceInfo: { path: `${root}/background-task` } },
-  { name: "grep", sourceInfo: { path: "<builtin:grep>" } },
-];
-const ready = { ok: true };
-
-describe("runtime attestation", () => {
-  test("only the content-addressed managed tree counts as managed", () => {
-    expect(managedRoot(`${root}/auto-mode/index.ts`)).toBe(root);
-    for (const path of ["/Users/me/.pi/agent/extensions/auto-mode/index.ts", "/nix/store/short-pi-extensions/auto-mode/index.ts", `/nix/store/${"a".repeat(32)}-other/auto-mode/index.ts`]) {
-      expect(managedRoot(path)).toBeUndefined();
-    }
-  });
-  test("confined only with managed root, ready sandbox, policy-owned read/bash and a managed called tool", () => {
-    expect(attestRuntime({ root, tools: managedTools, toolName: "background_task", boundary: ready }).confined).toBe(true);
-    expect(attestRuntime({ root: undefined, tools: managedTools, toolName: "bash", boundary: ready }).confined).toBe(false);
-    const missing = attestRuntime({ root, tools: managedTools, toolName: "bash", boundary: { ok: false, reason: "toolchain missing" } });
-    expect(missing).toEqual({ confined: false, reason: "toolchain missing" });
-    const foreignBash = managedTools.map(tool => tool.name === "bash" ? { ...tool, sourceInfo: { path: "<builtin:bash>" } } : tool);
-    expect(attestRuntime({ root, tools: foreignBash, toolName: "read", boundary: ready }).confined).toBe(false);
-    expect(attestRuntime({ root, tools: managedTools, toolName: "grep", boundary: ready }).confined).toBe(false);
-    expect(attestRuntime({ root, tools: managedTools, toolName: "unregistered", boundary: ready }).confined).toBe(false);
-    const escaped = [...managedTools, { name: "x", sourceInfo: { path: `${root}/../elsewhere/x.ts` } }];
-    expect(attestRuntime({ root, tools: escaped, toolName: "x", boundary: ready }).confined).toBe(false);
-  });
-});
 
 describe("gate escalation", () => {
   const cwd = process.cwd();
@@ -70,7 +39,7 @@ let workerEnv: string | undefined;
 beforeEach(() => { workerEnv = process.env.PI_TEAM_AGENT; delete process.env.PI_TEAM_AGENT; });
 afterEach(() => { if (workerEnv === undefined) delete process.env.PI_TEAM_AGENT; else process.env.PI_TEAM_AGENT = workerEnv; });
 
-function setup(attestation = { confined: true, reason: "" }, verdict = "allow") {
+function setup(attestation = { managed: true, reason: "" }, verdict = "allow") {
   const handlers = new Map<string, any>(), commands = new Map<string, any>();
   const calls: any[] = [], notes: any[] = [], statuses = new Map<string, string>(), views: any[] = [];
   const ctx: any = { cwd: process.cwd(), mode: "tui", hasUI: false,
@@ -88,12 +57,12 @@ const bash = { toolName: "bash", input: { command: "git status" } };
 const background = { toolName: "background_task", input: { action: "start", command: "cat deploy.md" } };
 
 describe("extension", () => {
-  test("unconfined runtime blocks execution even with /auto off or YOLO, keeps coordination, refuses YOLO", async () => {
-    const s = setup({ confined: false, reason: "toolchain missing" });
+  test("unmanaged runtime blocks execution, keeps coordination, refuses YOLO", async () => {
+    const s = setup({ managed: false, reason: "foreign tool source" });
     s.ctx.hasUI = true;
     await s.event("session_start");
-    expect(s.statuses.get("auto-mode")).toBe("auto:UNCONFINED");
-    expect(s.notes.some(([text, level]) => level === "error" && text.includes("toolchain missing"))).toBe(true);
+    expect(s.statuses.get("auto-mode")).toBe("auto:UNMANAGED");
+    expect(s.notes.some(([text, level]) => level === "error" && text.includes("foreign tool source"))).toBe(true);
     const blocked = await s.event("tool_call", background);
     expect(blocked).toMatchObject({ block: true, terminate: true });
     expect(blocked.reason).toContain("security boundary");
@@ -104,7 +73,7 @@ describe("extension", () => {
     expect(s.calls).toHaveLength(0);
   });
 
-  test("sandbox refusal forces human approval for substitute execution until the next human turn", async () => {
+  test("external sandbox refusal forces human approval for substitute execution until the next human turn", async () => {
     const s = setup();
     await s.event("input", { source: "interactive", text: "deploy per deploy.md" });
     await s.event("tool_result", { toolName: "read", isError: true, content: [{ type: "text", text: "Restricted execution unavailable: the pinned /nix/store toolchain is missing." }] });

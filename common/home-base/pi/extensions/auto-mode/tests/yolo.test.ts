@@ -3,10 +3,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import extension from "../index.ts";
-// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
-const confined = { attest: () => ({ confined: true, reason: "" }) };
+// Tests run from the repository checkout; production attests managed tool provenance.
+const managed = { attest: () => ({ managed: true, reason: "" }) };
 import { requestParentContext } from "../service.ts";
-import { executionDecision } from "../../execution-policy/index.ts";
 import { approveAction } from "../index.ts";
 import { Team, autoModeActionId } from "../../agent-team/team.mjs";
 
@@ -21,7 +20,7 @@ function setup(mode = "tui") {
   const ctx: any = { mode, hasUI: false, cwd: process.cwd(), sessionManager: { getSessionId: () => "test", getBranch: () => [], getLeafId: () => null },
     model: { provider: "test", id: "test", maxTokens: 2048 }, modelRegistry: { complete: async () => { modelCalls++; return { stopReason: "stop", content: [{ type: "text", text: '{"decision":"deny","reason":"unsafe"}' }] }; } },
     ui: { setStatus() {}, notify() {} } };
-  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any, confined);
+  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any, managed);
   const event = (n: string, e: any = {}) => handlers.get(n)?.(e, ctx);
   cleanup.push(async () => { await event("session_shutdown"); });
   return { ctx, event, command: (text: string) => commands.get("yolo").handler(text, ctx), auto: (text: string) => commands.get("auto").handler(text, ctx), calls: () => modelCalls };
@@ -42,10 +41,9 @@ test("parent YOLO bypasses only its own hook, off restores review, fresh instanc
   const fresh = setup(); expect((await fresh.event("tool_call", tool))?.block).toBe(true);
 });
 
-test("YOLO leaves execution-policy and explicit verification approval intact", async () => {
+test("YOLO leaves explicit verification approval intact", async () => {
   const s = setup(); await s.command("on");
-  expect(await s.event("tool_call", { toolName: "unknown_executor", input: {} })).toBeUndefined();
-  expect(executionDecision("unknown_executor")?.block).toBe(true);
+  expect(await s.event("tool_call", tool)).toBeUndefined();
   expect(await approveAction({ ...s.ctx, mode: "print", hasUI: false }, { ...tool, cwd: process.cwd() }, "Verify check declaration", new AbortController().signal)).toBe(false);
 });
 

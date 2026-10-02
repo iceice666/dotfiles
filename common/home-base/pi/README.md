@@ -5,7 +5,7 @@
 launcher loads it, with `--no-extensions` and explicit store paths. The
 auto-discovery directory `~/.pi/agent/extensions/` receives just
 `unmanaged-pi-guard.ts`: an unmanaged Pi (for example a Bun/npm global install
-earlier on `PATH`) would otherwise run the tree without its sandbox, and after a
+earlier on `PATH`) may lack the expected review hooks, and after a
 switch its per-path extension cache can mix old and new modules. The guard blocks
 every tool in such a process. Unrelated local extensions are left alone.
 
@@ -16,7 +16,6 @@ every tool in such a process. Unrelated local extensions are left alone.
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed tasks, human-approved required checks, and fingerprint-bound completion evidence |
-| `execution-policy/` | Mandatory OS-confined file/shell execution, shared by background jobs and verification |
 | `unmanaged-pi-guard/` | Installed alone into `~/.pi/agent/extensions/`; blocks every tool when Pi was not started by the managed launcher |
 | `dot-continue/` | Standalone `.` means `continue` in an idle interactive conversation |
 | `btw/` | `/btw` side questions while the main agent runs, without changing its context |
@@ -29,27 +28,29 @@ every tool in such a process. Unrelated local extensions are left alone.
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. Bash is installed explicitly for background jobs;
 Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
-the invoking user's permissions, including root on lumo: they are the trusted host
-control plane, not sandboxed plugins. The managed `pi` launcher now pins this
-extension tree and restricts file/shell operations with Seatbelt on macOS or
-bubblewrap on Linux. Auto Mode approval never lifts that OS boundary. See
-[execution-policy/README.md](extensions/execution-policy/README.md) for scope,
-compatibility changes, validation and limitations; `/sandbox` shows the boundary.
-User-selected CLI attachments and trusted configuration are host inputs, not
-agent tool operations. No automatic deployment/escalation path is provided.
+the invoking user's permissions, including root on lumo. The managed launcher
+pins this extension tree but does **not** sandbox tools: upstream file/shell tools,
+background jobs, verification commands and workers use normal host permissions,
+PATH, environment, network and filesystem access. `local-process.mjs` shares
+ordinary process plans for background jobs and verification; Bash/Node/Git are
+pinned by the launcher. Auto Mode is an intent/approval gate, not OS isolation.
+The former Seatbelt/bubblewrap adapters, workspace scans, `/sandbox` command and
+`PI_SANDBOX_*`/`PI_EXECUTION_*` settings have been removed. Restart Pi after a
+normal host switch; changing repo sources does not alter an already-running Pi.
+The browser's own sandbox remains enabled and is unrelated to this change.
 
 ## Auto Mode
 
 `/yolo on` skips Auto Mode for the parent and all existing/new workers until
 `/yolo off` (or parent `/auto on`). Only the parent TUI can toggle it; restart,
-reload, or branch navigation resets it. OS sandbox and verification gates remain
-enabled. Workers check the parent before every action and fail closed if unreachable.
+reload, or branch navigation resets it. Verification gates remain enabled;
+there is no Pi OS sandbox. Workers check the parent before every action and fail closed if unreachable.
 Use `/yolo status` to inspect the team switch; no second confirmation is required.
 
-Auto Mode first attests that it runs from the managed store tree with a ready
-sandbox and managed tool sources; otherwise (`auto:UNCONFINED`) every
+Auto Mode first checks that it runs from the managed store tree with upstream
+built-in or managed extension tool sources; otherwise (`auto:UNMANAGED`) every
 non-coordination tool is blocked regardless of `/auto off` or YOLO, and `/yolo on`
-is refused. After a sandbox or Auto Mode refusal, substitute execution (Bash,
+is refused. After a recognized execution or Auto Mode refusal, substitute execution (Bash,
 background starts, worker spawn/delegation) needs single-use human approval until
 the next human turn. Parent TUI answers to the agent's own questions are passed to
 the reviewer as trusted `task.decisions`.
@@ -103,7 +104,7 @@ Do not use `pi install` to install a second copy of these extensions.
 
 Authentication, trust decisions, sessions, team archives and temporary
 background logs remain unmanaged. The Lumo audit uses the same managed launcher
-with `PI_EXECUTION_TOOLS=read,ls`; extension discovery remains disabled while the
+with `--tools read,ls` (a tool allowlist, not filesystem isolation); extension discovery remains disabled while the
 launcher explicitly loads the required managed tree. The audit's collection and
 delivery stay outside the agent and are unchanged.
 
@@ -196,10 +197,9 @@ full source separately when needed. This is not a browser integration.
 
 ## Browser access (m5pro and Framework)
 
-The managed restricted shell cannot currently launch the host browser or reach its
-network/daemon. Browser work requires human execution outside this Pi session;
-no auto-approved fallback is provided. The installed tooling remains available
-to the operator.
+The shell uses normal host permissions, so the browser CLI can access its network
+and daemon. Auto Mode still reviews commands and external actions; browser access
+is not authorization to submit forms or change remote state.
 
 These two hosts additionally import `../browser.nix`: pinned `playwright-cli`,
 a `playwright-read` rendered-page Markdown helper, and the agent-neutral
@@ -274,8 +274,11 @@ From the repository root (Node 22.19+ and Bun required):
 ```sh
 cd common/home-base/pi
 bun install --frozen-lockfile --ignore-scripts
-bun run test
+env -u PI_PACKAGE_DIR bun run test
 ```
+
+Unset the launcher's `PI_PACKAGE_DIR` only for the test process so SDK theme
+fixtures resolve from the local dependency instead of the packaged Pi runtime.
 
 The test suite resolves the local pinned SDK, not a machine-specific global npm
 installation. Dependency lifecycle scripts are not needed. The two legacy

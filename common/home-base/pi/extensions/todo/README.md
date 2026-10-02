@@ -12,7 +12,7 @@
 | `/todo add 撰寫測試` | 新增待辦 |
 | `/todo start 1` | 標為進行中 |
 | `/todo done 1` | 標為完成；宣告 checks 的任務必須先通過新鮮驗證 |
-| `/todo verify 1` | 在受限 sandbox 中實際執行已批准的 checks |
+| `/todo verify 1` | 以目前使用者權限實際執行已批准的 checks |
 | `/todo pending 1` | 改回待辦 |
 | `/todo edit 1 補齊整合測試` | 修改標題 |
 | `/todo category 1 UI` | 設定／修改類別（名稱可包含空格） |
@@ -85,11 +85,11 @@
 
 - 每項 1–10 個具唯一名稱的 checks；名称上限 100 字元、單行命令上限 4000 字元。批次每筆也可帶 checks。新增時透過 Auto Mode 的單次人類授權 UI，顯示完整命令、任務描述及 canonical cwd；worker 經團隊 broker 路由至真正人類。取消、拒絕、無 UI／broker 都不算同意，整批不新增。這只批准要求宣告，不授予 host/network 權限。
 - 描述及命令新增後不可更改；工具參數不能注入 approval／evidence。批准的原始 canonical cwd 與時間保存在 session。恢復至其他目錄、舊快照缺少批准欄位時，驗證一律阻擋，不會把當前目錄當成已批准目錄；回原始目錄使用，缺少批准的舊任務需人工處理。
-- `verify` 不接受命令或自報的測試結果，只在固定 execution-policy sandbox 中執行已批准的命令，絕不退回無 sandbox 執行。環境及外部讀寫／網路權限遵循 sandbox 政策。需要受管理的 `PI_SANDBOX_NODE`／`PI_SANDBOX_GIT`；無法啟動就失敗。
+- `verify` 不接受命令或自報的測試結果，只透過 `../local-process.mjs` 實際執行已批准的命令。使用目前程序的環境及使用者權限，沒有 Pi OS sandbox 或網路隔離；批准 checks 前需確認命令的主機及外部副作用。launcher 以 `PI_TOOL_BASH`／`PI_TOOL_NODE`／`PI_TOOL_GIT` 固定工具；開發環境可使用 PATH 與目前 Node/Bun runtime。無法啟動或執行失敗不會產生成功證據。
 - 每個 check 最多 120 秒、stdout/stderr 合計最多捕捉 10 MiB；超量、超時、signal、取消、啟動失敗及非零退出碼都不通過。記錄實際退出狀態、開始／结束時間、耗時與最後 12KB／200 行輸出（截斷有標記），逐項失敗即停止。紀錄位於 `local-todo-verification-v1` custom entry；只是 audit history，不能作為恢復後的新證據。
-- 檢查前後的 worktree fingerprint 必須一致，完成／移除／prune／clear 前也重新檢查。fingerprint 在唯讀 sandbox 中計算，包含 tracked + nonignored untracked 檔案內容、mode、inode、修改時間、Git refs/index/config；修改後即使改回同樣內容，也通常因 metadata 改變而失效。限本地 `.git` 目錄的 Git root，不支援 linked worktree／submodule、特殊檔案、symlink ancestor；最多 100000 檔案／256 MiB。忽略檔案及外部依賴不納入；這不是完整 hermetic build 或對惡意外部程序的原子快照。
+- 檢查前後的 worktree fingerprint 必須一致，完成／移除／prune／clear 前也重新檢查。fingerprint 由固定的本機程式計算，停用 Git hooks、fsmonitor 及 optional locks，包含 tracked + nonignored untracked 檔案內容、mode、inode、修改時間、Git refs/index/config；修改後即使改回同樣內容，也通常因 metadata 改變而失效。限本地 `.git` 目錄的 Git root，不支援 linked worktree／submodule、特殊檔案、symlink ancestor；最多 100000 檔案／256 MiB。忽略檔案及外部依賴不納入；這不是完整 hermetic build 或對惡意外部程序的原子快照。
 - 只有目前程序剛執行成功且內容仍相符的 live evidence 可以允許完成；模型不能以文字聲稱完成，也不能刪除或清空未完成閘門來繞過。檔案變更、fingerprint 錯誤、reload/resume/fork/tree 會讓證據失效，已完成閘門及其遞迴依賴者回到 pending，保留依賴圖。compaction 保留本程序的證據，但仍重新比對 fingerprint；不需要無故重跑檢查。
-- 取消／超時會終止 process group 並限制等待時間；Darwin 上刻意脫離 process group 的後代可能繼續執行，但仍繼承 kernel sandbox 限制。成功驗證不保證沒有背景程序；請勿使用 daemon／背景工作作為 checks。
+- 取消／超時會終止 process group 並限制等待時間；刻意脫離 process group 的後代可能繼續以使用者權限執行，沒有 kernel sandbox 限制。成功驗證不保證沒有背景程序；請勿使用 daemon／背景工作作為 checks。
 - Todo 操作串行執行；其他工具或程序仍可能平行編輯，因此要先停止修改再驗證。驗證結束後再次比對發現變更時會回報失敗，而不誤報成功。證據只證明已批准命令確實成功執行，不保證命令本身涵蓋所有需求。
 
 ### 精簡輸出與快取
@@ -158,4 +158,4 @@ bun install --frozen-lockfile --ignore-scripts
 bun test extensions/todo/tests
 ```
 
-`model.test.ts` 驗證狀態規則；`verification.test.ts` 與 `gate-extension.test.ts` 使用注入的離線 backend／人類授權 mock 驗證不可自證、cwd binding、取消、stale evidence、compaction、依賴重開與生命週期（不是 OS sandbox 安全測試）；`sandbox.test.ts` 在 Darwin 上用 immutable Nix toolchain 實際驗證 fingerprint、退出碼、取消、超時及輸出上限；`extension.test.ts` 使用本機實際 Pi extension loader 搭配模擬 session/UI，驗證並行更新、分支還原、取消、指令、精簡輸出與窄螢幕顯示。快取回歸測試攔截實際 Anthropic adapter 的序列化請求，比對連續回合的前綴；自動壓縮測試使用真正 Pi session 與離線 provider，確認恢復快照不多啟動模型回合。測試不讀取真實憑證、不發送模型網路請求，SDK 固定為 package.json / bun.lock 的 Pi 0.85.1。
+`model.test.ts` 驗證狀態規則；`verification.test.ts` 與 `gate-extension.test.ts` 使用注入的離線 backend／人類授權 mock 驗證不可自證、cwd binding、取消、stale evidence、compaction、依賴重開與生命週期（不是 OS sandbox 安全測試）；`process.test.ts` 在 Linux/macOS 上用合成環境實際驗證 fingerprint、Git PATH fallback、cwd／環境繼承、退出碼、取消、超時及輸出上限；`extension.test.ts` 使用本機實際 Pi extension loader 搭配模擬 session/UI，驗證並行更新、分支還原、取消、指令、精簡輸出與窄螢幕顯示。快取回歸測試攔截實際 Anthropic adapter 的序列化請求，比對連續回合的前綴；自動壓縮測試使用真正 Pi session 與離線 provider，確認恢復快照不多啟動模型回合。測試不讀取真實憑證、不發送模型網路請求，SDK 固定為 package.json / bun.lock 的 Pi 0.85.1。

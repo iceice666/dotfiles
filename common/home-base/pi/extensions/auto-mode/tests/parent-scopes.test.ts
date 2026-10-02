@@ -3,8 +3,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import extension from "../index.ts";
-// Tests run from the repository checkout; production attests the managed Nix tree and sandbox.
-const confined = { attest: () => ({ confined: true, reason: "" }) };
+// Tests run from the repository checkout; production attests managed tool provenance.
+const managed = { attest: () => ({ managed: true, reason: "" }) };
 import { requestParentContext, registerParentContext, mergeParentContext } from "../service.ts";
 import { autoModeActionId } from "../../agent-team/team.mjs";
 import { guardTool } from "../gate.ts";
@@ -22,7 +22,7 @@ function setup(mode = "tui") {
   const ctx: any = { cwd: root, mode, hasUI: mode !== "print", sessionManager: { getSessionId: () => "parent-test", getLeafId: () => entries.at(-1)?.id, getBranch: () => entries },
     ui: { notify: (...args: any[]) => notes.push(args), setStatus() {}, custom: (factory: any) => new Promise(resolve => views.push(factory({ requestRender() {}, terminal: { rows: 24, columns: 100 } }, { fg: (_: string, s: string) => s }, {}, resolve))) },
   };
-  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any, confined);
+  extension({ on: (n: string, h: any) => handlers.set(n, h), registerCommand: (n: string, c: any) => commands.set(n, c), getAllTools: () => [] } as any, managed);
   return { ctx, views, notes, entries, event: (n: string, e: any = {}) => handlers.get(n)?.(e, ctx), command: (s: string) => commands.get("auto").handler(s, ctx) };
 }
 const request = (includeContext = false) => {

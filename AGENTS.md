@@ -237,7 +237,7 @@ model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 
 The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
-`cache-safe-compaction`, and `execution-policy`) are owned by `common/home-base/pi/extensions/` and
+`cache-safe-compaction`) are owned by `common/home-base/pi/extensions/` and
 built into one Nix store tree on all Pi-enabled hosts; only the managed `pi` launcher
 loads it (`--no-extensions` plus explicit store paths). `~/.pi/agent/extensions/`
 receives only `unmanaged-pi-guard.ts`, which blocks every tool in an unmanaged Pi
@@ -255,14 +255,15 @@ ownership.
 Bash is installed explicitly for background jobs; the shared CLI baseline supplies
 Git and Node.js. Runtime state stays unmanaged. Extensions run with the invoking
 user's full permissions, including root on lumo, as a trusted control plane.
-The managed `pi` wrapper restricts file/shell execution with Seatbelt (Darwin) or
-bubblewrap (Linux), pins the repo extension tree, and disables project executable
-resources. Background jobs, verification, and worker tools inherit the same
-workspace boundary. Auto Mode approval does not lift it; there is no escalation
-path in this version. See `common/home-base/pi/extensions/execution-policy/README.md`
-for limits, Linux validation requirements, and operator handoff. Todo tasks with
-explicit human-approved `checks` require fresh sandbox-captured evidence before
-completion; see `common/home-base/pi/extensions/todo/README.md`.
+The managed `pi` wrapper pins the repo extension tree and disables project
+executable resources, but does not provide an OS sandbox. Upstream file/shell
+tools, background jobs, verification and workers use normal user permissions,
+environment, network and filesystem access. `local-process.mjs` shares ordinary
+process plans using launcher-pinned Bash/Node/Git. Seatbelt/bubblewrap adapters,
+workspace scans and the `/sandbox` command have been removed. Auto Mode remains
+an intent/approval gate, not isolation. Todo tasks with explicit human-approved
+`checks` still require fresh captured execution evidence before completion;
+see `common/home-base/pi/extensions/todo/README.md`.
 Auto Mode defaults on for new sessions, reviews nontrivial tools through the current
 model, and routes single-use human approvals from workers through the authenticated
 team broker. `/auto off` requires parent TUI confirmation and does not disable
@@ -271,13 +272,14 @@ scopes; `/auto scopes` lists them and `/auto revoke ID` or `/auto revoke all`
 revokes them. Workers query the authenticated parent for bounded OM context and
 scope matches, never inherit permission from memory text. Scopes exclude shell,
 deployment, secrets and live controls; reload/restart/branch navigation expires them.
-Parent `/yolo on` skips Auto Mode for the whole team, not OS sandbox or verification
-gates. `/yolo off` or parent `/auto on` restores review; reload/restart/branch
+Parent `/yolo on` skips Auto Mode for the whole team, but not verification
+gates; there is no Pi OS sandbox. `/yolo off` or parent `/auto on` restores review; reload/restart/branch
 navigation resets YOLO off. Workers query the authenticated parent per action and
 never assume YOLO when it is unavailable.
-Auto Mode attests the managed store tree, sandbox readiness and tool sources before
-every non-coordination call; when unattested (`auto:UNCONFINED`) it blocks those
-tools even under `/auto off` or YOLO and refuses `/yolo on`. After a sandbox or
+Auto Mode checks the managed store tree and upstream built-in/managed extension
+tool sources before every non-coordination call; when unattested (`auto:UNMANAGED`)
+it blocks those tools even under `/auto off` or YOLO and refuses `/yolo on`. After a
+recognized execution or
 Auto Mode refusal, substitute execution (Bash, background starts, worker
 spawn/delegation) needs single-use human approval until the next human turn, and
 parent TUI answers to the agent's own questions reach the reviewer as trusted
@@ -312,8 +314,8 @@ Images leave the host; do not send sensitive content without authorization.
 See `common/home-base/pi/extensions/analyze-image/README.md` for details.
 
 The active lumo daily audit reporter uses Pi with `cliproxyapi/gpt-6-astra`,
-`/root/.pi/agent`, and the managed restricted launcher with
-`PI_EXECUTION_TOOLS=read,ls`. Extension/skill/context discovery stays disabled;
+`/root/.pi/agent`, and the managed launcher with `--tools read,ls` (a tool
+allowlist, not filesystem isolation). Extension/skill/context discovery stays disabled;
 mandatory managed extensions are loaded explicitly by the launcher. Evidence collection and Resend delivery are unchanged; model stderr
 is saved as `pi-output.log`. `just update-pkgs` invokes Pi with the repo-local
 skill at `.agents/skills/update-pkgs/SKILL.md`.
