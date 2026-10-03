@@ -64,7 +64,7 @@ with open(patch,'w') as fh:
       'niri_groups':json.dumps([{'monitor':f'HEADLESS-{i}','workspaces':[{'label':str(i),
         'windows':[{'id':i,'title':'Synthetic Window','focused':i==1,
         'icon_path':work+'/mock-symbolic.svg'}]}]} for i in (1,2)])},fh)
-keys='appPlaceholder batteryAc batteryBat batteryUnknown brightness controlCenter media micActive micMuted network notification speakerHigh speakerLow speakerMuted tray bluetooth clear darkMode lock logout reboot shutdown suspend lidSleep'.split()
+keys='appPlaceholder batteryAc batteryBat batteryUnknown brightness controlCenter media micActive micMuted network notification speakerHigh speakerLow speakerMuted tray bluetooth clear darkMode lock logout reboot shutdown hibernate lidSleep'.split()
 with open(config,'w') as fh:
     json.dump({'stateBinary':work+'/fake-state','stateConfig':work+'/fake-config',
       'ccCtl':work+'/fake-ctl','ccCmd':work+'/fake-ctl','ccWifi':work+'/fake-ctl',

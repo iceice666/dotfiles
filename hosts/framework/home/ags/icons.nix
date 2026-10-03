@@ -72,7 +72,7 @@
   shutdown = pkgs.writeText "framework-shutdown-symbolic.svg" ''
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M11 2h2v10h-2V2zM7.8 5.2 6.4 6.6a7 7 0 1 0 11.2 0l-1.4-1.4a5 5 0 1 1-8.4 0z"/></svg>
   '';
-  suspend = pkgs.writeText "framework-suspend-symbolic.svg" ''
+  hibernate = pkgs.writeText "framework-hibernate-symbolic.svg" ''
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
   '';
   lidSleep = pkgs.writeText "framework-lid-sleep-symbolic.svg" ''

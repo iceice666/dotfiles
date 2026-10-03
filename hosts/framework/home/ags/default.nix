@@ -122,7 +122,7 @@ let
     set -euo pipefail
     case "''${1:-}" in
       lock) exec ${lockScreen} lock --daemonize ;;
-      suspend) exec ${pkgs.systemd}/bin/systemctl suspend ;;
+      hibernate) exec ${pkgs.systemd}/bin/systemctl hibernate ;;
       reboot) exec ${pkgs.systemd}/bin/systemctl reboot ;;
       shutdown) exec ${pkgs.systemd}/bin/systemctl poweroff ;;
       logout) exec ${unstablePkgs.niri}/bin/niri msg action quit ;;

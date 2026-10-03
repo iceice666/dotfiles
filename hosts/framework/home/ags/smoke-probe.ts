@@ -282,7 +282,7 @@ export async function runSmoke({
           w.get_label(),
         );
         assert(
-          ["Lock", "Suspend", "Log Out", "Restart", "Shut Down"].every(
+          ["Lock", "Hibernate", "Log Out", "Restart", "Shut Down"].every(
             (label) => labels.includes(label),
           ),
           "missing session action",

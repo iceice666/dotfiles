@@ -558,7 +558,7 @@ function Power() {
       {(
         [
           ["Lock", "lock"],
-          ["Suspend", "suspend"],
+          ["Hibernate", "hibernate"],
           ["Log Out", "logout"],
           ["Restart", "reboot"],
           ["Shut Down", "shutdown"],
