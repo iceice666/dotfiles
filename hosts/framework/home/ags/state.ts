@@ -60,7 +60,7 @@ export function command(
     })
     .catch(() => {
       // Never log argv or stderr: Wi-Fi commands can carry credentials.
-      if (args[0] !== config.ccWifi)
+      if (!onError && args[0] !== config.ccWifi)
         console.error("shell action failed", args[0]);
       onError?.();
     });

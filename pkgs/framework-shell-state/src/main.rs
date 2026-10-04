@@ -1007,6 +1007,7 @@ fn battery_vars(cfg: &Config) -> Result<Vars> {
 
     let mut vars = Vars::new();
     vars.insert("battery_value".to_string(), capacity.to_string());
+    vars.insert("battery_profile".to_string(), profile.to_string());
     vars.insert(
         "battery_tooltip".to_string(),
         format!("{percentage} - {profile} profile"),
@@ -1021,6 +1022,7 @@ fn battery_unknown_vars(cfg: &Config, foreground: &str) -> Vars {
     let mut vars = Vars::new();
     vars.insert("battery_value".to_string(), "0".to_string());
     vars.insert("battery_tooltip".to_string(), "Battery --".to_string());
+    vars.insert("battery_profile".to_string(), "Unknown".to_string());
     vars.insert(
         "battery_class".to_string(),
         "island battery unknown".to_string(),

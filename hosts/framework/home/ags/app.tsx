@@ -18,6 +18,7 @@ import {
   unreadLabel,
 } from "./notifications";
 import {
+  command,
   config,
   directory,
   state,
@@ -76,12 +77,80 @@ function click(widget: Gtk.Widget, button: number, action: () => void) {
   widget.add_controller(gesture);
 }
 
+type PopupKind = "control" | "calendar" | "power";
+const [powerBusy, setPowerBusy] = createState(false);
+const [powerError, setPowerError] = createState("");
+
+function PowerContents() {
+  return (
+    <box class="control-panel power-panel" orientation={vertical} spacing={8}>
+      <label class="cc-page-title" label="Power Mode" xalign={0} />
+      <label
+        class="secondary"
+        label={value("battery_tooltip", "Battery --")}
+        xalign={0}
+      />
+      {[
+        ["performance", "Performance"],
+        ["balanced", "Balanced"],
+        ["power-saver", "Power Saver"],
+      ].map(([profile, label]) => (
+        <button
+          class={value("battery_profile")((current) =>
+            `power-option power-${profile}${current === label ? " selected" : ""}`,
+          )}
+          sensitive={powerBusy((busy) => !busy)}
+          onClicked={() => {
+            if (powerBusy()) return;
+            setPowerBusy(true);
+            setPowerError("");
+            void command(
+              [config.ccCmd, "power-profile", profile],
+              patch,
+              () =>
+                setPowerError(
+                  "Could not change power mode. Authorization may have been cancelled.",
+                ),
+            ).finally(() => setPowerBusy(false));
+          }}
+        >
+          <box spacing={12}>
+            <label label={label} hexpand xalign={0} />
+            <label
+              label={value("battery_profile")((current) =>
+                current === label ? "✓" : "",
+              )}
+            />
+          </box>
+        </button>
+      ))}
+      <label
+        class="secondary"
+        label="Changing mode requires system authorization."
+        wrap
+        maxWidthChars={34}
+        xalign={0}
+      />
+      <label visible={powerBusy} label="Applying…" xalign={0} />
+      <label
+        class="power-error"
+        visible={powerError((error) => !!error)}
+        label={powerError}
+        wrap
+        maxWidthChars={34}
+        xalign={0}
+      />
+    </box>
+  );
+}
+
 const overlays = new Map<
   Gdk.Monitor,
   {
     bar: Astal.Window;
     control: Astal.Window;
     calendar: Astal.Window;
+    power: Astal.Window;
     dispose: (destroyWindows?: boolean) => void;
   }
 >();
@@ -92,9 +161,10 @@ function close(mon: Gdk.Monitor) {
   if (windows) {
     windows.control.visible = false;
     windows.calendar.visible = false;
+    windows.power.visible = false;
   }
 }
-function toggle(mon: Gdk.Monitor, target: "control" | "calendar") {
+function toggle(mon: Gdk.Monitor, target: PopupKind) {
   const windows = overlays.get(mon);
   if (!windows) return;
   const wasVisible = windows[target].visible;
@@ -102,11 +172,15 @@ function toggle(mon: Gdk.Monitor, target: "control" | "calendar") {
   for (const monitor of overlays.keys()) close(monitor);
   if (!wasVisible) {
     if (target === "control") openView("home");
+    if (target === "power") {
+      setPowerError("");
+      void shell("refresh", "battery");
+    }
     windows[target].visible = true;
     windows[target].present();
   }
 }
-function Popup(mon: Gdk.Monitor, kind: "control" | "calendar") {
+function Popup(mon: Gdk.Monitor, kind: PopupKind) {
   const backdrop = (
     <box
       class="backdrop"
@@ -135,6 +209,8 @@ function Popup(mon: Gdk.Monitor, kind: "control" | "calendar") {
           <box class="control-panel calendar-panel">
             <Gtk.Calendar />
           </box>
+        ) : kind === "power" ? (
+          <PowerContents />
         ) : (
           <ControlContents />
         )}
@@ -153,7 +229,7 @@ function Popup(mon: Gdk.Monitor, kind: "control" | "calendar") {
       namespace={
         kind === "control"
           ? "framework-ags-control-center"
-          : "framework-ags-calendar"
+          : `framework-ags-${kind}`
       }
       anchor={
         Astal.WindowAnchor.TOP |
@@ -439,8 +515,10 @@ function Bar(mon: Gdk.Monitor) {
               <label label={state((s) => `DN ${s.perf_down || "--"}/s`)} />
             </box>
           </box>
-          <box
+          <button
             class={value("battery_class", "island battery")}
+            tooltipText="Power Mode"
+            onClicked={() => toggle(mon, "power")}
             valign={Gtk.Align.FILL}
             $={(self) =>
               hover(
@@ -466,7 +544,7 @@ function Bar(mon: Gdk.Monitor) {
                 />
               </revealer>
             </box>
-          </box>
+          </button>
           <box
             class="island tray"
             valign={Gtk.Align.FILL}
@@ -541,17 +619,20 @@ function mount(mon: Gdk.Monitor) {
   createRoot((dispose) => {
     const bar = Bar(mon),
       control = Popup(mon, "control"),
-      calendar = Popup(mon, "calendar");
+      calendar = Popup(mon, "calendar"),
+      power = Popup(mon, "power");
     overlays.set(mon, {
       bar,
       control,
       calendar,
+      power,
       dispose(destroyWindows = true) {
         dispose();
         if (destroyWindows) {
           bar.destroy();
           control.destroy();
           calendar.destroy();
+          power.destroy();
         }
       },
     });

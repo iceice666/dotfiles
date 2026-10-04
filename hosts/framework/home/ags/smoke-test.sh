@@ -57,7 +57,7 @@ import json,sys
 patch,config,work=sys.argv[1:]
 with open(patch,'w') as fh:
     json.dump({'datetime_time':'12:00','datetime_date':'2026-09-26','battery_value':'50',
-      'battery_tooltip':'Battery 50 percent','network_label':'Network test','audio_speaker_value':'55',
+      'battery_tooltip':'Battery 50 percent','battery_profile':'Balanced','network_label':'Network test','audio_speaker_value':'55',
       'audio_speaker_percent':'55%','brightness_value':'65','brightness_text':'65%',
       'perf_cpu':'12%','perf_ram':'4.2G','perf_gpu':'45°','perf_up':'2K','perf_down':'84K',
       'media_text':'Synthetic Artist — Synthetic Song',
@@ -67,7 +67,7 @@ with open(patch,'w') as fh:
 keys='appPlaceholder batteryAc batteryBat batteryUnknown brightness controlCenter media micActive micMuted network notification speakerHigh speakerLow speakerMuted tray bluetooth clear darkMode lock logout reboot shutdown hibernate lidSleep'.split()
 with open(config,'w') as fh:
     json.dump({'stateBinary':work+'/fake-state','stateConfig':work+'/fake-config',
-      'ccCtl':work+'/fake-ctl','ccCmd':work+'/fake-ctl','ccWifi':work+'/fake-ctl',
+      'ccCtl':work+'/fake-ctl','ccCmd':work+'/fake-power','ccWifi':work+'/fake-ctl',
       'icons':{key:work+'/mock-symbolic.svg' for key in keys}},fh)
 PY
 printf '%s\n' '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#808080" stroke-width="2"/><path d="M8 12h8m-4-4v8" stroke="#808080" stroke-width="2"/></svg>' > "$work/mock-symbolic.svg"
@@ -75,7 +75,23 @@ printf '%s\n' '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" vi
 printf '%s\n' '#!/usr/bin/env bash' 'if [[ "${*: -1}" == daemon ]]; then cat "$(dirname "$0")/patch.json"; echo; exec sleep 20; else printf "%s\n" "$*" >> "$(dirname "$0")/actions.log"; fi' > "$work/fake-state"
 # shellcheck disable=SC2016 # Literal expressions are evaluated by the generated script.
 printf '%s\n' '#!/usr/bin/env bash' 'if [[ "${1:-}" == connect && "${2:-}" == Locked ]]; then exit 1; fi' 'case "${1:-}" in state) echo off ;; scan|rescan|connect|disconnect) echo '\''[{"ssid":"Known","signal":80,"security":"WPA2","known":true,"active":true},{"ssid":"Open","signal":60,"security":"","known":false,"active":false},{"ssid":"Locked","signal":40,"security":"WPA2","known":false,"active":false}]'\'' ;; esac' > "$work/fake-ctl"
-chmod +x "$work/fake-state" "$work/fake-ctl"
+cat > "$work/fake-power" <<'PYPOWER'
+#!/usr/bin/env python3
+import json, pathlib, sys, time
+root = pathlib.Path(__file__).parent
+with (root / 'actions.log').open('a') as log:
+    log.write(' '.join(sys.argv[1:]) + '\n')
+if len(sys.argv) != 3 or sys.argv[1] != 'power-profile':
+    sys.exit(2)
+time.sleep(0.3)
+if sys.argv[2] == 'performance':
+    sys.exit(1)  # Simulate denied authorization.
+profiles = {'balanced': 'Balanced', 'power-saver': 'Power Saver'}
+if sys.argv[2] not in profiles:
+    sys.exit(2)
+print(json.dumps({'battery_profile': profiles[sys.argv[2]]}))
+PYPOWER
+chmod +x "$work/fake-state" "$work/fake-ctl" "$work/fake-power"
 printf '{}\n' > "$work/fake-config"
 printf '%s\n' '<?xml version="1.0"?><labwc_config><core><xwayland>no</xwayland></core></labwc_config>' > "$work/labwc/rc.xml"
 
@@ -127,7 +143,7 @@ if [[ "$status" != 0 ]]; then
   tail -n 80 "$work/ags.log" "$work/tray.log" >&2
   exit 1
 fi
-for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_NOTIFICATIONS_PASS SMOKE_PASS; do
+for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_POWER_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_NOTIFICATIONS_PASS SMOKE_PASS; do
   if ! grep -q "$marker" "$work/ags.log"; then
     printf 'Missing UI assertion: %s\n' "$marker" >&2
     tail -n 80 "$work/ags.log" "$work/tray.log" >&2

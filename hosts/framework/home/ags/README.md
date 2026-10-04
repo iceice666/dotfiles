@@ -34,7 +34,7 @@ of the AGS CLI wrapper.
 
 AGS owns monitor/window lifecycle. Output matching uses GTK4's monitor connector
 rather than GDK index ordering. Each monitor has its own hover revealers; opening
-one control/calendar popup closes the other monitors' popups. Escape and clicking
+one control/calendar/power popup closes the other monitors' popups. Escape and clicking
 the backdrop dismiss a popup, and dismissal clears password input. The panel is
 height-limited to its monitor and scrolls on small displays.
 
@@ -80,6 +80,14 @@ field and displays Performance, Balanced, or Power Saver; legacy `Mode` output
 keeps AC/Battery labels. Missing or unrecognized profiles display Unknown rather
 than guessing from the power source. Icons and charging styling use UPower's
 supply state independently of the selected profile.
+Clicking the battery opens a compact Power Mode panel with Performance, Balanced,
+and Power Saver choices and a checkmark on the current TLP profile. Selection runs
+an allowlisted TLP command through NixOS's `pkexec` wrapper; the Home Manager
+`polkit-gnome` agent supplies the authorization dialog, without passwordless rules.
+Choices are disabled while authorization/application is pending; failures stay
+visible and do not optimistically change the selected mode. TLP's configured
+policies define what each profile does (these are not raw hardware platform
+profiles). Plug/unplug and reboot behavior remains controlled by TLP.
 
 `themegen/framework/.config/ags/theme-{light,dark}.scss` supplies palette values.
 Both stylesheets are compiled during the Framework build. The appearance installer
@@ -112,6 +120,9 @@ After reviewing the build, deploy explicitly with `just switch`. Check
    persistence across `systemctl --user restart framework-ags` work together.
 7. Both themes retain the wallpaper palette and legible active/disabled states.
 8. Lid sleep is restored when the inhibitor is toggled off or the session ends.
+9. Clicking battery opens Power Mode; each profile prompts for authorization and
+   updates the checkmark after success. Cancellation leaves the current mode intact.
+   Escape, click-outside, other panels and monitor removal dismiss the panel.
 
 Do not run a second shell on the live session merely to test compilation: it
 would compete for the tray watcher and reserve another bar. `smoke-test.sh` uses
@@ -121,7 +132,8 @@ executes that launcher through the built runtime wrapper, matching the deployed
 service's launch path.
 `smoke-probe.ts` checks widget/layout,
 real Notify calls through AstalNotifd (popups, actions, unread, DND, clear),
-slider command isolation, masked Wi-Fi failures/password clearing, popup behavior
+slider command isolation, power-profile success/denial and popup lifecycle,
+masked Wi-Fi failures/password clearing, popup behavior
 and monitor disposal/remount. `smoke-tray.js` exports isolated
 StatusNotifier/DBusMenu fixtures to exercise delayed dynamic menu updates, menu
 actions, activation, secondary activation, scrolling and removal. Run once per palette with built dependencies:

@@ -128,6 +128,15 @@ let
       logout) exec ${unstablePkgs.niri}/bin/niri msg action quit ;;
       open-bluetooth) exec ${pkgs.overskride}/bin/overskride ;;
       open-audio) exec ${pkgs.pavucontrol}/bin/pavucontrol ;;
+      power-profile)
+        [ "$#" -eq 2 ] || exit 2
+        case "''${2:-}" in
+          performance|balanced|power-saver) ;;
+          *) exit 2 ;;
+        esac
+        /run/wrappers/bin/pkexec ${pkgs.tlp}/bin/tlp "$2" >/dev/null
+        exec ${stateBinary} --config-file ${stateConfig} refresh battery
+        ;;
       *) exit 2 ;;
     esac
   '';
@@ -183,6 +192,7 @@ in
   };
 
   home.packages = [ ags ];
+  services.polkit-gnome.enable = true;
 
   # AGS owns org.freedesktop.Notifications through AstalNotifd; early senders
   # activate the shell unit instead of failing before the session is ready.

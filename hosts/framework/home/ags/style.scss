@@ -158,6 +158,23 @@ button:active {
 .calendar-panel {
   min-width: 0;
 }
+.power-panel {
+  min-width: 260px;
+}
+.power-option {
+  background: $surfaceContainer;
+  padding: 12px;
+}
+.power-option.selected {
+  background: $primary;
+  color: $onPrimary;
+}
+.power-option:disabled {
+  opacity: 0.6;
+}
+.power-error {
+  color: $critical;
+}
 .cc-page {
   min-width: 408px;
 }

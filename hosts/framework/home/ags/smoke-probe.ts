@@ -80,9 +80,7 @@ export async function runSmoke({
     print(`SMOKE_MONITORS count=${monitors.length}`);
     assert(monitors.length === 2, "expected two monitors");
     const first = monitors[0];
-    const bars = app
-      .get_windows()
-      .filter((window) => window.name.startsWith("bar-"));
+    const bars = monitors.map((mon) => overlays.get(mon).bar);
     assert(bars.length === 2, `expected two bars, got ${bars.length}`);
     const widgets = bars.map((bar) => {
       const battery = find(bar, "battery");
@@ -150,6 +148,61 @@ export async function runSmoke({
       print(`SMOKE_WIDGET_${type.toUpperCase()}_PASS`);
     }
 
+    widgets[0].battery.emit("clicked");
+    await delay();
+    const power = overlays.get(first).power;
+    assert(power.visible, "battery click did not open power modes");
+    const saver = find(power, "power-power-saver");
+    const balanced = find(power, "power-balanced");
+    const performance = find(power, "power-performance");
+    assert(
+      balanced.has_css_class("selected"),
+      "current profile is not selected",
+    );
+    performance.emit("clicked");
+    assert(
+      !saver.sensitive,
+      "profile choices not disabled during authorization",
+    );
+    await delay(500);
+    assert(find(power, "power-error").visible, "authorization failure not shown");
+    assert(
+      balanced.has_css_class("selected"),
+      "failed selection changed current mode",
+    );
+    saver.emit("clicked");
+    await delay(500);
+    assert(
+      saver.has_css_class("selected"),
+      "successful selection did not update mode",
+    );
+    assert(!find(power, "power-error").visible, "successful retry retained error");
+    const second = monitors.find((mon) => mon !== first);
+    toggle(second, "power");
+    await delay();
+    assert(
+      !power.visible && overlays.get(second).power.visible,
+      "power popup leaked between monitors",
+    );
+    assert(
+      find(overlays.get(second).power, "power-power-saver").has_css_class("selected"),
+      "profile state not shared between monitors",
+    );
+    const powerKeys = controllers(
+      overlays.get(second).power,
+      Gtk.EventControllerKey,
+    )[0];
+    powerKeys.emit("key-pressed", Gdk.KEY_Escape, 0, 0);
+    assert(!overlays.get(second).power.visible, "Escape did not close power popup");
+    toggle(first, "power");
+    const powerBackdrop = find(power, "backdrop");
+    controllers(powerBackdrop, Gtk.GestureClick)[0].emit("released", 1, 0, 0);
+    assert(!power.visible, "backdrop did not close power popup");
+    toggle(first, "power");
+    widgets[0].battery.emit("clicked");
+    assert(!power.visible, "second battery click did not close popup");
+    print("SMOKE_POWER_PASS");
+
     toggle(first, "control");
     await delay();
     const panel = overlays.get(first).control;
@@ -197,6 +250,11 @@ export async function runSmoke({
     };
     const volume = find(rows[0], "cc-scale");
     const brightness = find(rows[1], "cc-scale");
+    assert(
+      readActions().includes("power-profile performance") &&
+        readActions().includes("power-profile power-saver"),
+      "power choices did not dispatch explicit profiles",
+    );
     const beforeActions = readActions();
     volume.set_value(0.42);
     brightness.set_value(0.55);
@@ -475,7 +533,13 @@ export async function runSmoke({
     print("SMOKE_TRAY_PASS");
     // Exercise the same owned-window lifecycle as removal/reconnection, without
     // changing the compositor or the user's physical output configuration.
+    toggle(first, "power");
+    const removedPower = overlays.get(first).power;
     overlays.get(first).dispose();
+    assert(
+      !app.get_windows().includes(removedPower),
+      "monitor disposal left power popup attached",
+    );
     overlays.delete(first);
     await delay();
     assert(
