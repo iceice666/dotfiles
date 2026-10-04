@@ -202,7 +202,9 @@ Use Pi's repo-owned multi-source `web_search` tool (Exa by default; optional
 The `cliproxyapi` provider is enabled on homolab, lumo, m5pro, and framework; the shared client key lives in `sensitive/shared/cliproxyapi.yaml`.
 
 Pi (`https://pi.dev/`) is configured through `common/home-base/pi.nix`, enabled
-with `features.pi` on m5pro, framework, homolab, and lumo. It installs `pi-bin` and manages
+with `features.pi` on m5pro, framework, and homolab. Lumo retains only an
+unprivileged audit-specific Pi runner, not a general root Pi installation.
+The shared module installs `pi-bin` and manages
 `~/.pi/agent/models.json` with the `cliproxyapi` OpenAI Chat Completions provider
 at `https://cliproxyapi.justaslime.dev/v1` and the `cliproxyapi-claude` native
 Anthropic Messages provider at `https://cliproxyapi.justaslime.dev`. Claude models
@@ -313,12 +315,24 @@ history/tools), and enforces file/output limits plus cancellation/deadlines.
 Images leave the host; do not send sensitive content without authorization.
 See `common/home-base/pi/extensions/analyze-image/README.md` for details.
 
-The active lumo daily audit reporter uses Pi with `cliproxyapi/gpt-6-astra`,
-`/root/.pi/agent`, and the managed launcher with `--tools read,ls` (a tool
-allowlist, not filesystem isolation). Extension/skill/context discovery stays disabled;
-mandatory managed extensions are loaded explicitly by the launcher. Evidence collection and Resend delivery are unchanged; model stderr
-is saved as `pi-output.log`. `just update-pkgs` invokes Pi with the repo-local
-skill at `.agents/skills/update-pkgs/SKILL.md`.
+The active lumo daily audit reporter uses an audit-only Pi runner with the shared
+`agent-model.nix` profile (`cliproxyapi/gpt-6-astra`). Root collects evidence and
+sends mail through Resend; `runuser` runs Pi as the non-login `homolab-audit`
+account and the runner refuses UID 0 or any other account. Root-owned evidence
+is group-readable but not writable by that account. Each report uses a private
+0700 temporary agent directory under `/run/homolab-audit`, a sanitized environment,
+and a 0400 copy of only the model API key; the directory is removed on exit.
+The account cannot read the root SOPS identity, original secrets, or Resend key.
+The fixed runner invokes the pinned `pi-bin` directly with `--tools read,ls`,
+`--no-approve`, and extension/skill/context/theme discovery disabled; it does not
+load the interactive managed extension tree. This is Unix privilege separation,
+not an OS sandbox or a bundle-only filesystem boundary: world-readable host files
+remain readable. Model stderr is saved as root-only `pi-output.log`; reports and
+mail artifacts are also root-only. Switching removes root's managed Pi launcher
+and symlinked config, but leaves unmanaged `/root/.pi` settings/auth/sessions
+untouched; old generations still retain their previous closures until collected.
+`just update-pkgs` invokes Pi with the repo-local skill at
+`.agents/skills/update-pkgs/SKILL.md` on a Pi-enabled workstation.
 
 ## Managed browser access
 

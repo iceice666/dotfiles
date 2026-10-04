@@ -13,7 +13,6 @@
     sops = true;
     gui = false;
     devEnv = false;
-    pi = true;
   };
 
   extraSpecialArgs = {
