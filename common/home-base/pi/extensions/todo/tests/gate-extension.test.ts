@@ -6,7 +6,7 @@ import { VerificationGate, type Backend, type RunResult } from "../verification"
 const cwd = realpathSync(process.cwd());
 const result = (): RunResult => ({ exitCode: 0, signal: null, timedOut: false, aborted: false, overflow: false, output: "tests passed" });
 const declaration = { action: "add", text: "Verify feature", checks: [{ name: "tests", command: "bun test" }] };
-function setup(options: { approve?: (...args: any[]) => Promise<boolean>; backend?: Backend } = {}) {
+function setup(options: { approve?: (...args: any[]) => Promise<boolean>; backend?: Backend; defaultApproval?: boolean } = {}) {
   const entries: any[] = [];
   const handlers = new Map<string, Function>();
   const commands = new Map<string, any>();
@@ -20,12 +20,35 @@ function setup(options: { approve?: (...args: any[]) => Promise<boolean>; backen
     registerTool: (value: any) => { tool = value; }, registerCommand: (name: string, value: any) => commands.set(name, value),
     appendEntry: (customType: string, data: any) => entries.push({ type: "custom", customType, data: structuredClone(data) }),
     getActiveTools: () => ["todo"], sendMessage: (...args: any[]) => messages.push(args),
-  } as any, { gate, approve: async (...args: any[]) => { approvals.push(args); return options.approve ? options.approve(...args) : true; } });
+  } as any, { gate, ...(options.defaultApproval ? {} : { approve: async (...args: any[]) => { approvals.push(args); return options.approve ? options.approve(...args) : true; } }) });
   return { entries, ctx, approvals, messages, gate,
     call: (params: any, signal?: AbortSignal) => tool.execute("test", params, signal, undefined, ctx),
     event: (name: string, event = {}) => handlers.get(name)?.(event, ctx),
   };
 }
+
+test("default declaration approval works without a tool-review extension and still requires a human", async () => {
+  const s = setup({ defaultApproval: true });
+  await s.event("session_start");
+  await expect(s.call(declaration)).rejects.toThrow(/explicit human approval/);
+  expect(s.entries).toEqual([]);
+  let prompted = 0;
+  s.ctx.hasUI = true;
+  s.ctx.mode = "rpc";
+  s.ctx.ui = { setWidget() {}, select: async (title: string, options: string[]) => {
+    prompted++;
+    expect(title).toContain(declaration.checks[0].command);
+    expect(title).toContain(cwd);
+    return options[1];
+  } };
+  await s.call({ action: "add", text: "ordinary" });
+  expect(prompted).toBe(0);
+  await s.call(declaration);
+  expect(prompted).toBe(1);
+  await expect(s.call({ action: "update", id: 2, status: "completed" })).rejects.toThrow(/verify/);
+  await s.call({ action: "verify", id: 2 });
+  await s.call({ action: "update", id: 2, status: "completed" });
+});
 
 test("explicit declaration approval binds canonical cwd and never approves ordinary tasks", async () => {
   const s = setup();

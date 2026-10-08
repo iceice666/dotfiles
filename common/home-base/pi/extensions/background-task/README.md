@@ -63,7 +63,7 @@
 
 ## 安全
 
-任務透過 `../local-process.mjs` 的共用 process plan 執行，使用 launcher 固定的 Bash（開發環境則從 PATH 尋找），繼承目前程序的環境與使用者權限。沒有 Pi OS sandbox、網路隔離或原始 workspace 限制；指定 cwd 只決定工作目錄，不是權限邊界。Auto Mode 仍審查啟動意圖，輸出上限、取消、逾時及 process-group 清理機制維持不變。不要用背景執行繞過批准流程。
+任務透過 `../local-process.mjs` 的共用 process plan 執行，使用 launcher 固定的 Bash（開發環境則從 PATH 尋找），繼承目前程序的環境與使用者權限。沒有 Pi OS sandbox、網路隔離或原始 workspace 限制；指定 cwd 只決定工作目錄，不是權限邊界。不再有自動模型審查；輸出上限、取消、逾時及 process-group 清理機制維持不變。不要用背景執行繞過批准流程。
 
 ## 驗證
 

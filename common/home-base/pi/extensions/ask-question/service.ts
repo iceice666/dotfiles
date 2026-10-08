@@ -24,45 +24,6 @@ const queueKey = Symbol.for("pi.local.ask-question.queue.v1");
 const globalQueue = globalThis as typeof globalThis & { [queueKey]?: { tail: Promise<unknown> } };
 const queue = globalQueue[queueKey] ??= { tail: Promise.resolve() };
 
-/** A human answer typed in the parent TUI. The agent wrote the question and option labels. */
-export interface HumanDecision { question: string; selected: string[]; customText?: string }
-type DecisionListener = (decisions: HumanDecision[]) => void;
-// Trusted in-process bridge (same pattern as the queue); never fed from session files or messages.
-const decisionsKey = Symbol.for("pi.local.ask-question.human-decisions.v1");
-const globalDecisions = globalThis as typeof globalThis & { [decisionsKey]?: { listeners: Set<DecisionListener> } };
-const decisionHub = globalDecisions[decisionsKey] ??= { listeners: new Set() };
-
-/** Subscribe to live human answers to the parent agent's own questions; returns an unsubscribe function. */
-export function onHumanDecisions(listener: DecisionListener): () => void {
-  decisionHub.listeners.add(listener);
-  return () => { decisionHub.listeners.delete(listener); };
-}
-
-/**
- * Ask on behalf of the parent agent's own question tools and publish TUI answers as live human
- * decisions. Workers, RPC/print clients, relayed worker questions and approval dialogs never publish.
- */
-export async function askHumanDecision(ctx: ExtensionContext, params: { questions: Question[] }, signal?: AbortSignal): Promise<QuestionResult> {
-  const result = await askQuestions(ctx, params, signal);
-  if (result.status !== "answered" || ctx.mode !== "tui" || process.env.PI_TEAM_AGENT || signal?.aborted) return result;
-  const decisions = result.answers.map((answer, index) => {
-    const question = params.questions[index]?.question === answer.question ? params.questions[index] : params.questions.find(q => q.question === answer.question);
-    const describe = (label: string) => {
-      const description = question?.options?.find(option => option.label === label)?.description;
-      return description ? `${label} — ${description}` : label;
-    };
-    return {
-      question: question?.header ? `${question.header}: ${answer.question}` : answer.question,
-      selected: answer.selected.map(describe),
-      ...(answer.customText === undefined ? {} : { customText: answer.customText }),
-    };
-  });
-  for (const listener of [...decisionHub.listeners]) {
-    try { listener(structuredClone(decisions)); } catch { /* A consumer cannot break the question tool. */ }
-  }
-  return result;
-}
-
 export function validateQuestions(params: { questions: Question[] }): void {
   if (!Array.isArray(params?.questions) || params.questions.length < 1 || params.questions.length > 4) throw new Error("Provide 1–4 questions");
   if (JSON.stringify(params).length > 24000) throw new Error("Questionnaire exceeds 24000 characters");

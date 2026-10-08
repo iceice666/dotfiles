@@ -83,7 +83,7 @@
 {"action":"update","id":1,"status":"completed"}
 ```
 
-- 每項 1–10 個具唯一名稱的 checks；名称上限 100 字元、單行命令上限 4000 字元。批次每筆也可帶 checks。新增時透過 Auto Mode 的單次人類授權 UI，顯示完整命令、任務描述及 canonical cwd；worker 經團隊 broker 路由至真正人類。取消、拒絕、無 UI／broker 都不算同意，整批不新增。這只批准要求宣告，不授予 host/network 權限。
+- 每項 1–10 個具唯一名稱的 checks；名称上限 100 字元、單行命令上限 4000 字元。批次每筆也可帶 checks。新增時透過 `ask-question/approval.ts` 的單次人類授權 UI，顯示完整命令、任務描述及 canonical cwd；worker 經團隊 broker 路由至真正人類。取消、拒絕、無 UI／broker 都不算同意，整批不新增。這只批准要求宣告，不授予 host/network 權限。
 - 描述及命令新增後不可更改；工具參數不能注入 approval／evidence。批准的原始 canonical cwd 與時間保存在 session。恢復至其他目錄、舊快照缺少批准欄位時，驗證一律阻擋，不會把當前目錄當成已批准目錄；回原始目錄使用，缺少批准的舊任務需人工處理。
 - `verify` 不接受命令或自報的測試結果，只透過 `../local-process.mjs` 實際執行已批准的命令。使用目前程序的環境及使用者權限，沒有 Pi OS sandbox 或網路隔離；批准 checks 前需確認命令的主機及外部副作用。launcher 以 `PI_TOOL_BASH`／`PI_TOOL_NODE`／`PI_TOOL_GIT` 固定工具；開發環境可使用 PATH 與目前 Node/Bun runtime。無法啟動或執行失敗不會產生成功證據。
 - 每個 check 最多 120 秒、stdout/stderr 合計最多捕捉 10 MiB；超量、超時、signal、取消、啟動失敗及非零退出碼都不通過。記錄實際退出狀態、開始／结束時間、耗時與最後 12KB／200 行輸出（截斷有標記），逐項失敗即停止。紀錄位於 `local-todo-verification-v1` custom entry；只是 audit history，不能作為恢復後的新證據。

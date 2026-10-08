@@ -8,8 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Team, userQuestion, remoteWait, parseAgentKinds } from './team.mjs';
 import { teamToolRenderers, renderTeamMessage } from './render.ts';
 import { TranscriptViewer } from './transcript-viewer.ts';
-import { askHumanDecision, askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
-import { requestParentContext } from '../auto-mode/service.ts';
+import { askQuestions, QuestionFields, type Question } from '../ask-question/service.ts';
 
 export default function (pi: ExtensionAPI) {
   pi.registerMessageRenderer('agent-team', renderTeamMessage);
@@ -76,9 +75,6 @@ export default function (pi: ExtensionAPI) {
         extension: fileURLToPath(import.meta.url),
         executable: process.env.PI_TEAM_EXECUTABLE || 'pi',
         kinds: parseAgentKinds(),
-        getAutoModeContext(who: string, args: any, signal: AbortSignal) {
-          return requestParentContext(who, args, signal);
-        },
         askUser(question: Question, signal: AbortSignal, from: string) {
           return askQuestions(context ?? ctx, { questions: [{ ...question, header: `Agent ${from}${question.header ? ` — ${question.header}` : ''}`.slice(0, 120) }] }, signal);
         },
@@ -96,8 +92,7 @@ export default function (pi: ExtensionAPI) {
     // A parent asking the real user needs neither a broker nor a worker.
     if (!isChild && operation === 'agent_ask' && (args as { to?: string }).to === 'user') {
       const combined = signal ? AbortSignal.any([signal, lifecycle.signal]) : lifecycle.signal;
-      // The parent's own question: TUI answers become live human decisions for Auto Mode.
-      return askHumanDecision(ctx, { questions: [userQuestion(args)] }, combined);
+      return askQuestions(ctx, { questions: [userQuestion(args)] }, combined);
     }
     signal?.throwIfAborted();
     const combined = signal ? AbortSignal.any([signal, lifecycle.signal]) : lifecycle.signal;

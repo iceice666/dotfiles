@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { keyText } from "@earendil-works/pi-coding-agent";
 import { Container, Text } from "@earendil-works/pi-tui";
-import { askHumanDecision, askQuestions, QuestionsSchema, type QuestionResult } from "./service.ts";
+import { askQuestions, QuestionsSchema, type QuestionResult } from "./service.ts";
 
 // Display only: preserve the original structured answers in content/details.
 function displayText(text: string): string {
@@ -63,8 +63,7 @@ export default function (pi: ExtensionAPI) {
     async execute(_id, params, signal, _update, ctx) {
       if (isWorker()) return { content: [{ type: "text", text: 'Human UI unavailable in workers. Use agent_ask with to: "user".' }], details: { status: "unavailable", answers: [] } };
       const combined = signal ? AbortSignal.any([signal, lifetime.signal]) : lifetime.signal;
-      // Parent TUI answers also become live human decisions for Auto Mode review.
-      const result = await askHumanDecision(ctx, params, combined);
+      const result = await askQuestions(ctx, params, combined);
       const text = JSON.stringify(result);
       // Keep tool content below Pi's 50KB ceiling; full structured details remain available.
       const summary = Buffer.byteLength(text, "utf8") > 48000 ? `${text.slice(0, 10000)}\n[Summary truncated; full answers in details]` : text;

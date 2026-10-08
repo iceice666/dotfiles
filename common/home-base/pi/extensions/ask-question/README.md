@@ -5,7 +5,6 @@
 的選項式提問設計，採用本地實作，不需要安裝該 npm 套件。
 
 由受管 `pi` launcher 從 Nix store 載入（見 `../../README.md`），部署後重新啟動 Pi。
-在 parent TUI 回答 agent 自己的問題時，答案也會以 in-process 方式交給 Auto Mode 作為 `task.decisions`。
 輸入 `/ask-question` 可直接預覽對話框，不需要模型呼叫；結果只顯示易讀摘要通知。
 
 工具送出後，TUI 對話紀錄只顯示「各題問題 → 已選選項／自訂文字」，
@@ -46,6 +45,8 @@
 
 `service.ts` 匯出 `askQuestions(ctx, { questions }, signal?)`、`QuestionFields`、
 `QuestionSchema`、`QuestionsSchema`、`validateQuestions` 和相關型別。
+`approval.ts` 另提供 todo 驗證要求使用的單次人類確認；worker 經受驗證的團隊 broker 轉交，
+不依賴自動工具審查，也不接受代理訊息作為批准。
 
 ```json
 {

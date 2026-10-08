@@ -4,7 +4,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Text, truncateToWidth } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { applyAction, emptyState, formatTodos, parseState, type Action, type State } from "./model.js";
-import { approveAction } from "../auto-mode/index.js";
+import { approveAction } from "../ask-question/approval.ts";
 import { VerificationGate, invalidateGated, formatEvidence } from "./verification.js";
 
 const checksSchema = () => Type.Array(Type.Object({

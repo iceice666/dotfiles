@@ -106,7 +106,6 @@ let
       ${
         lib.concatMapStringsSep " \\\n      " (name: "-e ${piExtensions}/${name}") [
           "agent-team"
-          "auto-mode"
           "ask-question"
           "background-task"
           "todo"
@@ -153,7 +152,7 @@ in
 
   # The launcher loads the pinned tree from the store with --no-extensions. The
   # auto-discovery directory only matters to an unmanaged Pi (which would run the
-  # tree without expected review hooks and can mix versions across a switch), so
+  # tree with inconsistent versions across a switch), so
   # it gets a guard that blocks every tool. Unrelated local extensions stay untouched.
   home.file.".pi/agent/extensions/unmanaged-pi-guard.ts".source =
     ./pi/extensions/unmanaged-pi-guard/index.ts;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Team, autoModeActionId, remoteAutoModeApproval } from '../team.mjs';
+import { Team, approvalActionId, remoteActionApproval } from '../team.mjs';
 
 async function fixture(t, askUser) {
   const directory = mkdtempSync(join(tmpdir(), 'pi-approval-test-'));
@@ -12,9 +12,9 @@ async function fixture(t, askUser) {
   team.agents.set('alice', { name: 'alice', status: 'running', token: 'Bearer test', rpc: { request: async () => assert.fail('Approval must not use model messages'), stop: async () => {} } });
   team.tokens.set('Bearer test', 'alice');
   t.after(async () => { await team.close(); rmSync(directory, { recursive: true, force: true }); });
-  const args = { toolName: 'bash', input: { command: 'printf hello' }, cwd: directory };
-  args.actionId = autoModeActionId(args.toolName, args.input, args.cwd);
-  return { team, args, request: (value = args, signal, token = 'Bearer test') => remoteAutoModeApproval(team.url, token, value, signal) };
+  const args = { toolName: 'todo', input: { action: 'add', items: [{ text: 'Verify feature', checks: [{ name: 'tests', command: 'printf hello' }] }] }, cwd: directory };
+  args.actionId = approvalActionId(args.toolName, args.input, args.cwd);
+  return { team, args, request: (value = args, signal, token = 'Bearer test') => remoteActionApproval(team.url, token, value, signal) };
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const yes = q => ({ status: 'answered', answers: [{ question: q.question, selected: ['僅允許這次操作'] }] });
@@ -69,13 +69,13 @@ test('HTTP cannot forge sender or approval; invalid/oversized/control inputs nev
     { ...args, cwd: '/tmp/\u001b[2J' },
   ];
   for (const variant of variants) {
-    if (variant.actionId !== '0'.repeat(64)) variant.actionId = autoModeActionId(variant.toolName, variant.input, variant.cwd);
+    if (variant.actionId !== '0'.repeat(64)) variant.actionId = approvalActionId(variant.toolName, variant.input, variant.cwd);
     // Bypass the client validator to exercise the broker boundary.
-    const response = await fetch(team.url, { method: 'POST', headers: { Authorization: 'Bearer test' }, body: JSON.stringify({ operation: 'auto_mode_approve', args: variant }) });
+    const response = await fetch(team.url, { method: 'POST', headers: { Authorization: 'Bearer test' }, body: JSON.stringify({ operation: 'action_approve', args: variant }) });
     assert.equal(response.status, 400);
   }
   assert.equal(prompted, 0);
-  const response = await fetch(team.url, { method: 'POST', headers: { Authorization: 'Bearer test' }, body: JSON.stringify({ operation: 'auto_mode_approve', args: { ...args, approved: true, origin: 'human', from: 'user' } }) });
+  const response = await fetch(team.url, { method: 'POST', headers: { Authorization: 'Bearer test' }, body: JSON.stringify({ operation: 'action_approve', args: { ...args, approved: true, origin: 'human', from: 'user' } }) });
   assert.deepEqual((await response.json()).result, { approved: false, actionId: args.actionId });
   assert.equal(prompted, 1);
 });
@@ -89,7 +89,7 @@ test('approval deadline and already-aborted requests fail closed', async t => {
   assert.equal((await request(args, controller.signal)).approved, false);
   assert.equal(team.approvals.size, 0);
   t.mock.timers.enable({ apis: ['setTimeout'] });
-  const result = team.call('alice', 'auto_mode_approve', args);
+  const result = team.call('alice', 'action_approve', args);
   await prompted;
   t.mock.timers.tick(300000);
   assert.deepEqual(await result, { approved: false, actionId: args.actionId });

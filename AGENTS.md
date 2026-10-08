@@ -237,7 +237,7 @@ After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5-5`.
 
-The repo-owned Pi extensions (`agent-team`, `auto-mode`, `ask-question`, `background-task`,
+The repo-owned Pi extensions (`agent-team`, `ask-question`, `background-task`,
 `todo`, `dot-continue`, `btw`, `status-line`, `exa-search`, `analyze-image`, and
 `cache-safe-compaction`) are owned by `common/home-base/pi/extensions/` and
 built into one Nix store tree on all Pi-enabled hosts; only the managed `pi` launcher
@@ -262,32 +262,15 @@ executable resources, but does not provide an OS sandbox. Upstream file/shell
 tools, background jobs, verification and workers use normal user permissions,
 environment, network and filesystem access. `local-process.mjs` shares ordinary
 process plans using launcher-pinned Bash/Node/Git. Seatbelt/bubblewrap adapters,
-workspace scans and the `/sandbox` command have been removed. Auto Mode remains
-an intent/approval gate, not isolation. Todo tasks with explicit human-approved
-`checks` still require fresh captured execution evidence before completion;
-see `common/home-base/pi/extensions/todo/README.md`.
-Auto Mode defaults on for new sessions, reviews nontrivial tools through the current
-model, and routes single-use human approvals from workers through the authenticated
-team broker. `/auto off` requires parent TUI confirmation and does not disable
-workers. Parent-only `/auto grant PATH` confirms session-local read/write/edit
-scopes; `/auto scopes` lists them and `/auto revoke ID` or `/auto revoke all`
-revokes them. Workers query the authenticated parent for bounded OM context and
-scope matches, never inherit permission from memory text. Scopes exclude shell,
-deployment, secrets and live controls; reload/restart/branch navigation expires them.
-Parent `/yolo on` skips Auto Mode for the whole team, but not verification
-gates; there is no Pi OS sandbox. `/yolo off` or parent `/auto on` restores review; reload/restart/branch
-navigation resets YOLO off. Workers query the authenticated parent per action and
-never assume YOLO when it is unavailable.
-Auto Mode checks the managed store tree and upstream built-in/managed extension
-tool sources before every non-coordination call; when unattested (`auto:UNMANAGED`)
-it blocks those tools even under `/auto off` or YOLO and refuses `/yolo on`. After a
-recognized execution or
-Auto Mode refusal, substitute execution (Bash, background starts, worker
-spawn/delegation) needs single-use human approval until the next human turn, and
-parent TUI answers to the agent's own questions reach the reviewer as trusted
-`task.decisions`.
-It has no persistent approval cache or writable policy config; see
-`common/home-base/pi/extensions/auto-mode/README.md` for privacy and enforcement limits.
+workspace scans and the `/sandbox` command have been removed. Auto Mode has also
+been removed, including per-tool model review, `/auto`, `/yolo`, file-scope grants
+and the worker review-context bridge. The managed launcher and unmanaged-Pi guard
+remain; tools and workers run with normal host permissions, without OS isolation.
+Todo tasks with explicit human-approved `checks` still require fresh captured
+execution evidence before completion. Declaration approval lives independently in
+`common/home-base/pi/extensions/ask-question/approval.ts` and routes worker
+requests through the authenticated team broker; cancellation or unavailable UI
+never approves a declaration. See `common/home-base/pi/extensions/todo/README.md`.
 See `common/home-base/pi/README.md` for first-adoption backups and development.
 `/btw <question>` runs a separate tool-free call using the selected model and a
 bounded conversation snapshot while the main agent continues. Its persisted

@@ -136,10 +136,10 @@ team questions and prevents stale answers from reaching a replacement session.
 HTTP validates question fields before queuing. Question requests are limited to
 24,000 serialized characters, 12 options, and 12,000 characters per question.
 
-### Internal auto-mode approval bridge
+### Internal human approval bridge
 
-The repo-owned auto-mode gate uses the authenticated, internal
-`auto_mode_approve` broker operation for worker approvals. It is **not a model
+Todo check declarations use the authenticated, internal
+`action_approve` broker operation for worker approvals. It is **not a model
 tool** and does not use `agent_reply` or model-visible messages as authorization.
 The worker waits for the real parent's shared question UI; the first option is
 reject. Only the exact, single “allow this operation once” selection approves.
@@ -147,26 +147,14 @@ Custom text, refusal, unavailable UI, errors, disconnect, worker stop, shutdown,
 and the five-minute deadline deny the operation. Ordinary `agent_ask` remains
 asynchronous and unchanged.
 
-`team.mjs` exports `autoModeActionId(toolName, input, cwd)` and
-`remoteAutoModeApproval(url, token, { actionId, toolName, input, cwd }, signal)`.
+`team.mjs` exports `approvalActionId(toolName, input, cwd)` and
+`remoteActionApproval(url, token, { actionId, toolName, input, cwd }, signal)`.
 The action ID is SHA-256 over `JSON.stringify({ toolName, input, cwd })`. The
 broker validates it and displays the complete original arguments, tool, cwd,
 worker identity, and ID. Requests exceeding the 12,000-character question limit
 are rejected, never truncated. The response is `{ approved, actionId }`; the
 gate must match its original action ID and recheck cancellation before execution.
 This bridges human approval, not filesystem or process isolation.
-
-The separate authenticated `auto_mode_context` operation returns a bounded current
-parent memory snapshot and optional matching file-scope ID for an exact action.
-It calls the parent Auto Mode's in-process service; workers cannot create grants
-or supply parent state. `remoteAutoModeContext(url, token, args, signal)` uses a
-10-second deadline and a 32 KiB response limit. `args` contains the same exact
-`actionId`, tool, input, and cwd plus optional `includeContext`. The result is
-`{ revision, yolo?, scopeId?, context? }`. The optional boolean `yolo` is
-parent-owned; omitted values never enable bypass. Workers query team mode on every
-tool preflight, and recheck revision/scope before execution;
-disconnect, worker stop, parent reload/shutdown, or missing service fails closed.
-This operation emits no model messages and does not log memory or create approval.
 
 ## Defaults and lifecycle
 
@@ -189,7 +177,7 @@ Automatic worker reports are persisted in `events.jsonl` but parent-session noti
   later do not alter existing workers. `model` override uses `provider/model`.
 - Independent context: parent conversation is not cloned. Put necessary context in `task`.
 - Default cwd is the parent's. Any existing directory is accepted and canonicalized,
-  including alternate worktrees and symlink paths. Auto Mode reviews spawn intent.
+  including alternate worktrees and symlink paths.
   The extension does not create worktrees or merge changes.
 - All workers start with `--no-approve`. The managed launcher pins its own executable for workers
   and explicitly loads managed extensions, not repository executable resources.
@@ -235,8 +223,8 @@ request timeouts and process exits. No shell interpolation is used for spawning.
 ## Safety / limitations
 
 The team broker and worker Pi processes are **trusted host control planes**, not
-isolated plugin runtimes. Workers run with the invoking user's permissions; Auto
-Mode reviews tools and obtains required human approvals, but is not OS isolation.
+isolated plugin runtimes. Workers run with the invoking user's permissions,
+without per-tool model review or OS isolation.
 Shared workspaces require coordinated file ownership to prevent write conflicts.
 Agent messages are labelled as agent data, not user/system instructions.
 

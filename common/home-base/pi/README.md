@@ -1,18 +1,17 @@
 # Pi extensions
 
 `../pi.nix` builds `extensions/` into one Nix store tree for every host with
-`features.pi = true` (m5pro, framework, homolab, and lumo). Only the managed `pi`
+`features.pi = true` (m5pro, framework, and homolab). Only the managed `pi`
 launcher loads it, with `--no-extensions` and explicit store paths. The
 auto-discovery directory `~/.pi/agent/extensions/` receives just
 `unmanaged-pi-guard.ts`: an unmanaged Pi (for example a Bun/npm global install
-earlier on `PATH`) may lack the expected review hooks, and after a
+earlier on `PATH`) may load inconsistent extension versions, and after a
 switch its per-path extension cache can mix old and new modules. The guard blocks
 every tool in such a process. Unrelated local extensions are left alone.
 
 | Extension | Purpose |
 |---|---|
 | `agent-team/` | Persistent Pi RPC workers, team messaging, explicit waits and observation UI |
-| `auto-mode/` | Default-on tool review using the current model, with single-use human approval and worker routing |
 | `ask-question/` | Structured human questions, including worker-to-parent routing |
 | `background-task/` | Session-local background Bash jobs, explicit waits and bounded logs |
 | `todo/` | Session-backed tasks, human-approved required checks, and fingerprint-bound completion evidence |
@@ -33,46 +32,25 @@ pins this extension tree but does **not** sandbox tools: upstream file/shell too
 background jobs, verification commands and workers use normal host permissions,
 PATH, environment, network and filesystem access. `local-process.mjs` shares
 ordinary process plans for background jobs and verification; Bash/Node/Git are
-pinned by the launcher. Auto Mode is an intent/approval gate, not OS isolation.
+pinned by the launcher.
 The former Seatbelt/bubblewrap adapters, workspace scans, `/sandbox` command and
 `PI_SANDBOX_*`/`PI_EXECUTION_*` settings have been removed. Restart Pi after a
 normal host switch; changing repo sources does not alter an already-running Pi.
 The browser's own sandbox remains enabled and is unrelated to this change.
 
-## Auto Mode
+## Human confirmation and verification
 
-`/yolo on` skips Auto Mode for the parent and all existing/new workers until
-`/yolo off` (or parent `/auto on`). Only the parent TUI can toggle it; restart,
-reload, or branch navigation resets it. Verification gates remain enabled;
-there is no Pi OS sandbox. Workers check the parent before every action and fail closed if unreachable.
-Use `/yolo status` to inspect the team switch; no second confirmation is required.
+Auto Mode has been removed: there is no per-tool model reviewer, `/auto` or
+`/yolo` command, file-scope grant, or worker review-context bridge. Tools and
+workers run with the invoking user's normal host permissions. The managed
+launcher and unmanaged-Pi guard remain in place to keep extension loading
+consistent; neither is an OS sandbox.
 
-Auto Mode first checks that it runs from the managed store tree with upstream
-built-in or managed extension tool sources; otherwise (`auto:UNMANAGED`) every
-non-coordination tool is blocked regardless of `/auto off` or YOLO, and `/yolo on`
-is refused. After a recognized execution or Auto Mode refusal, substitute execution (Bash,
-background starts, worker spawn/delegation) needs single-use human approval until
-the next human turn. Parent TUI answers to the agent's own questions are passed to
-the reviewer as trusted `task.decisions`.
-
-Auto Mode is enabled by default in new sessions and follows the selected session
-model for independent, tool-free review. Ordinary workspace reads/writes and local
-coordination pass locally; shell commands, background command starts, external
-requests, and unknown tools receive review. Ambiguous actions request one real
-human approval, including worker requests through the team broker. Rejected,
-cancelled, unavailable, or timed-out approvals do not execute. `/auto status`,
-`/auto on`, and parent-only confirmed `/auto off` control the current session.
-Review context combines the pinned Observational Memory full branch projection,
-recent raw inputs/question answers, and bounded source evidence. Memories provide
-task continuity, not permissions. Workers supplement their own branch with a
-bounded parent snapshot through the authenticated broker. Parent-only `/auto grant
-PATH` creates a confirmed in-memory read/write/edit scope; `/auto scopes` lists it
-and `/auto revoke ID` or `/auto revoke all` removes it. Scopes exclude secrets,
-shell/deployment and live controls, and expire on reload, restart, or branch navigation. The exact OM
-dev dependency is used only for offline adapter compatibility tests. Update it
-alongside the Nix OM source pin. No approval cache or writable policy configuration is used. See
-[auto-mode/README.md](extensions/auto-mode/README.md) for data transmission,
-limits, test commands, and required manual smoke checks.
+Explicit human questions remain available. Todo tasks with declared `checks`
+still require human confirmation through `ask-question/approval.ts`, with worker
+requests routed through the authenticated team broker. Cancellation, unavailable
+UI and timeouts do not approve declarations. Completion still requires fresh
+successful verification evidence; see [todo/README.md](extensions/todo/README.md).
 
 ## First adoption and launcher check
 
@@ -103,10 +81,9 @@ build/switch workflows; edit the repo sources, not the installed store links.
 Do not use `pi install` to install a second copy of these extensions.
 
 Authentication, trust decisions, sessions, team archives and temporary
-background logs remain unmanaged. The Lumo audit uses the same managed launcher
-with `--tools read,ls` (a tool allowlist, not filesystem isolation); extension discovery remains disabled while the
-launcher explicitly loads the required managed tree. The audit's collection and
-delivery stay outside the agent and are unchanged.
+background logs remain unmanaged. The Lumo audit uses a separate unprivileged,
+audit-only runner with `--tools read,ls`, not this interactive extension tree.
+The audit's collection and delivery stay outside the agent and are unchanged.
 
 `settings.json` is only partially managed. A `piSettings` activation step merges
 the repo-owned keys (`theme`, `hideThinkingBlock`, `defaultProvider`,
@@ -198,8 +175,8 @@ full source separately when needed. This is not a browser integration.
 ## Browser access (m5pro and Framework)
 
 The shell uses normal host permissions, so the browser CLI can access its network
-and daemon. Auto Mode still reviews commands and external actions; browser access
-is not authorization to submit forms or change remote state.
+and daemon. Browser access is not authorization to submit forms or change remote
+state.
 
 These two hosts additionally import `../browser.nix`: pinned `playwright-cli`,
 a `playwright-read` rendered-page Markdown helper, and the agent-neutral
