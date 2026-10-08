@@ -5,7 +5,6 @@
 }:
 
 let
-  desktopWallpaper = dotfiles + /assets/mzen.png;
   frameworkAvatar = dotfiles + /assets/framework-avatar.png;
 in
 {
@@ -15,7 +14,6 @@ in
   ];
 
   _module.args = {
-    inherit desktopWallpaper;
     avatarImage = frameworkAvatar;
     kittyFontSize = 14;
     themegenHost = "framework";

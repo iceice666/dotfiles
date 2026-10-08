@@ -36,7 +36,7 @@ common/              # shared modules applied to all hosts
 
 hosts/               # per-host entrypoints
   m5pro/             # macOS; host.nix declares features, configuration/, home/, wallpaper.jpg
-  framework/         # NixOS system + Home Manager modules; wallpaper.png
+  framework/         # NixOS system + Home Manager modules
   homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
   lumo/              # Alpine root Home Manager + OpenRC data/apps + edge services
   worker/            # Alpine root Home Manager disposable-work / agent-runtime host (ex-gateway)

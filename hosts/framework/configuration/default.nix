@@ -6,12 +6,12 @@
   username,
   homeDirectory,
   dotfiles,
+  desktopWallpaper,
   unstablePkgs,
   ...
 }:
 
 let
-  desktopWallpaper = dotfiles + /assets/mzen.png;
   memorySleepInhibitThresholdKiB = 4 * 1024 * 1024;
 
   largeRssProcessCheck = pkgs.writeShellScript "framework-large-rss-process-check" ''

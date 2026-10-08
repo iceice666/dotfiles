@@ -27,6 +27,7 @@
   };
 
   extraSpecialArgs = {
+    desktopWallpaper = dotfiles + /assets/isekaijoucho.jpg;
     homolab = import (dotfiles + /lib/homolab.nix);
   };
 

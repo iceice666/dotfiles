@@ -55,7 +55,6 @@ hosts/               # per-host entrypoints
     overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/AGS Home Manager modules
-    wallpaper.png    # symlink → assets/mzen.png
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
     configuration/   # system, networking, XLibre/bspwm desktop, secrets, user, hardware
