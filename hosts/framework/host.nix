@@ -27,7 +27,13 @@
   };
 
   extraSpecialArgs = {
-    desktopWallpaper = dotfiles + /assets/isekaijoucho/p1.jpg;
+    # Static login-screen (regreet) wallpaper.
+    desktopWallpaper = dotfiles + /assets/mzen.png;
+    # Desktop rotation set: darkman picks a random one at sunrise/sunset.
+    desktopWallpapers = map (name: dotfiles + "/assets/${name}") [
+      "isekaijoucho/p1.jpg"
+      "isekaijoucho/p2.jpg"
+    ];
     homolab = import (dotfiles + /lib/homolab.nix);
   };
 

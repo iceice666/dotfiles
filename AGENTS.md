@@ -54,7 +54,7 @@ hosts/               # per-host entrypoints
     host.nix         # feature manifest
     overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
-    home/            # GUI/Niri/AGS Home Manager modules
+    home/            # GUI/Niri/AGS Home Manager modules, wallpaper.nix rotation
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
     configuration/   # system, networking, XLibre/bspwm desktop, secrets, user, hardware
@@ -364,6 +364,20 @@ with Home Manager's `services.darkman`. It uses coarse Taipei coordinates from
 the Framework timezone, exposes darkman through the XDG Settings portal, and
 runs GTK/GNOME color-scheme scripts on sunrise/sunset transitions.
 
+Framework wallpaper rotation lives in `hosts/framework/home/wallpaper.nix`.
+`host.nix` lists the set as `desktopWallpapers` (files under `assets/`, unique
+stems); `desktopWallpaper` stays the static regreet login background. Every
+wallpaper gets its own themegen render plus AGS CSS and `Themegen{,-dark}` GTK
+theme dirs at build time. The `framework-wallpaper` helper copies the chosen
+bundle to `~/.local/state/themegen/current`, which all themegen Home Manager
+links point at, then reloads apps (darkman appearance links, GTK name bounce,
+link nudges for Zed/Pi/Equibop dir watchers, kitty `SIGUSR1`, fish
+`themegen_generation` uvar, AGS restart, `awww img`). The darkman hook rotates to a
+random different wallpaper only when the mode actually changes (sunrise/sunset
+or a manual toggle); logins and `just switch` keep the current one.
+`framework-wallpaper next` rotates manually. awww replaces swaybg.
+libadwaita apps pick up new colors only after restarting.
+
 Framework Niri session persistence is configured through `services.nirinit`. The
 `nirinit` NixOS module is injected via `features.nirinit = true` in
 `hosts/framework/host.nix`. It installs the `nirinit.service` user unit on
@@ -654,7 +668,7 @@ Canonical module shape:
   source at `$HOME/.pi/agent/AGENTS.md` on Pi-enabled hosts.
 - `themegen/` contains root-level plain templates split into `common/`, `m5pro/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
 - `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
-- `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
+- `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation (`themegenCache`), and installs outputs through `home.file`. Setting `themegen.wallpapers` (Framework) renders one cache per wallpaper (`themegenWallpapers`) and links outputs to `$XDG_STATE_HOME/themegen/current` instead, for a host runtime switcher to populate.
 - `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.

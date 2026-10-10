@@ -10,7 +10,31 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
 2. `common/home-gui/themegen/default.nix` builds a host-specific `themegen-cache-<host>` derivation from the wallpaper plus `themegen/common/` and `themegen/<host>/` templates.
 3. Host-specific templates overwrite common templates when their relative paths match.
 4. The same module installs the derivation outputs into Home Manager using the target list known at evaluation time.
-5. On Framework, Home Manager wraps the generated GTK CSS into a named Nix GTK theme package under `share/themes` and switches between `Themegen` and `Themegen-dark`.
+5. On Framework, the generated GTK CSS is wrapped into `Themegen` / `Themegen-dark` theme directories under `~/.local/share/themes`, switched by darkman.
+
+## Runtime Rotation (Framework)
+
+Setting `themegen.wallpapers` (Framework passes `desktopWallpapers` from `host.nix`) switches the module to dynamic mode:
+
+- One `themegen-cache-<host>-<id>` derivation is rendered per wallpaper; `<id>` is the file stem.
+- Rendered targets become out-of-store links to `$XDG_STATE_HOME/themegen/current/<target>`.
+- `hosts/framework/home/wallpaper.nix` bundles each cache with AGS CSS and GTK theme dirs, and its `framework-wallpaper` helper copies the selected bundle into a fresh `render.*` dir and atomically repoints `current`.
+
+Copies (not store links) are deliberate: kitty only re-reads `*.auto.conf` when the mtime increases. App reload behavior:
+
+| App | Reload |
+| --- | --- |
+| niri | watches included `theme.kdl`; automatic |
+| starship, fuzzel | read config on every prompt/launch |
+| Zed, Pi, Equibop | watch their theme directory; the helper atomically re-creates each link to fire an event |
+| qt5ct/qt6ct | watch the config dir; darkman's `qt*ct.conf` relink triggers it |
+| kitty | `SIGUSR1` |
+| fish palette | `set -U themegen_generation …` re-sources the conf.d file in open shells |
+| GTK3 / non-libadwaita GTK4 | gtk-theme bounces through `Adwaita` |
+| AGS | service restart |
+| libadwaita apps | restart the app |
+
+The darkman hooks rotate on real mode changes only; `framework-wallpaper next` rotates manually and `framework-wallpaper current` prints the active id.
 
 ## File Map
 
@@ -27,7 +51,7 @@ Templates live under `themegen/` and are already relative to `$HOME`; there is n
   The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
   them up through global theme auto-discovery, and `common/home-base/pi.nix`
   selects `themegen-light/themegen-dark` whenever those files are installed.
-- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and AGS bar templates. GTK templates become a standalone package on Framework.
+- `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and AGS bar templates. GTK templates become `Themegen` theme dirs on Framework.
 - `themegen/m5pro/`: macOS-only Equibop template.
 - `common/home-gui/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.
 - `pkgs/themegen/`: Rust CLI that extracts palette data and renders placeholders.
@@ -65,7 +89,7 @@ The generated preview is written to `.cache/themegen/preview/index.html`.
 - Add a new themed file by placing it at the final `$HOME`-relative target path under the right scope.
 - Use direct `{{color.dark.primary}}`-style lookups in template bodies. Put derived colors in an optional leading `{{#themegen ... }}` header with `let local.name = ...` declarations, then reference them as `{{local.name}}`.
 - Header helpers cover the current derived-color operations: `alpha`, `mix`, `lightness_add`, `tone`, `readable`, `readable_alpha`, `tone_alpha`, and `tone_readable`.
-- Framework GTK templates should define the full Adwaita/libadwaita color token surface; `hosts/framework/home/gui.nix` adds the Adwaita base imports and packages the rendered CSS as `Themegen` / `Themegen-dark`.
+- Framework GTK templates should define the full Adwaita/libadwaita color token surface; `hosts/framework/home/wallpaper.nix` adds the Adwaita base imports and packages the rendered CSS as `Themegen` / `Themegen-dark`.
 - Framework Niri templates should render mode-specific snippets as `.config/niri/theme-{dark,light}.kdl`; the static Niri config includes `.config/niri/theme.kdl`, and darkman switches that symlink with the rest of the appearance files.
 
 ## Validation

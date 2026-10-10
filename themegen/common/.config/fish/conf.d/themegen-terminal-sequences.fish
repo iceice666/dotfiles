@@ -3,6 +3,15 @@ let local.tg_001 = mix(color.light.surface_container_low, seed.color, 0.080000, 
 }}
 status is-interactive; or return
 
+# Runtime wallpaper switchers bump this universal variable; re-source the
+# freshly rendered file so already-open shells pick up the new palette.
+if not functions -q __themegen_sequences_reload
+  set -g __themegen_sequences_file (status filename)
+  function __themegen_sequences_reload --on-variable themegen_generation
+    test -r $__themegen_sequences_file; and source $__themegen_sequences_file
+  end
+end
+
 set -l themegen_variant dark
 
 # Match the shell palette to the current desktop appearance when possible.

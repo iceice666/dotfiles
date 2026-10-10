@@ -2,10 +2,8 @@
   config,
   lib,
   pkgs,
-  themegenCache,
   unstablePkgs,
   avatarImage ? null,
-  desktopWallpaper,
   agsReload,
   shellState,
   shellStateConfig,
@@ -453,52 +451,6 @@ let
   cursorThemeName = "Bibata-Modern-Classic";
   cursorThemeSize = 24;
 
-  themegenGtkTheme = pkgs.runCommand "themegen-gtk-theme" { } ''
-    install_theme() {
-      local name=$1
-      local mode=$2
-      local gtk3_base=$3
-      local gtk4_base=$4
-      local theme_dir="$out/share/themes/$name"
-
-      mkdir -p "$theme_dir/gtk-3.0" "$theme_dir/gtk-4.0"
-
-      {
-        printf '[X-GNOME-Metatheme]\n'
-        printf 'Name=%s\n' "$name"
-        printf 'Type=X-GNOME-Metatheme\n'
-        printf 'Comment=Wallpaper-derived Themegen GTK theme\n'
-        printf 'Encoding=UTF-8\n'
-        printf 'GtkTheme=%s\n' "$name"
-        printf 'IconTheme=Papirus\n'
-        printf 'CursorTheme=${cursorThemeName}\n'
-        printf 'CursorSize=${toString cursorThemeSize}\n'
-      } > "$theme_dir/index.theme"
-
-      {
-        printf '@import url("%s");\n\n' "$gtk3_base"
-        cat "${themegenCache}/.config/gtk-3.0/themegen-$mode.css"
-      } > "$theme_dir/gtk-3.0/gtk.css"
-
-      {
-        printf '@import url("%s");\n\n' "$gtk4_base"
-        cat "${themegenCache}/.config/gtk-4.0/themegen-$mode.css"
-      } > "$theme_dir/gtk-4.0/gtk.css"
-    }
-
-    install_theme \
-      Themegen \
-      light \
-      resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained.css \
-      resource:///org/gtk/libgtk/theme/Default/Default-light.css
-
-    install_theme \
-      Themegen-dark \
-      dark \
-      resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css \
-      resource:///org/gtk/libgtk/theme/Default/Default-dark.css
-  '';
-
   mkQtctConfig =
     {
       iconTheme,
@@ -539,6 +491,12 @@ let
       export XDG_DATA_DIRS=${lib.escapeShellArg gsettingsSchemaDataDir}''${XDG_DATA_DIRS:+:''${XDG_DATA_DIRS}}
 
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface color-scheme ${lib.escapeShellArg colorScheme}
+      # GTK only reloads a theme when its name changes; bounce through Adwaita
+      # after the Themegen CSS behind the same name was replaced.
+      if [ "$refresh_gtk" = 1 ]; then
+        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme Adwaita
+        ${pkgs.coreutils}/bin/sleep 1
+      fi
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme ${lib.escapeShellArg gtkTheme}
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme ${lib.escapeShellArg iconTheme}
       ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface cursor-theme ${lib.escapeShellArg cursorThemeName}
@@ -547,6 +505,34 @@ let
       ${pkgs.systemd}/bin/systemctl --user try-restart blueman-applet.service >/dev/null 2>&1 || true
       ${agsReload}
     '';
+
+  # framework-set-appearance <light|dark> [--refresh-gtk]
+  frameworkSetAppearance = pkgs.writeShellScript "framework-set-appearance" ''
+    set -eu
+    refresh_gtk=0
+    if [ "''${2:-}" = --refresh-gtk ]; then
+      refresh_gtk=1
+    fi
+
+    case "''${1:-dark}" in
+      light)
+        ${setAppearance {
+          colorScheme = "default";
+          gtkTheme = "Themegen";
+          iconTheme = "Papirus-Light";
+          mode = "light";
+        }}
+        ;;
+      *)
+        ${setAppearance {
+          colorScheme = "prefer-dark";
+          gtkTheme = "Themegen-dark";
+          iconTheme = "Papirus-Dark";
+          mode = "dark";
+        }}
+        ;;
+    esac
+  '';
 
   frameworkPostSwitch = pkgs.writeShellApplication {
     name = "framework-post-switch";
@@ -637,31 +623,13 @@ let
       (builtins.readFile ./niri-config.kdl);
 in
 {
-  imports = [ ./ags ];
+  imports = [
+    ./ags
+    ./wallpaper.nix
+  ];
 
-  _module.args.lockScreen = lockScreen;
-
-  systemd.user.services.swaybg = {
-    Unit = {
-      Description = "Swaybg wallpaper daemon";
-      PartOf = [ "graphical-session.target" ];
-      After = [
-        "niri.service"
-        "graphical-session.target"
-      ];
-      Wants = [ "graphical-session.target" ];
-    };
-
-    Service = {
-      Type = "simple";
-      ExecStart = "${pkgs.swaybg}/bin/swaybg -i ${lib.escapeShellArg (toString desktopWallpaper)} -m fill";
-      Restart = "on-failure";
-      RestartSec = 2;
-    };
-
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
+  _module.args = {
+    inherit frameworkSetAppearance lockScreen;
   };
 
   systemd.user.services.cliphist = {
@@ -745,7 +713,6 @@ in
     socat
     slurp
     swappy
-    swaybg
     wev
     wf-recorder
     wl-clipboard
@@ -778,10 +745,8 @@ in
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
-    theme = {
-      name = "Themegen-dark";
-      package = themegenGtkTheme;
-    };
+    # Theme directories are installed by ./wallpaper.nix from the rotating set.
+    theme.name = "Themegen-dark";
     gtk4.theme = config.gtk.theme;
   };
 
@@ -824,33 +789,6 @@ in
           ${pkgs.systemd}/bin/systemctl --user restart xdg-desktop-portal.service || true
         fi
       '';
-
-  home.activation.frameworkThemegenAppearance = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    mode="$(${pkgs.darkman}/bin/darkman get 2>/dev/null || true)"
-    case "$mode" in
-      light|dark) ;;
-      *) mode="dark" ;;
-    esac
-
-    case "$mode" in
-      light)
-        ${setAppearance {
-          colorScheme = "default";
-          gtkTheme = "Themegen";
-          iconTheme = "Papirus-Light";
-          mode = "light";
-        }}
-        ;;
-      dark)
-        ${setAppearance {
-          colorScheme = "prefer-dark";
-          gtkTheme = "Themegen-dark";
-          iconTheme = "Papirus-Dark";
-          mode = "dark";
-        }}
-        ;;
-    esac
-  '';
 
   xdg = {
     enable = true;
@@ -934,18 +872,6 @@ in
         lng = 121.5;
         usegeoclue = false;
         dbusserver = true;
-      };
-      darkModeScripts.gtk = setAppearance {
-        colorScheme = "prefer-dark";
-        gtkTheme = "Themegen-dark";
-        iconTheme = "Papirus-Dark";
-        mode = "dark";
-      };
-      lightModeScripts.gtk = setAppearance {
-        colorScheme = "default";
-        gtkTheme = "Themegen";
-        iconTheme = "Papirus-Light";
-        mode = "light";
       };
     };
     gnome-keyring.enable = true;

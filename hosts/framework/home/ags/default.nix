@@ -5,7 +5,6 @@
   pkgs,
   unstablePkgs,
   lockScreen,
-  themegenCache,
   ...
 }:
 
@@ -24,7 +23,6 @@ let
       {
         nativeBuildInputs = [
           ags
-          pkgs.dart-sass
           pkgs.gobject-introspection
           pkgs.wrapGAppsHook3
         ];
@@ -54,9 +52,21 @@ let
         chmod +x "$out/bin/framework-ags"
         gappsWrapperArgsHook
         wrapGApp "$out/bin/framework-ags"
+      '';
+
+  # Compiled per themegen cache so every rotation wallpaper ships its own CSS.
+  agsStylesFor =
+    cache:
+    pkgs.runCommand "framework-ags-styles"
+      {
+        nativeBuildInputs = [ pkgs.dart-sass ];
+        preferLocalBuild = true;
+      }
+      ''
+        mkdir -p "$out" work
         cp ${./style.scss} work/style.scss
         for mode in light dark; do
-          cp --remove-destination ${themegenCache}/.config/ags/theme-$mode.scss work/theme.scss
+          cp --remove-destination ${cache}/.config/ags/theme-$mode.scss work/theme.scss
           sass --no-source-map work/style.scss "$out/style-$mode.css"
         done
       '';
@@ -186,7 +196,7 @@ let
 in
 {
   _module.args = {
-    inherit agsReload;
+    inherit agsReload agsStylesFor;
     shellState = stateBinary;
     shellStateConfig = stateConfig;
   };
@@ -205,8 +215,6 @@ in
 
   xdg.configFile = {
     "ags/app.js".source = "${shellAssets}/app.js";
-    "ags/style-light.css".source = "${shellAssets}/style-light.css";
-    "ags/style-dark.css".source = "${shellAssets}/style-dark.css";
     "ags/config.json".text = builtins.toJSON {
       inherit stateBinary;
       stateConfig = toString stateConfig;
