@@ -14,7 +14,6 @@
     ./git-server.nix
     ./monitoring.nix
     ./podman.nix
-    ./pirc.nix
     ./umami.nix
     ./wifi.nix
   ];
