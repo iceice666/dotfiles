@@ -6,9 +6,6 @@ in
 {
   imports = [
     (dotfiles + /common/home-base/browser.nix)
-    # pirc node itself is managed manually (binary + launchd plist in
-    # ~/.local/pirc-node), like m3air; only its agent config stays here.
-    (dotfiles + /common/home-base/pirc-agent.nix)
     ./appearance.nix
     ./default-apps.nix
     ./dsh-desktop.nix
