@@ -6,6 +6,7 @@ import Tray from "gi://AstalTray";
 import GLib from "gi://GLib";
 import Gio from "gi://Gio";
 import System from "system";
+import { OsdWindow, handleOsdRequest } from "./osd";
 import ControlContents, {
   openView,
   resetControl,
@@ -652,7 +653,11 @@ function syncMonitors() {
 
 app.start({
   css: GLib.build_filenamev([directory, "style.css"]),
+  requestHandler(args, respond) {
+    respond(handleOsdRequest(args) ? "ok" : "invalid request");
+  },
   main() {
+    OsdWindow();
     // Claim the notification bus name before the bars subscribe to its state.
     onCleanup(initNotifications());
     NotificationPopups();

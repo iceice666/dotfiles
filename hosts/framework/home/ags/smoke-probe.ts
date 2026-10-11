@@ -1,6 +1,7 @@
 // Injected only into the private smoke copy; never included by the production app.
-import { notifications } from "./notifications";
-import { switches, toggleSwitch } from "./state";
+import { Astal } from "ags/gtk4";
+import { notifications, unreadCount } from "./notifications";
+import { patch, setState, state, switches, toggleSwitch } from "./state";
 
 export async function runSmoke({
   app,
@@ -74,8 +75,52 @@ export async function runSmoke({
       );
     });
 
+  const osdRequest = (args: string[], expected = "ok") =>
+    new Promise<void>((resolve, reject) => {
+      const process = Gio.Subprocess.new(
+        [`${GLib.getenv("AGS")}/bin/ags`, "request", ...args],
+        Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
+      );
+      process.communicate_utf8_async(null, null, (process, result) => {
+        try {
+          const [, stdout, stderr] = process.communicate_utf8_finish(result);
+          assert(process.get_successful(), `OSD IPC failed: ${stderr}`);
+          assert(
+            stdout.trim() === expected,
+            `OSD IPC response mismatch: ${stdout.trim()}`,
+          );
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
   try {
     await delay(700);
+    const osd = app.get_windows().find((w) => w.name === "media-osd");
+    assert(osd, "missing media OSD window");
+    assert(!osd.visible, "OSD visible without an explicit request");
+    assert(osd.keymode === Astal.Keymode.NONE, "OSD requests keyboard focus");
+    assert(!osd.get_focusable(), "OSD window is focusable");
+    assert(
+      (osd.anchor & Astal.WindowAnchor.BOTTOM) !== 0 &&
+        (osd.anchor & Astal.WindowAnchor.TOP) === 0,
+      "OSD is not bottom anchored",
+    );
+    const initialState = { ...state() };
+    patch(
+      JSON.stringify({
+        audio_speaker_value: "99",
+        audio_speaker_class: "audio-control speaker muted",
+        audio_mic_value: "88",
+        audio_mic_class: "audio-control mic muted",
+        brightness_value: "77",
+      }),
+    );
+    await delay(120);
+    assert(!osd.visible, "state patch alone showed the OSD");
+    setState(initialState);
     const monitors = app.get_monitors();
     print(`SMOKE_MONITORS count=${monitors.length}`);
     assert(monitors.length === 2, "expected two monitors");
@@ -445,6 +490,125 @@ export async function runSmoke({
       "DND still showed a popup",
     );
     assert(badge.get_label() === "1", "DND notification was not unread");
+
+    // Exercise AGS's real request socket, not an imported OSD handler. OSDs
+    // remain separate from notification history, unread accounting, and DND.
+    const historyBeforeOsd = notifications().map((n) => n.id).join(",");
+    const unreadBeforeOsd = unreadCount();
+    const stateBeforeOsd = JSON.stringify(state());
+    const osdTitle = find(osd, "osd-title");
+    const osdValue = find(osd, "osd-value");
+    const osdProgress = find(osd, "osd-progress");
+    assert(
+      find(osd, "osd-card") &&
+        find(osd, "osd-icon") &&
+        osdTitle &&
+        osdValue &&
+        osdProgress instanceof Gtk.ProgressBar,
+      "OSD widgets or progress bar are missing",
+    );
+    const assertOsd = (title, label, fraction) => {
+      assert(osd.visible, `OSD did not show ${title} during DND`);
+      assert(
+        osdTitle.get_label() === title,
+        `OSD title mismatch: ${osdTitle.get_label()}`,
+      );
+      assert(
+        osdValue.get_label() === label,
+        `OSD value mismatch: ${osdValue.get_label()}`,
+      );
+      assert(
+        Math.abs(osdProgress.get_fraction() - fraction) < 0.000001,
+        `OSD progress mismatch: ${osdProgress.get_fraction()}`,
+      );
+      assert(
+        JSON.stringify(state()) === stateBeforeOsd,
+        "OSD snapshot mutated shared state",
+      );
+      assert(
+        notifications().map((n) => n.id).join(",") === historyBeforeOsd &&
+          unreadCount() === unreadBeforeOsd && badge.get_label() === "1",
+        "OSD changed notification history or unread accounting",
+      );
+      assert(!popupWindow.visible, "OSD showed a notification popup during DND");
+    };
+    const speaker = JSON.stringify({
+      audio_speaker_value: "55.5",
+      audio_speaker_class: "audio-control speaker unmuted",
+    });
+    const invalidRequests = [
+      ["osd", "unknown", speaker],
+      ["osd", "speaker", "{"],
+      ["osd", "speaker", "null"],
+      ["osd", "speaker", "[]"],
+      ["osd", "speaker", JSON.stringify({ audio_speaker_value: "55" })],
+      ...["", " ", "NaN", "Infinity", "1e309", "-1", "101", 55].map(
+        (value) => ["osd", "speaker", JSON.stringify({
+          audio_speaker_value: value,
+          audio_speaker_class: "speaker",
+        })],
+      ),
+      ["osd", "brightness", JSON.stringify({ brightness_value: "101" })],
+      ["osd", "mic", JSON.stringify({
+        audio_mic_value: "50", audio_mic_class: 7,
+      })],
+      ["osd", "speaker"],
+      ["osd", "speaker", speaker, "extra"],
+    ];
+    for (const args of invalidRequests) {
+      await osdRequest(args, "invalid request");
+      assert(!osd.visible, "invalid OSD request showed the window");
+    }
+    await osdRequest(["osd", "speaker", speaker]);
+    await delay(80);
+    assertOsd("Volume", "56%", 0.555);
+    await osdRequest([
+      "osd", "brightness", JSON.stringify({ brightness_value: "65.4" }),
+    ]);
+    await delay(80);
+    assertOsd("Brightness", "65%", 0.654);
+    await osdRequest([
+      "osd", "mic", JSON.stringify({
+        audio_mic_value: "37.4",
+        audio_mic_class: "audio-control mic muted",
+      }),
+    ]);
+    await delay(80);
+    assertOsd("Microphone · Muted", "37%", 0);
+    await osdRequest([
+      "osd", "speaker", JSON.stringify({
+        audio_speaker_value: "55.4",
+        audio_speaker_class: "audio-control speaker muted",
+      }),
+    ]);
+    await delay(80);
+    assertOsd("Volume · Muted", "55%", 0);
+
+    await osdRequest(["osd", "speaker", speaker]);
+    await delay(950);
+    await osdRequest(["osd", "speaker", speaker]);
+    const repeatedAt = GLib.get_monotonic_time();
+    await delay(700);
+    assertOsd("Volume", "56%", 0.555);
+    // Invalid messages neither replace the content nor restart the hide timer.
+    for (const args of invalidRequests) {
+      await osdRequest(args, "invalid request");
+      assertOsd("Volume", "56%", 0.555);
+    }
+    await delay(
+      Math.max(1, 1650 - (GLib.get_monotonic_time() - repeatedAt) / 1000),
+    );
+    assert(
+      !osd.visible,
+      "OSD did not expire, or invalid requests renewed its timer",
+    );
+    assert(
+      JSON.stringify(state()) === stateBeforeOsd &&
+        notifications().map((n) => n.id).join(",") === historyBeforeOsd &&
+        unreadCount() === unreadBeforeOsd,
+      "expired OSD changed shared state or notifications",
+    );
+    print("SMOKE_OSD_PASS");
     toggleSwitch("dnd");
     const clear = all(panel, (w) => w.has_css_class("cc-action")).find(
       (b) => b.get_tooltip_text() === "Clear",

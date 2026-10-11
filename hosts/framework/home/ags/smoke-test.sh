@@ -36,7 +36,7 @@ cp "$THEME_SCSS" "$XDG_CONFIG_HOME/ags/theme.scss"
 "$SASS/bin/sass" --no-source-map "$XDG_CONFIG_HOME/ags/style.scss" "$XDG_CONFIG_HOME/ags/style.css" > "$work/sass.log" 2>&1
 
 # Copy the shared modules, then inject a probe into the private entrypoint only.
-cp "$source_dir/state.ts" "$source_dir/control-center.tsx" "$source_dir/notifications.tsx" "$source_dir/smoke-probe.ts" "$XDG_CONFIG_HOME/ags/"
+cp "$source_dir/state.ts" "$source_dir/control-center.tsx" "$source_dir/notifications.tsx" "$source_dir/osd.tsx" "$source_dir/smoke-probe.ts" "$XDG_CONFIG_HOME/ags/"
 cp "$source_dir/smoke-tray.js" "$work/"
 python3 - "$XDG_CONFIG_HOME/ags/app.tsx" <<'PYPROBE'
 import sys
@@ -143,7 +143,7 @@ if [[ "$status" != 0 ]]; then
   tail -n 80 "$work/ags.log" "$work/tray.log" >&2
   exit 1
 fi
-for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_POWER_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_NOTIFICATIONS_PASS SMOKE_PASS; do
+for marker in 'SMOKE_MONITORS count=2' SMOKE_WIDGET_PASS SMOKE_WIDGET_BATTERY_PASS SMOKE_POWER_PASS SMOKE_WIDGET_TRAY_PASS SMOKE_SLIDER_ALIGNMENT_PASS SMOKE_SLIDER_ACTIONS_PASS SMOKE_TRAY_PASS SMOKE_TRAY_DYNAMIC_PASS SMOKE_LIFECYCLE_PASS SMOKE_WIFI_PASS SMOKE_NOTIFICATIONS_PASS SMOKE_OSD_PASS SMOKE_PASS; do
   if ! grep -q "$marker" "$work/ags.log"; then
     printf 'Missing UI assertion: %s\n' "$marker" >&2
     tail -n 80 "$work/ags.log" "$work/tray.log" >&2
@@ -161,4 +161,4 @@ if grep -E 'CRITICAL|JS ERROR|TypeError|ReferenceError|SMOKE_FAIL|smoke-private-
   printf 'AGS or tray fixture emitted an error\n' >&2
   exit 1
 fi
-printf 'AGS GTK4 smoke passed (2 monitors; all control views; isolated hover; slider alignment; notifications/DND; DBusMenu and tray actions/removal).\n'
+printf 'AGS GTK4 smoke passed (2 monitors; all control views; isolated hover; slider alignment; notifications/DND; IPC OSD lifecycle; DBusMenu and tray actions/removal).\n'

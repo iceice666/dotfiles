@@ -5,6 +5,7 @@
   unstablePkgs,
   avatarImage ? null,
   agsReload,
+  mediaKey,
   shellState,
   shellStateConfig,
   ...
@@ -585,7 +586,7 @@ let
   niriConfig =
     builtins.replaceStrings
       [
-        "@brightnessctl@"
+        "@mediaKey@"
         "@clipboardManager@"
         "@equibop@"
         "@shellState@"
@@ -603,7 +604,7 @@ let
         "@browser@"
       ]
       [
-        "${pkgs.brightnessctl}/bin/brightnessctl"
+        (toString mediaKey)
         (toString clipboardManager)
         (lib.getExe pkgs.equibop-bin)
         shellState

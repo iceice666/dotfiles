@@ -42,6 +42,7 @@ let
         cp ${./state.ts} work/state.ts
         cp ${./control-center.tsx} work/control-center.tsx
         cp ${./notifications.tsx} work/notifications.tsx
+        cp ${./osd.tsx} work/osd.tsx
         ags bundle work/app.tsx "$out/app.js"
         # Bundle launchers need the GI/runtime environment independently of the CLI.
         mkdir -p "$out/bin"
@@ -90,6 +91,24 @@ let
     }
   );
   agsReload = "${pkgs.systemd}/bin/systemctl --user --no-block try-restart framework-ags.service";
+  mediaKey = pkgs.writeShellScript "framework-media-key" (
+    builtins.replaceStrings
+      [
+        "@shellState@"
+        "@shellStateConfig@"
+        "@brightnessctl@"
+        "@timeout@"
+        "@ags@"
+      ]
+      [
+        stateBinary
+        (toString stateConfig)
+        "${pkgs.brightnessctl}/bin/brightnessctl"
+        "${pkgs.coreutils}/bin/timeout"
+        "${ags}/bin/ags"
+      ]
+      (builtins.readFile ./media-key.sh)
+  );
 
   ccCtl = pkgs.writeShellScript "framework-cc-ctl" ''
     set -euo pipefail
@@ -196,7 +215,7 @@ let
 in
 {
   _module.args = {
-    inherit agsReload agsStylesFor;
+    inherit agsReload agsStylesFor mediaKey;
     shellState = stateBinary;
     shellStateConfig = stateConfig;
   };

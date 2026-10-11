@@ -8,6 +8,7 @@ window,
 .bar-window,
 .popup-window,
 .notification-popup-window,
+.osd-window,
 .backdrop {
   background: transparent;
   color: $foreground;
@@ -25,6 +26,32 @@ button:hover {
 }
 button:active {
   background: $surfaceActive;
+}
+.osd-card {
+  background: $surface;
+  border: 1px solid $outline;
+  border-radius: 20px;
+  padding: 20px 24px;
+  min-width: 280px;
+}
+.osd-icon,
+.osd-value {
+  color: $primary;
+}
+.osd-title,
+.osd-value {
+  font-size: 15px;
+  font-weight: bold;
+}
+.osd-progress trough {
+  background: $surfaceHover;
+  border-radius: 999px;
+  min-height: 6px;
+}
+.osd-progress progress {
+  background: $primary;
+  border-radius: 999px;
+  min-height: 6px;
 }
 .bar {
   padding: 0 3px;

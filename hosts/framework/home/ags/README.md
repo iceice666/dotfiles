@@ -22,6 +22,8 @@ of the AGS CLI wrapper.
   center, and session actions. Bluetooth device settings open Overskride; detailed audio
   settings open pavucontrol. This is an independently authored adaptation of our
   existing shell, not a vendored Matshell or DankMaterialShell component.
+- `osd.tsx` / `media-key.sh`: transient volume, mute and brightness feedback from
+  explicit hotkey requests; independent of notification history and DND.
 - `notifications.tsx`: AstalNotifd daemon ownership, popups, notification cards,
   in-memory unread tracking, history cap and Do Not Disturb.
 - `style.scss`: GTK4 styling using the existing wallpaper-derived Material palette.
@@ -60,8 +62,17 @@ activation/restart.
 - Popups use one layer surface without a fixed output, so Niri places it on the
   focused output.
 
-Media keys invoke the helper
-without depending on a running UI. The lid-sleep toggle starts/stops
+Volume/mute and brightness keys use `framework-media-key`: it applies the device
+change first, reads the resulting state, then sends a bounded best-effort AGS
+request. A bottom-center OSD on the compositor-selected output shows the icon,
+percentage, progress bar and mute state for 1.5 s; repeated keys update the same
+hint and restart its timeout, even at a limit. It never takes keyboard focus or
+pointer input and is not a notification (no history, unread count or DND effect).
+Ordinary daemon updates and control-center adjustments do not open it. The action
+still works when AGS is unavailable; failed device actions do not show a hint.
+Playback keys continue to invoke the helper directly.
+
+The lid-sleep toggle starts/stops
 `framework-lid-inhibit.service`, which is session-scoped and disabled at login.
 
 ## Tray and theme
@@ -98,10 +109,14 @@ Matugen theme generator or competing shell/notification service.
 ## Validation and activation
 
 ```sh
+python3 hosts/framework/home/ags/media-key-test.py
 just fmt
 just build
 just check
 ```
+
+The media-key contract tests substitute temporary device/AGS commands and verify
+argv quoting, failure handling and bounded UI delivery without touching hardware.
 
 After reviewing the build, deploy explicitly with `just switch`. Check
 `systemctl --user status framework-ags.service` and
@@ -115,7 +130,9 @@ After reviewing the build, deploy explicitly with `just switch`. Check
 4. Wi-Fi scanning, saved/open/secured connections and errors work without exposing
    credentials; Bluetooth settings open correctly.
 5. Speaker/microphone/brightness controls and media keys update live. State updates
-   alone must not emit setter commands.
+   alone must not emit setter commands. Volume/brightness/mute hotkeys show the
+   OSD, including repeated presses at limits; it disappears after the last key,
+   follows the focused output on the next appearance, and leaves app focus intact.
 6. `notify-send` popups, actions, unread badge, center history, DND, and
    persistence across `systemctl --user restart framework-ags` work together.
 7. Both themes retain the wallpaper palette and legible active/disabled states.
@@ -132,7 +149,8 @@ executes that launcher through the built runtime wrapper, matching the deployed
 service's launch path.
 `smoke-probe.ts` checks widget/layout,
 real Notify calls through AstalNotifd (popups, actions, unread, DND, clear),
-slider command isolation, power-profile success/denial and popup lifecycle,
+slider command isolation, explicit OSD IPC/validation/timeout renewal and DND
+independence, power-profile success/denial and popup lifecycle,
 masked Wi-Fi failures/password clearing, popup behavior
 and monitor disposal/remount. `smoke-tray.js` exports isolated
 StatusNotifier/DBusMenu fixtures to exercise delayed dynamic menu updates, menu
