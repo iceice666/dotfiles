@@ -463,6 +463,7 @@ just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installati
 just lumo-build              # dry-activate lumo root Home Manager
 just lumo-switch             # deploy lumo root Home Manager
 just lumo-smoke              # verify lumo OpenRC services and local endpoints
+just cliproxyapi-reset-cooldown [provider] # clear CLIProxyAPI cooldowns (default codex) after an upstream quota reset
 
 just worker-bootstrap 192.168.1.129  # converge the ex-gateway Pi as worker (pass a reachable target)
 just worker-build            # dry-activate worker root Home Manager

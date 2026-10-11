@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Clear CLIProxyAPI's core quota/cooldown state for every enabled credential of
+# one provider on lumo. Use after an upstream quota reset (e.g. Codex) that
+# CLIProxyAPI cannot observe on its own. Runs on lumo so the management key
+# never leaves the host; the public management route sits behind Authelia.
+set -euo pipefail
+
+provider="${1:-codex}"
+target="${2:-lumo}"
+
+case "$provider" in
+  *[!a-z0-9_-]* | '')
+    echo "cliproxyapi-reset-cooldown: invalid provider: $provider" >&2
+    exit 1
+    ;;
+esac
+
+ssh "root@${target}" sh -s -- "$provider" <<'REMOTE'
+set -eu
+
+provider="$1"
+base="http://127.0.0.1:20129/v0/management"
+key_file="/var/lib/sops-nix/secrets/cliproxyapi-management-key"
+export PATH="/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
+
+umask 077
+headers="$(mktemp)"
+trap 'rm -f "$headers"' EXIT
+printf 'Authorization: Bearer %s\n' "$(cat "$key_file")" > "$headers"
+
+auths="$(curl --fail --silent --show-error -H "@$headers" "$base/auth-files" |
+  jq -r --arg p "$provider" \
+    '.files[] | select(.provider == $p and (.disabled | not)) | "\(.auth_index)\t\(.name)"')"
+
+if [ -z "$auths" ]; then
+  echo "no enabled $provider credentials found" >&2
+  exit 1
+fi
+
+failed=0
+printf '%s\n' "$auths" | {
+  while IFS="$(printf '\t')" read -r index name; do
+    if body="$(jq -nc --arg i "$index" '{auth_index: $i}' |
+      curl --fail --silent --show-error -H "@$headers" \
+        -H 'Content-Type: application/json' --data @- "$base/reset-quota")"; then
+      echo "reset $name ($(printf '%s' "$body" | jq -r '.models | length') models)"
+    else
+      echo "failed $name" >&2
+      failed=1
+    fi
+  done
+  exit "$failed"
+}
+REMOTE

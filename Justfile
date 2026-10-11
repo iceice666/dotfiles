@@ -101,6 +101,11 @@ lumo-switch:
 lumo-smoke target='lumo':
     {{ scripts }}/lumo-smoke {{ target }}
 
+# Clear CLIProxyAPI cooldowns on lumo after an upstream quota reset
+[group('host')]
+cliproxyapi-reset-cooldown provider='codex' target='lumo':
+    {{ scripts }}/cliproxyapi-reset-cooldown '{{ provider }}' '{{ target }}'
+
 # Bootstrap the existing Alpine 3.24 installation for worker (ex-gateway Pi)
 [group('host')]
 worker-bootstrap target='worker':
