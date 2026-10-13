@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# This script is packaged by hosts/framework-installer/configuration.nix.
+set -euo pipefail
+
+fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+usage() {
+  printf '%s\n' \
+    'Usage: framework-install --disk DEVICE --swap-gib INTEGER [--dry-run]' \
+    'Erases the entire disk; creates a 1 GiB ESP, swap, and Btrfs root.' \
+    'Use swap at least as large as RAM if hibernation is required.' \
+    '--dry-run validates the disk and prints the plan without changing anything.'
+}
+
+disk=
+swap_gib=
+dry_run=false
+while (($#)); do
+  case "$1" in
+    --disk|--swap-gib)
+      (($# >= 2)) || fail "Missing value for $1"
+      case "$1" in
+        --disk) disk=$2 ;;
+        --swap-gib) swap_gib=$2 ;;
+      esac
+      shift 2 ;;
+    --dry-run) dry_run=true; shift ;;
+    --help|-h) usage; exit 0 ;;
+    *) fail "Unknown argument: $1" ;;
+  esac
+done
+[[ -n $disk && $swap_gib =~ ^[1-9][0-9]{0,3}$ ]] || { usage >&2; exit 1; }
+[[ $disk == /dev/* ]] || fail 'Use a /dev/ disk path (prefer /dev/disk/by-id/).'
+disk=$(readlink -e -- "$disk") || fail 'Disk does not exist.'
+[[ -b $disk ]] || fail 'Target is not a block device.'
+
+# Refuse mounted disks, active swap, device-mapper/RAID holders, duplicate labels,
+# partitions, and read-only devices. Run again immediately before partitioning.
+validate_disk() {
+  lsblk --json --bytes --paths --output NAME,TYPE,SIZE,RO,MOUNTPOINTS,LABEL |
+    python3 -c '
+import json, pathlib, sys
+nodes = json.load(sys.stdin)["blockdevices"]
+disk, swap = sys.argv[1], int(sys.argv[2])
+def walk(nodes):
+    for node in nodes:
+        yield node
+        yield from walk(node.get("children", []))
+all_nodes = list(walk(nodes))
+target = next((n for n in nodes if n["name"] == disk), None)
+def fail(message):
+    sys.exit("ERROR: " + message)
+if not target or target["type"] != "disk":
+    fail("Select a whole disk (TYPE=disk), not a partition or mapped device.")
+if target["ro"]:
+    fail("Disk is read-only.")
+if target["size"] < (swap + 34) * 1024**3:
+    fail("Disk needs room for swap, EFI, and at least 32 GiB of root space.")
+selected = list(walk([target]))
+for node in selected:
+    if node.get("mountpoints") and any(node["mountpoints"]):
+        fail("Disk has mounted filesystems or active swap: " + node["name"])
+    if node["type"] not in ("disk", "part"):
+        fail("Disk has active mapped/RAID devices: " + node["name"])
+    holders = pathlib.Path("/sys/class/block") / pathlib.Path(node["name"]).name / "holders"
+    if holders.exists() and any(holders.iterdir()):
+        fail("Disk has active holders: " + node["name"])
+names = {n["name"] for n in selected}
+for node in all_nodes:
+    if node["name"] not in names and node.get("label") in ("NIXOS_BOOT", "NIXOS_ROOT", "NIXOS_SWAP"):
+        fail("Another disk has a conflicting NixOS label: " + node["name"])
+' "$disk" "$swap_gib"
+}
+validate_disk
+lsblk --paths --output NAME,SIZE,MODEL,SERIAL,TYPE,MOUNTPOINTS "$disk"
+printf '\nPlan: ERASE %s; GPT + 1 GiB EFI (NIXOS_BOOT) + %s GiB swap (NIXOS_SWAP)\n' "$disk" "$swap_gib"
+printf 'Remaining space: Btrfs NIXOS_ROOT with @, @home, @nix, @log.\n'
+printf 'Install embedded dotfiles #framework, then set iceice666 login password.\n'
+$dry_run && exit 0
+
+[[ $EUID == 0 ]] || fail 'Run through sudo.'
+[[ -f /etc/framework-installer ]] || fail 'Destructive mode only runs from the Framework installer ISO.'
+[[ -d /sys/firmware/efi/efivars ]] || fail 'Boot the ISO in UEFI mode.'
+[[ -t 0 && -t 1 ]] || fail 'An interactive local console is required.'
+[[ ! -e /mnt || -d /mnt ]] || fail '/mnt is not a directory.'
+[[ -z $(findmnt -rn -o TARGET | grep -E '^/mnt(/|$)' || true) ]] || fail '/mnt already has mounts.'
+[[ ! -d /mnt || -z $(ls -A /mnt) ]] || fail '/mnt must be empty.'
+exec 9>/run/framework-install.lock
+flock --nonblock 9 || fail 'Another Framework installation is running.'
+disk_identity=$(lsblk --json --bytes --nodeps --output NAME,SIZE,MODEL,SERIAL,WWN "$disk")
+source_dir=${FRAMEWORK_INSTALL_SOURCE:-/etc/framework-dotfiles}
+[[ -f $source_dir/flake.lock && -f $source_dir/flake.nix ]] || fail 'Embedded flake is missing.'
+
+work=$(mktemp -d /tmp/framework-install.XXXXXX)
+trap 'rm -rf -- "$work"' EXIT
+trap 'printf "Installation failed. Do not reboot until resolved; inspect /mnt.\n" >&2' ERR
+repo=$work/dotfiles
+cp -a -- "$source_dir" "$repo"
+chmod -R u+w "$repo"
+# The ESP gets a new FAT UUID. Change only the copied target, not the running host.
+python3 - "$repo/hosts/framework/configuration/hardware-configuration.nix" <<'PY'
+import pathlib, sys
+path = pathlib.Path(sys.argv[1])
+text = path.read_text()
+old = 'device = "/dev/disk/by-uuid/26D2-8AF4";'
+if text.count(old) != 1:
+    sys.exit("Unexpected Framework EFI config; update the installer before using it.")
+path.write_text(text.replace(old, 'device = "/dev/disk/by-label/NIXOS_BOOT";'))
+PY
+# Nix Git flakes only see tracked files; the embedded source has no .git history.
+git -C "$repo" init -q
+git -C "$repo" add --all
+printf '\nChecking Framework build plan BEFORE erasing anything (internet required)...\n'
+nix build "path:$repo#nixosConfigurations.framework.config.system.build.toplevel" \
+  --no-write-lock-file --dry-run
+printf 'Preflight passed; actual downloads/build happen AFTER erasure on the target disk.\n'
+
+printf '\nALL DATA on %s will be lost, including /home.\n' "$disk"
+printf 'Verify the model/serial above and your external backup.\n'
+printf 'Type exactly "ERASE %s" to proceed: ' "$disk"
+IFS= read -r confirmation
+[[ $confirmation == "ERASE $disk" ]] || fail 'Confirmation did not match; nothing erased.'
+validate_disk
+[[ $(lsblk --json --bytes --nodeps --output NAME,SIZE,MODEL,SERIAL,WWN "$disk") == "$disk_identity" ]] || fail 'Disk identity changed during the build.'
+[[ -z $(findmnt -rn -o TARGET | grep -E '^/mnt(/|$)' || true) ]] || fail '/mnt acquired mounts during the build.'
+[[ ! -d /mnt || -z $(ls -A /mnt) ]] || fail '/mnt acquired files during the build.'
+# Explicitly user-triggered only; never invoked by ISO boot or a service.
+swap_end_mib=$((1025 + swap_gib * 1024))
+wipefs --all "$disk"
+parted --script --align optimal "$disk" \
+  mklabel gpt \
+  mkpart ESP fat32 1MiB 1025MiB \
+  set 1 esp on \
+  mkpart swap linux-swap 1025MiB "${swap_end_mib}MiB" \
+  mkpart root btrfs "${swap_end_mib}MiB" 100%
+partprobe "$disk"
+udevadm settle
+mapfile -t partitions < <(lsblk --json --paths --output NAME,PARTN "$disk" | python3 -c '
+import json, sys
+children = json.load(sys.stdin)["blockdevices"][0].get("children", [])
+parts = {int(n["partn"]): n["name"] for n in children if n.get("partn")}
+if set(parts) != {1, 2, 3}:
+    sys.exit("Unexpected partition layout.")
+for number in (1, 2, 3):
+    print(parts[number])
+')
+((${#partitions[@]} == 3)) || fail 'Could not resolve new partitions.'
+efi=${partitions[0]}
+swap=${partitions[1]}
+root=${partitions[2]}
+mkfs.fat -F 32 -n NIXOS_BOOT "$efi"
+mkswap -L NIXOS_SWAP "$swap"
+mkfs.btrfs -f -L NIXOS_ROOT "$root"
+mkdir -p /mnt
+mount "$root" /mnt
+for subvol in @ @home @nix @log; do
+  btrfs subvolume create "/mnt/$subvol"
+done
+umount /mnt
+options=compress=zstd,noatime,ssd,space_cache=v2
+mount -o "subvol=@,$options" "$root" /mnt
+mkdir -p /mnt/{boot,home,nix,var/log}
+mount -o "subvol=@home,$options" "$root" /mnt/home
+mount -o "subvol=@nix,$options" "$root" /mnt/nix
+mount -o "subvol=@log,$options" "$root" /mnt/var/log
+mount -o fmask=0077,dmask=0077 "$efi" /mnt/boot
+
+nixos-install --root /mnt --flake "path:$repo#framework" \
+  --no-write-lock-file --no-root-passwd --no-channel-copy
+nixos-enter --root /mnt -c 'passwd iceice666'
+mkdir -p /mnt/home/iceice666
+cp -a "$repo" /mnt/home/iceice666/dotfiles
+nixos-enter --root /mnt -c 'chown -R iceice666:users /home/iceice666/dotfiles'
+printf '\nInstalled. Root login remains locked; use iceice666 and sudo.\n'
+printf 'Repo: ~/dotfiles (staged snapshot, no original Git history).\n'
+printf 'Restore your SSH identity separately, then activate Home Manager secrets.\n'
+printf 'No private keys were embedded. Fingerprints and Tailscale need re-enrollment.\n'
+printf 'When ready: umount -R /mnt && reboot\n'

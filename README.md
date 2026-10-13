@@ -62,6 +62,7 @@ flake output automatically.
 just build           # dry-build current platform host
 just switch          # apply configuration to current platform host
 just boot            # set current NixOS host for next boot, Linux only
+just framework-iso   # build Framework full-disk reinstall ISO (Linux builder)
 just fmt             # format all files
 just fmt-check       # check Justfile formatting
 just check           # format, Justfile metadata, and flake checks
@@ -127,6 +128,12 @@ just switch
 ```
 
 After the first switch, use `just switch`.
+
+For a full-disk Framework reinstall, `just framework-iso` builds a dedicated
+UEFI installer with an embedded dotfiles snapshot. Installation is online,
+unencrypted, and requires an explicit disk-erasure confirmation. See
+[`hosts/framework-installer/README.md`](hosts/framework-installer/README.md)
+for backup requirements, usage, and secrets recovery. No installation runs at boot.
 
 NixOS owns the Framework system, including login/session launch, D-Bus,
 PipeWire, NetworkManager, Bluetooth, polkit, greetd/ReGreet, and fingerprint

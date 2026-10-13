@@ -55,6 +55,7 @@ hosts/               # per-host entrypoints
     overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/AGS Home Manager modules, wallpaper.nix rotation
+  framework-installer/ # UEFI-only Framework reinstall ISO, embedded source + explicit install tool
   homolab/           # NixOS server (x86_64), AI/GPU plane — built and switched locally
     host.nix         # feature manifest
     configuration/   # system, networking, XLibre/bspwm desktop, secrets, user, hardware
@@ -130,6 +131,7 @@ Nix derivations from each host wallpaper plus `themegen/common/` and
 |---|---|
 | `darwinConfigurations.m5pro` | nix-darwin configuration |
 | `nixosConfigurations.framework` | NixOS configuration |
+| `nixosConfigurations.framework-installer` | minimal UEFI Framework reinstall ISO (`config.system.build.isoImage`) |
 | `nixosConfigurations.homolab` | NixOS server configuration (built locally) |
 | `homeConfigurations.lumo` | Alpine root Home Manager data+apps + DNS + edge configuration |
 | `homeConfigurations.worker` | Alpine root Home Manager disposable-work / agent-runtime host |
@@ -353,6 +355,18 @@ Prefer these `just` recipes over direct `nix build`, `darwin-rebuild`,
 `nixos-rebuild`, or `home-manager` commands.
 
 
+Framework full-disk reinstallation uses `just framework-iso`, which builds the
+`framework-installer` host without activating it. Its source snapshot includes
+tracked encrypted secrets but never identities. `scripts/framework-install`
+requires a local console, UEFI, an unused whole disk, an explicit swap size and
+exact erasure confirmation; it dry-runs the online build plan before wiping, then
+builds into the target disk store after erasure (not the Live RAM store). It creates
+the existing Btrfs subvolumes and patches only the installed source copy's EFI
+UUID to `NIXOS_BOOT`. No destructive command runs on boot. Run
+`just framework-install-test` for safe fixture tests; never execute the destructive
+path on a real host as validation. See `hosts/framework-installer/README.md` for
+backups, credential recovery, and disposable UEFI VM validation.
+
 Fingerprint authentication is configured in
 `hosts/framework/configuration/default.nix` through `services.fprintd.enable`
 and `security.pam.services.{greetd,sudo}.fprintAuth`. Keep `fprintd` in the
@@ -425,6 +439,7 @@ Which build to run for a given change:
 | `hosts/m5pro/**` | `m5pro` |
 | `hosts/framework/home/**` | `framework` |
 | `hosts/framework/configuration/**` | `framework` |
+| `hosts/framework-installer/**`, `scripts/framework-install` | `just framework-install-test` + `just framework-iso` |
 | `hosts/homolab/**` | `homolab` (via `just homolab-build`) |
 | `hosts/lumo/**` | `lumo` (via `just lumo-build`) |
 | `hosts/worker/**` | `worker` (via `just worker-build`) |

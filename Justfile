@@ -47,6 +47,18 @@ boot:
     sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
     sudo ./result/bin/switch-to-configuration boot
 
+# Build the UEFI Framework reinstall ISO (does not install or erase disks)
+[group('host')]
+[linux]
+framework-iso:
+    nix build .#nixosConfigurations.framework-installer.config.system.build.isoImage --out-link result-framework-iso
+
+# Run non-destructive Framework installer tests
+[group('host')]
+framework-install-test:
+    bash -n {{ scripts }}/framework-install
+    python3 {{ scripts }}/tests/test-framework-install.py
+
 # Suspend homolab immediately (return to off state)
 [group('host')]
 homolab-sleep:
