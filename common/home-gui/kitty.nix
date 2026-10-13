@@ -7,7 +7,7 @@
     enable = true;
     shellIntegration.enableFishIntegration = true;
     settings = {
-      font_family = "Sarasa Term TC";
+      font_family = "JetBrainsMono Nerd Font Mono";
       font_size = kittyFontSize;
       background_opacity = 0.75;
       background_blur = 20;
