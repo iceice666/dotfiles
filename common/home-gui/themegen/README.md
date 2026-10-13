@@ -38,16 +38,20 @@ The darkman hooks rotate on real mode changes only; `framework-wallpaper next` r
 
 ## File Map
 
-- `themegen/common/`: shared Kitty, fish, starship, Zed, VSCodium, and Pi theme templates.
-  Kitty palettes render to `.config/kitty/{dark,light}-theme.auto.conf`, preserving
-  the terminal, cursor, selection, and 16 ANSI colors. `no-preference-theme.auto.conf`
-  includes the light palette. Kitty 0.38+ follows the OS color scheme automatically
-  (macOS appearance / Framework's GNOME Settings portal, updated by darkman); no theme-switch hook
-  or `kitten themes` invocation is needed. See [Kitty automatic themes](https://sw.kovidgoyal.net/kitty/kittens/themes/#auto-color-scheme).
-  Shared behavior is managed by `common/home-gui/kitty.nix`, with host-specific
-  `kittyFontSize`. Background opacity remains 0.75, with blur radius 20 where
-  supported. Unlike Ghostty's all-cell opacity, Kitty only makes the default
-  terminal background transparent; other cell backgrounds remain opaque.
+- `themegen/common/`: shared Ghostty, fish, starship, Zed, VSCodium, and Pi theme templates.
+  Ghostty palettes render to `.config/ghostty/themes/themegen-{dark,light}` in
+  native Ghostty syntax, preserving the terminal, cursor, selection, and 16 ANSI
+  colors, including the seed-tinted light background. The shared configuration
+  selects `light:themegen-light,dark:themegen-dark` so Ghostty follows the OS
+  color scheme; no separate theme-switch hook is needed.
+  Shared behavior is managed by `common/home-gui/ghostty.nix`, with host-specific
+  `ghosttyFontSize`. The pinned `iceice666/ghostty` fork provides left-side
+  vertical tabs (`window-tab-bar-position = left`, `window-show-tab-bar = always`).
+  Darwin installs the fork's arm64 release app bundle via `pkgs/ghostty-bin`;
+  Linux uses the fork's flake package. The macOS bundle is ad-hoc signed, not
+  notarized, so Gatekeeper may require explicit approval on first launch.
+  See [the fork](https://github.com/iceice666/ghostty) and
+  [the pinned release](https://github.com/iceice666/ghostty/releases/tag/fork-905108bca070).
   The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
   them up through global theme auto-discovery, and `common/home-base/pi.nix`
   selects `themegen-light/themegen-dark` whenever those files are installed.

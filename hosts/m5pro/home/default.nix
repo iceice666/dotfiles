@@ -17,7 +17,7 @@ in
   _module.args = {
     inherit desktopWallpaper;
     themegenHost = "m5pro";
-    kittyFontSize = 16;
+    ghosttyFontSize = 16;
   };
 
   programs.fish.interactiveShellInit = ''

@@ -78,6 +78,7 @@ let
         {
           inherit (p)
             themegen
+            ghostty
             equibop-bin
             oh-my-pi-bin
             pi-bin

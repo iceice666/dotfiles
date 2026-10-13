@@ -248,7 +248,7 @@ in
       enable = true;
       settings = {
         launch = {
-          "kitty" = "${pkgs.kitty}/bin/kitty";
+          "com.mitchellh.ghostty" = "${pkgs.ghostty}/bin/ghostty";
         };
 
         skip.apps = [

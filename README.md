@@ -32,7 +32,7 @@ common/              # shared modules applied to all hosts
   system-nixos/      # NixOS-specific system settings (experimental-features)
   home-base/         # CLI baseline: git, direnv, fish, packages, starship, zoxide…
   home-alpine/       # root Home Manager baseline for Alpine + Lix hosts
-  home-gui/          # GUI workstation: kitty, vscodium, zed, rime, themegen…
+  home-gui/          # GUI workstation: ghostty, vscodium, zed, rime, themegen…
 
 hosts/               # per-host entrypoints
   m5pro/             # macOS; host.nix declares features, configuration/, home/, wallpaper.jpg
@@ -55,6 +55,11 @@ and wires Home Manager accordingly.
 
 **Adding a host:** create `hosts/<new>/host.nix` with feature flags. It appears as a
 flake output automatically.
+
+The terminal configuration uses the pinned [Ghostty fork](https://github.com/iceice666/ghostty)
+with left-side vertical tabs and wallpaper-generated light/dark themes. The
+macOS arm64 package uses the fork's release app bundle. It is ad-hoc signed,
+not notarized; Gatekeeper may require explicit approval before the first launch.
 
 ## Commands
 

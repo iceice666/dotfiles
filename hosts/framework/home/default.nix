@@ -15,7 +15,7 @@ in
 
   _module.args = {
     avatarImage = frameworkAvatar;
-    kittyFontSize = 14;
+    ghosttyFontSize = 14;
     themegenHost = "framework";
   };
 

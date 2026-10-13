@@ -96,7 +96,7 @@ the managed launcher disables project settings and executable extensions;
 this is deployment-time default synchronization, not live selection syncing.
 On hosts with `features.themegen` the
 wallpaper-derived `~/.pi/agent/themes/themegen-{dark,light}.json` are installed
-and the theme resolves to `themegen-light/themegen-dark`, matching Kitty's wallpaper-generated light/dark palettes;
+and the theme resolves to `themegen-light/themegen-dark`, matching Ghostty's wallpaper-generated light/dark palettes;
 other hosts keep the built-in `light/dark` pair. Changing the theme via
 `/settings` is overwritten on the next switch — edit the repo instead. If
 `settings.json` is not valid JSON, activation warns and leaves it untouched.

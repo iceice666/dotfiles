@@ -203,11 +203,11 @@ let
     app_id="dev.iceice666.lazygit.repo$repo_hash"
   '';
 
-  openKitty = pkgs.writeShellApplication {
-    name = "open-niri-kitty";
+  openGhostty = pkgs.writeShellApplication {
+    name = "open-niri-ghostty";
     runtimeInputs = [
       pkgs.coreutils
-      pkgs.kitty
+      pkgs.ghostty
       pkgs.jq
       niriPkg
     ];
@@ -239,11 +239,11 @@ let
             workspace_path="$(dirname "$workspace_path")"
           fi
 
-          exec kitty "--directory=$workspace_path"
+          exec ghostty "--working-directory=$workspace_path"
         fi
       fi
 
-      exec kitty
+      exec ghostty
     '';
   };
 
@@ -252,7 +252,7 @@ let
     runtimeInputs = [
       pkgs.coreutils
       pkgs.git
-      pkgs.kitty
+      pkgs.ghostty
       pkgs.jq
       pkgs.lazygit
       niriPkg
@@ -260,12 +260,13 @@ let
     text = ''
       ${lazygitRepoFromWorkspace}
 
-      exec kitty \
+      exec ghostty \
+        --gtk-single-instance=false \
         "--class=$app_id" \
-        --override confirm_os_window_close=0 \
+        --confirm-close-surface=false \
         "--title=lazygit: $repo" \
-        "--directory=$repo" \
-        lazygit
+        "--working-directory=$repo" \
+        -e lazygit
     '';
   };
 
@@ -342,7 +343,7 @@ let
     runtimeInputs = [
       pkgs.coreutils
       pkgs.fuzzel
-      pkgs.kitty
+      pkgs.ghostty
       pkgs.jq
       unstablePkgs.just
       niriPkg
@@ -385,10 +386,11 @@ let
       recipe="''${selection%%$'\t'*}"
       [ -n "$recipe" ] || exit 0
 
-      exec kitty \
+      exec ghostty \
+        --gtk-single-instance=false \
         "--title=just $recipe: $just_dir" \
-        "--directory=$just_dir" \
-        just --justfile "$justfile" --working-directory "$just_dir" "$recipe"
+        "--working-directory=$just_dir" \
+        -e just --justfile "$justfile" --working-directory "$just_dir" "$recipe"
     '';
   };
 
@@ -592,7 +594,7 @@ let
         "@shellState@"
         "@shellStateConfig@"
         "@fuzzel@"
-        "@kitty@"
+        "@ghostty@"
         "@grim@"
         "@nautilus@"
         "@renameWorkspace@"
@@ -610,7 +612,7 @@ let
         shellState
         (toString shellStateConfig)
         "${pkgs.fuzzel}/bin/fuzzel"
-        "${openKitty}/bin/open-niri-kitty"
+        "${openGhostty}/bin/open-niri-ghostty"
         "${pkgs.grim}/bin/grim"
         "${pkgs.nautilus}/bin/nautilus"
         (toString renameWorkspace)
@@ -830,7 +832,7 @@ in
 
     terminal-exec = {
       enable = true;
-      settings.default = [ "kitty.desktop" ];
+      settings.default = [ "com.mitchellh.ghostty.desktop" ];
     };
   };
 

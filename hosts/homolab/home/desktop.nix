@@ -25,7 +25,7 @@
 
   xdg.configFile."sxhkd/sxhkdrc".text = ''
     super + Return
-      ${pkgs.kitty}/bin/kitty
+      ${pkgs.ghostty}/bin/ghostty
 
     super + n
       ${lib.getExe config.programs.zed-editor.package}
@@ -125,19 +125,21 @@
     };
   };
 
-  programs.kitty = {
+  programs.ghostty = {
     enable = true;
-    shellIntegration.enableFishIntegration = true;
+    package = pkgs.ghostty;
+    enableFishIntegration = true;
     settings = {
-      font_family = "JetBrainsMono Nerd Font Mono";
-      font_size = 12;
+      font-family = "JetBrainsMono Nerd Font Mono";
+      font-size = 12;
       background = "#1d2021";
       foreground = "#ebdbb2";
-      cursor = "#ebdbb2";
-      selection_background = "#504945";
-      enable_audio_bell = false;
-      scrollback_lines = 10000;
-      confirm_os_window_close = 0;
+      cursor-color = "#ebdbb2";
+      selection-background = "#504945";
+      scrollback-limit = 10000000;
+      confirm-close-surface = false;
+      window-tab-bar-position = "left";
+      window-show-tab-bar = "always";
     };
   };
 

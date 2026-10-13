@@ -29,10 +29,10 @@ common/              # shared modules injected by mk-host into every host
     pi.nix           # Pi binary, extensions, CLIProxyAPI models and runtime SOPS key lookup (features.pi)
     pi/              # repo-owned Pi extensions, tests and development dependencies
   home-gui/          # GUI workstation baseline (features.gui)
-    default.nix      # imports app-defaults, kitty, packages-gui, vscodium, zed
+    default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
     packages-gui.nix # GUI binaries: equibop-bin, helium-bin, …
     app-defaults.nix # XDG MIME associations
-    kitty.nix        # Kitty config
+    ghostty.nix      # fork Ghostty config with left-side vertical tabs
     vscodium.nix     # VSCodium config + marketplace wiring
     zed.nix          # Zed config
     rime/            # Rime Frost setup with Traditional Chinese octagram model (features.rime)
@@ -60,7 +60,7 @@ hosts/               # per-host entrypoints
     host.nix         # feature manifest
     configuration/   # system, networking, XLibre/bspwm desktop, secrets, user, hardware
     services/        # edge/ (Traefik, Authelia, Cloudflare, SSH, Tailscale, node-exporter), ai/ (TEA-ASR 1.1 mini)
-    home/            # homolab CLI and bspwm/Polybar/sxhkd/Kitty/Neovide configuration
+    home/            # homolab CLI and bspwm/Polybar/sxhkd/Ghostty/Neovide configuration
     apps/            # repo-local applications (e.g. daily-audit)
     patches/         # nixpkgs patches to apply at build time
     plan/            # design notes for in-flight homolab work
@@ -113,6 +113,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
+| `ghostty` | `github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8` (fork with vertical tabs) | no |
 | `nirinit` | `github:amaanq/nirinit` | yes |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `dsh-desktop` | `github:iceice666/dsh-desktop` | yes |
@@ -502,7 +503,7 @@ from the repo root on homolab, or use the `homolab-*` recipe aliases. The build 
 locally and does not require SSH or deploy-rs.
 
 Homolab also has a local XLibre desktop: LightDM launches bspwm, with Polybar,
-sxhkd, Kitty, Neovim, and Neovide configured under `hosts/homolab`. The
+sxhkd, Ghostty, Neovim, and Neovide configured under `hosts/homolab`. The
 XLibre server and libinput driver come from the pinned `xlibre-overlay` input;
 the existing proprietary NVIDIA driver remains the display driver.
 
@@ -680,7 +681,7 @@ Canonical module shape:
 - `common/system-darwin/` is injected for darwin hosts only; `common/system-nixos/` for NixOS hosts only.
 - `common/home-base/` is the CLI baseline, injected for every `features.homeManager = true` host.
 - `common/home-alpine/` adds root-only Lix, direct sops activation, and Alpine root-shell wiring for standalone Home Manager hosts.
-- `common/home-gui/` is injected when `features.gui = true`. GUI-only tools (kitty, vscodium, zed, rime, themegen, helium-bin, etc.) live here and are not imported by server hosts.
+- `common/home-gui/` is injected when `features.gui = true`. GUI tools (ghostty, vscodium, zed, rime, themegen, helium-bin, etc.) live here; server hosts do not import the baseline, though homolab explicitly configures Ghostty for its local desktop.
 - `common/home-base/agent-skills.nix` installs curated reusable skills into
   `$HOME/.skills`, then symlinks each into `$HOME/.agents/skills` for Pi discovery.
   Each skill's `SKILL.md` must stay agent-neutral prose (no tool-specific
@@ -696,7 +697,18 @@ Canonical module shape:
   source at `$HOME/.pi/agent/AGENTS.md` on Pi-enabled hosts.
 - `themegen/` contains root-level plain templates split into `common/`, `m5pro/`, and `framework/`; paths are `$HOME`-relative with no `home/` segment. `common/home-gui/themegen/default.nix` renders concrete files in the Nix store for Home Manager to install. `just theme` only renders a local `.cache/themegen/<host>/` copy for inspection.
 - `common/home-gui/rime/` copies Rime Frost data into the host Rime user directory, enables Traditional Chinese by default with `s2tw.json`, and installs the `zh-hant-t-essay-bgw` octagram model. macOS uses the `squirrel-app` Homebrew cask; Linux uses Home Manager's Fcitx5 input method module with `fcitx5-rime`.
-- `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation (`themegenCache`), and installs outputs through `home.file`. Setting `themegen.wallpapers` (Framework) renders one cache per wallpaper (`themegenWallpapers`) and links outputs to `$XDG_STATE_HOME/themegen/current` instead, for a host runtime switcher to populate.
+- `common/home-gui/themegen/` supports wallpaper-driven theme generation. `default.nix` auto-discovers plain templates under `themegen/common/` plus `themegen/<host>/`, builds a host-specific render derivation, exposes it as `themegenCache` for Framework GTK wrapping, and installs outputs through `home.file`.
+- `common/home-gui/ghostty.nix` manages the pinned `iceice666/ghostty` fork,
+  with `window-tab-bar-position = left`, `window-show-tab-bar = always`, and
+  host-specific `ghosttyFontSize`. Themegen hosts select
+  `light:themegen-light,dark:themegen-dark` from generated native themes under
+  `$HOME/.config/ghostty/themes/`. Homolab configures Ghostty explicitly
+  without enabling the GUI baseline. Linux uses the fork's flake package through
+  `pkgs.ghostty`; Darwin uses the arm64 release app bundle packaged by
+  `pkgs/ghostty-bin/default.nix` through the same overlay attribute. The macOS
+  bundle is ad-hoc signed, not notarized; Gatekeeper may require explicit
+  approval before the first launch. Packaging does not establish a verified
+  interactive launch or deployment.
 - `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
