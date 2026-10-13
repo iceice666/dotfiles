@@ -129,6 +129,8 @@ in
     };
   };
 
+  virtualisation.podman.enable = true;
+
   zramSwap.enable = false;
   swapDevices = [ { device = "/dev/disk/by-label/NIXOS_SWAP"; } ];
   powerManagement.enable = true;
