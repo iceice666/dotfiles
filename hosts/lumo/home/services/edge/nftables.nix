@@ -4,7 +4,12 @@
 # the edge rules (Cloudflare IP sets + 80/443 + traefik ping/metrics) that
 # moved here from the retired gateway Pi. Mirror any change in
 # scripts/alpine-bootstrap's lumo branch so a fresh bootstrap matches.
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   nftablesFile = pkgs.writeText "dotfiles.nft" ''
@@ -31,7 +36,7 @@ let
         udp dport 41641 accept
         ip saddr 192.168.1.0/24 tcp dport 22 accept
         # app ports proxied from homolab and lumo itself (Traefik backends)
-        ip saddr { 192.168.1.127, 192.168.1.128 } tcp dport { 2222, 18075, 18076, 18084, 20129 } accept
+        ip saddr { 192.168.1.127, 192.168.1.128 } tcp dport { ${lib.optionalString config.lumo.forgejoWoodpecker.enable "2222, "}18075, 18076, 18084, 20129 } accept
         # edge: HTTP/HTTPS from Cloudflare IP sets and the LAN
         ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
         ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept

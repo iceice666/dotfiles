@@ -318,6 +318,18 @@ untouched; old generations still retain their previous closures until collected.
 `just update-pkgs` invokes Pi with the repo-local skill at
 `.agents/skills/update-pkgs/SKILL.md` on a Pi-enabled workstation.
 
+Forgejo and Woodpecker on lumo are temporarily offline. Their module, encrypted
+secrets, and persistent data are retained. `lumo.forgejoWoodpecker.enable` defaults
+to `false`; activation stops the stack and removes its default-runlevel entries,
+and Traefik omits its routes. Re-enable only after resolving the image's auxiliary
+OpenSSH listener conflict with host port 22. `just lumo-smoke` expects the stack
+to remain offline.
+
+The lumo audit collector discovers OpenRC commands through the system PATH,
+collects file-based sysklogd logs and bounded rotated-log tails, and records
+individual service status exit codes. Missing or truncated logs do not establish
+complete 24-hour authentication coverage.
+
 ## Managed browser access
 
 m5pro and Framework explicitly import `common/home-base/browser.nix`. It installs

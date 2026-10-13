@@ -246,93 +246,125 @@ let
   '';
 in
 {
-  home.packages = [ pkgs.podman ];
+  options.lumo.forgejoWoodpecker.enable = lib.mkEnableOption "the Forgejo and Woodpecker stack";
 
-  sops.secrets = {
-    forgejo-admin-password = {
-      sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
-      key = "forgejoAdminPassword";
-      mode = "0400";
-    };
-    forgejo-github-oauth-client-id = {
-      sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
-      key = "githubOauthClientId";
-      mode = "0400";
-    };
-    forgejo-github-oauth-client-secret = {
-      sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
-      key = "githubOauthClientSecret";
-      mode = "0400";
-    };
-    woodpecker-agent-secret = {
-      sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
-      key = "woodpeckerAgentSecret";
-      mode = "0400";
-    };
-  };
-
-  home.activation.lumoForgejoWoodpecker =
-    lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ]
-      ''
-        install -d -m 0755 /var/log/lumo
-        install -d -m 0750 -o 1000 -g 1000 ${forgejoDataDir}
-        install -d -m 0700 -o root -g root ${woodpeckerDataDir}
-        install -d -m 0700 -o 1000 -g 1000 \
-          ${woodpeckerDataDir}/server \
-          ${woodpeckerDataDir}/agent
-        agent_secret="$(cat '${woodpeckerAgentSecretPath}')"
-        {
-          printf 'WOODPECKER_HOST=${homolab.urls.woodpecker}\n'
-          printf 'WOODPECKER_SERVER_ADDR=127.0.0.1:${toString woodpeckerPort}\n'
-          printf 'WOODPECKER_GRPC_ADDR=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
-          printf 'WOODPECKER_FORGEJO=true\n'
-          printf 'WOODPECKER_FORGEJO_URL=${homolab.urls.forgejo}\n'
-          printf 'WOODPECKER_FORGEJO_CLIENT=%s\n' "$(cat '${woodpeckerOauthClientPath}')"
-          printf 'WOODPECKER_FORGEJO_SECRET=%s\n' "$(cat '${woodpeckerOauthSecretPath}')"
-          printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
-          printf 'WOODPECKER_OPEN=true\n'
-          printf 'WOODPECKER_ADMIN=${adminUsername}\n'
-        } > ${woodpeckerServerEnvPath}
-        {
-          printf 'WOODPECKER_SERVER=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
-          printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
-          printf 'WOODPECKER_AGENT_CONFIG_FILE=/etc/woodpecker/agent.conf\n'
-          printf 'WOODPECKER_BACKEND=docker\n'
-          printf 'WOODPECKER_HOSTNAME=lumo\n'
-          printf 'WOODPECKER_MAX_WORKFLOWS=1\n'
-          printf 'WOODPECKER_HEALTHCHECK_ADDR=127.0.0.1:${toString woodpeckerAgentHealthPort}\n'
-          printf 'DOCKER_HOST=unix:///var/run/docker.sock\n'
-        } > ${woodpeckerAgentEnvPath}
-        chmod 0400 ${woodpeckerServerEnvPath} ${woodpeckerAgentEnvPath}
-
-
-        install -Dm755 ${forgejoService} /etc/init.d/lumo-forgejo
-        install -Dm755 ${forgejoBootstrapService} /etc/init.d/lumo-forgejo-bootstrap
-        install -Dm755 ${woodpeckerServerService} /etc/init.d/lumo-woodpecker-server
-        install -Dm755 ${woodpeckerAgentService} /etc/init.d/lumo-woodpecker-agent
-
-        /sbin/rc-update add lumo-forgejo default
-        /sbin/rc-update add lumo-forgejo-bootstrap default
-        /sbin/rc-update add lumo-woodpecker-server default
-        /sbin/rc-update add lumo-woodpecker-agent default
-
-        # --nodeps: each service below is `need`ed by the next
-        # (forgejo -> forgejo-bootstrap -> woodpecker-server ->
-        # woodpecker-agent). A plain restart cascades to the already-running
-        # dependent, racing with the explicit restart_service call for it
-        # further down (flock contention, duplicate Forgejo API
-        # provisioning curl calls hitting a mid-restart container).
-        restart_service() {
-          service="$1"
-          if ! /sbin/rc-service --nodeps "$service" restart; then
-            sleep 5
-            /sbin/rc-service --nodeps "$service" restart
+  config = lib.mkMerge [
+    (lib.mkIf (!config.lumo.forgejoWoodpecker.enable) {
+      home.activation.lumoForgejoWoodpeckerOffline = lib.hm.dag.entryAfter [ "lumoPodman" ] ''
+        export PATH="/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+        # Keep data, credentials and service definitions for a later re-enable.
+        for service in lumo-woodpecker-agent lumo-woodpecker-server lumo-forgejo-bootstrap lumo-forgejo; do
+          if [ -x "/etc/init.d/$service" ]; then
+            if rc-service "$service" status >/dev/null 2>&1; then
+              rc-service --nodeps "$service" stop
+            fi
+            if [ -e "/etc/runlevels/default/$service" ]; then
+              rc-update del "$service" default
+            fi
           fi
-        }
-
-        restart_service lumo-forgejo
-        restart_service lumo-forgejo-bootstrap
-        restart_service lumo-woodpecker-server
-        restart_service lumo-woodpecker-agent
+        done
+        for container in lumo-woodpecker-agent lumo-woodpecker-server lumo-forgejo; do
+          if ${pkgs.podman}/bin/podman container exists "$container"; then
+            ${pkgs.podman}/bin/podman stop "$container"
+          fi
+        done
+        # The image's auxiliary sshd may have occupied the host management port.
+        if ! rc-service sshd status >/dev/null 2>&1; then
+          /usr/sbin/sshd -t
+          rc-service sshd restart
+        fi
       '';
+    })
+    (lib.mkIf config.lumo.forgejoWoodpecker.enable {
+      home.packages = [ pkgs.podman ];
+
+      sops.secrets = {
+        forgejo-admin-password = {
+          sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
+          key = "forgejoAdminPassword";
+          mode = "0400";
+        };
+        forgejo-github-oauth-client-id = {
+          sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
+          key = "githubOauthClientId";
+          mode = "0400";
+        };
+        forgejo-github-oauth-client-secret = {
+          sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
+          key = "githubOauthClientSecret";
+          mode = "0400";
+        };
+        woodpecker-agent-secret = {
+          sopsFile = dotfiles + /sensitive/hosts/lumo/forgejo-woodpecker.yaml;
+          key = "woodpeckerAgentSecret";
+          mode = "0400";
+        };
+      };
+
+      home.activation.lumoForgejoWoodpecker =
+        lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ]
+          ''
+            install -d -m 0755 /var/log/lumo
+            install -d -m 0750 -o 1000 -g 1000 ${forgejoDataDir}
+            install -d -m 0700 -o root -g root ${woodpeckerDataDir}
+            install -d -m 0700 -o 1000 -g 1000 \
+              ${woodpeckerDataDir}/server \
+              ${woodpeckerDataDir}/agent
+            agent_secret="$(cat '${woodpeckerAgentSecretPath}')"
+            {
+              printf 'WOODPECKER_HOST=${homolab.urls.woodpecker}\n'
+              printf 'WOODPECKER_SERVER_ADDR=127.0.0.1:${toString woodpeckerPort}\n'
+              printf 'WOODPECKER_GRPC_ADDR=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
+              printf 'WOODPECKER_FORGEJO=true\n'
+              printf 'WOODPECKER_FORGEJO_URL=${homolab.urls.forgejo}\n'
+              printf 'WOODPECKER_FORGEJO_CLIENT=%s\n' "$(cat '${woodpeckerOauthClientPath}')"
+              printf 'WOODPECKER_FORGEJO_SECRET=%s\n' "$(cat '${woodpeckerOauthSecretPath}')"
+              printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
+              printf 'WOODPECKER_OPEN=true\n'
+              printf 'WOODPECKER_ADMIN=${adminUsername}\n'
+            } > ${woodpeckerServerEnvPath}
+            {
+              printf 'WOODPECKER_SERVER=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
+              printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
+              printf 'WOODPECKER_AGENT_CONFIG_FILE=/etc/woodpecker/agent.conf\n'
+              printf 'WOODPECKER_BACKEND=docker\n'
+              printf 'WOODPECKER_HOSTNAME=lumo\n'
+              printf 'WOODPECKER_MAX_WORKFLOWS=1\n'
+              printf 'WOODPECKER_HEALTHCHECK_ADDR=127.0.0.1:${toString woodpeckerAgentHealthPort}\n'
+              printf 'DOCKER_HOST=unix:///var/run/docker.sock\n'
+            } > ${woodpeckerAgentEnvPath}
+            chmod 0400 ${woodpeckerServerEnvPath} ${woodpeckerAgentEnvPath}
+
+
+            install -Dm755 ${forgejoService} /etc/init.d/lumo-forgejo
+            install -Dm755 ${forgejoBootstrapService} /etc/init.d/lumo-forgejo-bootstrap
+            install -Dm755 ${woodpeckerServerService} /etc/init.d/lumo-woodpecker-server
+            install -Dm755 ${woodpeckerAgentService} /etc/init.d/lumo-woodpecker-agent
+
+            /sbin/rc-update add lumo-forgejo default
+            /sbin/rc-update add lumo-forgejo-bootstrap default
+            /sbin/rc-update add lumo-woodpecker-server default
+            /sbin/rc-update add lumo-woodpecker-agent default
+
+            # --nodeps: each service below is `need`ed by the next
+            # (forgejo -> forgejo-bootstrap -> woodpecker-server ->
+            # woodpecker-agent). A plain restart cascades to the already-running
+            # dependent, racing with the explicit restart_service call for it
+            # further down (flock contention, duplicate Forgejo API
+            # provisioning curl calls hitting a mid-restart container).
+            restart_service() {
+              service="$1"
+              if ! /sbin/rc-service --nodeps "$service" restart; then
+                sleep 5
+                /sbin/rc-service --nodeps "$service" restart
+              fi
+            }
+
+            restart_service lumo-forgejo
+            restart_service lumo-forgejo-bootstrap
+            restart_service lumo-woodpecker-server
+            restart_service lumo-woodpecker-agent
+          '';
+    })
+  ];
 }

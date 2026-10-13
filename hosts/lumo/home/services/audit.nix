@@ -58,6 +58,7 @@ let
       findutils
       gnugrep
       gnused
+      gzip
       iproute2
       jq
       procps
@@ -67,14 +68,10 @@ let
       set -euo pipefail
       umask 0027
 
-      # crond runs jobs with a stripped-down PATH (typically /usr/bin:/bin,
-      # without /sbin or /usr/sbin). OpenRC's own tooling (rc-status,
-      # rc-update) and the system busybox applets it internally shells out to
-      # live under /sbin and /usr/sbin, so without this the "openrc-*" and
-      # "system-log" records below silently fail every run. writeShellApplication
-      # inherits the caller's $PATH, so make sure the full system PATH is present
-      # regardless of how this script was invoked.
-      export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+      # OpenRC is supplied by Alpine, not Nix; Alpine 3.24 puts rc-status
+      # in /bin. Append the system PATH even under crond, keeping the
+      # runtimeInputs' GNU tools ahead of Alpine's BusyBox applets.
+      export PATH="$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
       runs_dir=${auditBaseDir}/runs
       timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -123,6 +120,39 @@ let
           >> "$status_log"
       }
 
+      collect_system_logs() {
+        local base suffix file status=0
+        printf '%s\n' \
+          'Coverage: sysklogd file logs; current files and rotations .0/.1/.2 (plain or gzip).' \
+          'Each file is capped at its last 500 lines and 65536 bytes; older rotations are omitted.' \
+          'This is bounded evidence, NOT a guaranteed complete 24-hour window.' \
+          'Missing rotations are normal; missing current files or read failures are collector gaps.'
+        for base in auth.log syslog messages daemon.log kern.log; do
+          for suffix in "" .0 .1 .2 .gz .0.gz .1.gz .2.gz; do
+            file="/var/log/$base$suffix"
+            printf '\n== %s ==\n' "$file"
+            if [ ! -f "$file" ]; then
+              printf 'MISSING: no evidence from this file.\n'
+              if [ -z "$suffix" ]; then status=1; fi
+              continue
+            fi
+            if [ ! -r "$file" ]; then
+              printf 'UNREADABLE: no evidence from this file.\n'
+              status=1
+              continue
+            fi
+            stat --printf='size_bytes=%s modified=%y\n' "$file" || status=1
+            if [[ "$file" == *.gz ]]; then
+              gzip -cd -- "$file" | tail -n 500 | tail -c 65536 || status=1
+            else
+              tail -n 500 -- "$file" | tail -c 65536 || status=1
+            fi
+            printf '\n'
+          done
+        done
+        return "$status"
+      }
+
       install -m 0640 -o root -g ${auditUser} \
         ${dotfiles + /hosts/homolab/apps/daily-audit/server-security-audit-guide.md} \
         "$context_dir/server-security-audit-guide.md"
@@ -137,20 +167,29 @@ let
       record ip6-route ip -6 route
       record listeners ss -tulpen
       record nftables /usr/sbin/nft list ruleset
-      record openrc-status /sbin/rc-status --all
-      record openrc-default /sbin/rc-status default
-      record service-list /sbin/rc-update show
+      record openrc-status rc-status --all
+      record openrc-default rc-status default
+      record service-list rc-update show
+      record host-sshd-status rc-service sshd status
+      record host-syslog-status rc-service sysklogd status
       record mounts findmnt --real
       record disk-free df -h
       record memory-free free -h
-      record processes ps auxww
+      # Process arguments and environment can contain credentials.
+      record processes ps -eo pid,ppid,user,stat,etime,comm
       record kernel-log dmesg
-      record system-log /bin/busybox logread
+      record system-log collect_system_logs
       record podman-containers ${pkgs.podman}/bin/podman ps --all
       record podman-stats ${pkgs.podman}/bin/podman stats --no-stream
-      # shellcheck disable=SC2016
-      record_shell service-statuses \
-        'for service in /etc/init.d/lumo-*; do printf "\n== %s ==\n" "$service"; "$service" status || true; done'
+      shopt -s nullglob
+      services=(/etc/init.d/lumo-*)
+      if [ "''${#services[@]}" -eq 0 ]; then
+        record_shell service-discovery 'printf "No /etc/init.d/lumo-* services found.\n"; exit 1'
+      fi
+      for service in "''${services[@]}"; do
+        record "service-$(basename "$service")-status" "$service" status
+      done
+      shopt -u nullglob
 
       jq -n \
         --arg collected_at "$(date --iso-8601=seconds)" \
