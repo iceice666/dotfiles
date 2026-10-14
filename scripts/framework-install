@@ -88,7 +88,7 @@ exec 9>/run/framework-install.lock
 flock --nonblock 9 || fail 'Another Framework installation is running.'
 disk_identity=$(lsblk --json --bytes --nodeps --output NAME,SIZE,MODEL,SERIAL,WWN "$disk")
 source_dir=${FRAMEWORK_INSTALL_SOURCE:-/etc/framework-dotfiles}
-[[ -f $source_dir/flake.lock && -f $source_dir/flake.nix ]] || fail 'Embedded flake is missing.'
+[[ -f $source_dir/flake.lock && -f $source_dir/flake.nix ]] || fail "Embedded flake is missing at $source_dir (expected flake.nix and flake.lock)."
 
 work=$(mktemp -d /tmp/framework-install.XXXXXX)
 trap 'rm -rf -- "$work"' EXIT

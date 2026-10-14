@@ -83,6 +83,21 @@ there is no automatic reboot, unmount, or retry that re-erases a disk. Resolve t
 error before rebooting. If only password setup failed after successful installation,
 use `sudo nixos-enter --root /mnt -c 'passwd iceice666'`.
 
+## Embedded source troubleshooting
+
+The packaged installer reads `/etc/framework-dotfiles`, the ISO-managed source
+link. If it reports a missing embedded flake, check both files before proceeding:
+
+```sh
+ls -l /etc/framework-dotfiles/flake.nix /etc/framework-dotfiles/flake.lock
+readlink -f /etc/framework-dotfiles
+```
+
+Older images may contain these files but have a launcher that exports a different,
+missing store path. Rebuild and rewrite the ISO with the corrected launcher; simply
+rebooting the old USB does not update it. This error occurs before disk erasure.
+`--dry-run` only checks the disk and prints the plan; it does not check the source.
+
 ## Disk layout
 
 | Partition | Size / format | Label / mounts |
@@ -132,7 +147,7 @@ the old installation. SSH root/password login remains disabled.
 ## Validation
 
 `just framework-install-test` checks shell syntax, arguments, read-only disk
-validation fixtures and guard ordering. The preflight is an evaluation/build-plan
+validation fixtures, packaged source-path wiring, source-file guards and guard ordering. The preflight is an evaluation/build-plan
 check, not proof that every required download or build will succeed. Packaging uses `writeShellApplication`
 for ShellCheck. `just framework-iso` builds the image; `just check` checks flake
 wiring. These do not test a real disk erase or firmware boot. Before relying on

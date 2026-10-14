@@ -21,7 +21,8 @@ let
       util-linux
     ];
     text = ''
-      export FRAMEWORK_INSTALL_SOURCE=${lib.escapeShellArg (toString dotfiles)}
+      # Use the packaged /etc source, not an evaluation-time path coerced to text.
+      export FRAMEWORK_INSTALL_SOURCE=/etc/framework-dotfiles
       export PATH=${
         lib.makeBinPath [
           config.system.build.nixos-install

@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -242,6 +243,42 @@ class CliTests(unittest.TestCase):
                 self.assertNotIn("Plan: ERASE", result.stdout)
 
 
+class EmbeddedSourceTests(unittest.TestCase):
+    def test_packaged_launcher_uses_etc_source(self):
+        configuration = (SCRIPT.parents[1] / "hosts/framework-installer/configuration.nix").read_text()
+        self.assertIn('"framework-dotfiles".source = dotfiles;', configuration)
+        self.assertIn("export FRAMEWORK_INSTALL_SOURCE=/etc/framework-dotfiles\n", configuration)
+        self.assertNotIn("toString dotfiles", configuration)
+
+    def test_source_check_accepts_complete_flake_and_reports_missing_files(self):
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("Bash is unavailable")
+        source = SCRIPT.read_text()
+        start = source.index("source_dir=${FRAMEWORK_INSTALL_SOURCE:")
+        end = source.index("\n\n", start)
+        # Execute only the exact source guard, never disk discovery or installation.
+        guard = "fail() { printf '%s\\n' \"$*\" >&2; exit 1; }\n" + source[start:end]
+        with tempfile.TemporaryDirectory(prefix="framework source ") as directory:
+            for files in ((), ("flake.nix",), ("flake.lock",), ("flake.nix", "flake.lock")):
+                with self.subTest(files=files):
+                    for name in ("flake.nix", "flake.lock"):
+                        path = Path(directory) / name
+                        if name in files:
+                            path.touch()
+                        elif path.exists():
+                            path.unlink()
+                    result = subprocess.run(
+                        [bash, "--noprofile", "--norc", "-c", guard],
+                        env={"PATH": "", "FRAMEWORK_INSTALL_SOURCE": directory},
+                        capture_output=True, text=True, timeout=5, check=False)
+                    if len(files) == 2:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                    else:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("Embedded flake is missing at " + directory, result.stderr)
+
+
 class SafetyOrderingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -342,7 +379,7 @@ class SafetyOrderingTests(unittest.TestCase):
             "[[ -t 0 && -t 1 ]]",
             "'/mnt already has mounts.'",
             "'/mnt must be empty.'",
-            "'Embedded flake is missing.'",
+            '"Embedded flake is missing at $source_dir',
         )
         for guard in guards:
             with self.subTest(guard=guard):
