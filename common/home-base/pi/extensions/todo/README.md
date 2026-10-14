@@ -158,4 +158,4 @@ bun install --frozen-lockfile --ignore-scripts
 bun test extensions/todo/tests
 ```
 
-`model.test.ts` 驗證狀態規則；`verification.test.ts` 與 `gate-extension.test.ts` 使用注入的離線 backend／人類授權 mock 驗證不可自證、cwd binding、取消、stale evidence、compaction、依賴重開與生命週期（不是 OS sandbox 安全測試）；`process.test.ts` 在 Linux/macOS 上用合成環境實際驗證 fingerprint、Git PATH fallback、cwd／環境繼承、退出碼、取消、超時及輸出上限；`extension.test.ts` 使用本機實際 Pi extension loader 搭配模擬 session/UI，驗證並行更新、分支還原、取消、指令、精簡輸出與窄螢幕顯示。快取回歸測試攔截實際 Anthropic adapter 的序列化請求，比對連續回合的前綴；自動壓縮測試使用真正 Pi session 與離線 provider，確認恢復快照不多啟動模型回合。測試不讀取真實憑證、不發送模型網路請求，SDK 固定為 package.json / bun.lock 的 Pi 0.85.1。
+`model.test.ts` 驗證狀態規則；`verification.test.ts` 與 `gate-extension.test.ts` 使用注入的離線 backend／人類授權 mock 驗證不可自證、cwd binding、取消、stale evidence、compaction、依賴重開與生命週期（不是 OS sandbox 安全測試）；`process.test.ts` 在 Linux/macOS 上用合成環境實際驗證 fingerprint、Git PATH fallback、cwd／環境繼承、退出碼、取消、超時及輸出上限；`extension.test.ts` 使用本機實際 Pi extension loader 搭配模擬 session/UI，驗證並行更新、分支還原、取消、指令、精簡輸出與窄螢幕顯示。快取回歸測試攔截實際 Anthropic adapter 的序列化請求，比對連續回合的前綴；自動壓縮測試使用真正 Pi session 與離線 provider，確認恢復快照不多啟動模型回合。測試不讀取真實憑證、不發送模型網路請求，SDK 固定為 package.json / bun.lock 的 Pi 1.2.0。

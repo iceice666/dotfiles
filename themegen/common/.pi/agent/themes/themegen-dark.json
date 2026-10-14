@@ -5,7 +5,7 @@ let local.tool_success_bg = mix(base16.dark.base0B, color.dark.surface_container
 let local.tool_error_bg = mix(base16.dark.base08, color.dark.surface_container_low, 0.180000, hex, hex)
 }}
 {
-  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "$schema": "https://pi.dev/schemas/theme.schema.json",
   "name": "themegen-dark",
   "colors": {
     "accent": "{{color.dark.primary}}",

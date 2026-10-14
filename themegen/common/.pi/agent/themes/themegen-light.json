@@ -5,7 +5,7 @@ let local.tool_success_bg = mix(base16.light.base0B, color.light.surface_contain
 let local.tool_error_bg = mix(base16.light.base08, color.light.surface_container_low, 0.180000, hex, hex)
 }}
 {
-  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "$schema": "https://pi.dev/schemas/theme.schema.json",
   "name": "themegen-light",
   "colors": {
     "accent": "{{color.light.primary}}",

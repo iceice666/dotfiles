@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import { getCurrentSystemPrompt, getCurrentTools, normalizeContext, type AssistantMessage } from "@earendil-works/pi-ai";
+import { buildSessionProjection, convertToLlm, type SessionEntry } from "@earendil-works/pi-coding-agent";
 import extension, { activeTools, supportsCacheWarm, warmCompactedContext } from "../index.ts";
 
 const usage = {
@@ -51,7 +52,7 @@ function setup(response: Promise<AssistantMessage> | AssistantMessage = reply())
     getSystemPrompt: () => "stable system prompt",
     sessionManager: {
       getSessionId: () => "session-123",
-      buildContextEntries: () => [
+      buildSessionProjection: () => buildSessionProjection([
         {
           type: "compaction",
           id: "compact-1",
@@ -68,7 +69,7 @@ function setup(response: Promise<AssistantMessage> | AssistantMessage = reply())
           timestamp: "1970-01-01T00:00:00.002Z",
           message: { role: "user", content: "retained tail", timestamp: 2 },
         },
-      ],
+      ] as SessionEntry[]),
     },
     modelRegistry: {
       complete: (...args: any[]) => {
@@ -136,6 +137,45 @@ test("warms the rebuilt compacted context with foreground cache identity", async
     ["cache-safe-compaction", "warming compacted cache…"],
     ["cache-safe-compaction", undefined],
   ]);
+});
+
+test("uses canonical edits and prompt/tool checkpoint without duplicating the system prompt", async () => {
+  const s = setup();
+  const timestamp = "1970-01-01T00:00:00.001Z";
+  const systemMessage: any = {
+    role: "system", content: "checkpoint prompt", timestamp: 0,
+    sections: { team: "team instructions" },
+    toolsAdded: [{ name: "read", description: "Checkpoint read", parameters: { type: "object" } }],
+  };
+  const entries: SessionEntry[] = [
+    { type: "compaction", id: "compact", parentId: null, timestamp,
+      summary: "memory", firstKeptEntryId: "compact", tokensBefore: 1000, systemMessage },
+    { type: "message", id: "omit", parentId: "compact", timestamp,
+      message: { role: "user", content: "must not be sent", timestamp: 1 } },
+    { type: "message", id: "replace", parentId: "omit", timestamp,
+      message: { role: "user", content: "old content", timestamp: 2 } },
+    { type: "context_edit", id: "edit-omit", parentId: "replace", timestamp,
+      targetId: "omit", replacement: null },
+    { type: "context_edit", id: "edit-replace", parentId: "edit-omit", timestamp,
+      targetId: "replace", replacement: { content: "replacement content" } },
+    { type: "message", id: "tools", parentId: "edit-replace", timestamp,
+      message: { role: "system", content: "", timestamp: 3,
+        toolsRemoved: [{ name: "read" }],
+        toolsAdded: [{ name: "write", description: "Updated write", parameters: { type: "object" } }] } },
+  ];
+  s.ctx.sessionManager.buildSessionProjection = () => buildSessionProjection(entries);
+  await warmCompactedContext(s.pi, s.ctx, { signal: new AbortController().signal });
+
+  const context = s.calls[0][1];
+  expect(context.systemPrompt).toBeUndefined();
+  expect(context.tools).toBeUndefined();
+  expect(context.messages).toEqual(convertToLlm(buildSessionProjection(entries).messages));
+  expect(JSON.stringify(context)).not.toContain("must not be sent");
+  expect(JSON.stringify(context)).not.toContain("old content");
+  expect(JSON.stringify(context)).toContain("replacement content");
+  const transcript = normalizeContext(context);
+  expect(getCurrentSystemPrompt(transcript.messages)).toBe("checkpoint prompt\n\nteam instructions");
+  expect(getCurrentTools(transcript.messages).map(tool => tool.name)).toEqual(["write"]);
 });
 
 test("preserves foreground active-tool order and ignores unknown names", () => {

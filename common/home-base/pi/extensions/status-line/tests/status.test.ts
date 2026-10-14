@@ -63,7 +63,7 @@ test('footer event bridge, editor wrapping, prompt isolation and shutdown cleanu
   expect(editor.handleInput).toBe(originalInput);
 });
 
-test('session usage includes assistant, tool and summary usage', () => {
+test('session usage includes assistant, tool, summary and standalone usage', () => {
   const usage = (input: number, cacheRead: number, output: number, cacheWrite: number) => ({ input, cacheRead, output, cacheWrite });
   expect(sessionTokenUsage([
     { type: 'message', message: { role: 'assistant', usage: usage(10, 20, 3, 4) } },
@@ -71,7 +71,8 @@ test('session usage includes assistant, tool and summary usage', () => {
     { type: 'message', message: { role: 'user' } },
     { type: 'compaction', usage: usage(1, 2, 3, 4) },
     { type: 'branch_summary', usage: usage(9, 8, 7, 6) },
-  ] as any)).toEqual({ input: 25, cacheRead: 36, output: 20, cacheWrite: 22 });
+    { type: 'usage', kind: 'cache_warm', usage: usage(2, 30, 1, 5) },
+  ] as any)).toEqual({ input: 27, cacheRead: 66, output: 21, cacheWrite: 27 });
 });
 
 test('one row per live worker, including idle; terminal states disappear', () => {

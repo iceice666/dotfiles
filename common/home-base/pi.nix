@@ -66,16 +66,16 @@ let
     };
   };
 
-  # Upstream 3.1.3 plus the repo-owned rate-limit fallback patch. The patch is
-  # generated against this exact tag: bump both together and re-run the upstream
-  # vitest suite from a checkout before changing `rev`.
+  # Upstream 3.1.4 plus rate-limit fallback and Pi 1.2.0 worker compatibility.
+  # Regenerate against this exact tag and run vitest + tsc against the deployed
+  # Pi SDK (see pi/README.md), not only upstream's older locked SDK.
   observationalMemory = pkgs.applyPatches {
-    name = "pi-observational-memory-3.1.3-patched";
+    name = "pi-observational-memory-3.1.4-patched";
     src = pkgs.fetchFromGitHub {
       owner = "elpapi42";
       repo = "pi-observational-memory";
-      rev = "3.1.3";
-      hash = "sha256-E6ldxcWo3CWM6ugCEsobesRFkn7J9AtQFd0GFXqhMLI=";
+      rev = "3.1.4";
+      hash = "sha256-nec9q3Y/mKH4+qj5wPIOtEXizQKrKl1k0/WuCMXApNE=";
     };
     patches = [ ./pi/patches/observational-memory-rate-limit-fallback.patch ];
   };

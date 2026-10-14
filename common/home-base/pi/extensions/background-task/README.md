@@ -73,4 +73,4 @@ bun install --frozen-lockfile --ignore-scripts
 bun test extensions/background-task/tests
 ```
 
-整合測試使用 package.json / bun.lock 固定的本地 Pi 0.85.1 開發 SDK；不需要全域安裝或模型請求。
+整合測試使用 package.json / bun.lock 固定的本地 Pi 1.2.0 開發 SDK；不需要全域安裝或模型請求。

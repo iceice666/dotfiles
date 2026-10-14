@@ -2,7 +2,9 @@
 
 `../pi.nix` builds `extensions/` into one Nix store tree for every host with
 `features.pi = true` (m5pro, framework, and homolab). Only the managed `pi`
-launcher loads it, with `--no-extensions` and explicit store paths. The
+launcher loads it, with `--no-extensions` and explicit store paths. Pi's bundled
+built-in extensions also remain disabled by that flag; only the explicit managed
+extension tree is loaded. The
 auto-discovery directory `~/.pi/agent/extensions/` receives just
 `unmanaged-pi-guard.ts`: an unmanaged Pi (for example a Bun/npm global install
 earlier on `PATH`) may load inconsistent extension versions, and after a
@@ -21,7 +23,7 @@ every tool in such a process. Unrelated local extensions are left alone.
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
-| `observational-memory/` | Upstream Observational Memory 3.1.3 plus the repo-owned rate-limit fallback patch, pinned and installed by Nix for durable ledger-backed memory |
+| `observational-memory/` | Upstream Observational Memory 3.1.4 plus the repo-owned rate-limit fallback and Pi 1.2.0 compatibility patch, pinned and installed by Nix for durable ledger-backed memory |
 | `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
@@ -103,9 +105,13 @@ other hosts keep the built-in `light/dark` pair. Changing the theme via
 
 ## Observational memory and cache-safe compaction
 
-Nix pins upstream `pi-observational-memory` 3.1.3, applies
+Nix pins upstream `pi-observational-memory` 3.1.4, applies
 `patches/observational-memory-rate-limit-fallback.patch`, and installs the
-resulting `src/` as the managed `observational-memory/` extension. Do not also
+resulting `src/` as the managed `observational-memory/` extension. The patched
+source targets Pi 1.2.0: worker instructions are leading system messages, and
+`finishTurn` ends each worker at its configured turn budget without forcing
+another request. Upstream 3.1.4 also preserves the model registry receiver when
+streaming. Do not also
 run `pi install npm:pi-observational-memory`; duplicate copies would register
 competing memory workers and compaction hooks. The managed defaults use
 `cliproxyapi/gpt-6.1-sol` at low thinking for background observer/reflector/dropper
@@ -135,8 +141,23 @@ tried anyway, so a stale cooldown cannot disable memory.
 
 The patch is generated against the exact upstream tag in `../pi.nix`. To bump
 the pin, clone the new tag, apply the patch, resolve any conflicts, run the
-upstream suite (`npm install && npx vitest run && npx tsc --noEmit`), and
-regenerate the patch with `git diff` before changing `rev` and `hash`.
+upstream suite with lifecycle scripts disabled, and regenerate the patch with
+`git diff -- src tests` before changing `rev` and `hash`. Upstream's lockfile
+uses an older Pi SDK, so validate the patched source against the deployed SDK,
+not only upstream's development dependencies:
+
+```sh
+npm ci --ignore-scripts
+npm install --ignore-scripts --no-save \
+  @earendil-works/pi-agent-core@1.2.0 @earendil-works/pi-ai@1.2.0 \
+  @earendil-works/pi-coding-agent@1.2.0 @earendil-works/pi-tui@1.2.0
+env -u PI_PACKAGE_DIR npx vitest run
+env -u PI_PACKAGE_DIR npx tsc --noEmit
+```
+
+The patch also updates prompt/turn-budget tests and the mock OAuth runtime for
+that SDK; its HTTP fixture checks that worker system instructions reach the
+provider. These tests use a loopback mock, not live credentials or models.
 
 Observational Memory owns the content of an extension-provided compaction:
 ledger entries are folded into a deterministic memory summary. The sibling

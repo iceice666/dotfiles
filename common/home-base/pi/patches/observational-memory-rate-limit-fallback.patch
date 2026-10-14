@@ -1,3 +1,73 @@
+diff --git a/src/agents/dropper/agent.ts b/src/agents/dropper/agent.ts
+index accc94d..e769c69 100644
+--- a/src/agents/dropper/agent.ts
++++ b/src/agents/dropper/agent.ts
+@@ -239,7 +239,7 @@ export async function runDropper(args: RunDropperArgs): Promise<string[] | undef
+ 	const fullnessPercent = Math.round(fullness * 100);
+ 	const userText = `CURRENT REFLECTIONS:\n${joinOrEmpty(reflections.map(reflectionToSummaryLine))}\n\nCURRENT OBSERVATIONS:\n${joinOrEmpty(observations.map((observation) => observationToDropperLine(observation, coverageTierForObservation(observation, coverageById))))}\n\nActive observation pool: ~${observationTokens.toLocaleString()} tokens; target: ~${targetTokens.toLocaleString()} tokens; fullness against target: ~${fullnessPercent.toLocaleString()}%; over target by ~${tokensOverTarget.toLocaleString()} tokens.\nMaximum drops allowed this run: ${maxDropsAllowed.toLocaleString()} observation${maxDropsAllowed === 1 ? "" : "s"}. This maximum is sized to move the active pool toward the target if every proposed drop is clearly safe.\nThis maximum is a hard upper bound, not a target. Drop fewer or none if fewer observations are clearly safe.`;
+ 	const prompts: Message[] = [{ role: "user", content: [{ type: "text", text: userText }], timestamp: Date.now() }];
+-	const context: AgentContext = { systemPrompt: DROPPER_SYSTEM, messages: [], tools: [dropObservations as AgentTool<any>] };
++	const context: AgentContext = { messages: [{ role: "system", content: DROPPER_SYSTEM, timestamp: Date.now() }], tools: [dropObservations as AgentTool<any>] };
+ 	const reasoning = (model as { reasoning?: unknown }).reasoning;
+ 	const thinkingLevel = args.thinkingLevel ?? "low";
+ 	const effectiveMaxTurns = args.maxTurns && args.maxTurns > 0 ? args.maxTurns : undefined;
+@@ -253,7 +253,7 @@ export async function runDropper(args: RunDropperArgs): Promise<string[] | undef
+ 		convertToLlm: (msgs) => msgs as Message[],
+ 		toolExecution: "sequential",
+ 		...(reasoning && thinkingLevel !== "off" ? { reasoning: thinkingLevel } : {}),
+-		...(effectiveMaxTurns !== undefined ? { shouldStopAfterTurn: () => ++turnCount >= effectiveMaxTurns } : {}),
++		...(effectiveMaxTurns !== undefined ? { finishTurn: () => ++turnCount >= effectiveMaxTurns ? { action: "end" as const } : undefined } : {}),
+ 	};
+ 
+ 	const loop = args.agentLoop ?? agentLoop;
+diff --git a/src/agents/observer/agent.ts b/src/agents/observer/agent.ts
+index d70dd3d..51c6ee0 100644
+--- a/src/agents/observer/agent.ts
++++ b/src/agents/observer/agent.ts
+@@ -185,8 +185,7 @@ ${conversation}`;
+ 	];
+ 
+ 	const context: AgentContext = {
+-		systemPrompt: OBSERVER_SYSTEM,
+-		messages: [],
++		messages: [{ role: "system", content: OBSERVER_SYSTEM, timestamp: Date.now() }],
+ 		tools: [recordObservations as AgentTool<any>],
+ 	};
+ 
+@@ -205,9 +204,9 @@ ${conversation}`;
+ 		...(reasoning && thinkingLevel !== "off" ? { reasoning: thinkingLevel } : {}),
+ 		...(effectiveMaxTurns !== undefined
+ 			? {
+-				shouldStopAfterTurn: () => {
++				finishTurn: () => {
+ 					turnCount++;
+-					return turnCount >= effectiveMaxTurns;
++					return turnCount >= effectiveMaxTurns ? { action: "end" as const } : undefined;
+ 				},
+ 			}
+ 			: {}),
+diff --git a/src/agents/reflector/agent.ts b/src/agents/reflector/agent.ts
+index da8cf3e..e604b6d 100644
+--- a/src/agents/reflector/agent.ts
++++ b/src/agents/reflector/agent.ts
+@@ -172,7 +172,7 @@ export async function runReflector(args: RunReflectorArgs): Promise<Reflection[]
+ 
+ 	const userText = `CURRENT REFLECTIONS:\n${joinOrEmpty(reflections.map(reflectionToSummaryLine))}\n\nCURRENT OBSERVATIONS:\n${joinOrEmpty(observations.map((observation) => observationToReflectorLine(observation, coverageTierForObservation(observation, coverageById))))}\n\nCrystallize any missing durable facts or patterns into new reflections. If nothing is stable enough, do not call the tool.`;
+ 	const prompts: Message[] = [{ role: "user", content: [{ type: "text", text: userText }], timestamp: Date.now() }];
+-	const context: AgentContext = { systemPrompt: REFLECTOR_SYSTEM, messages: [], tools: [recordReflections as AgentTool<any>] };
++	const context: AgentContext = { messages: [{ role: "system", content: REFLECTOR_SYSTEM, timestamp: Date.now() }], tools: [recordReflections as AgentTool<any>] };
+ 	const reasoning = (model as { reasoning?: unknown }).reasoning;
+ 	const thinkingLevel = args.thinkingLevel ?? "low";
+ 	const effectiveMaxTurns = args.maxTurns && args.maxTurns > 0 ? args.maxTurns : undefined;
+@@ -186,7 +186,7 @@ export async function runReflector(args: RunReflectorArgs): Promise<Reflection[]
+ 		convertToLlm: (msgs) => msgs as Message[],
+ 		toolExecution: "sequential",
+ 		...(reasoning && thinkingLevel !== "off" ? { reasoning: thinkingLevel } : {}),
+-		...(effectiveMaxTurns !== undefined ? { shouldStopAfterTurn: () => ++turnCount >= effectiveMaxTurns } : {}),
++		...(effectiveMaxTurns !== undefined ? { finishTurn: () => ++turnCount >= effectiveMaxTurns ? { action: "end" as const } : undefined } : {}),
+ 	};
+ 
+ 	const loop = args.agentLoop ?? agentLoop;
 diff --git a/src/agents/stream-errors.ts b/src/agents/stream-errors.ts
 index d2b8bd0..7d74267 100644
 --- a/src/agents/stream-errors.ts
@@ -473,6 +543,32 @@ index a21cdc1..da69a65 100644
  			showWorkerNotifications: true,
  			passive: false,
  			debugLog: false,
+diff --git a/tests/dropper.test.ts b/tests/dropper.test.ts
+index e8644a4..c9001f6 100644
+--- a/tests/dropper.test.ts
++++ b/tests/dropper.test.ts
+@@ -116,10 +116,20 @@ describe("V3 dropper agent", () => {
+ 		expect(maxDropCountForPool(observations, 40, 20)).toBe(2);
+ 	});
+ 
++	it("ends after the configured turn budget without forcing another request", async () => {
++		let finishTurn: any;
++		const loop = fakeAgentLoop((_prompts, _context, config) => {
++			finishTurn = config.finishTurn;
++		});
++		await runDropper({ ...baseArgs, agentLoop: loop, maxTurns: 2 });
++		expect(finishTurn({})).toBeUndefined();
++		expect(finishTurn({})).toEqual({ action: "end" });
++	});
++
+ 	it("keeps core dropper safety guidance in V3 terms", async () => {
+ 		let systemPrompt = "";
+ 		const loop = fakeAgentLoop((_prompts, context) => {
+-			systemPrompt = context.systemPrompt;
++			systemPrompt = context.messages.find((message: any) => message.role === "system")?.content;
+ 		});
+ 
+ 		await runDropper({ ...baseArgs, agentLoop: loop });
 diff --git a/tests/model-fallback.test.ts b/tests/model-fallback.test.ts
 new file mode 100644
 index 0000000..397b6db
@@ -665,3 +761,92 @@ index 0000000..397b6db
 +		expect(result).toEqual({ ok: false, reason: 'no API key or auth headers for provider "cliproxyapi"' });
 +	});
 +});
+diff --git a/tests/oauth-end-to-end.test.ts b/tests/oauth-end-to-end.test.ts
+index bf34ee9..eb9b1ad 100644
+--- a/tests/oauth-end-to-end.test.ts
++++ b/tests/oauth-end-to-end.test.ts
+@@ -3,6 +3,7 @@ import { AddressInfo } from "node:net";
+ import { afterEach, describe, expect, it, vi } from "vitest";
+ 
+ import { ModelRegistry } from "@earendil-works/pi-coding-agent";
++import { streamSimple } from "@earendil-works/pi-ai/compat";
+ 
+ import { DEFAULTS } from "../src/config.js";
+ import { registerConsolidationTrigger } from "../src/hooks/consolidation-trigger.js";
+@@ -93,6 +94,7 @@ function oauthModelRegistry(): any {
+ 	return new ModelRegistry({
+ 		getAuth: async () => undefined,
+ 		getCompatibilityRequestConfig: () => ({ headers: { Authorization: OAUTH_TOKEN }, authHeader: false }),
++		streamSimple,
+ 		isUsingOAuth: (providerId: string) => providerId === "kimi-coding",
+ 	} as any);
+ }
+@@ -164,6 +166,7 @@ describe("OAuth provider end-to-end consolidation", () => {
+ 		expect(requests).toHaveLength(1);
+ 		expect(requests[0].headers.authorization).toBe(OAUTH_TOKEN);
+ 		expect(requests[0].headers["x-api-key"]).toBeUndefined();
++		expect(requests[0].body.system.map((block: any) => block.text).join("\n")).toContain("Preserve user assertions exactly");
+ 
+ 		// The observation reached the session ledger; nothing was skipped.
+ 		const recorded = appended.filter((entry) => entry.customType === OM_OBSERVATIONS_RECORDED);
+diff --git a/tests/observer.test.ts b/tests/observer.test.ts
+index 1f576ef..35cfd43 100644
+--- a/tests/observer.test.ts
++++ b/tests/observer.test.ts
+@@ -95,7 +95,7 @@ describe("runObserver", () => {
+ 	it("keeps core observer prompt rules", async () => {
+ 		let systemPrompt = "";
+ 		const loop = fakeAgentLoop((_prompts, context) => {
+-			systemPrompt = context.systemPrompt;
++			systemPrompt = context.messages.find((message: any) => message.role === "system")?.content;
+ 		});
+ 
+ 		await runObserver({ ...baseArgs, agentLoop: loop });
+@@ -188,16 +188,16 @@ describe("runObserver", () => {
+ 	});
+ 
+ 	it("uses maxTurns as an observer turn cap", async () => {
+-		let shouldStopAfterTurn: any;
++		let finishTurn: any;
+ 		const loop = fakeAgentLoop((_prompts, _context, config) => {
+-			shouldStopAfterTurn = config.shouldStopAfterTurn;
++			finishTurn = config.finishTurn;
+ 		});
+ 
+ 		await runObserver({ ...baseArgs, agentLoop: loop, maxTurns: 2 });
+ 
+-		expect(shouldStopAfterTurn).toBeTypeOf("function");
+-		expect(shouldStopAfterTurn({})).toBe(false);
+-		expect(shouldStopAfterTurn({})).toBe(true);
++		expect(finishTurn).toBeTypeOf("function");
++		expect(finishTurn({})).toBeUndefined();
++		expect(finishTurn({})).toEqual({ action: "end" });
+ 	});
+ 
+ 	it("uses configured observer thinking level for reasoning models", async () => {
+diff --git a/tests/reflector.test.ts b/tests/reflector.test.ts
+index 65fa52b..8bc0902 100644
+--- a/tests/reflector.test.ts
++++ b/tests/reflector.test.ts
+@@ -81,10 +81,20 @@ describe("V3 reflector agent", () => {
+ 		observations: [obsA, obsB],
+ 	};
+ 
++	it("ends after the configured turn budget without forcing another request", async () => {
++		let finishTurn: any;
++		const loop = fakeAgentLoop((_prompts, _context, config) => {
++			finishTurn = config.finishTurn;
++		});
++		await runReflector({ ...baseArgs, agentLoop: loop, maxTurns: 2 });
++		expect(finishTurn({})).toBeUndefined();
++		expect(finishTurn({})).toEqual({ action: "end" });
++	});
++
+ 	it("keeps core reflector prompt guidance in V3 terms", async () => {
+ 		let systemPrompt = "";
+ 		const loop = fakeAgentLoop((_prompts, context) => {
+-			systemPrompt = context.systemPrompt;
++			systemPrompt = context.messages.find((message: any) => message.role === "system")?.content;
+ 		});
+ 
+ 		await runReflector({ ...baseArgs, agentLoop: loop });

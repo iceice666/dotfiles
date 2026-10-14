@@ -248,7 +248,7 @@ node --test extensions/agent-team/tests/*.test.mjs
 bun test extensions/agent-team/tests/*.test.ts
 ```
 
-Requires Node 22.19+ and Bun. Tests use the pinned local Pi 0.85.1 development SDK,
+Requires Node 22.19+ and Bun. Tests use the pinned local Pi 1.2.0 development SDK,
 not a global installation. The two legacy real-Pi smoke tests are skipped: they
 inherit personal configuration and do not have an isolated, fail-closed provider
 fixture. `--offline` alone does not prohibit completion API calls. No live model

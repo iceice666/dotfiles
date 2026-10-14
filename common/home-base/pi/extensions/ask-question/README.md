@@ -74,6 +74,6 @@ bun install --frozen-lockfile --ignore-scripts
 bun test extensions/ask-question/tests
 ```
 
-測試使用 package.json / bun.lock 固定的本地 Pi 0.85.1 開發 SDK，直接操作實際元件的按鍵序列，覆蓋單/複選、
+測試使用 package.json / bun.lock 固定的本地 Pi 1.2.0 開發 SDK，直接操作實際元件的按鍵序列，覆蓋單/複選、
 分頁往返與草稿保留、多行/長貼上展開、IME 游標標記、明確提交與缺答阻擋、長問題換行與溢位提示、全文捲動、
 窄/矮終端、結果摘要與展開、JSON 保留、RPC、取消與 shutdown、跨 loader 排隊和輸入驗證，不需要模型請求；開發依賴只安裝於 checkout，不會部署到 Home Manager。

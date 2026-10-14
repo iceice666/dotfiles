@@ -6,9 +6,11 @@ that creates the summary: Observational Memory or Pi's native summarizer keeps
 sole ownership of `session_before_compact`, while this extension observes only
 `session_compact`.
 
-The warm request rebuilds the active post-compaction messages, effective system
-prompt and active tools, then sends a non-persisted, low-output request with the
-foreground session ID. Reusing that ID preserves Pi's `prompt_cache_key` and the
+The warm request uses Pi's canonical session projection, including branch-relative
+context omissions/replacements and the compaction's system prompt/tool checkpoint,
+then sends a non-persisted, low-output request with the foreground session ID.
+Legacy sessions without system messages fall back to the effective system prompt
+and active tools. Reusing that ID preserves Pi's `prompt_cache_key` and the
 CLIProxyAPI affinity headers. The response is discarded and never enters the
 session.
 

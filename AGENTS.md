@@ -251,8 +251,10 @@ same extension tree includes the Nix-pinned upstream `pi-observational-memory`
 source, patched by `common/home-base/pi/patches/` so background memory work
 falls back from a rate-limited `cliproxyapi/gpt-6.1-sol` to
 `cliproxyapi-claude/claude-sonnet-5-5` for a bounded cooldown. The patch is tied
-to the pinned upstream tag: regenerate and re-run the upstream test suite when
-bumping it. Keep sibling directories together: agent-team imports ask-question's
+to the pinned upstream tag and also adapts its agents to Pi 1.2.0's transcript
+system messages and `finishTurn` boundaries: regenerate and re-run the upstream
+test suite and type check against the pinned Pi SDK when bumping either version.
+Keep sibling directories together: agent-team imports ask-question's
 service. Observational Memory owns `session_before_compact`; the cache-safe
 extension observes only `session_compact` and must not compete for summary
 ownership.

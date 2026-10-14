@@ -10,7 +10,7 @@ export function sessionTokenUsage(entries: SessionEntry[]): TokenUsage {
   for (const entry of entries) {
     const usage = entry.type === "message"
       ? entry.message.role === "assistant" || entry.message.role === "toolResult" ? entry.message.usage : undefined
-      : entry.type === "compaction" || entry.type === "branch_summary" ? entry.usage : undefined;
+      : entry.type === "compaction" || entry.type === "branch_summary" || entry.type === "usage" ? entry.usage : undefined;
     if (!usage) continue;
     totals.input += usage.input;
     totals.cacheRead += usage.cacheRead;

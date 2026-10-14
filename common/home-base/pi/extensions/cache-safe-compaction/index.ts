@@ -1,6 +1,5 @@
 import {
   convertToLlm,
-  sessionEntryToContextMessages,
   type ExtensionAPI,
   type ExtensionContext,
   type SessionCompactEvent,
@@ -55,14 +54,12 @@ export async function warmCompactedContext(
   const model = ctx.model;
   if (!supportsCacheWarm(model) || options.signal.aborted) return;
 
-  const agentMessages = ctx.sessionManager
-    .buildContextEntries()
-    .flatMap(sessionEntryToContextMessages);
-  const context: Context = {
-    systemPrompt: ctx.getSystemPrompt(),
-    messages: convertToLlm(agentMessages),
-    tools: activeTools(pi),
-  };
+  // Projection applies branch-relative context edits and replays the compaction's
+  // prompt/tool checkpoint. Adding a legacy systemPrompt would duplicate it.
+  const messages = convertToLlm(ctx.sessionManager.buildSessionProjection().messages);
+  const context: Context = messages.some(message => message.role === "system")
+    ? { messages }
+    : { systemPrompt: ctx.getSystemPrompt(), messages, tools: activeTools(pi) };
   const timeoutMs = options.timeoutMs ?? WARM_TIMEOUT_MS;
   const controller = new AbortController();
   const abort = () => controller.abort();
