@@ -250,6 +250,35 @@ class EmbeddedSourceTests(unittest.TestCase):
         self.assertIn("export FRAMEWORK_INSTALL_SOURCE=/etc/framework-dotfiles\n", configuration)
         self.assertNotIn("toString dotfiles", configuration)
 
+    def test_symlink_source_copies_contents_into_writable_directory(self):
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("Bash is unavailable")
+        source = SCRIPT.read_text()
+        command = next(line for line in source.splitlines() if line.startswith("cp -a -- "))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = root / "store-source"
+            store.mkdir()
+            flake = store / "flake.nix"
+            flake.write_text("original")
+            flake.chmod(0o444)
+            link = root / "etc-source"
+            link.symlink_to(store, target_is_directory=True)
+            repo = root / "copied-repo"
+            result = subprocess.run(
+                [bash, "--noprofile", "--norc", "-c", command],
+                env={"PATH": str(Path(shutil.which("cp")).parent),
+                     "source_dir": str(link), "repo": str(repo)},
+                capture_output=True, text=True, timeout=5, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse(repo.is_symlink())
+            copied = repo / "flake.nix"
+            copied.chmod(0o644)
+            copied.write_text("patched")
+            self.assertEqual(flake.read_text(), "original")
+            self.assertEqual(flake.stat().st_mode & 0o777, 0o444)
+
     def test_source_check_accepts_complete_flake_and_reports_missing_files(self):
         bash = shutil.which("bash")
         if bash is None:

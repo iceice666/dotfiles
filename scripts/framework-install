@@ -94,7 +94,8 @@ work=$(mktemp -d /tmp/framework-install.XXXXXX)
 trap 'rm -rf -- "$work"' EXIT
 trap 'printf "Installation failed. Do not reboot until resolved; inspect /mnt.\n" >&2' ERR
 repo=$work/dotfiles
-cp -a -- "$source_dir" "$repo"
+# The /etc source is a symlink into the read-only store; copy its contents.
+cp -a -- "$source_dir/." "$repo"
 chmod -R u+w "$repo"
 # The ESP gets a new FAT UUID. Change only the copied target, not the running host.
 python3 - "$repo/hosts/framework/configuration/hardware-configuration.nix" <<'PY'
