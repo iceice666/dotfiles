@@ -90,9 +90,15 @@ disk_identity=$(lsblk --json --bytes --nodeps --output NAME,SIZE,MODEL,SERIAL,WW
 source_dir=${FRAMEWORK_INSTALL_SOURCE:-/etc/framework-dotfiles}
 [[ -f $source_dir/flake.lock && -f $source_dir/flake.nix ]] || fail "Embedded flake is missing at $source_dir (expected flake.nix and flake.lock)."
 
+# Keep this process and its local-store builds above the usual 1024-file limit.
+[[ $(ulimit -Hn) == unlimited || $(ulimit -Hn) -ge 65536 ]] || fail 'Open-file hard limit must be at least 65536; raise it before installing.'
+if [[ $(ulimit -Sn) != unlimited && $(ulimit -Sn) -lt 65536 ]]; then
+  ulimit -Sn 65536 || fail 'Could not raise the open-file soft limit to 65536.'
+fi
+
 work=$(mktemp -d /tmp/framework-install.XXXXXX)
 trap 'rm -rf -- "$work"' EXIT
-trap 'printf "Installation failed. Do not reboot until resolved; inspect /mnt.\n" >&2' ERR
+trap 'printf "Installation failed. Do not reboot or rerun the erasing installer; inspect /mnt.\n" >&2; df -h / /tmp /nix/store /mnt /mnt/nix /mnt/boot >&2 || true; df -i / /tmp /mnt /mnt/nix >&2 || true' ERR
 repo=$work/dotfiles
 # The /etc source is a symlink into the read-only store; copy its contents.
 cp -a -- "$source_dir/." "$repo"
@@ -165,12 +171,32 @@ mount -o "subvol=@nix,$options" "$root" /mnt/nix
 mount -o "subvol=@log,$options" "$root" /mnt/var/log
 mount -o fmask=0077,dmask=0077 "$efi" /mnt/boot
 
+# Preserve patched sources for recovery, even if installation fails below.
+mkdir -p /mnt/root /mnt/var/tmp
+cp -a -- "$repo" /mnt/root/framework-install-recovery
+repo=/mnt/root/framework-install-recovery
+rm -rf -- "$work"
+
+# Override inherited Live ISO temp/cache settings; all heavy work belongs on SSD.
+install_work=$(mktemp -d /mnt/var/tmp/framework-install.XXXXXX)
+export TMPDIR=$install_work/build
+export XDG_CACHE_HOME=$install_work/cache
+chmod 0755 "$install_work"
+mkdir -m 0755 "$TMPDIR"
+mkdir -m 0700 "$XDG_CACHE_HOME"
+[[ $(findmnt -rn -o TARGET -T "$TMPDIR") == /mnt ]] || fail 'Build temporary directory is not on the target root filesystem.'
+printf '\nBuild temp/cache: %s; recovery source: %s\n' "$install_work" "$repo"
+
+# The preflight used the live store; reevaluate derivations for the target store.
 nixos-install --root /mnt --flake "path:$repo#framework" \
+  --option eval-cache false \
+  --option build-dir "$TMPDIR" --max-jobs 2 \
   --no-write-lock-file --no-root-passwd --no-channel-copy
 nixos-enter --root /mnt -c 'passwd iceice666'
 mkdir -p /mnt/home/iceice666
 cp -a "$repo" /mnt/home/iceice666/dotfiles
 nixos-enter --root /mnt -c 'chown -R iceice666:users /home/iceice666/dotfiles'
+rm -rf -- "$install_work"
 printf '\nInstalled. Root login remains locked; use iceice666 and sudo.\n'
 printf 'Repo: ~/dotfiles (staged snapshot, no original Git history).\n'
 printf 'Restore your SSH identity separately, then activate Home Manager secrets.\n'

@@ -61,7 +61,12 @@ or restore data. Do not proceed if you cannot recover your credentials/data.
 5. The tool first evaluates the target and checks its build plan using a dry run,
    while the old disk is intact. This is **not** a full build/download check:
    actual installation builds into the target disk's store **after erasure**, avoiding
-   the Live ISO's RAM-backed store filling up. Download/build failures after erasure
+   the Live ISO's RAM-backed store filling up. Installation disables the Nix evaluation
+   cache so it does not reuse preflight derivation paths absent from the target store.
+   Before erasure, the installer requires an open-file hard limit of at least 65536
+   and sets its soft limit to 65536. Target builds use at most two concurrent jobs.
+   After mounting the SSD, it explicitly places temporary builds and caches under
+   `/mnt/var/tmp/framework-install.*`, overriding inherited Live ISO settings. Download/build failures after erasure
    cannot restore old data. Review the displayed model/serial and backup; enter the
    exact `ERASE /dev/...` confirmation shown. Only then does partitioning start. It rejects mounted disks, active swap or
    mapped devices, read-only disks, competing NixOS filesystem labels, and nonempty
@@ -80,7 +85,15 @@ or restore data. Do not proceed if you cannot recover your credentials/data.
 Never remove the USB or interrupt power during installation. Once erasure begins,
 errors do not roll back. A failed install leaves `/mnt` mounted for inspection;
 there is no automatic reboot, unmount, or retry that re-erases a disk. Resolve the
-error before rebooting. If only password setup failed after successful installation,
+error before rebooting. The installer prints filesystem capacity and inode usage on failure. `No space
+left on device` can mean a full Live overlay, target filesystem, ESP or exhausted
+inodes; the message alone does not identify which. Do not delete store paths or
+rerun the erasing installer to recover. After mounting the target, the patched
+source is preserved at `/mnt/root/framework-install-recovery` and build temporary
+files are retained on failure for inspection. Temporary builds/caches are removed
+only after successful installation, password setup and source copy.
+
+If only password setup failed after successful installation,
 use `sudo nixos-enter --root /mnt -c 'passwd iceice666'`.
 
 ## Embedded source troubleshooting

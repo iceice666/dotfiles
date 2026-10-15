@@ -334,6 +334,8 @@ class SafetyOrderingTests(unittest.TestCase):
         source = self.source
         install = re.search(
             r'^nixos-install --root /mnt --flake "path:\$repo#framework" '
+            r'\\\n  --option eval-cache false '
+            r'\\\n  --option build-dir "\$TMPDIR" --max-jobs 2 '
             r'\\\n  --no-write-lock-file --no-root-passwd --no-channel-copy$',
             source, re.MULTILINE)
         self.assertIsNotNone(install)
@@ -349,6 +351,39 @@ class SafetyOrderingTests(unittest.TestCase):
                 self.assertLess(source.index(mount), install.start())
         self.assertNotIn('system=$(readlink -e "$work/system")', source)
         self.assertNotIn('nixos-install --root /mnt --system', source)
+
+    def test_target_resources_are_configured_before_install(self):
+        source = self.source
+        install = source.index('\nnixos-install --root /mnt')
+        boot_mount = source.index('mount -o fmask=0077,dmask=0077 "$efi" /mnt/boot')
+        settings = (
+            'cp -a -- "$repo" /mnt/root/framework-install-recovery',
+            'repo=/mnt/root/framework-install-recovery',
+            'install_work=$(mktemp -d /mnt/var/tmp/framework-install.XXXXXX)',
+            'export TMPDIR=$install_work/build',
+            'export XDG_CACHE_HOME=$install_work/cache',
+            'chmod 0755 "$install_work"',
+            'mkdir -m 0755 "$TMPDIR"',
+            'mkdir -m 0700 "$XDG_CACHE_HOME"',
+            '[[ $(findmnt -rn -o TARGET -T "$TMPDIR") == /mnt ]]',
+        )
+        for setting in settings:
+            with self.subTest(setting=setting):
+                self.assertLess(boot_mount, source.index(setting))
+                self.assertLess(source.index(setting), install)
+        self.assertLess(source.index('ulimit -Sn 65536'), source.index('\nnix build '))
+        self.assertIn("Open-file hard limit must be at least 65536", source)
+
+    def test_failure_preserves_target_source_and_prints_space_diagnostics(self):
+        source = self.source
+        error_trap = next(line for line in source.splitlines() if line.endswith(" ERR"))
+        self.assertIn("Do not reboot or rerun the erasing installer", error_trap)
+        self.assertIn("df -h", error_trap)
+        self.assertIn("df -i", error_trap)
+        self.assertNotIn("rm -rf", error_trap)
+        self.assertLess(source.index("nixos-enter --root /mnt -c 'passwd iceice666'"),
+                        source.index('rm -rf -- "$install_work"'))
+        self.assertNotIn('rm -rf -- "$repo"', source)
 
     def test_single_install_lock_precedes_identity_snapshot_and_build(self):
         source = self.source
