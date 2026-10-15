@@ -63,7 +63,7 @@
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/26D2-8AF4";
+    device = "/dev/disk/by-label/NIXOS_BOOT";
     fsType = "vfat";
     options = [
       "fmask=0077"

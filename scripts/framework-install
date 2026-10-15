@@ -103,16 +103,10 @@ repo=$work/dotfiles
 # The /etc source is a symlink into the read-only store; copy its contents.
 cp -a -- "$source_dir/." "$repo"
 chmod -R u+w "$repo"
-# The ESP gets a new FAT UUID. Change only the copied target, not the running host.
-python3 - "$repo/hosts/framework/configuration/hardware-configuration.nix" <<'PY'
-import pathlib, sys
-path = pathlib.Path(sys.argv[1])
-text = path.read_text()
-old = 'device = "/dev/disk/by-uuid/26D2-8AF4";'
-if text.count(old) != 1:
-    sys.exit("Unexpected Framework EFI config; update the installer before using it.")
-path.write_text(text.replace(old, 'device = "/dev/disk/by-label/NIXOS_BOOT";'))
-PY
+# The new ESP gets a fresh FAT UUID; the source must mount it by the label created below.
+grep -Fq 'device = "/dev/disk/by-label/NIXOS_BOOT";' \
+  "$repo/hosts/framework/configuration/hardware-configuration.nix" ||
+  fail 'Framework /boot must use /dev/disk/by-label/NIXOS_BOOT; nothing erased.'
 # Nix Git flakes only see tracked files; the embedded source has no .git history.
 git -C "$repo" init -q
 git -C "$repo" add --all

@@ -308,6 +308,22 @@ class EmbeddedSourceTests(unittest.TestCase):
                         self.assertIn("Embedded flake is missing at " + directory, result.stderr)
 
 
+class HardwareConfigurationTests(unittest.TestCase):
+    def test_installed_filesystems_use_installer_labels(self):
+        hardware = (SCRIPT.parents[1] / "hosts/framework/configuration/hardware-configuration.nix").read_text()
+        self.assertNotIn("/dev/disk/by-uuid/", hardware)
+        self.assertIn('device = "/dev/disk/by-label/NIXOS_BOOT";', hardware)
+        self.assertIn('device = "/dev/disk/by-label/NIXOS_ROOT";', hardware)
+        self.assertIn('device = "/dev/disk/by-label/NIXOS_SWAP";', hardware)
+
+    def test_boot_label_guard_precedes_erasure(self):
+        source = SCRIPT.read_text()
+        guard = source.index('grep -Fq \'device = "/dev/disk/by-label/NIXOS_BOOT";\'')
+        self.assertLess(guard, source.index("IFS= read -r confirmation"))
+        self.assertLess(guard, source.index('\nwipefs --all "$disk"'))
+        self.assertNotIn("26D2-8AF4", source)
+
+
 class SafetyOrderingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

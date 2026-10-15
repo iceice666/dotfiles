@@ -124,19 +124,18 @@ Btrfs subvolumes are `@` → `/`, `@home` → `/home`, `@nix` → `/nix`, and
 is reserved for root by the size preflight; the actual desktop and data can need
 considerably more space.
 
-The installer patches the **copied** hardware configuration to mount EFI by
-`NIXOS_BOOT` instead of the old FAT UUID `26D2-8AF4`. It does not change the
-running system's hardware configuration. Other host-specific hardware settings
-remain intact. Reusing this ISO for different hardware is not supported.
+The Framework hardware configuration mounts every installer-created filesystem by
+label, including EFI as `NIXOS_BOOT`, because formatting assigns new UUIDs. The
+installer refuses to erase the disk if the embedded source does not use that EFI
+label. Reusing this ISO for different hardware is not supported.
 
 ## After reboot
 
 The editable snapshot is in `~/dotfiles`, with files staged in a newly initialized
-Git repo (no original commits/remotes). It contains the installed EFI-label change.
-Use it for `just build` / `just switch`. When reconnecting to the upstream Git repo,
-keep that hardware change: blindly replacing it with the old UUID breaks `/boot`.
-The preflight patch intentionally fails if the source EFI setting changes; update
-that small installer transformation when migrating the upstream hardware config.
+Git repo (no original commits/remotes). Use it, or an upstream checkout containing
+the same label-based hardware configuration, for `just build` / `just switch`.
+Never reintroduce a filesystem UUID from an erased disk: the new system will wait
+for that missing device at boot.
 
 SOPS Home Manager secrets may fail until the existing authorized SSH identity is
 restored, but their absence is not meant to block local password login. Pi API and
