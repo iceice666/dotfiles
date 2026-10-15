@@ -33,8 +33,7 @@ let
   systemBase =
     lib.optionals (kind == "nixos" || kind == "darwin") [ (dotfiles + /common/system) ]
     ++ lib.optional (kind == "darwin") (dotfiles + /common/system-darwin)
-    ++ lib.optional (kind == "nixos") (dotfiles + /common/system-nixos)
-    ++ lib.optional (kind == "nixos" && (feat.nirinit or false)) inputs.nirinit.nixosModules.nirinit;
+    ++ lib.optional (kind == "nixos") (dotfiles + /common/system-nixos);
 
   homeBase = dotfiles + /common/home-base;
 

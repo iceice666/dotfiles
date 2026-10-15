@@ -40,11 +40,6 @@
 
     ghostty.url = "github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8";
 
-    nirinit = {
-      url = "github:amaanq/nirinit";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     niri-scratchpad-helper = {
       url = "github:gvolpe/niri-scratchpad";
       flake = false;

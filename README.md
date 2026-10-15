@@ -143,7 +143,7 @@ for backup requirements, usage, and secrets recovery. No installation runs at bo
 NixOS owns the Framework system, including login/session launch, D-Bus,
 PipeWire, NetworkManager, Bluetooth, polkit, greetd/ReGreet, and fingerprint
 authentication for greetd and sudo. Home Manager is wired into the NixOS system
-configuration for user-level programs, Niri, AGS, nirinit session persistence,
+configuration for user-level programs, Niri, AGS,
 and dotfiles.
 
 Enroll fingerprints with:

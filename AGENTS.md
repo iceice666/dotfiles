@@ -114,7 +114,6 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
 | `ghostty` | `github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8` (fork with vertical tabs) | no |
-| `nirinit` | `github:amaanq/nirinit` | yes |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `dsh-desktop` | `github:iceice666/dsh-desktop` | yes |
 | `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway`, `pkgs.pirc-chat` and `pkgs.pirc-node`; currently not deployed on any host while pirc is being reworked; bump with `just update pirc`) | yes |
@@ -169,7 +168,6 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 | `rime` | `common/home-gui/rime` |
 | `devEnv` | `common/home-base/dev-env.nix` |
 | `pi` | `common/home-base/pi.nix` (binary and configuration) |
-| `nirinit` | `inputs.nirinit.nixosModules.nirinit` |
 
 **Adding a host:** create `hosts/<new>/host.nix` with `{ inputs, dotfiles, name }:` signature, declare `features`, and add `homeModules = [ ./home ]`. The host appears as a flake output automatically.
 
@@ -406,11 +404,6 @@ random different wallpaper only when the mode actually changes (sunrise/sunset
 or a manual toggle); logins and `just switch` keep the current one.
 `framework-wallpaper next` rotates manually. awww replaces swaybg.
 libadwaita apps pick up new colors only after restarting.
-
-Framework Niri session persistence is configured through `services.nirinit`. The
-`nirinit` NixOS module is injected via `features.nirinit = true` in
-`hosts/framework/host.nix`. It installs the `nirinit.service` user unit on
-`graphical-session.target`, so it starts with the existing Niri session.
 
 ### Primary workflows
 
@@ -713,7 +706,7 @@ Canonical module shape:
   interactive launch or deployment.
 - `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
-- `framework` is NixOS with Home Manager wired in by `mk-host`. The `nirinit` NixOS module is injected via `features.nirinit = true` in `hosts/framework/host.nix`.
+- `framework` is NixOS with Home Manager wired in by `mk-host`.
 - `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
 - `hosts/framework/home/ags/` runs the Framework AGS 3 / Astal GTK4 shell (`framework-ags.service`), pinned through the upstream AGS flake with its matching Astal libraries. It provides per-monitor bars, StatusNotifier tray/GTK4 menus, calendar, and a Material/GNOME-inspired control center. `state.ts` adapts the Rust backend, `control-center.tsx` owns the panel, and `app.tsx` owns monitor/window lifecycle and the bar. Theme files come from `themegen/framework/.config/ags/`; AGS owns notifications through AstalNotifd (`notifications.tsx`: popups, center, unread badge, DND), with a D-Bus activation file pointing at `framework-ags.service` — there is no Mako. `pkgs/framework-shell-state/` emits UI-neutral JSON-line state patches and handles media keys. See the AGS directory's README for validation and migration notes.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.

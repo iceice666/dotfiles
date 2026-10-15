@@ -244,22 +244,6 @@ in
       enable = true;
       settings.default_session.user = "greeter";
     };
-    nirinit = {
-      enable = true;
-      settings = {
-        launch = {
-          "com.mitchellh.ghostty" = "${pkgs.ghostty}/bin/ghostty";
-        };
-
-        skip.apps = [
-          "dev.zed.Zed"
-          "dev.iceice666.lazygit.repo86ff3035c73490ab"
-          "equibop"
-          "org.equicord.equibop"
-          "helium"
-        ];
-      };
-    };
   };
 
   security = {

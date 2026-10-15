@@ -23,7 +23,6 @@
     rime = true;
     devEnv = true;
     pi = true;
-    nirinit = true;
   };
 
   extraSpecialArgs = {
