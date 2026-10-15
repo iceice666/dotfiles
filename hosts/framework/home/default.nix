@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   dotfiles,
   ...
@@ -18,6 +19,9 @@ in
     ghosttyFontSize = 14;
     themegenHost = "framework";
   };
+
+  # Framework uses Niri for window management; no Ghostty tab bar.
+  programs.ghostty.settings.window-show-tab-bar = lib.mkForce "never";
 
   home.packages = with pkgs; [
     obs-studio
