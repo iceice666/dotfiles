@@ -4,7 +4,7 @@
 keys:
   # Per-device age recipients (public)
   - &m5pro         age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
-  - &framework     age1cxxr5xe7u7zxepf7y4eka07m856dx9hqwynu6jyf9xftc7q53ulqd997ah
+  - &framework     age1dlqnmece4v95dttl7c99marqvsxeu2qysvt7wazd4fkdjpfl75tqrpv97s
   - &homolab       age1r80n348lhctp82j7vuj6fe6hs6sup7lz7x66nh80xunrsrg2sqrqh98zpu
   - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   - &lumo          age1eqr9wgdsa2tfkck96guuxclu8vr0la62sju6yjkzvd9667uxrugs9kyync
