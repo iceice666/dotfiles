@@ -45,11 +45,6 @@
       flake = false;
     };
 
-    dsh-desktop = {
-      url = "github:iceice666/dsh-desktop";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     pirc = {
       url = "github:iceice666/pirc";
       # pirc's bun.lock needs Bun 1.4, which the stable channel lacks.

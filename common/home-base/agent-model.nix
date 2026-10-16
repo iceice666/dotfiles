@@ -1,7 +1,7 @@
 { dotfiles, homolab }:
 
 {
-  # Shared OpenAI-compatible startup profile for Pi and dsh-desktop.
+  # Shared OpenAI-compatible startup profile for Pi and the Lumo audit runner.
   model = "gpt-6-astra";
   contextWindow = 1050000;
   maxTokens = 128000;

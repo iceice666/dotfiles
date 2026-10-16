@@ -92,7 +92,7 @@ the repo-owned keys (`theme`, `hideThinkingBlock`, `defaultProvider`,
 `defaultModel`, and the `observational-memory` defaults) into the existing file with `jq`; every other
 key stays runtime-owned and writable, so `/model`, `/settings` and
 `lastChangelogVersion` still persist. Each deployment restores the startup model
-from `../agent-model.nix`, shared with m5pro dsh-desktop alongside the base URL,
+from `../agent-model.nix`, shared with the Lumo audit runner alongside the base URL,
 model limits, and SOPS key reference. Session model overrides remain available;
 the managed launcher disables project settings and executable extensions;
 this is deployment-time default synchronization, not live selection syncing.

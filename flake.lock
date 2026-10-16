@@ -65,26 +65,6 @@
         "type": "github"
       }
     },
-    "dsh-desktop": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1790238182,
-        "narHash": "sha256-I6eZ2HHDZlKVguAcnm22/9d+tdZ1UfCcn8zZKHMRhJA=",
-        "owner": "iceice666",
-        "repo": "dsh-desktop",
-        "rev": "82089eaf82747eec7b7672c7db261dd6d1eb2914",
-        "type": "github"
-      },
-      "original": {
-        "owner": "iceice666",
-        "repo": "dsh-desktop",
-        "type": "github"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -373,7 +353,6 @@
       "inputs": {
         "ags": "ags",
         "deploy-rs": "deploy-rs",
-        "dsh-desktop": "dsh-desktop",
         "ghostty": "ghostty",
         "home-manager": "home-manager_2",
         "niri-scratchpad-helper": "niri-scratchpad-helper",

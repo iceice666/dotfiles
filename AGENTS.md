@@ -115,7 +115,6 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
 | `ghostty` | `github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8` (fork with vertical tabs) | no |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
-| `dsh-desktop` | `github:iceice666/dsh-desktop` | yes |
 | `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway`, `pkgs.pirc-chat` and `pkgs.pirc-node`; currently not deployed on any host while pirc is being reworked; bump with `just update pirc`) | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 `self.submodules = true` is set so Git submodules are fetched.
@@ -218,21 +217,12 @@ into the existing file with `jq` instead of installing a
 store symlink, so Pi can still persist `/model`, `/settings`, and
 `lastChangelogVersion` at runtime. On themegen hosts the theme resolves to
 `themegen-light/themegen-dark`; other hosts keep the built-in `light/dark`.
-Pi and m5pro dsh-desktop share `common/home-base/agent-model.nix` for their
+Pi and the Lumo audit runner share `common/home-base/agent-model.nix` for their
 OpenAI-compatible startup model (`gpt-6-astra`), base URL, model limits, and SOPS
 key reference. Edit that profile and deploy each host to synchronize defaults;
 API key rotation stays in the referenced encrypted SOPS file. Pi retains its
 other providers. Each switch restores the shared Pi startup default; project
 settings, explicit CLI selections, and resumed sessions can override it.
-For dsh-desktop, quit the app before switching: activation merges the managed
-fields into writable `settings.yaml` (including ownership of the `cliproxyapi`
-provider's model list), preserving other providers and unrelated values and keeping a
-private `settings.yaml.pre-deploy-*` backup when it changes (YAML comments are
-not retained in the rewritten file). Its `0600` SOPS-rendered `.env` carries
-`CLIPROXYAPI_API_KEY` and Exa; inherited environment, DSH's credential store, or a
-working-directory `.env` can override the home-layer credential. Existing DSH
-sessions keep their own model selections. Restart the app and start a new session
-to use the deployed default. Neither app's auth/session state is synchronized.
 After switching, select a
 model with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
 `pi --model cliproxyapi-claude/claude-sonnet-5-5`.
