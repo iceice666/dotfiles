@@ -38,7 +38,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    ghostty.url = "github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8";
+    ghostty.url = "github:iceice666/ghostty/3869d3a8a9733b06c844e5b43518ce0613df0be5";
 
     niri-scratchpad-helper = {
       url = "github:gvolpe/niri-scratchpad";

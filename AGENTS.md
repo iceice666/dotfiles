@@ -113,7 +113,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `sops-nix` | `github:Mic92/sops-nix` | yes |
 | `deploy-rs` | `github:serokell/deploy-rs` | yes |
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
-| `ghostty` | `github:iceice666/ghostty/905108bca070c450a2ad25d25011f2746498efd8` (fork with vertical tabs) | no |
+| `ghostty` | `github:iceice666/ghostty/3869d3a8a9733b06c844e5b43518ce0613df0be5` (fork with vertical tabs) | no |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
 | `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway`, `pkgs.pirc-chat` and `pkgs.pirc-node`; currently not deployed on any host while pirc is being reworked; bump with `just update pirc`) | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |

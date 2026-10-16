@@ -51,7 +51,7 @@ The darkman hooks rotate on real mode changes only; `framework-wallpaper next` r
   Linux uses the fork's flake package. The macOS bundle is ad-hoc signed, not
   notarized, so Gatekeeper may require explicit approval on first launch.
   See [the fork](https://github.com/iceice666/ghostty) and
-  [the pinned release](https://github.com/iceice666/ghostty/releases/tag/fork-905108bca070).
+  [the pinned release](https://github.com/iceice666/ghostty/releases/tag/fork-3869d3a8a973).
   The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
   them up through global theme auto-discovery, and `common/home-base/pi.nix`
   selects `themegen-light/themegen-dark` whenever those files are installed.
