@@ -3,6 +3,10 @@ let local.tg_001 = mix(color.light.surface_container_low, seed.color, 0.080000, 
 }}
 status is-interactive; or return
 
+# Ghostty switches themegen-light/dark natively; OSC overrides would pin the
+# palette until reset and block its appearance-driven theme changes.
+test "$TERM_PROGRAM" = ghostty; and return
+
 # Runtime wallpaper switchers bump this universal variable; re-source the
 # freshly rendered file so already-open shells pick up the new palette.
 if not functions -q __themegen_sequences_reload
