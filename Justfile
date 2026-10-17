@@ -295,7 +295,20 @@ sleepguard-install: sleepguard-build
     dest="/Applications/SleepGuard.app"
     launchctl bootout "gui/$(id -u)/com.iceice666.sleepguard" 2>/dev/null || true
     pkill -f "$dest/Contents/MacOS/SleepGuard" 2>/dev/null || true
+    pkill -f 'SleepGuard.app/Contents/' 2>/dev/null || true
     rm -rf "$dest"
     cp -R "$src" "$dest"
-    echo "Installed $dest"
-    echo "Run 'just switch' to (re)activate its launchd agent."
+    # Drop the build copy so the widget (and the app it launches) binds to /Applications.
+    lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+    pluginkit -r "$src/Contents/PlugIns/SleepGuardWidgetExtension.appex" 2>/dev/null || true
+    "$lsregister" -u "$src" 2>/dev/null || true
+    rm -rf "{{ repo_root }}/pkgs/sleepguard/build"
+    "$lsregister" -f "$dest"
+    pluginkit -a "$dest/Contents/PlugIns/SleepGuardWidgetExtension.appex"
+    agent="$HOME/Library/LaunchAgents/com.iceice666.sleepguard.plist"
+    if [ -f "$agent" ]; then
+        launchctl bootstrap "gui/$(id -u)" "$agent"
+        echo "Installed $dest and restarted its launchd agent"
+    else
+        echo "Installed $dest; run 'just switch' to create its launchd agent"
+    fi
