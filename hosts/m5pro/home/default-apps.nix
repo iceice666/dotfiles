@@ -166,4 +166,17 @@ in
       StandardErrorPath = "/tmp/com.iceice666.default-apps.err";
     };
   };
+
+  # Forget app bundles registered from /nix/store so Launch Services resolves
+  # bundle IDs to the copied apps; launching a store bundle tags it with
+  # com.apple.macl and App Management then blocks GC from deleting it.
+  home.activation.unregisterStoreApps = lib.hm.dag.entryAfter [ "copyApps" ] ''
+    lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+    $lsregister -dump 2>/dev/null \
+      | ${pkgs.gnused}/bin/sed -nE 's|^path: +(/nix/store/[^/]+/Applications/[^/]+\.app) \(0x[0-9a-f]+\)$|\1|p' \
+      | sort -u \
+      | while IFS= read -r app; do
+          run $lsregister -u "$app" || true
+        done
+  '';
 }

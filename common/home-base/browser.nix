@@ -13,8 +13,10 @@
       isolated = true;
       launchOptions = {
         executablePath =
+          # Launch the copied bundle: running Helium from /nix/store makes macOS
+          # tag the store path with com.apple.macl, which later blocks GC.
           if pkgs.stdenv.hostPlatform.isDarwin then
-            "${pkgs.helium-bin}/Applications/Helium.app/Contents/MacOS/Helium"
+            "${config.home.homeDirectory}/${config.targets.darwin.copyApps.directory}/Helium.app/Contents/MacOS/Helium"
           else
             "${pkgs.chromium}/bin/chromium";
         headless = true;
