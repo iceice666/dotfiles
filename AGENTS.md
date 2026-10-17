@@ -460,6 +460,15 @@ just gc
 just store-size
 ```
 
+`just gc` runs `scripts/nix-gc`. On macOS, App Management blocks deleting a
+`/nix/store` `.app` that macOS tagged with `com.apple.macl` (it was launched
+from the store). When GC aborts on such a path after dropping its database row,
+the script removes only that now-invalid path with `/bin/rm` and retries. The
+terminal running it needs App Management permission. To avoid new tags, launch
+only the copied `~/Applications/Home Manager Apps` bundles: m5pro activation
+unregisters store bundles from Launch Services, and Playwright uses the copied
+Helium.
+
 ### Host-specific helpers
 
 ```sh

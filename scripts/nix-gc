@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Delete old generations and collect garbage.
+#
+# On macOS, App Management can block `nix-collect-garbage` from deleting a
+# `.app` bundle tagged with `com.apple.macl` after its database row was already
+# removed, aborting the whole run. Such orphaned paths are no longer valid store
+# paths, so remove them with /bin/rm and retry. Valid paths are never touched.
+set -euo pipefail
+
+max_attempts=5
+log="$(mktemp)"
+trap 'rm -f "$log"' EXIT
+
+sudo -v
+
+for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+  if sudo -H nix-collect-garbage -d 2>&1 | tee "$log"; then
+    exit 0
+  fi
+
+  [[ "$(uname -s)" == Darwin ]] || exit 1
+
+  blocked="$(
+    grep -oE "in directory '/nix/store/[^/']+" "$log" | sed "s/^in directory '//" | sort -u || true
+  )"
+
+  removed=0
+  while IFS= read -r path; do
+    [[ "$path" =~ ^/nix/store/[a-z0-9]{32}-[^/]+$ && -e "$path" ]] || continue
+    if nix-store --check-validity "$path" 2>/dev/null; then
+      echo "nix-gc: refusing to remove valid store path: $path" >&2
+      continue
+    fi
+    echo "nix-gc: removing orphaned protected path: $path" >&2
+    sudo /bin/rm -rf -- "$path"
+    removed=1
+  done <<<"$blocked"
+
+  ((removed)) || exit 1
+  echo "nix-gc: retrying ($((attempt + 1))/$max_attempts)..." >&2
+done
+
+echo "nix-gc: giving up after $max_attempts attempts" >&2
+exit 1

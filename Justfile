@@ -266,7 +266,7 @@ search query:
 [confirm]
 [group('nix')]
 gc:
-    sudo nix-collect-garbage -d
+    {{ scripts }}/nix-gc
 
 # Show disk usage of the Nix store
 [group('nix')]
