@@ -27,7 +27,8 @@ targets:
     entitlements:
       path: SleepGuard/SleepGuard.entitlements
       properties:
-        com.apple.security.app-sandbox: true
+        # Unsandboxed so it can exec `sudo pmset`; the widget stays sandboxed.
+        com.apple.security.app-sandbox: false
         com.apple.security.application-groups:
           - $(TeamIdentifierPrefix)group.com.iceice666.sleepguard
     settings:

@@ -108,8 +108,10 @@ in
   # Passwordless sudo for `just switch` (darwin-rebuild only, any arguments;
   # nix-darwin has no security.sudo.extraRules, so this appends directly to
   # sudoers via security.sudo.extraConfig -> /etc/sudoers.d/10-nix-darwin-extra-config)
+  # SleepGuard (pkgs/sleepguard) toggles system sleep with exactly these commands.
   security.sudo.extraConfig = ''
     ${username} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild
+    ${username} ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
   '';
 
   # Disable automatic macOS updates
