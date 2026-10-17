@@ -277,10 +277,13 @@ store-size:
 [group('apps')]
 [macos]
 sleepguard-build:
-    cd {{ repo_root }}/pkgs/sleepguard && \
-        xcodegen generate && \
-        xcodebuild -project SleepGuard.xcodeproj -scheme SleepGuard \
-            -configuration Release -derivedDataPath build build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Clean env: the repo devShell exports Nix SDK/linker variables that break xcodebuild.
+    xcodegen_dir="$(dirname "$(command -v xcodegen)")"
+    cd {{ repo_root }}/pkgs/sleepguard
+    env -i HOME="$HOME" USER="$USER" PATH="/usr/bin:/bin:/usr/sbin:/sbin:$xcodegen_dir" \
+        bash -c 'xcodegen generate && xcodebuild -project SleepGuard.xcodeproj -scheme SleepGuard -configuration Release -derivedDataPath build build'
 
 # Build SleepGuard.app and install it to /Applications
 [group('apps')]
