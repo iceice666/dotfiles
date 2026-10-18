@@ -38,9 +38,7 @@
     lumo-node-exporter
     lumo-blackbox-exporter
     lumo-prometheus
-    lumo-grafana
     lumo-dynacat
-    lumo-dev-port-proxy
     lumo-cliproxyapi
     lumo-cliproxyapi-usage-keeper
     lumo-umami-postgres

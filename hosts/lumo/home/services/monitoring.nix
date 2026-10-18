@@ -1,6 +1,4 @@
 {
-  config,
-  dotfiles,
   homolab,
   lib,
   pkgs,
@@ -11,12 +9,6 @@ let
   blackboxPort = 19115;
   nodeExporterPort = 19100;
   blockyScrapeInterval = "60s";
-
-  grafanaPlugins = pkgs.buildEnv {
-    name = "lumo-grafana-plugins";
-    paths = [ pkgs.grafanaPlugins.yesoreyeram-infinity-datasource ];
-    pathsToLink = [ "/share/grafana/plugins" ];
-  };
 
   blackboxConfig = (pkgs.formats.yaml { }).generate "blackbox.yml" {
     modules.http_2xx = {
@@ -120,7 +112,7 @@ let
         static_configs = [
           {
             targets = [
-              "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}/healthz"
+              "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/healthz"
             ];
             labels = {
               instance = homolab.hostName;
@@ -216,127 +208,16 @@ let
     }
   '';
 
-  grafanaSecret = config.sops.secrets.grafana-secret-key.path;
-  grafanaConfig = (pkgs.formats.ini { }).generate "grafana.ini" {
-    analytics = {
-      reporting_enabled = false;
-      check_for_updates = false;
-      check_for_plugin_updates = false;
-    };
-    server = {
-      http_addr = "0.0.0.0";
-      http_port = homolab.ports.grafana;
-      domain = homolab.domains.grafana;
-      enforce_domain = true;
-      root_url = "${homolab.urls.grafana}/";
-    };
-    security = {
-      disable_initial_admin_creation = true;
-      secret_key = "$__file{/run/lumo-grafana/secret-key}";
-    };
-    users = {
-      allow_sign_up = false;
-      auto_assign_org_role = "Editor";
-    };
-    auth.disable_login_form = true;
-    "auth.proxy" = {
-      enabled = true;
-      header_name = "Remote-User";
-      header_property = "username";
-      auto_sign_up = true;
-      sync_ttl = 15;
-      whitelist = homolab.hosts.lumo.lan;
-      headers = "Name:Remote-Name Email:Remote-Email Groups:Remote-Groups";
-    };
-    paths.provisioning = "/etc/lumo-grafana/provisioning";
-    plugins.allow_loading_unsigned_plugins = "";
-  };
-
-  grafanaDatasource = (pkgs.formats.yaml { }).generate "datasources.yml" {
-    apiVersion = 1;
-    prune = true;
-    datasources = [
-      {
-        name = "Prometheus";
-        uid = "prometheus";
-        type = "prometheus";
-        url = "http://127.0.0.1:${toString homolab.ports.prometheus}";
-        isDefault = true;
-        editable = false;
-      }
-      {
-        name = "Infinity";
-        uid = "infinity";
-        type = "yesoreyeram-infinity-datasource";
-        access = "proxy";
-        editable = false;
-      }
-    ];
-  };
-
-  grafanaDashboards = (pkgs.formats.yaml { }).generate "dashboards.yml" {
-    apiVersion = 1;
-    providers = [
-      {
-        name = "homolab";
-        type = "file";
-        folder = "Homolab";
-        editable = true;
-        allowUiUpdates = true;
-        options.path = dotfiles + /hosts/homolab/services/edge/grafana-dashboards;
-      }
-    ];
-  };
-
-  grafanaService = pkgs.writeText "lumo-grafana" ''
-    #!/sbin/openrc-run
-    name="lumo-grafana"
-    description="Lumo Grafana"
-    supervisor=supervise-daemon
-    command="${pkgs.grafana}/bin/grafana"
-    command_args="server --homepath ${pkgs.grafana}/share/grafana --config ${grafanaConfig}"
-    command_user="grafana:grafana"
-    directory="/var/lib/grafana"
-    output_log="/var/log/lumo/grafana.log"
-    error_log="/var/log/lumo/grafana.log"
-    respawn_delay=5
-    respawn_max=0
-    export GF_PATHS_DATA="/var/lib/grafana"
-    export GF_PATHS_LOGS="/var/log/grafana"
-    export GF_PATHS_PLUGINS="${grafanaPlugins}/share/grafana/plugins"
-
-    depend() {
-      need net
-      after lumo-prometheus
-    }
-
-    start_pre() {
-      checkpath -f -m 0640 -o grafana:grafana /var/log/lumo/grafana.log
-      checkpath -d -m 0750 -o grafana:grafana /run/lumo-grafana
-      checkpath -d -m 0750 -o grafana:grafana /var/lib/grafana
-      checkpath -d -m 0750 -o grafana:grafana /var/log/grafana
-      cp ${grafanaSecret} /run/lumo-grafana/secret-key
-      chown grafana:grafana /run/lumo-grafana/secret-key
-      chmod 0400 /run/lumo-grafana/secret-key
-    }
-  '';
 in
 {
   home.packages = [
-    pkgs.grafana
     pkgs.prometheus
     pkgs.prometheus-blackbox-exporter
     pkgs.prometheus-node-exporter
   ];
 
-  sops.secrets.grafana-secret-key = {
-    sopsFile = dotfiles + /sensitive/hosts/lumo/grafana.yaml;
-    key = "secretKey";
-    mode = "0400";
-  };
-
   home.activation.lumoMonitoring = lib.hm.dag.entryAfter [ "lumoDirectories" "lumoBlocky" ] ''
-    for account in prometheus grafana; do
+    for account in prometheus; do
       if ! /usr/bin/getent group "$account" >/dev/null; then
         /usr/sbin/addgroup -S "$account"
       fi
@@ -345,21 +226,14 @@ in
       fi
     done
 
-    install -d -m 0755 /etc/lumo-grafana/provisioning/datasources
-    install -d -m 0755 /etc/lumo-grafana/provisioning/dashboards
-    install -Dm644 ${grafanaDatasource} /etc/lumo-grafana/provisioning/datasources/default.yml
-    install -Dm644 ${grafanaDashboards} /etc/lumo-grafana/provisioning/dashboards/default.yml
-
     install -Dm755 ${nodeExporterService} /etc/init.d/lumo-node-exporter
     install -Dm755 ${blackboxService} /etc/init.d/lumo-blackbox-exporter
     install -Dm755 ${prometheusService} /etc/init.d/lumo-prometheus
-    install -Dm755 ${grafanaService} /etc/init.d/lumo-grafana
 
     for service in \
       lumo-node-exporter \
       lumo-blackbox-exporter \
-      lumo-prometheus \
-      lumo-grafana; do
+      lumo-prometheus; do
       /sbin/rc-update add "$service" default
       /sbin/rc-service "$service" restart
     done

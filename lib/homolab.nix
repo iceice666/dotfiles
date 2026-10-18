@@ -31,17 +31,12 @@ let
     traefikPing = 18081;
     traefikMetrics = 18082;
     prometheus = 18083;
-    grafana = 18084;
     postgresql = 25432;
     authelia = 18091;
     cliproxyapi = 20129;
     cliproxyapiUsageKeeper = 20130;
     teaAsrHttp = 19000;
     dynacat = 18075;
-    devPortProxy = 18076;
-    hermesGateway = 8642;
-    hermesDashboard = 9119;
-    honcho = 18077;
     umami = 18078;
     forgejo = 18079;
     forgejoSsh = 2222;
@@ -83,11 +78,9 @@ rec {
     auth = "auth.${root}";
     pirc = "pirc.${root}";
     dns = "dns.${root}";
-    grafana = "grafana.${root}";
     cliproxyapi = "cliproxyapi.${root}";
     traefik = "traefik.${root}";
     home = "home.${root}";
-    dev = "dev.${root}";
     npu = "npu.${root}";
     analytics = "analytics.${root}";
     forgejo = "git.${root}";
@@ -97,12 +90,10 @@ rec {
 
   urls = {
     auth = "https://${domains.auth}";
-    grafana = "https://${domains.grafana}";
     dns = "https://${domains.dns}/dns-query";
     cliproxyapi = "https://${domains.cliproxyapi}";
     traefik = "https://${domains.traefik}";
     home = "https://${domains.home}";
-    dev = "https://${domains.dev}";
     npu = "https://${domains.npu}";
     analytics = "https://${domains.analytics}";
     forgejo = "https://${domains.forgejo}";

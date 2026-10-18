@@ -95,7 +95,7 @@ in
     {
       printf 'DATABASE_URL=postgresql://umami:%s@127.0.0.1:${toString postgresPort}/umami\n' "$pg_pass"
       printf 'APP_SECRET=%s\n' "$app_secret"
-      printf 'HOSTNAME=0.0.0.0\n'
+      printf 'HOSTNAME=127.0.0.1\n'
       printf 'PORT=${toString umamiPort}\n'
       printf 'DISABLE_TELEMETRY=1\n'
     } > ${envPath}

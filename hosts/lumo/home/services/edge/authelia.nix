@@ -43,10 +43,6 @@ let
           policy = "bypass";
         }
         {
-          domain = homolab.domains.grafana;
-          policy = "two_factor";
-        }
-        {
           domain = homolab.domains.home;
           policy = "two_factor";
         }

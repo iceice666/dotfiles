@@ -7,11 +7,11 @@ reports. It intentionally avoids decrypted secret content.
 
 | Surface | Expected reachability | Notes |
 | --- | --- | --- |
-| `:80`, `:443` | LAN and Cloudflare; tailnet if explicitly trusted | Traefik terminates TLS and forwards to protected services. |
+| `:80`, `:443` | LAN, tailnet, and Cloudflare | Traefik terminates TLS and forwards to protected services. |
 | `:22` | LAN host SSH (Alpine `sshd`, `AllowUsers root git`) | Password auth disabled; root public-key login permitted (`prohibit-password`). This is the real host-management SSH service; see `scripts/alpine-bootstrap`. |
 | Forgejo / Woodpecker | Temporarily offline | `lumo.forgejoWoodpecker.enable = false` by default. No stack containers or port 2222 listener are expected. Persistent data and configuration are retained. Their individual status checks may report stopped (exit 3); this is intentional, not a failed enabled service. |
 | `:53` | Blocky on lumo's Tailscale address | DNS is provided over the tailnet; DoH is published through Traefik. |
-| Internal service ports | Loopback or explicit network trust | Some backends bind broadly; inspect nftables and tailnet ACLs rather than assuming loopback-only exposure. |
+| Internal service ports | Loopback only | Dynacat, Umami, CLIProxyAPI, Prometheus, and Authelia bind to 127.0.0.1 behind the local Traefik. Traefik ping/metrics (18081/18082) remain wildcard but LAN-restricted. Apart from `sshd` and Traefik, any wildcard application listener is unexpected. Tailnet accepts only 22, 53, 80, and 443; Podman interfaces only 53, 80, and 443. |
 
 ## Priority Checks
 

@@ -1,17 +1,23 @@
 # Edge firewall ruleset for lumo.
 #
-# Merges lumo's host rules (podman + app ports proxied from homolab/self) with
-# the edge rules (Cloudflare IP sets + 80/443 + traefik ping/metrics) that
-# moved here from the retired gateway Pi. Mirror any change in
-# scripts/alpine-bootstrap's lumo branch so a fresh bootstrap matches.
+# Application backends bind to loopback and are reached only through the
+# local Traefik, so tailnet and container interfaces get explicit ports
+# instead of blanket trust. Mirror any change in scripts/alpine-bootstrap's
+# lumo branch so a fresh bootstrap matches.
 {
   config,
+  homolab,
   lib,
   pkgs,
   ...
 }:
 
 let
+  forgejoSshRules = lib.optionalString config.lumo.forgejoWoodpecker.enable (
+    "iifname \"tailscale0\" tcp dport 2222 accept\n"
+    + "        ip saddr ${homolab.hosts.homolab.lan} tcp dport 2222 accept"
+  );
+
   nftablesFile = pkgs.writeText "dotfiles.nft" ''
     table inet dotfiles {
       set cloudflare_v4 {
@@ -29,14 +35,18 @@ let
         type filter hook input priority filter; policy drop;
         ct state established,related accept
         iifname "lo" accept
-        iifname "tailscale0" accept
-        iifname "podman*" accept
         ip protocol icmp accept
         ip6 nexthdr ipv6-icmp accept
         udp dport 41641 accept
         ip saddr 192.168.1.0/24 tcp dport 22 accept
-        # app ports proxied from homolab and lumo itself (Traefik backends)
-        ip saddr { 192.168.1.127, 192.168.1.128 } tcp dport { ${lib.optionalString config.lumo.forgejoWoodpecker.enable "2222, "}18075, 18076, 18084, 20129 } accept
+        # tailnet: SSH, Blocky DNS, and HTTP/HTTPS through Traefik
+        iifname "tailscale0" tcp dport { 22, 53, 80, 443 } accept
+        iifname "tailscale0" udp dport 53 accept
+        # containers: DNS and HTTP/HTTPS through Traefik
+        iifname "podman*" tcp dport { 53, 80, 443 } accept
+        iifname "podman*" udp dport 53 accept
+        # Forgejo SSH (only while the stack is enabled)
+        ${forgejoSshRules}
         # edge: HTTP/HTTPS from Cloudflare IP sets and the LAN
         ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
         ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept

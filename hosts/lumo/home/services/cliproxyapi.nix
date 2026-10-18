@@ -105,7 +105,7 @@ in
         account_quota_reserves="$(${pkgs.gnused}/bin/sed -e '/^[[:space:]]*$/d' -e 's/^[[:space:]]*/        /' '${accountQuotaReservesPath}')"
 
         cat > ${configPath} << EOF
-    host: "0.0.0.0"
+    host: "127.0.0.1"
     port: ${toString port}
 
     remote-management:
@@ -214,9 +214,8 @@ in
 
         install -Dm755 ${cliproxyapiService} /etc/init.d/lumo-cliproxyapi
         /sbin/rc-update add lumo-cliproxyapi default
-        # --nodeps: do not stop the honcho/hermes services that `need
-        # lumo-cliproxyapi`. They reconnect on the next request and are
-        # restarted by their own steps; cascading races the OpenRC lock.
+        # --nodeps: do not stop dependants such as the usage keeper; they
+        # reconnect and are restarted by their own steps.
         /sbin/rc-service --nodeps lumo-cliproxyapi restart
   '';
 }

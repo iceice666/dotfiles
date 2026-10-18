@@ -510,14 +510,13 @@ Blocky DNS and the edge stack (Traefik/Authelia/Cloudflare DDNS) that moved off
 the retired gateway Pi.
 
 `lumo` is the data+apps+DNS plane: Postgres, Valkey, git-server, Podman,
-Blocky, Prometheus, Grafana, Dynacat, dev-port-proxy, the Hermes Agent gateway,
-and the daily audit.
-Traefik on `homolab` proxies Grafana/Dynacat/dev-port-proxy to `lumo`'s LAN IP
-(`192.168.1.128`).
-Inter-host metrics scraping (Prometheus on lumo
-→ node-exporter/traefik-metrics on homolab) goes over the tailnet. Grafana's
-`auth.proxy.whitelist` is set to `homolab`'s LAN IP — never widen this without
-adjusting the firewall rule that scopes the Grafana port to `homolab` only.
+Blocky, Prometheus, Dynacat, CLIProxyAPI, Umami, and the daily audit.
+Application backends (Dynacat, Umami, CLIProxyAPI, Prometheus, Authelia) bind
+to loopback and are reached only through lumo's local Traefik. The lumo
+firewall accepts only SSH, Blocky DNS, and HTTP/HTTPS on `tailscale0`, and only
+DNS and HTTP/HTTPS from `podman*`; do not reintroduce blanket interface trust or
+wildcard backend listeners. Inter-host metrics scraping (Prometheus on lumo →
+node-exporter/traefik-metrics on homolab) goes over the tailnet.
 
 Blocky listens on lumo's Tailscale address (`100.120.152.7`) on TCP/UDP 53.
 Its HTTP/Prometheus listener is loopback-only on port 4000; Traefik publishes
@@ -542,9 +541,8 @@ trust boundary:
 - `hosts/lumo/home/services/cliproxyapi.nix` — OpenAI-compatible proxy on lumo. Its `account-quota` scheduler polls each Codex/Claude OAuth usage endpoint, caches observations for `poll_interval_seconds` (900), and fails closed when it cannot verify the reserve per upstream `AuthID`. A reserve withholds the account once *either* the five-hour or the weekly window reaches its ceiling; the per-account percentages in `sensitive/hosts/lumo/account-quota.yaml` cover both windows unless a `weekly_reserve_percent_by_auth_id` entry overrides the weekly one. Changes touch auth and routing.
 - `hosts/homolab/configuration/hardware-configuration.nix` — host-specific, regenerated via `just homolab-gen-hardware`.
 - `scripts/alpine-bootstrap` — root SSH, static addresses, Tailscale, cgroups, kernel hardening, and nftables reachability.
-- `hosts/lumo/home/services/monitoring.nix` — Grafana's proxy whitelist must remain `homolab.hosts.homolab.lan`; widening it permits header-injection admin bypass.
+- `hosts/lumo/home/services/edge/nftables.nix` — lumo inbound policy; mirror changes into `scripts/alpine-bootstrap`.
 - `hosts/lumo/home/services/podman.nix` — rootful container runtime trust boundary.
-- `hosts/lumo/home/services/hermes-agent.nix` — Nous Research `hermes-agent` gateway runs in `--network=host` with config/state at `/var/lib/hermes` bind-mounted to `/opt/data` (`HERMES_HOME`) and the working dir `/home/hermes` bind-mounted at the same path (`terminal.cwd`). Telegram/Exa and the cliproxyapi key are merged into the agent's `.env`: editable Telegram vars (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`, `TELEGRAM_HOME_CHANNEL`) live in the sops dotenv `sensitive/hosts/lumo/hermes-agent.env`; the LLM key and Exa key come from `sensitive/shared/`. The `custom` provider authenticates with `model.api_key` injected into `config.yaml`, not the env. The durable agent persona is `hosts/lumo/home/services/hermes-soul.md`, installed unconditionally to `HERMES_HOME/SOUL.md` (slot #1 of the system prompt); the repo file is the source of truth. Any change to `OPENAI_BASE_URL` redirects the agent's LLM calls; any leak of the Telegram bot token permits anyone to talk to the agent.
 
 ### Secrets helpers
 

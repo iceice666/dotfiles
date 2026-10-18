@@ -108,7 +108,6 @@ let
   serviceIcons = {
     authelia = "si:authelia";
     cliproxyapi = "si:openai";
-    grafana = "si:grafana";
     umami = "si:umami";
     proxy = "si:traefikproxy";
   };
@@ -139,6 +138,8 @@ let
 
   dynacatConfig = yamlFormat.generate "dynacat.yml" {
     server = {
+      # Traefik on this host is the only intended client.
+      host = "127.0.0.1";
       port = dynacatPort;
       proxied = true;
     };
@@ -207,9 +208,6 @@ let
                     (mkMonitorSite "Authelia" serviceIcons.authelia homolab.urls.auth (
                       mkLocalUrl homolab.ports.authelia ""
                     ))
-                    (mkMonitorSite "Grafana" serviceIcons.grafana homolab.urls.grafana (
-                      mkLocalUrl homolab.ports.grafana "/api/health"
-                    ))
                   ])
                 ];
               }
@@ -233,11 +231,10 @@ let
     error_log="/var/log/lumo/dynacat.log"
     respawn_delay=5
     respawn_max=0
-    export BIND="0.0.0.0"
 
     depend() {
       need net
-      after lumo-grafana
+      after lumo-prometheus
     }
 
     start_pre() {

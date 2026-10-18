@@ -18,28 +18,12 @@ let
     "::1/128"
   ];
 
-  testWildcardDomain = "test.${homolab.domains.root}";
-
   privateClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`${homolab.network.lan.cidr}`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
 
   mkHostRule = host: "Host(`${host}`)";
   mkHostPathRule = host: pathRule: "${mkHostRule host} && ${pathRule}";
   mkPrivateHostRule = host: "${mkHostRule host} && ${privateClientRule}";
   mkPrivateHostPathRule = host: pathRule: "${mkPrivateHostRule host} && ${pathRule}";
-
-  devPortClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`${homolab.network.lan.cidr}`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
-  devPortRule = "HostRegexp(`^3[0-9]{3}\\.test\\.${
-    builtins.replaceStrings [ "." ] [ "\\." ] homolab.domains.root
-  }$`) && ${devPortClientRule}";
-  devPortTls = {
-    certResolver = "letsencrypt";
-    domains = [
-      {
-        main = testWildcardDomain;
-        sans = [ "*.${testWildcardDomain}" ];
-      }
-    ];
-  };
 
   npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] homolab.domains.npu;
 
@@ -287,21 +271,6 @@ let
             tls.certResolver = "letsencrypt";
           };
 
-          grafana-http = {
-            rule = mkPrivateHostRule homolab.domains.grafana;
-            entryPoints = [ "web" ];
-            middlewares = [ "redirect-to-https@file" ];
-            service = "noop@internal";
-          };
-
-          grafana = {
-            rule = mkPrivateHostRule homolab.domains.grafana;
-            entryPoints = [ "websecure" ];
-            middlewares = [ "authelia@file" ];
-            service = "grafana";
-            tls.certResolver = "letsencrypt";
-          };
-
           blocky-doh = {
             rule = mkPrivateHostPathRule homolab.domains.dns "Path(`/dns-query`)";
             entryPoints = [ "websecure" ];
@@ -339,13 +308,6 @@ let
             service = "dynacat";
             tls.certResolver = "letsencrypt";
           };
-
-          dev-ports = {
-            rule = devPortRule;
-            entryPoints = [ "websecure" ];
-            service = "dev-port-proxy";
-            tls = devPortTls;
-          };
         };
 
     http.services =
@@ -363,7 +325,7 @@ let
             { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
           ];
           cliproxyapi.loadBalancer.servers = [
-            { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.cliproxyapi}"; }
+            { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}"; }
           ];
           cliproxyapi-usage-keeper.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapiUsageKeeper}"; }
@@ -377,17 +339,11 @@ let
           umami.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }
           ];
-          grafana.loadBalancer.servers = [
-            { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.grafana}"; }
-          ];
           blocky.loadBalancer.servers = [
             { url = "http://127.0.0.1:4000"; }
           ];
           dynacat.loadBalancer.servers = [
-            { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.dynacat}"; }
-          ];
-          dev-port-proxy.loadBalancer.servers = [
-            { url = "http://${homolab.hosts.lumo.lan}:${toString homolab.ports.devPortProxy}"; }
+            { url = "http://127.0.0.1:${toString homolab.ports.dynacat}"; }
           ];
         };
   };
