@@ -6,10 +6,11 @@ The overlay exposes `pkgs.ghostty` on both platforms:
 - Apple Silicon macOS uses this fixed-hash release ZIP. The upstream fork flake
   does not provide the macOS application bundle.
 
-Current source: `4df2074389ca6404d37564b05a6bef1f55bb284d`.
-[Release](https://github.com/iceice666/ghostty/releases/tag/fork-4df2074389ca)
-contains the ZIP, SHA-256, and build manifest. Built with Xcode 26.6 and Zig 0.16.0,
-`zig build -Doptimize=ReleaseFast -Dxcframework-target=native` on arm64.
+Current source: `1a9d07c00fc78d8ace9897d3c1d9fc101c23a2ee`.
+[Release](https://github.com/iceice666/ghostty/releases/tag/fork-1a9d07c00fc7)
+contains the ZIP, SHA-256, and build manifest. Built from a clean checkout with
+`nix develop --command bash -c 'zig build -Doptimize=ReleaseFast -Dxcframework-target=native'`
+on arm64.
 The fork checkout has a local `scripts/release-macos-local.sh` packaging helper;
 that uncommitted helper is not included in the pinned source revision.
 

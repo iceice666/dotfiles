@@ -6,11 +6,11 @@
 }:
 stdenvNoCC.mkDerivation {
   pname = "ghostty-bin";
-  version = "4df2074389ca";
+  version = "1a9d07c00fc7";
 
   src = fetchurl {
-    url = "https://github.com/iceice666/ghostty/releases/download/fork-4df2074389ca/ghostty-macos-arm64-4df2074389ca.zip";
-    hash = "sha256-NbKo55c7Crb8w85lt14HQmY7OeQuY20GB4Y0d0rPuYc=";
+    url = "https://github.com/iceice666/ghostty/releases/download/fork-1a9d07c00fc7/ghostty-macos-arm64-1a9d07c00fc7.zip";
+    hash = "sha256-T9Ix+k4EA+pkDpGzunOXMw5Np+OpYmears6T1DtN8wI=";
   };
 
   nativeBuildInputs = [ unzip ];
