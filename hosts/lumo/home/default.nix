@@ -51,6 +51,8 @@
     lumo-cloudflare-ddns
     lumo-cloudflare-ips
     lumo-traefik
+    lumo-pirc-daemon
+    lumo-pirc-web
     '
 
     for service_path in /etc/init.d/lumo-*; do

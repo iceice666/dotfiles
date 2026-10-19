@@ -47,6 +47,7 @@ let
       filterUnmappedTypes = true;
       mapping = {
         ${homolab.domains.auth} = homolab.hosts.lumo.tailnet;
+        ${homolab.domains.pirc} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.dns} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.cliproxyapi} = homolab.hosts.lumo.tailnet;
         ${homolab.domains.analytics} = homolab.hosts.lumo.tailnet;

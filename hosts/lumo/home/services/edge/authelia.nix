@@ -47,6 +47,10 @@ let
           policy = "two_factor";
         }
         {
+          domain = homolab.domains.pirc;
+          policy = "two_factor";
+        }
+        {
           domain = homolab.domains.traefik;
           policy = "two_factor";
         }
