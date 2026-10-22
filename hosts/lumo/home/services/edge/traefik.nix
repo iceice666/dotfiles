@@ -131,6 +131,9 @@ let
       # any client-supplied identity header so a device token cannot also
       # smuggle a spoofed identity; the gateway verifies the token itself.
       pirc-clear-identity.headers.customRequestHeaders."X-Pirc-User" = "";
+      # The static server has no SPA fallback; serve the app shell for the
+      # client-side /engine routes.
+      pirc-spa-index.replacePath.path = "/index.html";
 
       authelia.forwardAuth = {
         address = "http://127.0.0.1:${toString homolab.ports.authelia}/api/verify?rd=https%3A%2F%2F${homolab.domains.auth}%2F";
@@ -364,6 +367,21 @@ let
               "pirc-use-verified-email@file"
             ];
             service = "pirc-gateway";
+            tls.certResolver = "letsencrypt";
+          };
+
+          pirc-engine = {
+            rule = mkPrivateHostPathRule homolab.domains.pirc "(Path(`/engine`) || PathPrefix(`/engine/`))";
+            entryPoints = [ "websecure" ];
+            priority = 1500;
+            middlewares = [
+              "pirc-strip-identity@file"
+              "authelia@file"
+              "pirc-use-verified-email@file"
+              "pirc-revalidate@file"
+              "pirc-spa-index@file"
+            ];
+            service = "pirc-web";
             tls.certResolver = "letsencrypt";
           };
 
