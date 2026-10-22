@@ -9,6 +9,15 @@
     ./user.nix
   ];
 
+  # CLI consumers must not fall back to stale runtime/OS CA bundles.
+  home.sessionVariables = {
+    NIX_SSL_CERT_FILE = "${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt";
+    SSL_CERT_FILE = "${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt";
+    SSL_CERT_DIR = "${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs";
+    REQUESTS_CA_BUNDLE = "${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt";
+    CURL_CA_BUNDLE = "${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt";
+  };
+
   programs.git = {
     enable = true;
     settings = {

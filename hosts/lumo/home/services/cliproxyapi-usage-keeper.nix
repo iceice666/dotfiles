@@ -22,7 +22,7 @@ let
     description="Lumo CPA Usage Keeper analytics dashboard"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --name=lumo-cliproxyapi-usage-keeper --network=host --env-file=${envPath} -v ${dataDir}/data:/data ${image}"
+    command_args="run --replace --rm --name=lumo-cliproxyapi-usage-keeper --network=host --env-file=${envPath} --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro -v ${dataDir}/data:/data ${image}"
     command_user="root"
     output_log="/var/log/lumo/cliproxyapi-usage-keeper.log"
     error_log="/var/log/lumo/cliproxyapi-usage-keeper.log"

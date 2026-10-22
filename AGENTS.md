@@ -84,7 +84,7 @@ pkgs/                # overlay packages
   equibop-bin/       # Equibop binary
   framework-shell-state/ # Rust state daemon/action helper for Framework AGS
   helium-bin/        # Helium Browser package (macOS DMG / Linux AppImage)
-  pi-bin/           # official prebuilt Pi coding agent, including Linux loader wrapper
+  pi-bin/           # pinned upstream npm Pi on Node with managed TLS trust
   rime-frost/        # Rime Frost schema data
   rime-octagram-zh-hant-essay-bgw/ # Traditional Chinese octagram grammar model
   themegen/          # Rust-based theme generator (Cargo project)
@@ -115,7 +115,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
 | `ghostty` | `github:iceice666/ghostty/1a9d07c00fc78d8ace9897d3c1d9fc101c23a2ee` (fork with vertical tabs) | no |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
-| `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway`, `pkgs.pirc-chat` and `pkgs.pirc-node`; lumo's `pirc.nix` uses `pirc-gateway`; homolab (WSL) runs a manually built `pirc-node`; bump with `just update pirc`) | yes |
+| `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway` and `pkgs.pirc-node`; lumo's `pirc.nix` uses `pirc-gateway`; homolab (WSL) runs a manually built `pirc-node`; bump with `just update pirc`) | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 `self.submodules = true` is set so Git submodules are fetched.
 
@@ -203,7 +203,8 @@ The `cliproxyapi` provider is enabled on homolab, lumo, m5pro, and framework; th
 Pi (`https://pi.dev/`) is configured through `common/home-base/pi.nix`, enabled
 with `features.pi` on m5pro, framework, and homolab. Lumo retains only an
 unprivileged audit-specific Pi runner, not a general root Pi installation.
-The shared module installs `pi-bin` and manages
+The shared module installs `pi-bin` (the upstream npm distribution on Node with
+an explicit filtered CA bundle; see `pkgs/pi-bin/README.md`) and manages
 `~/.pi/agent/models.json` with the `cliproxyapi` OpenAI Chat Completions provider
 at `https://cliproxyapi.justaslime.dev/v1` and the `cliproxyapi-claude` native
 Anthropic Messages provider at `https://cliproxyapi.justaslime.dev`. Claude models
@@ -320,6 +321,43 @@ The lumo audit collector discovers OpenRC commands through the system PATH,
 collects file-based sysklogd logs and bounded rotated-log tails, and records
 individual service status exit codes. Missing or truncated logs do not establish
 complete 24-hour authentication coverage.
+
+## TLS trust and the October 2026 eMudhra incident
+
+`lib/tls-ca-blacklist.nix` owns the four NSS labels removed by the current
+Mozilla/NixOS response. `common/system` applies them to NixOS/nix-darwin;
+`dotfiles-cacert` in the shared overlay supplies an explicit plain bundle for
+Pi, CLI session variables, and configured containers without rebuilding every
+package in nixpkgs. Session variables apply to new sessions, not every daemon or
+application's embedded store. Preserve local/custom CA requirements deliberately
+when changing these paths.
+
+Alpine activation installs the full APK `ca-certificates` package if missing,
+records disabled source entries, and regenerates its bundle without discarding
+local certificates. It does not upgrade APK packages on every activation.
+macOS activation runs `scripts/tls-trust-macos.py`: it backs up the native
+`/etc/ssl/cert.pem` once, adds System keychain deny entries from the four
+fingerprint-verified public PEMs in `common/system-darwin/tls-distrust-roots.pem`,
+and atomically filters the native PEM bundle. It requires interactive operator
+privilege when sudo is unavailable. `--check` only inspects PEM membership, not
+keychain state or every application verifier.
+
+Bun is temporarily pinned to the official patched
+`1.4.4-canary.1+963452075` assets with fixed hashes, explicitly approved by the
+operator. The canary URL is rolling: replacement causes a hash failure, never a
+silent update. Replace this exception with a verified fixed stable release when
+available. Pi instead uses its supported npm/Node distribution at the same SDK
+version; updating external Bun cannot update an already compiled standalone Pi.
+
+Run `python3 scripts/tests/test-alpine-trust.py` and
+`python3 scripts/tests/test-tls-trust-macos.py` for non-destructive fixtures.
+`scripts/tls-trust-probe.mjs` tests a positive control and all twelve public
+compromised-chain endpoints; it never authenticates. Require certificate errors,
+not generic connection failures. Existing processes must be restarted after
+activation. Managed browser profiles need separate fresh-process verification:
+Playwright disables component updates by default, and pre-seeded CRLSets load
+asynchronously, so a successful CLI probe does not establish browser safety.
+Do not use an unverified managed browser for sensitive browsing.
 
 ## Managed browser access
 

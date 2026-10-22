@@ -35,6 +35,13 @@ let
       --publish 127.0.0.1:${toString homolab.ports.teaAsrHttp}:8000 \
       --publish ${homolab.network.tailnet.address}:${toString homolab.ports.teaAsrHttp}:8000 \
       --env HF_HOME=/cache \
+      --env SSL_CERT_FILE=/etc/dotfiles-ca.crt \
+      --env SSL_CERT_DIR=/etc/dotfiles-certs \
+      --env REQUESTS_CA_BUNDLE=/etc/dotfiles-ca.crt \
+      --env CURL_CA_BUNDLE=/etc/dotfiles-ca.crt \
+      --env PIP_CERT=/etc/dotfiles-ca.crt \
+      --volume ${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro \
+      --volume ${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro \
       --volume ${cacheDir}:/cache \
       --volume ${serverScript}:/app/server.py:ro \
       ${image} \

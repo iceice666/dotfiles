@@ -52,7 +52,7 @@ let
     description="Lumo Umami analytics"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --name=lumo-umami --network=host --env-file=${envPath} ${umamiImage}"
+    command_args="run --replace --rm --name=lumo-umami --network=host --env-file=${envPath} --env=NODE_OPTIONS=--use-openssl-ca --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro ${umamiImage}"
     command_user="root"
     output_log="/var/log/lumo/umami.log"
     error_log="/var/log/lumo/umami.log"

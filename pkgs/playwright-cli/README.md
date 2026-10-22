@@ -13,6 +13,16 @@ Both launch a separate, ephemeral profile, headless by default, with
 investigated against these pinned versions, not fixed by disabling the sandbox.
 Homolab and Lumo are not enabled. No remote browser service or MCP bridge is used.
 
+**TLS incident caveat:** fresh isolated Helium profiles accepted the October 2026
+eMudhra test chains before local distrust was applied. Playwright disables
+component updates by default, and even a pre-seeded CRLSet loads asynchronously.
+Do not assume Chrome's automatic emergency revocations cover these sessions.
+After the host trust activation, require a fresh sandbox-enabled browser to
+reject all twelve endpoints at <https://emudhra.we-have-a-problem.com/> with
+certificate errors while a positive control succeeds. macOS Keychain distrust
+is configured by the system activation, but its browser effect remains a
+separate runtime check. Do not use an unverified session for sensitive browsing.
+
 ## Use
 
 After `just build` / `just switch`, restart Pi or reload its skills and invoke

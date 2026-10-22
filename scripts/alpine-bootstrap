@@ -59,6 +59,7 @@ fi
 apk add --no-cache \
   age \
   bash \
+  ca-certificates \
   cgroup-tools \
   coreutils \
   curl \

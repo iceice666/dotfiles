@@ -27,7 +27,10 @@ every tool in such a process. Unrelated local extensions are left alone.
 | `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
-is needed on deployed hosts. Bash is installed explicitly for background jobs;
+is needed on deployed hosts. It now packages the upstream npm distribution under
+Node rather than the standalone Bun binary, so the launcher can select the
+filtered CA bundle explicitly. See `../../../pkgs/pi-bin/README.md` for package
+layout and TLS regression commands. Pi and its SDK remain at version 1.2.0. Bash is installed explicitly for background jobs;
 Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
 the invoking user's permissions, including root on lumo. The managed launcher
 pins this extension tree but does **not** sandbox tools: upstream file/shell tools,
