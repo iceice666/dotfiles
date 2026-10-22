@@ -46,7 +46,7 @@
     };
 
     pirc = {
-      url = "github:iceice666/pirc";
+      url = "github:iceice666/pirc/feat/pirc-harmony";
       # pirc's bun.lock needs Bun 1.4, which the stable channel lacks.
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };

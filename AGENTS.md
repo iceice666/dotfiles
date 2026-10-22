@@ -115,7 +115,7 @@ evaluation time — no hand-maintained list. Per-host specs declare a `features`
 | `ags` | `github:Aylur/ags/v3.1.2` (Framework GTK4 shell; matching Astal follows upstream lock) | yes |
 | `ghostty` | `github:iceice666/ghostty/1a9d07c00fc78d8ace9897d3c1d9fc101c23a2ee` (fork with vertical tabs) | no |
 | `xlibre-overlay` | `git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05` | no |
-| `pirc` | `github:iceice666/pirc` (overlay adds `pkgs.pirc-gateway` and `pkgs.pirc-node`; lumo's `pirc.nix` uses `pirc-gateway`; homolab (WSL) runs a manually built `pirc-node`; bump with `just update pirc`) | yes |
+| `pirc` | `github:iceice666/pirc/feat/pirc-harmony` (0.10.0+harmony rewrite; overlay adds `pkgs.pirc-gateway` and `pkgs.pirc-node`; lumo's `pirc.nix` uses `pirc-gateway`; homolab (WSL) runs a manually built `pirc-node`; bump with `just update pirc`) | yes |
 | `reimu-on-starlit-water` | `path:/home/iceice666/code/reimu_lays_on_water` | no |
 `self.submodules = true` is set so Git submodules are fetched.
 

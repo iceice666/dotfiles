@@ -320,15 +320,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792408383,
-        "narHash": "sha256-kyAmxnitVql9CuWF70+YYNyZJ3V6UdVXIKhE6EI1d1A=",
+        "lastModified": 1792669772,
+        "narHash": "sha256-IUHtJyZdm6HSzGHwUHeTKavRypobR662RWVweWEcLss=",
         "owner": "iceice666",
         "repo": "pirc",
-        "rev": "105871d713ab3a386768a55ebe3e25b98968e3b1",
+        "rev": "ec46ce5dbbf7f1f2511a15a857bded86a1886d2e",
         "type": "github"
       },
       "original": {
         "owner": "iceice666",
+        "ref": "feat/pirc-harmony",
         "repo": "pirc",
         "type": "github"
       }
