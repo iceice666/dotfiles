@@ -83,7 +83,6 @@ let
             oh-my-pi-bin
             pi-bin
             pirc-gateway
-            pirc-chat
             pirc-node
             playwright-cli
             zed-bin
