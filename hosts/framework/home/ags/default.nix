@@ -11,6 +11,10 @@
 let
   agsConfigDir = "${config.home.homeDirectory}/.config/ags";
   agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
+  # Astal and its layer-shell preload must share the wrapper's GTK closure.
+  agsRuntimePkgs = import inputs.ags.inputs.nixpkgs {
+    system = pkgs.stdenv.hostPlatform.system;
+  };
   ags = agsPackages.ags.override {
     extraPackages = [
       agsPackages.notifd
@@ -19,17 +23,17 @@ let
   };
   icons = import ./icons.nix { inherit pkgs; };
   shellAssets =
-    pkgs.runCommand "framework-ags-assets"
+    agsRuntimePkgs.runCommand "framework-ags-assets"
       {
         nativeBuildInputs = [
           ags
-          pkgs.gobject-introspection
-          pkgs.wrapGAppsHook3
+          agsRuntimePkgs.gobject-introspection
+          agsRuntimePkgs.wrapGAppsHook3
         ];
         buildInputs = [
-          pkgs.gjs
-          pkgs.gtk4
-          pkgs.libadwaita
+          agsRuntimePkgs.gjs
+          agsRuntimePkgs.gtk4
+          agsRuntimePkgs.libadwaita
           agsPackages.io
           agsPackages.astal4
           agsPackages.notifd

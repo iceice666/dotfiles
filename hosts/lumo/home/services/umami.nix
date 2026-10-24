@@ -12,7 +12,26 @@ let
   envPath = "${dataDir}/umami.env";
   postgresPort = 15432;
   postgresImage = "docker.io/library/postgres:16-alpine";
-  umamiImage = "ghcr.io/umami-software/umami:postgresql-latest";
+  # Preserve Umami 3.2.0 and its dependencies; replace only the Node executable.
+  # Both pinned images are linux/arm64 Alpine 3.24 builds.
+  umamiContainerfile = ''
+    FROM docker.io/library/node:22.23.4-alpine@sha256:fd4a97c1630a4a0a70117dd7b393e322db316d0489bdf36a0e776e7b235341b0 AS patched-node
+    FROM ghcr.io/umami-software/umami@sha256:41c5df65ee777b762411c105f9b040e33708ef8640a19a2d2b9abf3284ee3f37
+    COPY --from=patched-node /usr/local/bin/node /usr/local/bin/node
+    ENV NODE_VERSION=22.23.4
+    RUN test "$(node --version)" = v22.23.4
+  '';
+  umamiBuildContext = pkgs.writeTextDir "Containerfile" umamiContainerfile;
+  umamiImage = "localhost/lumo-umami:node-${
+    builtins.substring 0 16 (builtins.hashString "sha256" umamiContainerfile)
+  }";
+  ensureUmamiImage = pkgs.writeShellScript "lumo-umami-ensure-image" ''
+    set -eu
+    if ! ${pkgs.podman}/bin/podman image exists ${umamiImage}; then
+      ${pkgs.podman}/bin/podman build --pull=missing --network=none \
+        --file ${umamiBuildContext}/Containerfile --tag ${umamiImage} ${umamiBuildContext} >&2
+    fi
+  '';
   umamiPort = homolab.ports.umami;
   postgresPasswordPath = config.sops.secrets.umami-postgres-password.path;
   appSecretPath = config.sops.secrets.umami-app-secret.path;
@@ -66,9 +85,7 @@ let
 
     start_pre() {
       checkpath -f -m 0640 -o root:root /var/log/lumo/umami.log
-      if ! ${pkgs.podman}/bin/podman image exists ${umamiImage}; then
-        ${pkgs.podman}/bin/podman pull ${umamiImage} >&2
-      fi
+      ${ensureUmamiImage} || return $?
     }
   '';
 in
@@ -87,6 +104,9 @@ in
   };
 
   home.activation.lumoUmami = lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ] ''
+    # Fail before touching either running service if the derivative cannot be built.
+    ${ensureUmamiImage} || exit $?
+
     install -d -m 0755 /var/log/lumo
     install -d -m 0700 -o root -g root ${dataDir}
 

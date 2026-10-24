@@ -9,7 +9,11 @@ The service executes the bundle at `~/.config/ags/app.js` directly. Despite the
 historical filename, AGS 3 emits a shell launcher that starts GJS with the GTK4
 layer-shell preload; it is not JavaScript input for `ags run`. A Nix-generated
 `framework-ags` wrapper supplies GTK/Astal typelibs and runtime data independently
-of the AGS CLI wrapper.
+of the AGS CLI wrapper. Its GJS/GTK/libadwaita and wrapping hooks come from
+`inputs.ags.inputs.nixpkgs`, the same package set as Astal and the layer-shell
+preload. Do not mix these with host-overlay GTK: even identical version strings
+can refer to different builds, loading two GTK libraries and hanging startup
+with `cannot register existing type 'GtkIMContext'`.
 
 ## Ownership
 

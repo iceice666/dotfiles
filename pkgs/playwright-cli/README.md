@@ -7,7 +7,10 @@ is required on deployed hosts. Registry update checks are disabled.
 
 `common/home-base/browser.nix` is imported only by m5pro and Framework. It installs
 the CLI, the `playwright-browser` skill, and `~/.playwright/cli.config.json`.
-macOS uses the Nix-managed Helium app executable; Framework uses Nix Chromium.
+macOS uses the Nix-managed Helium app executable; Framework uses Nix Chromium
+from a pristine import of the same locked nixpkgs. This keeps custom Node
+build-tool overlays from invalidating Chromium's binary cache without changing
+its version. Playwright CLI itself still uses the managed, patched Node runtime.
 Both launch a separate, ephemeral profile, headless by default, with
 `chromiumSandbox = true`. A browser protocol compatibility failure should be
 investigated against these pinned versions, not fixed by disabling the sandbox.

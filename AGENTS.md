@@ -172,12 +172,13 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional 
 
 ### Overlay
 
-The overlay is split into four focused files under `lib/flake/overlays/`:
+The overlay is split into focused files under `lib/flake/overlays/`:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
 - `binaries.nix` — binary and cross-platform packages: `blocky-bin`, `cliproxyapi-account-quota`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `framework-shell-state`, `helium-bin`, `pi-bin`, `rime-frost`, `rime-octagram-zh-hant-essay-bgw`, `themegen`, `utiluti`, `zed-bin`.
 - `linux-gui.nix` — Linux-only packages: `kaguya-bin`, `niri-scratchpad-helper`, `reimu-on-starlit-water`. Attributes are omitted (not thrown) on non-Linux.
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
+- `nodejs.nix` — temporary official Node.js binary pins through `pkgs/nodejs-bin`: 24.22.1 for the CLI/Pi and 22.23.4 for consumers such as Bitwarden. Hash-pinned binaries include patched bundled dependencies and avoid compiling V8 on Raspberry Pi hosts. Remove the override once both locked package sets provide equivalent fixes; retain the regression tests in `scripts/tests/test-nodejs-security.mjs`.
 
 The Framework-only kernel pin (`linux_zen_7_0`, `linuxPackages_zen_7_0`) lives in
 `hosts/framework/overlay.nix` and is applied locally via `nixpkgs.overlays` in the
@@ -186,6 +187,32 @@ Framework system configuration — not in the shared overlay.
 Additional notes:
 - `reimu-on-starlit-water` imports the local package expression from `/home/iceice666/code/reimu_lays_on_water/nix/package.nix` through a non-flake path input and builds it with the `nixpkgs-unstable` Rust toolchain.
 - `helium-bin` is the local package under `pkgs/helium-bin`: the Helium macOS DMG on Darwin and the Helium Linux AppImage (via `appimageTools`) on Linux. m5pro and Framework use it as their default browser; homolab installs it for its bspwm desktop (`super + b`).
+
+### Node.js security updates
+
+The shared overlay updates both `nodejs-slim_22`/`nodejs-slim_24` and their
+npm/corepack wrappers, including the default `nodejs` alias. Updating only
+`home.packages` does not update absolute runtime paths embedded in Pi,
+Playwright, or Bitwarden. `pkgs/nodejs-bin` packages official binaries for native
+Linux/macOS x86_64 and arm64; cross builds are rejected. Matching full source is
+unpacked only for npm patches and node-gyp (no V8 compilation). The package does
+not provide a static libv8 or V8 compiler-generator outputs. Its launcher defaults
+to OpenSSL CA verification and the filtered bundle while permitting explicit
+caller trust overrides; direct `process.execPath` execution with a cleared
+environment bypasses these launcher defaults. Pi retains its explicit CA policy.
+Run each built runtime against `scripts/tests/test-nodejs-security.mjs 22` or
+`24`, its `tests.nativeAddon` passthru, and rebuild Pi for local TLS trust checks.
+See `pkgs/nodejs-bin/README.md` for validation commands and limits. Restart existing
+Node/Pi processes after activation; old generations and running processes retain
+their old runtimes.
+
+Lumo's Umami container is a separate runtime boundary. Its module pins the
+existing Umami 3.2.0 image and copies only Node 22.23.4 from a digest-pinned
+linux/arm64 Alpine 3.24 donor. It preserves application files, database settings,
+and explicit CA mounts. Activation builds the content-hash-tagged local image
+before restarting Umami/Postgres, and fails if the image cannot be prepared.
+Updating host Node does not patch Electron applications or user-managed fnm
+installations; those require their own compatible upstream updates.
 
 ### `unstablePkgsFor`
 

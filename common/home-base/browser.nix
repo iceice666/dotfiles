@@ -1,5 +1,13 @@
 { config, pkgs, ... }:
 
+let
+  # Keep Chromium on the same locked nixpkgs, without build-tool overlays that
+  # invalidate its binary cache. Node runtime consumers still use managed pkgs.
+  browserPkgs = import pkgs.path {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfree = true;
+  };
+in
 {
   home.packages = [ pkgs.playwright-cli ];
 
@@ -18,7 +26,7 @@
           if pkgs.stdenv.hostPlatform.isDarwin then
             "${config.home.homeDirectory}/${config.targets.darwin.copyApps.directory}/Helium.app/Contents/MacOS/Helium"
           else
-            "${pkgs.chromium}/bin/chromium";
+            "${browserPkgs.chromium}/bin/chromium";
         headless = true;
         chromiumSandbox = true;
       };
