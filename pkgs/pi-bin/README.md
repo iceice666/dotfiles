@@ -1,13 +1,14 @@
 # Pi with managed TLS trust
 
 The historical `pi-bin` attribute installs the upstream **npm distribution** of
-Pi 1.2.0 under Node, not the standalone Bun executable. The standalone release
+Pi 1.4.0 under Node, not the standalone Bun executable. The standalone release
 embeds an independent, outdated CA set; setting `SSL_CERT_FILE` did not remove
 its trust in the compromised eMudhra chains in regression testing.
 
 `package-lock.json` and `npmDepsHash` pin the npm graph. All Pi sibling packages
-are overridden to 1.2.0 so their caret dependencies cannot silently change the
-SDK version. Installation scripts are disabled. Linux clipboard prebuilds are
+are overridden to 1.4.0 so a stray caret dependency cannot silently change the
+SDK version (upstream pins them exactly since 1.3.0; the overrides stay as a
+guard). Installation scripts are disabled. Linux clipboard prebuilds are
 restricted to the host architecture and patched for Nix's `libxcb`.
 
 The launcher selects OpenSSL verification and the explicit `dotfiles-cacert`

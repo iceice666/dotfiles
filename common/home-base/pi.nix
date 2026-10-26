@@ -66,9 +66,10 @@ let
     };
   };
 
-  # Upstream 3.1.4 plus rate-limit fallback and Pi 1.2.0 worker compatibility.
-  # Regenerate against this exact tag and run vitest + tsc against the deployed
-  # Pi SDK (see pi/README.md), not only upstream's older locked SDK.
+  # Upstream 3.1.4 plus rate-limit fallback and Pi 1.2.0+ worker compatibility
+  # (validated against the pinned 1.4.0 SDK). Regenerate against this exact tag
+  # and run vitest + tsc against the deployed Pi SDK (see pi/README.md), not
+  # only upstream's older locked SDK.
   observationalMemory = pkgs.applyPatches {
     name = "pi-observational-memory-3.1.4-patched";
     src = pkgs.fetchFromGitHub {

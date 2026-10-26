@@ -12,9 +12,9 @@
 
 buildNpmPackage {
   pname = "pi-bin";
-  version = "1.2.0";
+  version = "1.4.0";
   src = ./.;
-  npmDepsHash = "sha256-d/KJcW8VNyaO3GIosgTA2VpDv2FtztjverFR2GO+Hy4=";
+  npmDepsHash = "sha256-SPAA6LwAyTsfMiBq8WjQnMJHYoXqiRsyMxHkv8cbOtw=";
   dontNpmBuild = true;
   npmFlags = [ "--ignore-scripts" ];
   nativeBuildInputs = [
@@ -72,7 +72,7 @@ buildNpmPackage {
   meta = {
     description = "Pi terminal coding agent using the system CA store";
     homepage = "https://github.com/earendil-works/pi";
-    changelog = "https://github.com/earendil-works/pi/releases/tag/v1.2.0";
+    changelog = "https://github.com/earendil-works/pi/releases/tag/v1.4.0";
     license = lib.licenses.mit;
     mainProgram = "pi";
     platforms = [

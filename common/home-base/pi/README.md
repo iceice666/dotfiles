@@ -23,14 +23,14 @@ every tool in such a process. Unrelated local extensions are left alone.
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
-| `observational-memory/` | Upstream Observational Memory 3.1.4 plus the repo-owned rate-limit fallback and Pi 1.2.0 compatibility patch, pinned and installed by Nix for durable ledger-backed memory |
+| `observational-memory/` | Upstream Observational Memory 3.1.4 plus the repo-owned rate-limit fallback and Pi 1.2.0+ compatibility patch (validated against the pinned 1.4.0 SDK), pinned and installed by Nix for durable ledger-backed memory |
 | `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
 The pinned `pi-bin` supplies the extension SDK imports at runtime; no npm install
 is needed on deployed hosts. It now packages the upstream npm distribution under
 Node rather than the standalone Bun binary, so the launcher can select the
 filtered CA bundle explicitly. See `../../../pkgs/pi-bin/README.md` for package
-layout and TLS regression commands. Pi and its SDK remain at version 1.2.0. Bash is installed explicitly for background jobs;
+layout and TLS regression commands. Pi and its SDK are pinned at version 1.4.0. Bash is installed explicitly for background jobs;
 Git and Node.js are supplied by the shared CLI baseline. Extensions execute with
 the invoking user's permissions, including root on lumo. The managed launcher
 pins this extension tree but does **not** sandbox tools: upstream file/shell tools,
@@ -111,10 +111,10 @@ other hosts keep the built-in `light/dark` pair. Changing the theme via
 Nix pins upstream `pi-observational-memory` 3.1.4, applies
 `patches/observational-memory-rate-limit-fallback.patch`, and installs the
 resulting `src/` as the managed `observational-memory/` extension. The patched
-source targets Pi 1.2.0: worker instructions are leading system messages, and
-`finishTurn` ends each worker at its configured turn budget without forcing
-another request. Upstream 3.1.4 also preserves the model registry receiver when
-streaming. Do not also
+source targets the Pi 1.2.0+ agent APIs (validated unchanged against the pinned
+1.4.0 SDK): worker instructions are leading system messages, and `finishTurn`
+ends each worker at its configured turn budget without forcing another request.
+Upstream 3.1.4 also preserves the model registry receiver when streaming. Do not also
 run `pi install npm:pi-observational-memory`; duplicate copies would register
 competing memory workers and compaction hooks. The managed defaults use
 `cliproxyapi/gpt-6.1-sol` at low thinking for background observer/reflector/dropper
@@ -152,11 +152,15 @@ not only upstream's development dependencies:
 ```sh
 npm ci --ignore-scripts
 npm install --ignore-scripts --no-save \
-  @earendil-works/pi-agent-core@1.2.0 @earendil-works/pi-ai@1.2.0 \
-  @earendil-works/pi-coding-agent@1.2.0 @earendil-works/pi-tui@1.2.0
+  @earendil-works/pi-agent-core@1.4.0 @earendil-works/pi-ai@1.4.0 \
+  @earendil-works/pi-coding-agent@1.4.0 @earendil-works/pi-tui@1.4.0
 env -u PI_PACKAGE_DIR npx vitest run
 env -u PI_PACKAGE_DIR npx tsc --noEmit
 ```
+
+Upstream's unreleased `main` already carries its own fallback-model feature and
+a prebuilt module layout; revisit the local patch when the next upstream tag
+is published.
 
 The patch also updates prompt/turn-budget tests and the mock OAuth runtime for
 that SDK; its HTTP fixture checks that worker system instructions reach the
@@ -275,11 +279,20 @@ From the repository root (Node 22.19+ and Bun required):
 ```sh
 cd common/home-base/pi
 bun install --frozen-lockfile --ignore-scripts
-env -u PI_PACKAGE_DIR bun run test
+env -u PI_PACKAGE_DIR -u PI_TEAM_AGENT -u PI_TEAM_URL -u PI_TEAM_TOKEN bun run test
 ```
 
 Unset the launcher's `PI_PACKAGE_DIR` only for the test process so SDK theme
 fixtures resolve from the local dependency instead of the packaged Pi runtime.
+Also unset the `PI_TEAM_*` variables when running the suite from inside a team
+worker: otherwise the todo approval fixtures route their test declarations
+through the live team broker as real human-approval prompts.
+
+There is no committed `tsconfig.json`; the extensions are loaded by Pi's
+loader at runtime. For an ad-hoc type check against the pinned SDK, run `tsc
+--noEmit` with `moduleResolution: "Bundler"`, `allowImportingTsExtensions` and
+`skipLibCheck` over `extensions/**/*.ts` (excluding `tests/`); the only known
+diagnostics come from untyped `.mjs` imports, not from the SDK.
 
 The test suite resolves the local pinned SDK, not a machine-specific global npm
 installation. Dependency lifecycle scripts are not needed. The two legacy
