@@ -4,11 +4,36 @@
   lab,
   lib,
   pkgs,
+  unstablePkgs,
   ...
 }:
 
 let
   auditBaseDir = "/var/lib/homolab-audit";
+  trivyCacheDir = "/var/cache/trivy";
+
+  # Versions of the Nix-provided services in this generation, so the report has
+  # a baseline to compare against published advisories. Trivy cannot see
+  # /nix/store; this list is the only Nix-side evidence.
+  nixServiceVersions = pkgs.writeText "homolab-nix-service-versions.txt" (
+    lib.concatMapStringsSep "\n" (p: "${p.pname or p.name} ${p.version or "unknown"}") [
+      unstablePkgs.traefik
+      unstablePkgs.authelia
+      pkgs.postgresql_17
+      pkgs.valkey
+      pkgs.blocky-bin
+      pkgs.podman
+      pkgs.prometheus
+      pkgs.prometheus-node-exporter
+      pkgs.prometheus-blackbox-exporter
+      pkgs.cliproxyapi-bin
+      pkgs.pirc-gateway
+      pkgs.nodejs
+      pkgs.pi-bin
+      pkgs.trivy
+    ]
+    + "\n"
+  );
   auditUser = "homolab-audit";
   auditRuntimeDir = "/run/homolab-audit";
   agentModel = import ../../../../common/home-base/agent-model.nix { inherit dotfiles lab; };
@@ -46,6 +71,67 @@ let
       ];
     }
   );
+  kernelCheck = pkgs.writeShellScript "homolab-audit-kernel-check" ''
+    set -eu
+    running="$(uname -r)"
+    installed="$(apk list -I linux-rpi 2>/dev/null | ${pkgs.gawk}/bin/awk 'NR == 1 { sub("^linux-rpi-", "", $1); print $1 }')"
+    printf 'running=%s\ninstalled=%s\n' "$running" "$installed"
+    # 6.18.58-r0 (package) vs 6.18.58-0-rpi (uname): compare upstream version only.
+    if [ "''${installed%%-r*}" != "''${running%%-*}" ]; then
+      echo "MISMATCH: installed kernel is not the running kernel; reboot required"
+      exit 1
+    fi
+    echo "running kernel matches installed package"
+  '';
+
+  # Host scan reads the APK database against the Alpine secdb. /nix and
+  # container storage are skipped: Trivy cannot assess Nix closures and
+  # walking them would outlast the cron gap before the reporter runs.
+  trivyHost = pkgs.writeShellScript "homolab-audit-trivy-host" ''
+    set -eu
+    exec ${pkgs.trivy}/bin/trivy rootfs \
+      --quiet \
+      --scanners vuln \
+      --pkg-types os \
+      --severity HIGH,CRITICAL \
+      --format table \
+      --timeout 5m \
+      --skip-java-db-update \
+      --skip-dirs /nix,/proc,/sys,/dev,/run,/tmp,/var,/home,/root,/srv,/mnt,/media,/boot \
+      /
+  '';
+
+  # Only the images backing running containers; lumo also stores many
+  # unmanaged images that are not part of this plane. Unfixed findings are
+  # omitted because the only remedy is a newer upstream image.
+  trivyImages = pkgs.writeShellScript "homolab-audit-trivy-images" ''
+    set -u
+    # Trivy resolves the Podman socket as $XDG_RUNTIME_DIR/podman/podman.sock;
+    # root under crond has no XDG_RUNTIME_DIR, so point it at /run.
+    export XDG_RUNTIME_DIR=/run
+    status=0
+    images="$(${pkgs.podman}/bin/podman ps --format '{{.Image}}' | sort -u)"
+    if [ -z "$images" ]; then
+      echo "No running containers; nothing to scan."
+      exit 0
+    fi
+    for image in $images; do
+      printf '\n==== %s ====\n' "$image"
+      ${pkgs.trivy}/bin/trivy image \
+        --quiet \
+        --image-src podman \
+        --scanners vuln \
+        --severity HIGH,CRITICAL \
+        --ignore-unfixed \
+        --format table \
+        --table-mode detailed \
+        --timeout 4m \
+        --skip-java-db-update \
+        "$image" || status=1
+    done
+    exit "$status"
+  '';
+
   reportRecipient = "iceice666@outlook.com";
   reportSender = "Homolab Audit <noreply@justaslime.dev>";
   resendSecret = config.sops.secrets.homolab-audit-resend-api-key.path;
@@ -70,6 +156,11 @@ let
     text = ''
       set -euo pipefail
       umask 0027
+
+      # Trivy: no telemetry or version pings; vulnerability DB cached root-only.
+      export TRIVY_DISABLE_TELEMETRY=true
+      export TRIVY_CACHE_DIR=${trivyCacheDir}
+      install -d -m 0700 -o root -g root ${trivyCacheDir}
 
       # OpenRC is supplied by Alpine, not Nix; Alpine 3.24 puts rc-status
       # in /bin. Append the system PATH even under crond, keeping the
@@ -191,6 +282,16 @@ let
       record system-log collect_system_logs
       record podman-containers ${pkgs.podman}/bin/podman ps --all
       record podman-stats ${pkgs.podman}/bin/podman stats --no-stream
+
+      # Patch level: APK is the only channel for kernel/OpenSSH/Tailscale
+      # fixes and nothing upgrades it automatically.
+      record_shell apk-upgradable 'apk update -q >/dev/null && apk list --upgradable'
+      record apk-core-packages apk list -I linux-rpi musl openssl openssh-server tailscale nftables busybox
+      record kernel-running-vs-installed ${kernelCheck}
+      record nix-service-versions cat ${nixServiceVersions}
+      # CVE evidence; see the scripts for scope and limits.
+      record trivy-host ${trivyHost}
+      record trivy-images ${trivyImages}
       shopt -s nullglob
       services=(/etc/init.d/lumo-*)
       if [ "''${#services[@]}" -eq 0 ]; then
@@ -306,9 +407,10 @@ let
       ## Collector Gaps
       ## Recommended Actions
 
-      Prioritize exposed services, SSH and firewall boundaries, failed OpenRC
-      services, suspicious log activity, and resource pressure. Cite evidence
-      filenames when useful.
+      Prioritize fixed CRITICAL/HIGH vulnerabilities (trivy-host, trivy-images),
+      pending APK upgrades and reboot requirements, exposed services, SSH and
+      firewall boundaries, failed OpenRC services, suspicious log activity, and
+      resource pressure. Cite evidence filenames when useful.
       PROMPT
 
       chown root:${auditUser} "$prompt_file"
