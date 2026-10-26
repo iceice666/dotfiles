@@ -65,6 +65,14 @@ let
       ];
     };
 
+    # The portal is reachable from the public internet (bypass policy on the
+    # auth domain); this is the only brute-force limiter in front of it.
+    regulation = {
+      max_retries = 3;
+      find_time = "2m";
+      ban_time = "10m";
+    };
+
     session = {
       cookies = [
         {

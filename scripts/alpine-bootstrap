@@ -166,8 +166,6 @@ table inet dotfiles {
     ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept
     ip6 saddr @cloudflare_v6 tcp dport { 80, 443 } accept
     ip saddr 192.168.1.0/24 tcp dport { 80, 443 } accept
-    # traefikPing (18081) and traefikMetrics (18082): LAN only
-    ip saddr 192.168.1.0/24 tcp dport { 18081, 18082 } accept
   }
 
   chain forward {

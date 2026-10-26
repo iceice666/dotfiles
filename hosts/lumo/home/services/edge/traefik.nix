@@ -90,21 +90,28 @@ let
       };
     };
 
-    entryPoints = {
-      ping.address = "0.0.0.0:${toString lab.ports.traefikPing}";
-      metrics.address = "0.0.0.0:${toString lab.ports.traefikMetrics}";
+    # Drop request headers whose name aliases another (X_Pirc_User, X.Pirc.User,
+    # …) so a client cannot smuggle a lookalike past the identity-stripping
+    # middlewares; only letters, digits and dashes survive.
+    entryPoints =
+      lib.mapAttrs (_: ep: lib.recursiveUpdate { http.aliasHeadersStrategy = "delete"; } ep)
+        {
+          # Only local Prometheus and the smoke check consume these; the retired
+          # gateway Pi was the last LAN scraper.
+          ping.address = "127.0.0.1:${toString lab.ports.traefikPing}";
+          metrics.address = "127.0.0.1:${toString lab.ports.traefikMetrics}";
 
-      web = {
-        address = ":80";
-        forwardedHeaders.trustedIPs = trustedProxyCidrs;
-      };
+          web = {
+            address = ":80";
+            forwardedHeaders.trustedIPs = trustedProxyCidrs;
+          };
 
-      websecure = {
-        address = ":443";
-        forwardedHeaders.trustedIPs = trustedProxyCidrs;
-        http.tls.certResolver = "letsencrypt";
-      };
-    };
+          websecure = {
+            address = ":443";
+            forwardedHeaders.trustedIPs = trustedProxyCidrs;
+            http.tls.certResolver = "letsencrypt";
+          };
+        };
 
     ping.entryPoint = "ping";
 
@@ -114,8 +121,48 @@ let
     };
   };
 
+  # Attached to every websecure router so no route forgets it. Redirect-only
+  # `web` routers are excluded: the headers belong on the HTTPS response.
+  securityHeadersMiddleware = "security-headers@file";
+  withSecurityHeaders = lib.mapAttrs (
+    _: router:
+    if router.entryPoints == [ "websecure" ] then
+      router // { middlewares = [ securityHeadersMiddleware ] ++ (router.middlewares or [ ]); }
+    else
+      router
+  );
+
   dynamicConfig = yamlFormat.generate "traefik-dynamic.yml" {
+    tls.options.default = {
+      minVersion = "VersionTLS12";
+      sniStrict = true;
+      # TLS 1.3 suites are fixed by Go; this list only constrains TLS 1.2.
+      cipherSuites = [
+        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+        "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+      ];
+      curvePreferences = [
+        "X25519"
+        "CurveP256"
+      ];
+    };
+
     http.middlewares = {
+      # SAMEORIGIN rather than DENY: the Authelia portal and Umami embed
+      # same-origin frames. No HSTS preload; every subdomain already
+      # redirects to HTTPS, so includeSubdomains is safe.
+      security-headers.headers = {
+        stsSeconds = 31536000;
+        stsIncludeSubdomains = true;
+        contentTypeNosniff = true;
+        referrerPolicy = "strict-origin-when-cross-origin";
+        customFrameOptionsValue = "SAMEORIGIN";
+      };
+
       # Only the single explicitly allowed Authelia account may reach pirc.
       # Strip client-provided identity before forward auth, then set the daemon
       # header after a successful two-factor check.
@@ -159,7 +206,7 @@ let
       };
     };
 
-    http.routers =
+    http.routers = withSecurityHeaders (
       lib.filterAttrs
         (
           name: _:
@@ -201,18 +248,21 @@ let
             tls.certResolver = "letsencrypt";
           };
 
+          # The whole CPA host is private: Pi clients sit on the tailnet and
+          # Blocky resolves the name to lumo's tailnet address, so nothing
+          # legitimate arrives through Cloudflare.
           cliproxyapi-http = {
-            rule = mkHostRule lab.domains.cliproxyapi;
+            rule = mkPrivateHostRule lab.domains.cliproxyapi;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
-          # /v1/* — public API, clients authenticate with their own API key.
+          # /v1/* — API, clients authenticate with their own API key.
           # Explicit priority (matches umami-api) so this always wins over the
           # broader Authelia-gated `cliproxyapi` dashboard router below.
           cliproxyapi-api = {
-            rule = mkHostPathRule lab.domains.cliproxyapi "PathPrefix(`/v1`)";
+            rule = mkPrivateHostPathRule lab.domains.cliproxyapi "PathPrefix(`/v1`)";
             entryPoints = [ "websecure" ];
             priority = 1000;
             service = "cliproxyapi";
@@ -220,7 +270,7 @@ let
           };
           # Same-origin Keeper route must outrank the broader CPAMC dashboard.
           cliproxyapi-keeper = {
-            rule = mkHostPathRule lab.domains.cliproxyapi "(Path(`/keeper`) || PathPrefix(`/keeper/`))";
+            rule = mkPrivateHostPathRule lab.domains.cliproxyapi "(Path(`/keeper`) || PathPrefix(`/keeper/`))";
             entryPoints = [ "websecure" ];
             priority = 1000;
             middlewares = [ "authelia@file" ];
@@ -230,7 +280,7 @@ let
 
           # Dashboard — Authelia protected
           cliproxyapi = {
-            rule = mkHostRule lab.domains.cliproxyapi;
+            rule = mkPrivateHostRule lab.domains.cliproxyapi;
             entryPoints = [ "websecure" ];
             middlewares = [ "authelia@file" ];
             service = "cliproxyapi";
@@ -397,7 +447,8 @@ let
             service = "pirc-web";
             tls.certResolver = "letsencrypt";
           };
-        };
+        }
+    );
 
     http.services =
       lib.filterAttrs

@@ -15,6 +15,31 @@ let
   ];
   publicResolverEndpoints = builtins.concatStringsSep "," publicResolvers;
 
+  # Names that must resolve to lumo itself for tailnet clients.
+  privateNames = with lab.domains; [
+    auth
+    pirc
+    dns
+    cliproxyapi
+    analytics
+    traefik
+    home
+    forgejo
+    woodpecker
+    npu
+  ];
+
+  # lumo's own resolver order is not trustworthy for these names: Tailscale
+  # refuses to loop back to a global resolver that is this node's address and
+  # falls back to the base config (1.1.1.1 first), so glibc-linked Nix
+  # binaries resolve them to Cloudflare and then fail the private ClientIP
+  # routes. /etc/hosts is consulted before any resolver by musl and glibc.
+  privateHostsBlock = pkgs.writeText "lumo-private-hosts" (
+    "# dotfiles-lumo-private-begin\n"
+    + lib.concatMapStringsSep "\n" (name: "${lab.hosts.lumo.tailnet} ${name}") privateNames
+    + "\n# dotfiles-lumo-private-end\n"
+  );
+
   blockyConfig = (pkgs.formats.yaml { }).generate "blocky.yml" {
     upstreams = {
       init.strategy = "failOnError";
@@ -45,18 +70,7 @@ let
     customDNS = {
       customTTL = "5m";
       filterUnmappedTypes = true;
-      mapping = {
-        ${lab.domains.auth} = lab.hosts.lumo.tailnet;
-        ${lab.domains.pirc} = lab.hosts.lumo.tailnet;
-        ${lab.domains.dns} = lab.hosts.lumo.tailnet;
-        ${lab.domains.cliproxyapi} = lab.hosts.lumo.tailnet;
-        ${lab.domains.analytics} = lab.hosts.lumo.tailnet;
-        ${lab.domains.traefik} = lab.hosts.lumo.tailnet;
-        ${lab.domains.home} = lab.hosts.lumo.tailnet;
-        ${lab.domains.forgejo} = lab.hosts.lumo.tailnet;
-        ${lab.domains.woodpecker} = lab.hosts.lumo.tailnet;
-        ${lab.domains.npu} = lab.hosts.lumo.tailnet;
-      };
+      mapping = lib.genAttrs privateNames (_: lab.hosts.lumo.tailnet);
       zone = "";
     };
 
@@ -127,5 +141,12 @@ in
     install -Dm755 ${blockyService} /etc/init.d/lumo-blocky
     /sbin/rc-update add lumo-blocky default
     /sbin/rc-service lumo-blocky restart
+
+    # Replace only the marker-delimited block; keep Alpine's own entries.
+    hosts_tmp="$(mktemp /etc/hosts.XXXXXX)"
+    ${pkgs.gnused}/bin/sed '/^# dotfiles-lumo-private-begin$/,/^# dotfiles-lumo-private-end$/d' /etc/hosts > "$hosts_tmp"
+    cat ${privateHostsBlock} >> "$hosts_tmp"
+    chmod 0644 "$hosts_tmp"
+    mv "$hosts_tmp" /etc/hosts
   '';
 }
