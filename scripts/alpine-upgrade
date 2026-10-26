@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# Upgrade the APK layer (kernel, OpenSSH, Tailscale, musl, OpenSSL, nftables,
+# …) on an Alpine host that this repo manages. Home Manager owns the Nix side;
+# nothing else refreshes APK packages, so security fixes only land through
+# this script. Defaults to a simulation; pass `apply` to upgrade for real.
+#
+# Never reboots or restarts services on its own: it reports what changed and
+# whether the running kernel or long-lived daemons still use old code, then
+# leaves the restart decision to the operator.
+set -euo pipefail
+
+mode="${1:-simulate}"
+target="${2:-lumo}"
+
+case "$mode" in
+  simulate | apply) ;;
+  *)
+    echo "alpine-upgrade: mode must be 'simulate' or 'apply' (got: $mode)" >&2
+    exit 1
+    ;;
+esac
+
+ssh "root@${target}" sh -s -- "$mode" <<'REMOTE'
+set -eu
+
+mode="$1"
+kernel_pkg="linux-rpi"
+
+installed_version() {
+  apk list -I "$1" 2>/dev/null | awk -v pkg="$1" 'NR == 1 { sub("^" pkg "-", "", $1); print $1 }'
+}
+
+echo "== apk update"
+apk update
+
+echo
+echo "== upgradable packages"
+upgradable="$(apk list --upgradable 2>/dev/null || true)"
+if [ -z "$upgradable" ]; then
+  echo "(none)"
+else
+  printf '%s\n' "$upgradable"
+fi
+
+kernel_before="$(installed_version "$kernel_pkg")"
+running_kernel="$(uname -r)"
+
+if [ "$mode" = "simulate" ]; then
+  echo
+  echo "== apk upgrade --simulate"
+  apk upgrade --simulate
+  echo
+  echo "Dry run only. Re-run with 'apply' to upgrade."
+else
+  echo
+  echo "== apk upgrade"
+  apk upgrade
+fi
+
+kernel_after="$(installed_version "$kernel_pkg")"
+
+echo
+echo "== kernel"
+echo "running:   $running_kernel"
+echo "installed: $kernel_pkg-$kernel_after"
+# Alpine package versions look like 6.18.58-r0; the running kernel reports
+# 6.18.58-0-rpi. Compare the upstream version part only.
+installed_base="${kernel_after%%-r*}"
+running_base="${running_kernel%%-*}"
+if [ "$installed_base" != "$running_base" ]; then
+  echo "REBOOT REQUIRED: installed kernel $installed_base differs from running $running_base"
+elif [ "$mode" = "apply" ] && [ "$kernel_before" != "$kernel_after" ]; then
+  echo "REBOOT REQUIRED: kernel package changed ($kernel_before -> $kernel_after)"
+else
+  echo "running kernel matches installed package"
+fi
+
+if [ "$mode" = "apply" ] && [ -n "$upgradable" ]; then
+  echo
+  echo "== restart hints"
+  # Core libraries: every long-running process keeps the old mapping until it
+  # restarts. A reboot is the only complete fix.
+  if printf '%s\n' "$upgradable" | grep -qE '^(musl|openssl|libcrypto3|libssl3|zlib|busybox)-'; then
+    echo "REBOOT RECOMMENDED: core library upgraded (musl/openssl/zlib/busybox)"
+  fi
+  for svc in sshd tailscale nftables chronyd wpa_supplicant; do
+    if printf '%s\n' "$upgradable" | grep -qE "^(openssh|openssh-server|$svc)-"; then
+      echo "restart: rc-service $svc restart"
+    fi
+  done
+fi
+REMOTE

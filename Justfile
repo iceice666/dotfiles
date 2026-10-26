@@ -79,6 +79,11 @@ lumo-switch:
 lumo-smoke target='lumo':
     {{ scripts }}/lumo-smoke {{ target }}
 
+# Upgrade lumo's APK layer (kernel, OpenSSH, Tailscale, …); dry run unless mode='apply'
+[group('host')]
+lumo-upgrade mode='simulate' target='lumo':
+    {{ scripts }}/alpine-upgrade {{ mode }} {{ target }}
+
 # Clear CLIProxyAPI cooldowns on lumo after an upstream quota reset
 [group('host')]
 cliproxyapi-reset-cooldown provider='codex' target='lumo':
@@ -98,6 +103,11 @@ worker-build:
 [group('host')]
 worker-switch:
     nix develop --command deploy .#worker --skip-checks
+
+# Upgrade worker's APK layer; dry run unless mode='apply'
+[group('host')]
+worker-upgrade mode='simulate' target='worker':
+    {{ scripts }}/alpine-upgrade {{ mode }} {{ target }}
 
 # Install or update the m3air Woodpecker agent and Colima runtime
 [group('host')]
