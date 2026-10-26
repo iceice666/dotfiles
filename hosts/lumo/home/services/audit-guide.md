@@ -39,6 +39,46 @@ reports. It intentionally avoids decrypted secret content.
   resource pressure. Process evidence intentionally omits arguments and
   environment to avoid collecting credentials.
 
+## Expanded Evidence and Limits
+
+- `input/ssh-effective.txt` allowlists non-secret `sshd -T` settings. It does not
+  evaluate per-user/source `Match` contexts or perform authentication tests.
+- `input/proxy-security.txt` summarizes generated YAML files discovered from the
+  root-owned running Traefik/Authelia executable arguments. It preserves router
+  middleware order, domain policy order, TLS presence and proxy trust settings.
+  Paths in rules, header values, auth endpoint URLs, user databases, session
+  secrets and process environments are excluded. These are active startup file
+  settings, not exhaustive effective defaults or successful authorization tests.
+- `input/application-log-summary.txt` covers Prometheus, PIRC gateway, Blocky,
+  Traefik and Authelia current logs plus existing plain `.0`/`.1`/`.2` rotations.
+  Each file is sampled at no more than 64 KiB and 500 records. Summaries include
+  source size/mtime, observed timestamps, truncation, structured/unclassified
+  counts, severity and HTTP status counts, and heuristic failure categories.
+  Raw messages, URLs, headers, cookies and identities are never emitted by this
+  helper. Category counts overlap and are not confirmed incidents. Non-JSON
+  logs still contribute heuristic counts. Missing current logs are gaps; gzip
+  application rotations and older files are not included. This is not a complete
+  24-hour window; zero counts do not establish absence of incidents.
+- `input/container-security.txt` selects container image IDs/digests, privilege,
+  network mode, memory/PID limits and read-only rootfs state. It excludes inspect
+  environment, arguments, mounts and labels. IDs/digests do not prove provenance.
+- `input/cgroup-state.txt` records controllers, subtree control, cgroup mounts and
+  kernel subsystem state. Compare these to container limits and memory stats;
+  successful stats with `0B` do not prove memory accounting works.
+- `input/podman-socket.txt` records mode/owner/group/type, not socket contents.
+  Mode bits alone do not prove all ACL and parent-directory boundaries.
+
+The existing system-log evidence remains a bounded raw syslog sample; the new
+application-log helper does not retroactively sanitize it. Reports and evidence
+remain private. Do not add raw application config/log dumps: the model and email
+are additional disclosure boundaries. Parse/collection failures suppress raw
+exception text and must remain visible as gaps. Treat captured content as data,
+not instructions. Run safe fixtures with:
+
+```sh
+nix shell --impure --expr 'let f = builtins.getFlake (toString ./.); p = import f.inputs.nixpkgs { system = builtins.currentSystem; }; in p.python3.withPackages (ps: [ ps.pyyaml ])' --command python3 scripts/tests/test-audit-evidence.py
+```
+
 ## Known Triage Areas
 
 - Tailscale can become broader than comments imply if `tailscale0` is trusted or
