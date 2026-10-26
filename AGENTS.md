@@ -351,8 +351,11 @@ recorded as collector gaps, not clean results. Nix closures are not CVE-scanned.
 
 ## TLS trust and the October 2026 eMudhra incident
 
-`lib/tls-ca-blacklist.nix` owns the four NSS labels removed by the current
-Mozilla/NixOS response. `common/system` applies them to NixOS/nix-darwin;
+`lib/tls-ca-blacklist.nix` owns the NSS labels still removed locally. NSS
+3.131.1 in nixpkgs already drops the three emSign roots, and cacert's blacklist
+fails the build for labels that are no longer in the store, so only the Comodo
+cross-sign anchor remains listed; `pkgs/pi-bin/trust.test.cjs` still asserts all
+four fingerprints are absent. `common/system` applies the list to NixOS/nix-darwin;
 `dotfiles-cacert` in the shared overlay supplies an explicit plain bundle for
 Pi, CLI session variables, and configured containers without rebuilding every
 package in nixpkgs. Session variables apply to new sessions, not every daemon or
