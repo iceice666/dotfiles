@@ -351,11 +351,12 @@ recorded as collector gaps, not clean results. Nix closures are not CVE-scanned.
 
 ## TLS trust and the October 2026 eMudhra incident
 
-`lib/tls-ca-blacklist.nix` owns the NSS labels still removed locally. NSS
-3.131.1 in nixpkgs already drops the three emSign roots, and cacert's blacklist
-fails the build for labels that are no longer in the store, so only the Comodo
-cross-sign anchor remains listed; `pkgs/pi-bin/trust.test.cjs` still asserts all
-four fingerprints are absent. `common/system` applies the list to NixOS/nix-darwin;
+`lib/tls-ca-blacklist.nix` is a function of the cacert version returning the
+NSS labels to remove. cacert's blacklist fails the build for labels missing from
+the store, and NSS 3.131.1 (nixpkgs-unstable) already drops the three emSign
+roots while nixos-26.05 still ships 3.126 with them, so the emSign labels are
+listed only below 3.131; `pkgs/pi-bin/trust.test.cjs` asserts all four
+fingerprints are absent either way. `common/system` applies the list to NixOS/nix-darwin;
 `dotfiles-cacert` in the shared overlay supplies an explicit plain bundle for
 Pi, CLI session variables, and configured containers without rebuilding every
 package in nixpkgs. Session variables apply to new sessions, not every daemon or

@@ -3,7 +3,7 @@
 final: prev: {
   # Explicit consumers use this bundle without rebuilding the entire package set.
   dotfiles-cacert = prev.cacert.override {
-    blacklist = import ../../tls-ca-blacklist.nix;
+    blacklist = import ../../tls-ca-blacklist.nix prev.cacert.version;
   };
 
   # Temporary official canary pin until a stable Bun includes the CA revocations.
