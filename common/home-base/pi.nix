@@ -1,14 +1,14 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
 }:
 
 let
-  agentModel = import ./agent-model.nix { inherit dotfiles homolab; };
+  agentModel = import ./agent-model.nix { inherit dotfiles lab; };
 
   mkModel = id: contextWindow: maxTokens: {
     inherit id contextWindow maxTokens;
@@ -205,7 +205,7 @@ in
     };
 
     providers.cliproxyapi-claude = {
-      baseUrl = homolab.urls.cliproxyapi;
+      baseUrl = lab.urls.cliproxyapi;
       api = "anthropic-messages";
       inherit apiKey;
       # Same reason as above; anthropic-messages sends x-session-affinity only.

@@ -5,8 +5,6 @@ keys:
   # Per-device age recipients (public)
   - &m5pro         age1dkgvxcx5x4a303pxy2zl92a63fhvf95jyu6wha3pw4g97qffq43ql6xa8k
   - &framework     age1dlqnmece4v95dttl7c99marqvsxeu2qysvt7wazd4fkdjpfl75tqrpv97s
-  - &homolab       age1r80n348lhctp82j7vuj6fe6hs6sup7lz7x66nh80xunrsrg2sqrqh98zpu
-  - &homolab-home  age12ddymngsg3ql50ym086smjcvj9ewmy4mhhz47yepwd00z8dcnypqatdk65
   - &lumo          age1eqr9wgdsa2tfkck96guuxclu8vr0la62sju6yjkzvd9667uxrugs9kyync
   - &worker        age1qfnqaz2pwlgx27ymm5wa4h4gs55nx2tt2hjjkg209t5hstdqp9yqvh2kck
   # Optional recovery recipient (public)
@@ -18,8 +16,6 @@ creation_rules:
     age:
       - *m5pro
       - *framework
-      - *homolab
-      - *homolab-home
       - *lumo
       # - *recovery
 
@@ -29,18 +25,6 @@ creation_rules:
 
   - path_regex: ^sensitive/hosts/framework/.*\.(yaml|yml|json|env|ini|key|pem)$
     age: [*framework, *m5pro]
-
-  # Homolab home-user secrets: editable from m5pro, decryptable by the home user on homolab
-  - path_regex: ^sensitive/hosts/homolab/home/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age:
-      - *m5pro
-      - *homolab-home
-
-  # Homolab system secrets: editable from m5pro, decryptable by the system on homolab
-  - path_regex: ^sensitive/hosts/homolab/.*\.(yaml|yml|json|env|ini|key|pem)$
-    age:
-      - *m5pro
-      - *homolab
 
   - path_regex: ^sensitive/hosts/lumo/.*\.(yaml|yml|json|env|ini|key|pem)$
     age:

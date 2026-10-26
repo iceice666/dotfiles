@@ -1,7 +1,7 @@
 # Pi extensions
 
 `../pi.nix` builds `extensions/` into one Nix store tree for every host with
-`features.pi = true` (m5pro, framework, and homolab). Only the managed `pi`
+`features.pi = true` (m5pro and framework). Only the managed `pi`
 launcher loads it, with `--no-extensions` and explicit store paths. Pi's bundled
 built-in extensions also remain disabled by that flag; only the explicit managed
 extension tree is loaded. The
@@ -208,7 +208,7 @@ a `playwright-read` rendered-page Markdown helper, and the agent-neutral
 additional Pi extension is needed. Each task/worker owns a separate ephemeral
 browser session. Sandbox-enabled browser defaults live in
 `~/.playwright/cli.config.json`; runtime profiles and artifacts remain unmanaged.
-Homolab and Lumo do not receive this integration. See
+Lumo does not receive this integration. See
 [the package guide](../../../pkgs/playwright-cli/README.md) for usage, privacy,
 first-adoption precautions and validation.
 

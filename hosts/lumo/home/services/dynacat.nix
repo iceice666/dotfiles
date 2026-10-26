@@ -1,12 +1,12 @@
 {
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
 }:
 
 let
-  dynacatPort = homolab.ports.dynacat;
+  dynacatPort = lab.ports.dynacat;
   dynacatStateDir = "/var/lib/dynacat";
 
   dynacatPackage = pkgs.buildGoModule rec {
@@ -27,10 +27,9 @@ let
 
   yamlFormat = pkgs.formats.yaml { };
   mkLocalUrl = port: path: "http://127.0.0.1:${toString port}${path}";
-  mkHomolabUrl = port: path: "http://${homolab.hosts.homolab.tailnet}:${toString port}${path}";
 
   # Prometheus instant-query helpers
-  promUrl = "http://127.0.0.1:${toString homolab.ports.prometheus}/api/v1/query";
+  promUrl = "http://127.0.0.1:${toString lab.ports.prometheus}/api/v1/query";
   mkPromReq = q: {
     url = promUrl;
     parameters.query = q;
@@ -77,8 +76,6 @@ let
       {{ end }}
     '';
   };
-
-  homolabPanel = mkHostPanel "homolab" { } "";
 
   lumoPanel =
     mkHostPanel "lumo"
@@ -146,8 +143,8 @@ let
 
     branding = {
       "hide-footer" = true;
-      "logo-text" = "HL";
-      "app-name" = homolab.hostName;
+      "logo-text" = "LB";
+      "app-name" = "lab";
     };
 
     theme = {
@@ -170,9 +167,8 @@ let
             widgets = [
               {
                 type = "split-column";
-                "max-columns" = 4;
+                "max-columns" = 3;
                 widgets = [
-                  homolabPanel
                   lumoPanel
                   edgePanel
                   dnsPanel
@@ -194,20 +190,18 @@ let
                 "max-columns" = 3;
                 widgets = [
                   (mkMonitorWidget "Public" [
-                    (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${homolab.urls.cliproxyapi}/management.html"
-                      (mkLocalUrl homolab.ports.cliproxyapi "/healthz")
-                    )
-                    (mkMonitorSite "Umami" serviceIcons.umami homolab.urls.analytics (
-                      mkLocalUrl homolab.ports.umami "/api/heartbeat"
+                    (mkMonitorSite "CLIProxyAPI" serviceIcons.cliproxyapi "${lab.urls.cliproxyapi}/management.html" (
+                      mkLocalUrl lab.ports.cliproxyapi "/healthz"
+                    ))
+                    (mkMonitorSite "Umami" serviceIcons.umami lab.urls.analytics (
+                      mkLocalUrl lab.ports.umami "/api/heartbeat"
                     ))
                   ])
                   (mkMonitorWidget "Infra" [
-                    (mkMonitorSite "Traefik" serviceIcons.proxy homolab.urls.traefik (
-                      mkLocalUrl homolab.ports.traefikPing "/ping"
+                    (mkMonitorSite "Traefik" serviceIcons.proxy lab.urls.traefik (
+                      mkLocalUrl lab.ports.traefikPing "/ping"
                     ))
-                    (mkMonitorSite "Authelia" serviceIcons.authelia homolab.urls.auth (
-                      mkLocalUrl homolab.ports.authelia ""
-                    ))
+                    (mkMonitorSite "Authelia" serviceIcons.authelia lab.urls.auth (mkLocalUrl lab.ports.authelia ""))
                   ])
                 ];
               }

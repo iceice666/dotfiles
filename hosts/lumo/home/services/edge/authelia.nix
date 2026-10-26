@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   unstablePkgs,
@@ -10,7 +10,7 @@
 
 let
   autheliaPackage = unstablePkgs.authelia;
-  autheliaPort = homolab.ports.authelia;
+  autheliaPort = lab.ports.authelia;
 
   jwtSecretPath = config.sops.secrets.authelia-jwt-secret.path;
   storageKeyPath = config.sops.secrets.authelia-storage-encryption-key.path;
@@ -35,31 +35,31 @@ let
       default_policy = "deny";
       rules = [
         {
-          domain = homolab.domains.auth;
+          domain = lab.domains.auth;
           policy = "bypass";
         }
         {
-          domain = homolab.domains.dns;
+          domain = lab.domains.dns;
           policy = "bypass";
         }
         {
-          domain = homolab.domains.home;
+          domain = lab.domains.home;
           policy = "two_factor";
         }
         {
-          domain = homolab.domains.pirc;
+          domain = lab.domains.pirc;
           policy = "two_factor";
         }
         {
-          domain = homolab.domains.traefik;
+          domain = lab.domains.traefik;
           policy = "two_factor";
         }
         {
-          domain = homolab.domains.analytics;
+          domain = lab.domains.analytics;
           policy = "two_factor";
         }
         {
-          domain = homolab.domains.cliproxyapi;
+          domain = lab.domains.cliproxyapi;
           policy = "two_factor";
         }
       ];
@@ -69,9 +69,9 @@ let
       cookies = [
         {
           name = "authelia_session";
-          domain = homolab.domains.root;
-          authelia_url = homolab.urls.auth;
-          default_redirection_url = homolab.urls.home;
+          domain = lab.domains.root;
+          authelia_url = lab.urls.auth;
+          default_redirection_url = lab.urls.home;
           expiration = "12h";
           inactivity = "1h";
         }
@@ -85,8 +85,8 @@ let
       smtp = {
         address = "submissions://smtp.resend.com:465";
         username = "resend";
-        sender = "Authelia <${homolab.contact.noReplyEmail}>";
-        identifier = homolab.domains.auth;
+        sender = "Authelia <${lab.contact.noReplyEmail}>";
+        identifier = lab.domains.auth;
       };
     };
 
@@ -125,7 +125,7 @@ let
       # Render users database with the hashed password from the sops secret.
       user_hash="$(cat '${userHashPath}')"
       printf 'users:\n  iceice666:\n    disabled: false\n    displayname: iceice666\n    password: '"'"'%s'"'"'\n    email: %s\n    groups:\n      - admins\n' \
-        "$user_hash" "${homolab.contact.adminEmail}" > /run/lumo-authelia/users-database.yml
+        "$user_hash" "${lab.contact.adminEmail}" > /run/lumo-authelia/users-database.yml
       chmod 0600 /run/lumo-authelia/users-database.yml
     }
   '';

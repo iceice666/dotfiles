@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -14,7 +14,7 @@ let
   exaKeyPath = config.sops.secrets.exa-api-key.path;
   models = pkgs.writeText "pirc-models.json" (
     builtins.toJSON (
-      import (dotfiles + /common/home-base/pirc-models.nix) { inherit dotfiles homolab; } {
+      import (dotfiles + /common/home-base/pirc-models.nix) { inherit dotfiles lab; } {
         apiKeyEnv = "PIRC_CLIPROXYAPI_KEY";
       }
     )

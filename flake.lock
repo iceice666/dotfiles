@@ -97,24 +97,6 @@
         "type": "github"
       }
     },
-    "flake-parts": {
-      "inputs": {
-        "nixpkgs-lib": "nixpkgs-lib"
-      },
-      "locked": {
-        "lastModified": 1782949081,
-        "narHash": "sha256-vp6Y/Grm98ESt6ceOkWiHWyZRDV3J1RID4w+6NWK9yA=",
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "rev": "17c9d6cdfc60c64f4ee8d306f9bc0b4ccb51481e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems_3"
@@ -249,21 +231,6 @@
         "url": "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
       }
     },
-    "nixpkgs-lib": {
-      "locked": {
-        "lastModified": 1782614948,
-        "narHash": "sha256-ePjCwr1sNm9NYUqywL7QfK3JnlS015msC+eBu2zKlp8=",
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "rev": "db3f255737b94216eb71cce308e2912cf6bc2d7c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1792506237,
@@ -296,22 +263,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
-      "locked": {
-        "lastModified": 1784356753,
-        "narHash": "sha256-12KrbMiWLcf8m7pCvAtZh1ZrgF85ZXDXvfR/fWTKy84=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "61b7c44c4073f0b827768aff0049561b5110ea5a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "pirc": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -320,16 +271,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792728576,
-        "narHash": "sha256-D6XULtGmpsnr6UI4QLwbuQov8NCn2O3NgfvAv5DwNV0=",
+        "lastModified": 1792934475,
+        "narHash": "sha256-mH2G2XBGEP0yQrhqsoje6FLQIF85/ojg2FjYzWqAU3E=",
         "owner": "iceice666",
         "repo": "pirc",
-        "rev": "3cefcc7108dc07dfa5158977a620885e087b6b2a",
+        "rev": "3615ae3b7f453be867d84a51fe3200b9cea8f659",
         "type": "github"
       },
       "original": {
         "owner": "iceice666",
-        "ref": "feat/pirc-harmony",
+        "ref": "v0.10.0",
         "repo": "pirc",
         "type": "github"
       }
@@ -363,8 +314,7 @@
         "pirc": "pirc",
         "reimu-on-starlit-water": "reimu-on-starlit-water",
         "sops-nix": "sops-nix",
-        "treefmt-nix": "treefmt-nix",
-        "xlibre-overlay": "xlibre-overlay"
+        "treefmt-nix": "treefmt-nix"
       }
     },
     "sops-nix": {
@@ -469,26 +419,6 @@
         "owner": "numtide",
         "repo": "flake-utils",
         "type": "github"
-      }
-    },
-    "xlibre-overlay": {
-      "inputs": {
-        "flake-parts": "flake-parts",
-        "nixpkgs": "nixpkgs_3"
-      },
-      "locked": {
-        "lastModified": 1785768669,
-        "narHash": "sha256-KPmK8Lj4NhrdzIuz67bV7/3sP1lirTQw3FoVjrGOB+0=",
-        "ref": "dev-for-26.05",
-        "rev": "3c9798f7e261eb3be40dbd7e9407b6bdefe8c7e9",
-        "revCount": 236,
-        "type": "git",
-        "url": "https://codeberg.org/takagemacoed/xlibre-overlay"
-      },
-      "original": {
-        "ref": "dev-for-26.05",
-        "type": "git",
-        "url": "https://codeberg.org/takagemacoed/xlibre-overlay"
       }
     },
     "zig": {

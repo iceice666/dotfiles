@@ -6,17 +6,13 @@
 # lumo branch so a fresh bootstrap matches.
 {
   config,
-  homolab,
   lib,
   pkgs,
   ...
 }:
 
 let
-  forgejoSshRules = lib.optionalString config.lumo.forgejoWoodpecker.enable (
-    "iifname \"tailscale0\" tcp dport 2222 accept\n"
-    + "        ip saddr ${homolab.hosts.homolab.lan} tcp dport 2222 accept"
-  );
+  forgejoSshRules = lib.optionalString config.lumo.forgejoWoodpecker.enable ''iifname "tailscale0" tcp dport 2222 accept'';
 
   nftablesFile = pkgs.writeText "dotfiles.nft" ''
     table inet dotfiles {

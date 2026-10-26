@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -11,7 +11,7 @@ let
   auditBaseDir = "/var/lib/homolab-audit";
   auditUser = "homolab-audit";
   auditRuntimeDir = "/run/homolab-audit";
-  agentModel = import ../../../../common/home-base/agent-model.nix { inherit dotfiles homolab; };
+  agentModel = import ../../../../common/home-base/agent-model.nix { inherit dotfiles lab; };
   modelSecret = config.sops.secrets.${agentModel.secretName}.path;
   modelConfig = pkgs.writeText "homolab-audit-models.json" (
     builtins.toJSON {
@@ -154,7 +154,7 @@ let
       }
 
       install -m 0640 -o root -g ${auditUser} \
-        ${dotfiles + /hosts/homolab/apps/daily-audit/server-security-audit-guide.md} \
+        ${dotfiles + /hosts/lumo/home/services/audit-guide.md} \
         "$context_dir/server-security-audit-guide.md"
 
       record date date --iso-8601=seconds

@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   unstablePkgs,
@@ -18,14 +18,14 @@ let
     "::1/128"
   ];
 
-  privateClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`${homolab.network.lan.cidr}`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
+  privateClientRule = "(ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`) || ClientIP(`${lab.network.lan.cidr}`) || ClientIP(`100.64.0.0/10`) || ClientIP(`fd7a:115c:a1e0::/48`))";
 
   mkHostRule = host: "Host(`${host}`)";
   mkHostPathRule = host: pathRule: "${mkHostRule host} && ${pathRule}";
   mkPrivateHostRule = host: "${mkHostRule host} && ${privateClientRule}";
   mkPrivateHostPathRule = host: pathRule: "${mkPrivateHostRule host} && ${pathRule}";
 
-  npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] homolab.domains.npu;
+  npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] lab.domains.npu;
 
   yamlFormat = pkgs.formats.yaml { };
 
@@ -36,7 +36,7 @@ let
     };
 
     certificatesResolvers.letsencrypt.acme = {
-      email = homolab.contact.adminEmail;
+      email = lab.contact.adminEmail;
       storage = "/var/lib/traefik/acme.json";
       dnsChallenge = {
         provider = "cloudflare";
@@ -91,8 +91,8 @@ let
     };
 
     entryPoints = {
-      ping.address = "0.0.0.0:${toString homolab.ports.traefikPing}";
-      metrics.address = "0.0.0.0:${toString homolab.ports.traefikMetrics}";
+      ping.address = "0.0.0.0:${toString lab.ports.traefikPing}";
+      metrics.address = "0.0.0.0:${toString lab.ports.traefikMetrics}";
 
       web = {
         address = ":80";
@@ -120,7 +120,7 @@ let
       # Strip client-provided identity before forward auth, then set the daemon
       # header after a successful two-factor check.
       pirc-strip-identity.headers.customRequestHeaders."Remote-Email" = "";
-      pirc-use-verified-email.headers.customRequestHeaders."X-Pirc-User" = homolab.contact.adminEmail;
+      pirc-use-verified-email.headers.customRequestHeaders."X-Pirc-User" = lab.contact.adminEmail;
       # The static server reports every Nix-store file as modified in 1970 and
       # sends no Cache-Control, so browsers may heuristically keep a stale
       # index.html pointing at the previous bundle. Always revalidate; hashed
@@ -136,7 +136,7 @@ let
       pirc-spa-index.replacePath.path = "/index.html";
 
       authelia.forwardAuth = {
-        address = "http://127.0.0.1:${toString homolab.ports.authelia}/api/verify?rd=https%3A%2F%2F${homolab.domains.auth}%2F";
+        address = "http://127.0.0.1:${toString lab.ports.authelia}/api/verify?rd=https%3A%2F%2F${lab.domains.auth}%2F";
         maxResponseBodySize = 65536;
         trustForwardHeader = true;
         authResponseHeaders = [
@@ -173,14 +173,14 @@ let
         )
         {
           npu-http = {
-            rule = mkHostRule homolab.domains.npu;
+            rule = mkHostRule lab.domains.npu;
             entryPoints = [ "web" ];
             middlewares = [ "npu-youtube@file" ];
             service = "noop@internal";
           };
 
           npu = {
-            rule = mkHostRule homolab.domains.npu;
+            rule = mkHostRule lab.domains.npu;
             entryPoints = [ "websecure" ];
             middlewares = [ "npu-youtube@file" ];
             service = "noop@internal";
@@ -188,21 +188,21 @@ let
           };
 
           authelia-http = {
-            rule = "Host(`${homolab.domains.auth}`)";
+            rule = "Host(`${lab.domains.auth}`)";
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           authelia = {
-            rule = "Host(`${homolab.domains.auth}`)";
+            rule = "Host(`${lab.domains.auth}`)";
             entryPoints = [ "websecure" ];
             service = "authelia";
             tls.certResolver = "letsencrypt";
           };
 
           cliproxyapi-http = {
-            rule = mkHostRule homolab.domains.cliproxyapi;
+            rule = mkHostRule lab.domains.cliproxyapi;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
@@ -212,7 +212,7 @@ let
           # Explicit priority (matches umami-api) so this always wins over the
           # broader Authelia-gated `cliproxyapi` dashboard router below.
           cliproxyapi-api = {
-            rule = mkHostPathRule homolab.domains.cliproxyapi "PathPrefix(`/v1`)";
+            rule = mkHostPathRule lab.domains.cliproxyapi "PathPrefix(`/v1`)";
             entryPoints = [ "websecure" ];
             priority = 1000;
             service = "cliproxyapi";
@@ -220,7 +220,7 @@ let
           };
           # Same-origin Keeper route must outrank the broader CPAMC dashboard.
           cliproxyapi-keeper = {
-            rule = mkHostPathRule homolab.domains.cliproxyapi "(Path(`/keeper`) || PathPrefix(`/keeper/`))";
+            rule = mkHostPathRule lab.domains.cliproxyapi "(Path(`/keeper`) || PathPrefix(`/keeper/`))";
             entryPoints = [ "websecure" ];
             priority = 1000;
             middlewares = [ "authelia@file" ];
@@ -230,42 +230,42 @@ let
 
           # Dashboard — Authelia protected
           cliproxyapi = {
-            rule = mkHostRule homolab.domains.cliproxyapi;
+            rule = mkHostRule lab.domains.cliproxyapi;
             entryPoints = [ "websecure" ];
             middlewares = [ "authelia@file" ];
             service = "cliproxyapi";
             tls.certResolver = "letsencrypt";
           };
           forgejo-http = {
-            rule = mkHostRule homolab.domains.forgejo;
+            rule = mkHostRule lab.domains.forgejo;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           forgejo = {
-            rule = mkHostRule homolab.domains.forgejo;
+            rule = mkHostRule lab.domains.forgejo;
             entryPoints = [ "websecure" ];
             service = "forgejo";
             tls.certResolver = "letsencrypt";
           };
 
           woodpecker-http = {
-            rule = mkHostRule homolab.domains.woodpecker;
+            rule = mkHostRule lab.domains.woodpecker;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           woodpecker = {
-            rule = mkHostRule homolab.domains.woodpecker;
+            rule = mkHostRule lab.domains.woodpecker;
             entryPoints = [ "websecure" ];
             service = "woodpecker";
             tls.certResolver = "letsencrypt";
           };
 
           umami-http = {
-            rule = mkHostRule homolab.domains.analytics;
+            rule = mkHostRule lab.domains.analytics;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
@@ -274,7 +274,7 @@ let
           # Public Umami collection endpoints plus the authenticated stats endpoints
           # consumed by Dynamic's Cloudflare Worker-side visit counters.
           umami-api = {
-            rule = mkHostPathRule homolab.domains.analytics "(Path(`/script.js`) || Path(`/api/send`) || Path(`/api/auth/login`) || PathRegexp(`/api/websites/[a-zA-Z0-9-]+/(stats|pageviews|metrics/expanded)`))";
+            rule = mkHostPathRule lab.domains.analytics "(Path(`/script.js`) || Path(`/api/send`) || Path(`/api/auth/login`) || PathRegexp(`/api/websites/[a-zA-Z0-9-]+/(stats|pageviews|metrics/expanded)`))";
             entryPoints = [ "websecure" ];
             priority = 1000;
             service = "umami";
@@ -283,7 +283,7 @@ let
 
           # Dashboard — Authelia protected; Umami still enforces its own app login.
           umami = {
-            rule = mkPrivateHostRule homolab.domains.analytics;
+            rule = mkPrivateHostRule lab.domains.analytics;
             entryPoints = [ "websecure" ];
             middlewares = [ "authelia@file" ];
             service = "umami";
@@ -291,7 +291,7 @@ let
           };
 
           blocky-doh = {
-            rule = mkPrivateHostPathRule homolab.domains.dns "Path(`/dns-query`)";
+            rule = mkPrivateHostPathRule lab.domains.dns "Path(`/dns-query`)";
             entryPoints = [ "websecure" ];
             priority = 120;
             service = "blocky";
@@ -299,14 +299,14 @@ let
           };
 
           traefik-http = {
-            rule = mkPrivateHostRule homolab.domains.traefik;
+            rule = mkPrivateHostRule lab.domains.traefik;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           traefik = {
-            rule = mkPrivateHostRule homolab.domains.traefik;
+            rule = mkPrivateHostRule lab.domains.traefik;
             entryPoints = [ "websecure" ];
             middlewares = [ "authelia@file" ];
             service = "api@internal";
@@ -314,14 +314,14 @@ let
           };
 
           dynacat-http = {
-            rule = mkPrivateHostRule homolab.domains.home;
+            rule = mkPrivateHostRule lab.domains.home;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           dynacat = {
-            rule = mkPrivateHostRule homolab.domains.home;
+            rule = mkPrivateHostRule lab.domains.home;
             entryPoints = [ "websecure" ];
             middlewares = [ "authelia@file" ];
             service = "dynacat";
@@ -329,14 +329,14 @@ let
           };
 
           pirc-http = {
-            rule = mkPrivateHostRule homolab.domains.pirc;
+            rule = mkPrivateHostRule lab.domains.pirc;
             entryPoints = [ "web" ];
             middlewares = [ "redirect-to-https@file" ];
             service = "noop@internal";
           };
 
           pirc-node = {
-            rule = mkPrivateHostPathRule homolab.domains.pirc "Path(`/node/connect`)";
+            rule = mkPrivateHostPathRule lab.domains.pirc "Path(`/node/connect`)";
             entryPoints = [ "websecure" ];
             priority = 1000;
             middlewares = [ "pirc-clear-identity@file" ];
@@ -348,7 +348,7 @@ let
           # gateway validates its own `pirc_dev_…` bearer token. This router must
           # outrank pirc-api so matching requests never reach forward auth.
           pirc-device = {
-            rule = mkPrivateHostPathRule homolab.domains.pirc "PathPrefix(`/api/`) && HeaderRegexp(`Authorization`, `^Bearer pirc_dev_`)";
+            rule = mkPrivateHostPathRule lab.domains.pirc "PathPrefix(`/api/`) && HeaderRegexp(`Authorization`, `^Bearer pirc_dev_`)";
             entryPoints = [ "websecure" ];
             priority = 3000;
             middlewares = [ "pirc-clear-identity@file" ];
@@ -357,7 +357,7 @@ let
           };
 
           pirc-api = {
-            rule = mkPrivateHostPathRule homolab.domains.pirc "PathPrefix(`/api/`)";
+            rule = mkPrivateHostPathRule lab.domains.pirc "PathPrefix(`/api/`)";
             entryPoints = [ "websecure" ];
             # The broader private-host rule is long enough to outrank priority 100.
             priority = 2000;
@@ -371,7 +371,7 @@ let
           };
 
           pirc-engine = {
-            rule = mkPrivateHostPathRule homolab.domains.pirc "(Path(`/engine`) || PathPrefix(`/engine/`))";
+            rule = mkPrivateHostPathRule lab.domains.pirc "(Path(`/engine`) || PathPrefix(`/engine/`))";
             entryPoints = [ "websecure" ];
             priority = 1500;
             middlewares = [
@@ -386,7 +386,7 @@ let
           };
 
           pirc = {
-            rule = mkPrivateHostRule homolab.domains.pirc;
+            rule = mkPrivateHostRule lab.domains.pirc;
             entryPoints = [ "websecure" ];
             middlewares = [
               "pirc-strip-identity@file"
@@ -417,28 +417,28 @@ let
             { url = "http://127.0.0.1:18788"; }
           ];
           authelia.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.authelia}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.authelia}"; }
           ];
           cliproxyapi.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapi}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.cliproxyapi}"; }
           ];
           cliproxyapi-usage-keeper.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.cliproxyapiUsageKeeper}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.cliproxyapiUsageKeeper}"; }
           ];
           forgejo.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.forgejo}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.forgejo}"; }
           ];
           woodpecker.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.woodpecker}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.woodpecker}"; }
           ];
           umami.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.umami}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.umami}"; }
           ];
           blocky.loadBalancer.servers = [
             { url = "http://127.0.0.1:4000"; }
           ];
           dynacat.loadBalancer.servers = [
-            { url = "http://127.0.0.1:${toString homolab.ports.dynacat}"; }
+            { url = "http://127.0.0.1:${toString lab.ports.dynacat}"; }
           ];
         };
   };

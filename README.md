@@ -1,7 +1,6 @@
 # dotfiles
 
-Multi-host Nix configuration for `m5pro`, `framework`, `homolab`, `lumo`, and
-`worker`.
+Multi-host Nix configuration for `m5pro`, `framework`, `lumo`, and `worker`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
@@ -13,7 +12,6 @@ See `AGENTS.md` for detailed repo and editing guidance.
 | --- | --- | --- | --- |
 | `m5pro` | `.#m5pro` | `aarch64-darwin` | personal macOS via `nix-darwin` + Home Manager |
 | `framework` | `.#framework` | `x86_64-linux` | Framework laptop via NixOS + Home Manager |
-| `homolab` | `.#homolab` | `x86_64-linux` | NixOS AI host |
 | `lumo` | `.#homeConfigurations.lumo` | `aarch64-linux` | Alpine data/apps + edge Pi |
 | `worker` | `.#homeConfigurations.worker` | `aarch64-linux` | Alpine disposable-work / agent-runtime Pi (ex-gateway); state lives on `lumo` |
 
@@ -37,7 +35,6 @@ common/              # shared modules applied to all hosts
 hosts/               # per-host entrypoints
   m5pro/             # macOS; host.nix declares features, configuration/, home/, wallpaper.jpg
   framework/         # NixOS system + Home Manager modules
-  homolab/           # NixOS server: configuration/, services/, home/, apps/, patches/, plan/
   lumo/              # Alpine root Home Manager + OpenRC data/apps + edge services
   worker/            # Alpine root Home Manager disposable-work / agent-runtime host (ex-gateway)
 
@@ -76,18 +73,8 @@ just theme-preview   # render and open this platform's wallpaper palette preview
 ```
 
 `just` recipes are platform-gated: macOS maps to `m5pro`, and Linux detects the
-hostname to pick `framework` or `homolab`. The same `build`, `switch`, and `boot`
+hostname to pick the NixOS host (`framework`). The same `build`, `switch`, and `boot`
 recipe names have separate `[macos]` and `[linux]` implementations.
-
-
-Homolab recipes run locally on the server itself (no remote deploy):
-
-```sh
-just homolab-build           # dry-build on the homolab
-just homolab-switch          # build + activate on the homolab
-just homolab-boot            # stage the closure for next boot
-just homolab-gen-hardware    # refresh hardware-configuration.nix from the server
-```
 
 Lumo uses the official Alpine Linux 3.24 Raspberry Pi image with root-only Lix
 (`--init none`). Its root Home Manager closure is built on the target and
@@ -174,8 +161,8 @@ just secret-edit sensitive/hosts/m5pro/forgejo.yaml
 
 `m5pro` and `framework` are both admin recipients: every rule in `.sops.yaml`
 includes both, so any secret can be read and edited from either workstation.
-Server secrets additionally carry the owning host's key (`homolab`,
-`homolab-home`, `lumo`, `worker`) so the host can decrypt at activation.
+Server secrets additionally carry the owning host's key (`lumo`,
+`worker`) so the host can decrypt at activation.
 `framework` derives its age identity from `~/.ssh/id_ed25519` via
 `SOPS_AGE_KEY_CMD` (see `common/home-base/default.nix`), so
 `just secret-edit sensitive/hosts/lumo/<file>` works there with no extra setup.
@@ -191,9 +178,7 @@ just secret-refresh sensitive/hosts/lumo
 `just secret-refresh` takes a file or directory and walks it for
 `.yaml`/`.yml`/`.json`/`.env`/`.ini`/`.key`/`.pem` files, running
 `sops updatekeys --yes` on each. Pass no argument to refresh the whole
-`sensitive/` tree. Files under `sensitive/hosts/homolab/` are still keyed to
-`m5pro` only; re-key them from `m5pro` or the homolab itself when that host is
-reachable.
+`sensitive/` tree.
 
 Never commit plaintext secrets.
 

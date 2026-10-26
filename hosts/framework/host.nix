@@ -33,7 +33,7 @@
       "isekaijoucho/p1.jpg"
       "isekaijoucho/p2.jpg"
     ];
-    homolab = import (dotfiles + /lib/homolab.nix);
+    lab = import (dotfiles + /lib/lab.nix);
   };
 
   deploy = {

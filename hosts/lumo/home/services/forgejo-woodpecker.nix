@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -10,8 +10,8 @@
 let
   forgejoDataDir = "/var/lib/forgejo";
   forgejoImage = "codeberg.org/forgejo/forgejo:15.0.7";
-  forgejoPort = homolab.ports.forgejo;
-  forgejoSshPort = homolab.ports.forgejoSsh;
+  forgejoPort = lab.ports.forgejo;
+  forgejoSshPort = lab.ports.forgejoSsh;
   forgejoAdminPasswordPath = config.sops.secrets.forgejo-admin-password.path;
   githubOauthClientIdPath = config.sops.secrets.forgejo-github-oauth-client-id.path;
   githubOauthClientSecretPath = config.sops.secrets.forgejo-github-oauth-client-secret.path;
@@ -19,9 +19,9 @@ let
   woodpeckerDataDir = "/var/lib/woodpecker";
   woodpeckerServerImage = "docker.io/woodpeckerci/woodpecker-server:v3.18.0";
   woodpeckerAgentImage = "docker.io/woodpeckerci/woodpecker-agent:v3.18.0";
-  woodpeckerPort = homolab.ports.woodpecker;
-  woodpeckerGrpcPort = homolab.ports.woodpeckerGrpc;
-  woodpeckerAgentHealthPort = homolab.ports.woodpeckerAgentHealth;
+  woodpeckerPort = lab.ports.woodpecker;
+  woodpeckerGrpcPort = lab.ports.woodpeckerGrpc;
+  woodpeckerAgentHealthPort = lab.ports.woodpeckerAgentHealth;
   woodpeckerAgentSecretPath = config.sops.secrets.woodpecker-agent-secret.path;
   woodpeckerOauthClientPath = "${woodpeckerDataDir}/forgejo-oauth-client";
   woodpeckerServerEnvPath = "${woodpeckerDataDir}/server.env";
@@ -35,14 +35,14 @@ let
     USER_GID=1000
     FORGEJO____APP_NAME=Just a Slime Forge
     FORGEJO____RUN_MODE=prod
-    FORGEJO__server__DOMAIN=${homolab.domains.forgejo}
-    FORGEJO__server__ROOT_URL=${homolab.urls.forgejo}/
+    FORGEJO__server__DOMAIN=${lab.domains.forgejo}
+    FORGEJO__server__ROOT_URL=${lab.urls.forgejo}/
     FORGEJO__server__HTTP_ADDR=127.0.0.1
     FORGEJO__server__HTTP_PORT=${toString forgejoPort}
     FORGEJO__server__OFFLINE_MODE=true
     FORGEJO__server__LFS_START_SERVER=true
     FORGEJO__server__START_SSH_SERVER=true
-    FORGEJO__server__SSH_DOMAIN=${homolab.domains.forgejo}
+    FORGEJO__server__SSH_DOMAIN=${lab.domains.forgejo}
     FORGEJO__server__SSH_PORT=${toString forgejoSshPort}
     FORGEJO__server__SSH_LISTEN_HOST=0.0.0.0
     FORGEJO__server__SSH_LISTEN_PORT=${toString forgejoSshPort}
@@ -53,7 +53,7 @@ let
     FORGEJO__service__ALLOW_ONLY_EXTERNAL_REGISTRATION=true
     FORGEJO__service__SHOW_REGISTRATION_BUTTON=false
     FORGEJO__security__INSTALL_LOCK=true
-    FORGEJO__webhook__ALLOWED_HOST_LIST=external,loopback,${homolab.domains.woodpecker}
+    FORGEJO__webhook__ALLOWED_HOST_LIST=external,loopback,${lab.domains.woodpecker}
   '';
 
   forgejoService = pkgs.writeText "lumo-forgejo" ''
@@ -111,7 +111,7 @@ let
         forgejo --work-path /data/gitea --config /data/gitea/conf/app.ini admin user create \
         --username '${adminUsername}' \
         --password "$admin_password" \
-        --email '${homolab.contact.adminEmail}' \
+        --email '${lab.contact.adminEmail}' \
         --admin \
         --must-change-password=false
     fi
@@ -155,7 +155,7 @@ let
     if [ "$oauth_valid" != true ]; then
       payload="$(${pkgs.jq}/bin/jq -nc \
         --arg name 'Woodpecker CI' \
-        --arg redirect '${homolab.urls.woodpecker}/authorize' \
+        --arg redirect '${lab.urls.woodpecker}/authorize' \
         '{name: $name, redirect_uris: [$redirect], confidential_client: true}')"
       application="$(${pkgs.curl}/bin/curl --fail --silent --show-error \
         --user '${adminUsername}':"$admin_password" \
@@ -312,11 +312,11 @@ in
               ${woodpeckerDataDir}/agent
             agent_secret="$(cat '${woodpeckerAgentSecretPath}')"
             {
-              printf 'WOODPECKER_HOST=${homolab.urls.woodpecker}\n'
+              printf 'WOODPECKER_HOST=${lab.urls.woodpecker}\n'
               printf 'WOODPECKER_SERVER_ADDR=127.0.0.1:${toString woodpeckerPort}\n'
-              printf 'WOODPECKER_GRPC_ADDR=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
+              printf 'WOODPECKER_GRPC_ADDR=${lab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
               printf 'WOODPECKER_FORGEJO=true\n'
-              printf 'WOODPECKER_FORGEJO_URL=${homolab.urls.forgejo}\n'
+              printf 'WOODPECKER_FORGEJO_URL=${lab.urls.forgejo}\n'
               printf 'WOODPECKER_FORGEJO_CLIENT=%s\n' "$(cat '${woodpeckerOauthClientPath}')"
               printf 'WOODPECKER_FORGEJO_SECRET=%s\n' "$(cat '${woodpeckerOauthSecretPath}')"
               printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
@@ -324,7 +324,7 @@ in
               printf 'WOODPECKER_ADMIN=${adminUsername}\n'
             } > ${woodpeckerServerEnvPath}
             {
-              printf 'WOODPECKER_SERVER=${homolab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
+              printf 'WOODPECKER_SERVER=${lab.hosts.lumo.tailnet}:${toString woodpeckerGrpcPort}\n'
               printf 'WOODPECKER_AGENT_SECRET=%s\n' "$agent_secret"
               printf 'WOODPECKER_AGENT_CONFIG_FILE=/etc/woodpecker/agent.conf\n'
               printf 'WOODPECKER_BACKEND=docker\n'

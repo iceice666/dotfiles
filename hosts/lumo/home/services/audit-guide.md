@@ -15,7 +15,7 @@ reports. It intentionally avoids decrypted secret content.
 
 ## Priority Checks
 
-- Compare `input/listeners.txt` to `lib/homolab.nix` and service modules.
+- Compare `input/listeners.txt` to `lib/lab.nix` and service modules.
 - Flag wildcard listeners that are not intentionally public.
 - Compare `input/nftables.txt` to the lumo edge nftables configuration.
 - Flag stale firewall rules for removed services.

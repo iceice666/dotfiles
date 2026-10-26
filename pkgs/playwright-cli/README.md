@@ -14,7 +14,7 @@ its version. Playwright CLI itself still uses the managed, patched Node runtime.
 Both launch a separate, ephemeral profile, headless by default, with
 `chromiumSandbox = true`. A browser protocol compatibility failure should be
 investigated against these pinned versions, not fixed by disabling the sandbox.
-Homolab and Lumo are not enabled. No remote browser service or MCP bridge is used.
+Lumo is not enabled. No remote browser service or MCP bridge is used.
 
 **TLS incident caveat:** fresh isolated Helium profiles accepted the October 2026
 eMudhra test chains before local distrust was applied. Playwright disables

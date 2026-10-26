@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -32,7 +32,7 @@ let
         --file ${umamiBuildContext}/Containerfile --tag ${umamiImage} ${umamiBuildContext} >&2
     fi
   '';
-  umamiPort = homolab.ports.umami;
+  umamiPort = lab.ports.umami;
   postgresPasswordPath = config.sops.secrets.umami-postgres-password.path;
   appSecretPath = config.sops.secrets.umami-app-secret.path;
 

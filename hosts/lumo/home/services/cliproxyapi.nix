@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -10,7 +10,7 @@
 let
   dataDir = "/var/lib/cliproxyapi";
   configPath = "/var/lib/cliproxyapi/config.yaml";
-  port = homolab.ports.cliproxyapi;
+  port = lab.ports.cliproxyapi;
 
   homonetApiKeyPath = config.sops.secrets.cliproxyapi-homonet-api-key.path;
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
@@ -151,7 +151,7 @@ in
         keeper:
           enabled: true
           priority: 1
-          keeper_url: "${homolab.urls.cliproxyapi}/keeper/"
+          keeper_url: "${lab.urls.cliproxyapi}/keeper/"
 
     commercial-mode: false
     logging-to-file: true

@@ -1,11 +1,11 @@
-{ dotfiles, homolab }:
+{ dotfiles, lab }:
 
 {
   # Shared OpenAI-compatible startup profile for Pi and the Lumo audit runner.
   model = "gpt-6-astra";
   contextWindow = 1050000;
   maxTokens = 128000;
-  baseUrl = "${homolab.urls.cliproxyapi}/v1";
+  baseUrl = "${lab.urls.cliproxyapi}/v1";
   secretName = "cliproxyapi_homonet_api_key";
   secret = {
     sopsFile = dotfiles + /sensitive/shared/cliproxyapi.yaml;

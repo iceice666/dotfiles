@@ -26,6 +26,6 @@
   };
 
   extraSpecialArgs = {
-    homolab = import (dotfiles + /lib/homolab.nix);
+    lab = import (dotfiles + /lib/lab.nix);
   };
 }

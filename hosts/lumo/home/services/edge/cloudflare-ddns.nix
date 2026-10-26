@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -18,12 +18,12 @@ let
         --proxied \
         -4 -no-6 \
         --cache-file /var/lib/cloudflare-ddns/ip.cache \
-        ${homolab.domains.root} || true
+        ${lab.domains.root} || true
       ${pkgs.cloudflare-dyndns}/bin/cloudflare-dyndns \
         --api-token-file '${ddnsTokenPath}' \
         -4 -no-6 \
         --cache-file /var/lib/cloudflare-ddns/ip-proxy.cache \
-        ${homolab.domains.proxy} || true
+        ${lab.domains.proxy} || true
       sleep 3600
     done
   '';

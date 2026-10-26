@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -11,7 +11,7 @@ let
   dataDir = "/var/lib/cliproxyapi-usage-keeper";
   envPath = "${dataDir}/keeper.env";
   image = "ghcr.io/willxup/cpa-usage-keeper:v1.14.5";
-  port = homolab.ports.cliproxyapiUsageKeeper;
+  port = lab.ports.cliproxyapiUsageKeeper;
 
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
   loginPasswordPath = config.sops.secrets.cliproxyapi-usage-keeper-login-password.path;
@@ -68,9 +68,9 @@ in
         management_key="$(cat '${managementKeyPath}')"
         login_password="$(cat '${loginPasswordPath}')"
         {
-          printf 'CPA_BASE_URL=http://127.0.0.1:${toString homolab.ports.cliproxyapi}\n'
+          printf 'CPA_BASE_URL=http://127.0.0.1:${toString lab.ports.cliproxyapi}\n'
           printf 'CPA_MANAGEMENT_KEY=%s\n' "$management_key"
-          printf 'REDIS_QUEUE_ADDR=127.0.0.1:${toString homolab.ports.cliproxyapi}\n'
+          printf 'REDIS_QUEUE_ADDR=127.0.0.1:${toString lab.ports.cliproxyapi}\n'
           printf 'APP_HOST=127.0.0.1\n'
           printf 'APP_PORT=${toString port}\n'
           printf 'APP_BASE_PATH=/keeper\n'

@@ -1,6 +1,5 @@
 let
   baseDomain = "justaslime.dev";
-  lanAddress = "192.168.1.127";
 
   hosts = {
     # LAN addresses are stable; tailnet IPs filled in after board provision.
@@ -18,16 +17,9 @@ let
       tailnet = "100.119.84.114";
       role = "worker";
     };
-    homolab = {
-      lan = lanAddress;
-      tailnet = "100.110.95.111";
-      mac = "24:4b:fe:df:2d:45";
-      role = "ai";
-    };
   };
 
   ports = {
-    ssh = 2222;
     traefikPing = 18081;
     traefikMetrics = 18082;
     prometheus = 18083;
@@ -35,7 +27,6 @@ let
     authelia = 18091;
     cliproxyapi = 20129;
     cliproxyapiUsageKeeper = 20130;
-    teaAsrHttp = 19000;
     dynacat = 18075;
     umami = 18078;
     forgejo = 18079;
@@ -45,32 +36,13 @@ let
     woodpeckerAgentHealth = 19002;
   };
 
-  portRanges = {
-    dev = {
-      from = 3000;
-      to = 3999;
-    };
-  };
 in
 rec {
-  hostName = "homolab";
-
-  network = {
-    interface = "enp7s0";
-    lan = {
-      address = lanAddress;
-      broadcast = "192.168.1.255";
-      cidr = "192.168.1.0/24";
-      gateway = "192.168.1.1";
-      prefixLength = 24;
-    };
-
-    tailnet = {
-      address = "100.110.95.111";
-      dnsName = "homolab-linux.skate-kanyu.ts.net";
-    };
-
-    docker.bridgeAddress = "172.17.0.1";
+  network.lan = {
+    broadcast = "192.168.1.255";
+    cidr = "192.168.1.0/24";
+    gateway = "192.168.1.1";
+    prefixLength = 24;
   };
 
   domains = rec {
@@ -106,7 +78,5 @@ rec {
     noReplyDomain = "noreply.${baseDomain}";
   };
 
-  inherit ports;
-  inherit portRanges;
-  inherit hosts;
+  inherit ports hosts;
 }

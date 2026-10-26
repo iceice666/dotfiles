@@ -3,7 +3,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 repo_root := justfile_directory()
-host := if os() == "macos" { "m5pro" } else { `cat /etc/hostname | sed 's/-linux$//'` }
+host := if os() == "macos" { "m5pro" } else { `cat /etc/hostname` }
 m5pro_flake := ".#m5pro"
 system_target := if host == "m5pro" { ".#darwinConfigurations.m5pro.system" } else { ".#nixosConfigurations." + host + ".config.system.build.toplevel" }
 scripts := repo_root / "scripts"
@@ -58,40 +58,6 @@ framework-iso:
 framework-install-test:
     bash -n {{ scripts }}/framework-install
     python3 {{ scripts }}/tests/test-framework-install.py
-
-# Suspend homolab immediately (return to off state)
-[group('host')]
-homolab-sleep:
-    ssh iceice666@homolab systemctl suspend
-
-# Apply the homolab NixOS configuration locally (run on homolab)
-[group('host')]
-homolab-switch:
-    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
-    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
-    sudo ./result/bin/switch-to-configuration switch
-
-# Stage the homolab NixOS configuration for next boot (run on homolab)
-[group('host')]
-homolab-boot:
-    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
-    sudo nix-env --profile /nix/var/nix/profiles/system --set "$(readlink -f ./result)"
-    sudo ./result/bin/switch-to-configuration boot
-
-# Dry-build the homolab NixOS configuration (run on homolab)
-[group('host')]
-homolab-build:
-    nix build .#nixosConfigurations.homolab.config.system.build.toplevel
-
-# Refresh hardware-configuration.nix from the live homolab server
-homolab-gen-hardware:
-    ssh iceice666@homolab sudo nixos-generate-config --show-hardware-config \
-        > {{ repo_root }}/hosts/homolab/configuration/hardware-configuration.nix
-
-# Smoke-check the homolab TEA-ASR 1.1 mini endpoint
-homolab-tea-asr-smoke:
-    TEA_ASR_BASE_URL="${TEA_ASR_BASE_URL:-http://100.110.95.111:19000}" \
-        {{ scripts }}/tea-asr-smoke
 
 # Bootstrap the existing Alpine 3.24 installation for lumo
 [group('host')]

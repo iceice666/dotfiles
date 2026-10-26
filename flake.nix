@@ -4,8 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    xlibre-overlay.url = "git+https://codeberg.org/takagemacoed/xlibre-overlay?ref=dev-for-26.05";
-
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     nix-darwin = {
@@ -46,7 +44,7 @@
     };
 
     pirc = {
-      url = "github:iceice666/pirc/feat/pirc-harmony";
+      url = "github:iceice666/pirc/v0.10.0";
       # pirc's bun.lock needs Bun 1.4, which the stable channel lacks.
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };

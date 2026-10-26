@@ -1,5 +1,5 @@
 {
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -24,7 +24,7 @@ let
     };
 
     ports = {
-      dns = "${homolab.hosts.lumo.tailnet}:53";
+      dns = "${lab.hosts.lumo.tailnet}:53";
       http = "127.0.0.1:${toString blockyMetricsPort}";
       dohPath = "/dns-query";
     };
@@ -46,25 +46,25 @@ let
       customTTL = "5m";
       filterUnmappedTypes = true;
       mapping = {
-        ${homolab.domains.auth} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.pirc} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.dns} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.cliproxyapi} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.analytics} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.traefik} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.home} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.forgejo} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.woodpecker} = homolab.hosts.lumo.tailnet;
-        ${homolab.domains.npu} = homolab.hosts.lumo.tailnet;
+        ${lab.domains.auth} = lab.hosts.lumo.tailnet;
+        ${lab.domains.pirc} = lab.hosts.lumo.tailnet;
+        ${lab.domains.dns} = lab.hosts.lumo.tailnet;
+        ${lab.domains.cliproxyapi} = lab.hosts.lumo.tailnet;
+        ${lab.domains.analytics} = lab.hosts.lumo.tailnet;
+        ${lab.domains.traefik} = lab.hosts.lumo.tailnet;
+        ${lab.domains.home} = lab.hosts.lumo.tailnet;
+        ${lab.domains.forgejo} = lab.hosts.lumo.tailnet;
+        ${lab.domains.woodpecker} = lab.hosts.lumo.tailnet;
+        ${lab.domains.npu} = lab.hosts.lumo.tailnet;
       };
       zone = "";
     };
 
     # CF Pages applications resolve through public upstreams, not internal DNS.
     conditional.mapping = {
-      "inm.${homolab.domains.root}" = publicResolverEndpoints;
-      "miaq.${homolab.domains.root}" = publicResolverEndpoints;
-      "ourbreak.${homolab.domains.root}" = publicResolverEndpoints;
+      "inm.${lab.domains.root}" = publicResolverEndpoints;
+      "miaq.${lab.domains.root}" = publicResolverEndpoints;
+      "ourbreak.${lab.domains.root}" = publicResolverEndpoints;
     };
 
     caching = {

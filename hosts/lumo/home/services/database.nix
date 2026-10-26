@@ -1,7 +1,7 @@
 {
   config,
   dotfiles,
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -12,7 +12,7 @@ let
   postgresData = "/var/lib/postgresql/17/data";
   postgresConfig = pkgs.writeText "postgresql.conf" ''
     listen_addresses = '''
-    port = ${toString homolab.ports.postgresql}
+    port = ${toString lab.ports.postgresql}
     unix_socket_directories = '/run/postgresql'
   '';
 

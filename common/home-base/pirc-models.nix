@@ -1,11 +1,11 @@
 # pirc model providers. They live only on the gateway (lumo), which resolves
 # the key and pushes the providers to every node; nodes configure none.
 # `apiKey` is a pirc key reference, e.g. { apiKeyEnv = "…"; }.
-{ dotfiles, homolab }:
+{ dotfiles, lab }:
 apiKey:
 
 let
-  agentModel = import ./agent-model.nix { inherit dotfiles homolab; };
+  agentModel = import ./agent-model.nix { inherit dotfiles lab; };
 
   mkModel = id: contextWindow: maxTokens: {
     inherit id contextWindow maxTokens;
@@ -52,7 +52,7 @@ in
 
   providers.cliproxyapi-claude = apiKey // {
     api = "anthropic-messages";
-    baseUrl = homolab.urls.cliproxyapi;
+    baseUrl = lab.urls.cliproxyapi;
     models = [
       (mkClaudeModel "claude-fable-5-1" 1000000 128000 true)
       (mkClaudeModel "claude-opus-5-5" 1000000 128000 true)

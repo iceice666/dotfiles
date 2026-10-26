@@ -1,5 +1,5 @@
 {
-  homolab,
+  lab,
   lib,
   pkgs,
   ...
@@ -63,7 +63,7 @@ let
         job_name = "prometheus";
         static_configs = [
           {
-            targets = [ "127.0.0.1:${toString homolab.ports.prometheus}" ];
+            targets = [ "127.0.0.1:${toString lab.ports.prometheus}" ];
             labels.instance = "lumo";
           }
         ];
@@ -75,12 +75,6 @@ let
             targets = [ "127.0.0.1:${toString nodeExporterPort}" ];
             labels.instance = "lumo";
           }
-          {
-            targets = [
-              "${homolab.hosts.homolab.tailnet}:${toString nodeExporterPort}"
-            ];
-            labels.instance = homolab.hostName;
-          }
         ];
       }
       {
@@ -88,7 +82,7 @@ let
         static_configs = [
           {
             targets = [
-              "127.0.0.1:${toString homolab.ports.traefikMetrics}"
+              "127.0.0.1:${toString lab.ports.traefikMetrics}"
             ];
             labels.instance = "lumo";
           }
@@ -112,10 +106,10 @@ let
         static_configs = [
           {
             targets = [
-              "http://127.0.0.1:${toString homolab.ports.cliproxyapi}/healthz"
+              "http://127.0.0.1:${toString lab.ports.cliproxyapi}/healthz"
             ];
             labels = {
-              instance = homolab.hostName;
+              instance = "lumo";
               service = "cliproxyapi";
             };
           }
@@ -144,7 +138,7 @@ let
     description="Lumo Prometheus"
     supervisor=supervise-daemon
     command="${pkgs.prometheus}/bin/prometheus"
-    command_args="--config.file=${prometheusConfig} --storage.tsdb.path=/var/lib/prometheus --storage.tsdb.retention.time=30d --web.listen-address=127.0.0.1:${toString homolab.ports.prometheus}"
+    command_args="--config.file=${prometheusConfig} --storage.tsdb.path=/var/lib/prometheus --storage.tsdb.retention.time=30d --web.listen-address=127.0.0.1:${toString lab.ports.prometheus}"
     command_user="prometheus:prometheus"
     output_log="/var/log/lumo/prometheus.log"
     error_log="/var/log/lumo/prometheus.log"
