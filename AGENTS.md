@@ -337,7 +337,14 @@ to remain offline.
 The lumo audit collector discovers OpenRC commands through the system PATH,
 collects file-based sysklogd logs and bounded rotated-log tails, and records
 individual service status exit codes. Missing or truncated logs do not establish
-complete 24-hour authentication coverage.
+complete 24-hour authentication coverage. It also records patch-level evidence:
+`apk list --upgradable` after a repository refresh, the installed-vs-running
+`linux-rpi` kernel, core APK versions, the Nix-provided service versions of the
+active generation, and Trivy HIGH/CRITICAL scans of the Alpine package database
+(`/nix`, `/var`, and container storage skipped) and of the images backing
+running containers (fixed-only). Trivy caches its database root-only under
+`/var/cache/trivy` and needs outbound access to ghcr.io; scan failures are
+recorded as collector gaps, not clean results. Nix closures are not CVE-scanned.
 
 ## TLS trust and the October 2026 eMudhra incident
 
@@ -533,12 +540,20 @@ just lumo-bootstrap          # converge the existing Alpine 3.24 lumo installati
 just lumo-build              # dry-activate lumo root Home Manager
 just lumo-switch             # deploy lumo root Home Manager
 just lumo-smoke              # verify lumo OpenRC services and local endpoints
+just lumo-upgrade [apply]    # refresh/upgrade lumo's APK layer (kernel, OpenSSH, Tailscale); dry run by default
 just cliproxyapi-reset-cooldown [provider] # clear CLIProxyAPI cooldowns (default codex) after an upstream quota reset
 
 just worker-bootstrap 192.168.1.129  # converge the ex-gateway Pi as worker (pass a reachable target)
 just worker-build            # dry-activate worker root Home Manager
 just worker-switch           # deploy worker root Home Manager
+just worker-upgrade [apply]  # refresh/upgrade worker's APK layer; dry run by default
 ```
+
+Nothing else upgrades APK packages on either Alpine host: Home Manager owns the
+Nix side only, and activation never runs `apk upgrade`. `scripts/alpine-upgrade`
+prints pending upgrades, applies them only with `apply`, compares the installed
+`linux-rpi` package to the running kernel, and prints reboot/restart hints. It
+never reboots or restarts services itself.
 
 `lumo` runs Alpine Linux 3.24 with root-only Lix installed using `--init none`.
 deploy-rs activates the standalone root Home Manager profile and builds the
@@ -554,7 +569,23 @@ Application backends (Dynacat, Umami, CLIProxyAPI, Prometheus, Authelia) bind
 to loopback and are reached only through lumo's local Traefik. The lumo
 firewall accepts only SSH, Blocky DNS, and HTTP/HTTPS on `tailscale0`, and only
 DNS and HTTP/HTTPS from `podman*`; do not reintroduce blanket interface trust or
-wildcard backend listeners. Prometheus scrapes only lumo's local exporters.
+wildcard backend listeners. Prometheus scrapes only lumo's local exporters, and
+Traefik's ping/metrics entry points bind to loopback (no LAN firewall rule).
+Every websecure router carries the `security-headers` middleware (HSTS with
+subdomains, nosniff, SAMEORIGIN, strict referrer) and the default TLS options
+require TLS 1.2+, strict SNI, and ECDHE AEAD suites. The whole CLIProxyAPI
+host, including `/v1`, is restricted to loopback/LAN/tailnet client IPs: Pi
+clients reach it over the tailnet because Blocky maps the name to lumo's
+tailnet address, and public requests through Cloudflare get a 404. lumo's own
+resolver order is not reliable for these names (Tailscale falls back to the base
+`1.1.1.1` entry because the tailnet resolver is lumo itself), so `blocky.nix`
+also maintains a marker-delimited `/etc/hosts` block mapping every private name
+to the tailnet address; glibc-linked Nix binaries such as the audit Pi depend
+on it. Traefik entry points use `aliasHeadersStrategy = delete`, dropping any
+request header whose name is not letters, digits, and dashes. Authelia's
+`regulation` bans an account for 10 minutes after 3 failed attempts within 2
+minutes. Rootful container images in `umami.nix` and
+`cliproxyapi-usage-keeper.nix` are digest-pinned; bump digests deliberately.
 
 Blocky listens on lumo's Tailscale address (`100.120.152.7`) on TCP/UDP 53.
 Its HTTP/Prometheus listener is loopback-only on port 4000; Traefik publishes
