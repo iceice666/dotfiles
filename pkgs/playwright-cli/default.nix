@@ -2,9 +2,9 @@
 
 buildNpmPackage {
   pname = "playwright-cli";
-  version = "0.1.20";
+  version = "0.1.22";
   src = ./.;
-  npmDepsHash = "sha256-Ilwi6EemjzdOtva7sX0BMCrA3gy+g0jq0tzFPaJdU0I=";
+  npmDepsHash = "sha256-4ii5LxSobA4cBpjwpoLYdZ8/weGYS2WnZJBgjL47lhA=";
   dontNpmBuild = true;
   npmFlags = [ "--ignore-scripts" ];
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
