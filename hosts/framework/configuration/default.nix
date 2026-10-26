@@ -82,8 +82,6 @@ in
     ./hardware-configuration.nix
   ];
 
-  nixpkgs.overlays = [ (import ../overlay.nix) ];
-
   networking.hostName = "framework";
   networking.networkmanager.enable = true;
   networking.firewall.allowedTCPPorts = [ 25565 ]; # Minecraft server
@@ -92,7 +90,8 @@ in
   i18n.defaultLocale = "en_US.UTF-8";
 
   boot = {
-    kernelPackages = pkgs.linuxPackages_zen_7_0;
+    # Track nixpkgs' supported Zen branch; do not pin an EOL kernel series.
+    kernelPackages = pkgs.linuxPackages_zen;
     kernelParams = [ "resume=/dev/disk/by-label/NIXOS_SWAP" ];
     resumeDevice = "/dev/disk/by-label/NIXOS_SWAP";
 

@@ -52,7 +52,6 @@ hosts/               # per-host entrypoints
     wallpaper.jpg    # symlink → assets/win_chan.jpg
   framework/         # NixOS system with Home Manager
     host.nix         # feature manifest
-    overlay.nix      # framework-only kernel pin (linux_zen_7_0)
     configuration/   # active NixOS system entrypoint, hardware, GRUB theme
     home/            # GUI/Niri/AGS Home Manager modules, wallpaper.nix rotation
   framework-installer/ # UEFI-only Framework reinstall ISO, embedded source + explicit install tool
@@ -170,9 +169,10 @@ The overlay is split into focused files under `lib/flake/overlays/`:
 - `global-patches.nix` — `direnv` build fix (strips `-linkmode=external` from Makefile).
 - `nodejs.nix` — temporary official Node.js binary pins through `pkgs/nodejs-bin`: 24.22.1 for the CLI/Pi and 22.23.4 for consumers such as Bitwarden. Hash-pinned binaries include patched bundled dependencies and avoid compiling V8 on Raspberry Pi hosts. Remove the override once both locked package sets provide equivalent fixes; retain the regression tests in `scripts/tests/test-nodejs-security.mjs`.
 
-The Framework-only kernel pin (`linux_zen_7_0`, `linuxPackages_zen_7_0`) lives in
-`hosts/framework/overlay.nix` and is applied locally via `nixpkgs.overlays` in the
-Framework system configuration — not in the shared overlay.
+Framework uses nixpkgs' `linuxPackages_zen` directly so kernel security fixes
+arrive with `just update nixpkgs`. Do not reintroduce a local pin to an
+end-of-life kernel series; if a pin is ever needed, keep it on a supported
+kernel.org branch and remove it once nixpkgs catches up.
 
 Additional notes:
 - `reimu-on-starlit-water` imports the local package expression from `/home/iceice666/code/reimu_lays_on_water/nix/package.nix` through a non-flake path input and builds it with the `nixpkgs-unstable` Rust toolchain.
@@ -728,7 +728,7 @@ Canonical module shape:
 - `hosts/<name>/` contains machine-specific choices only. The `host.nix` spec is the single file to create when adding a host.
 - `hosts/<name>/wallpaper.*` is a symlink to `assets/` used by `just theme` and `just theme-preview` for the convention-based wallpaper lookup.
 - `framework` is NixOS with Home Manager wired in by `mk-host`.
-- `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules. `hosts/framework/overlay.nix` holds the framework-only kernel pin.
+- `hosts/framework/configuration/` is the active NixOS entrypoint; `hosts/framework/home/` contains user-level modules.
 - `hosts/framework/home/ags/` runs the Framework AGS 3 / Astal GTK4 shell (`framework-ags.service`), pinned through the upstream AGS flake with its matching Astal libraries. It provides per-monitor bars, StatusNotifier tray/GTK4 menus, calendar, and a Material/GNOME-inspired control center. `state.ts` adapts the Rust backend, `control-center.tsx` owns the panel, and `app.tsx` owns monitor/window lifecycle and the bar. Theme files come from `themegen/framework/.config/ags/`; AGS owns notifications through AstalNotifd (`notifications.tsx`: popups, center, unread badge, DND), with a D-Bus activation file pointing at `framework-ags.service` — there is no Mako. `pkgs/framework-shell-state/` emits UI-neutral JSON-line state patches and handles media keys. See the AGS directory's README for validation and migration notes.
 - `hosts/framework/home/niri-config.kdl` is the Framework Niri compositor config installed through Home Manager.
 - `hosts/framework/configuration/grub-theme.nix` builds the Framework GRUB theme from repo assets.
