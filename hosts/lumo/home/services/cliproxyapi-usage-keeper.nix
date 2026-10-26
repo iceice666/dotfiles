@@ -10,7 +10,8 @@
 let
   dataDir = "/var/lib/cliproxyapi-usage-keeper";
   envPath = "${dataDir}/keeper.env";
-  image = "ghcr.io/willxup/cpa-usage-keeper:v1.14.5";
+  # Digest-pinned so a re-tagged upstream release cannot change what runs.
+  image = "ghcr.io/willxup/cpa-usage-keeper:v1.14.5@sha256:8c4c54ed9c7e88eba1ef33e211120244aa75778e34c554f32d93899b43eeb7a5";
   port = lab.ports.cliproxyapiUsageKeeper;
 
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;

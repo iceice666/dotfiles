@@ -11,7 +11,9 @@ let
   dataDir = "/var/lib/umami";
   envPath = "${dataDir}/umami.env";
   postgresPort = 15432;
-  postgresImage = "docker.io/library/postgres:16-alpine";
+  # Digest-pinned linux/arm64 manifest list (PostgreSQL 16.15). Bump the digest
+  # deliberately; `podman run` would otherwise follow the floating tag.
+  postgresImage = "docker.io/library/postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab";
   # Preserve Umami 3.2.0 and its dependencies; replace only the Node executable.
   # Both pinned images are linux/arm64 Alpine 3.24 builds.
   umamiContainerfile = ''
