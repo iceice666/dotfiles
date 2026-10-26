@@ -11,8 +11,29 @@ let
   dataDir = "/var/lib/cliproxyapi-usage-keeper";
   envPath = "${dataDir}/keeper.env";
   # Digest-pinned so a re-tagged upstream release cannot change what runs.
-  # Stay on the v1 line: Keeper v2 requires CPA 8.0.12+ and lumo runs 7.x.
-  image = "ghcr.io/willxup/cpa-usage-keeper:v1.15.11@sha256:e7e295e4c302ba72d170830b6847c879056d52b55bb45fd80e7a1ba22fb87a69";
+  # v2 requires CPA 8.0.12+ (lumo runs 8.0.43). First v2 start migrates the
+  # v1 database in place; a pre-upgrade copy is taken below in case rollback
+  # to v1.15.11 is needed (never open a migrated database with v1).
+  image = "ghcr.io/willxup/cpa-usage-keeper:v2.0.1@sha256:2f34d43cf3faf073078757290abd325c76a726d38d4d31688bc0640881e86a41";
+  imageMarker = "${dataDir}/image";
+  preUpgradeBackup = pkgs.writeShellScript "lumo-keeper-pre-upgrade-backup" ''
+    set -eu
+    if [ -f ${imageMarker} ] && [ "$(cat ${imageMarker})" = "${image}" ]; then
+      exit 0
+    fi
+    if [ ! -f ${dataDir}/data/app.db ]; then
+      exit 0
+    fi
+    dest="${dataDir}/pre-upgrade-$(date -u +%Y%m%dT%H%M%SZ)"
+    install -d -m 0700 "$dest"
+    # The container is stopped at this point, so the WAL can be copied as-is.
+    cp -p ${dataDir}/data/app.db "$dest/"
+    for f in ${dataDir}/data/app.db-wal ${dataDir}/data/app.db-shm; do
+      [ -f "$f" ] && cp -p "$f" "$dest/"
+    done
+    echo "keeper: pre-upgrade database copied to $dest" >&2
+    ls -1dt ${dataDir}/pre-upgrade-* | tail -n +4 | xargs -r rm -rf
+  '';
   port = lab.ports.cliproxyapiUsageKeeper;
 
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;
@@ -86,6 +107,9 @@ in
 
         install -Dm755 ${keeperService} /etc/init.d/lumo-cliproxyapi-usage-keeper
         /sbin/rc-update add lumo-cliproxyapi-usage-keeper default
-        /sbin/rc-service lumo-cliproxyapi-usage-keeper restart
+        /sbin/rc-service lumo-cliproxyapi-usage-keeper stop || true
+        ${preUpgradeBackup} || exit $?
+        /sbin/rc-service lumo-cliproxyapi-usage-keeper start
+        printf '%s\n' '${image}' > ${imageMarker}
       '';
 }

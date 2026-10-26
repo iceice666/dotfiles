@@ -202,8 +202,11 @@ earlier Node-donor Containerfile is gone) and preserves database settings and
 explicit CA mounts. Umami runs Prisma migrations on startup, so activation
 writes a `pg_dump` to `/var/lib/umami/backups/` before the first start of a
 changed image (five newest kept) and records the running image in
-`/var/lib/umami/image`. The usage keeper stays on the v1 line (v2 requires
-CLIProxyAPI 8.0.12+) and keeps its own daily SQLite backups.
+`/var/lib/umami/image`. The usage keeper runs v2 (requires CLIProxyAPI
+8.0.12+); activation stops it, copies `app.db` (plus WAL/SHM) to a
+`pre-upgrade-*` directory under `/var/lib/cliproxyapi-usage-keeper` before the
+first start of a changed image, and records the image in `image`. Never open a
+migrated v2 database with v1; roll back only from such a copy.
 Updating host Node does not patch Electron applications or user-managed fnm
 installations; those require their own compatible upstream updates.
 
@@ -594,6 +597,8 @@ request header whose name is not letters, digits, and dashes. Authelia's
 `regulation` bans an account for 10 minutes after 3 failed attempts within 2
 minutes. Rootful container images in `umami.nix` and
 `cliproxyapi-usage-keeper.nix` are digest-pinned; bump digests deliberately.
+lumo runs CLIProxyAPI 8.x; the generated `config.yaml` still uses the legacy
+layout, which v8 reads unchanged.
 
 Blocky listens on lumo's Tailscale address (`100.120.152.7`) on TCP/UDP 53.
 Its HTTP/Prometheus listener is loopback-only on port 4000; Traefik publishes
