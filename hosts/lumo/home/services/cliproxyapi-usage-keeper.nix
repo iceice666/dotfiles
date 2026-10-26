@@ -11,7 +11,8 @@ let
   dataDir = "/var/lib/cliproxyapi-usage-keeper";
   envPath = "${dataDir}/keeper.env";
   # Digest-pinned so a re-tagged upstream release cannot change what runs.
-  image = "ghcr.io/willxup/cpa-usage-keeper:v1.14.5@sha256:8c4c54ed9c7e88eba1ef33e211120244aa75778e34c554f32d93899b43eeb7a5";
+  # Stay on the v1 line: Keeper v2 requires CPA 8.0.12+ and lumo runs 7.x.
+  image = "ghcr.io/willxup/cpa-usage-keeper:v1.15.11@sha256:e7e295e4c302ba72d170830b6847c879056d52b55bb45fd80e7a1ba22fb87a69";
   port = lab.ports.cliproxyapiUsageKeeper;
 
   managementKeyPath = config.sops.secrets.cliproxyapi-management-key.path;

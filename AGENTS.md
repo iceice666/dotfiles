@@ -197,10 +197,13 @@ Node/Pi processes after activation; old generations and running processes retain
 their old runtimes.
 
 Lumo's Umami container is a separate runtime boundary. Its module pins the
-existing Umami 3.2.0 image and copies only Node 22.23.4 from a digest-pinned
-linux/arm64 Alpine 3.24 donor. It preserves application files, database settings,
-and explicit CA mounts. Activation builds the content-hash-tagged local image
-before restarting Umami/Postgres, and fails if the image cannot be prepared.
+upstream Umami 3.4.1 image by digest (Node 22.23.4 on Alpine 3.24.3, so the
+earlier Node-donor Containerfile is gone) and preserves database settings and
+explicit CA mounts. Umami runs Prisma migrations on startup, so activation
+writes a `pg_dump` to `/var/lib/umami/backups/` before the first start of a
+changed image (five newest kept) and records the running image in
+`/var/lib/umami/image`. The usage keeper stays on the v1 line (v2 requires
+CLIProxyAPI 8.0.12+) and keeps its own daily SQLite backups.
 Updating host Node does not patch Electron applications or user-managed fnm
 installations; those require their own compatible upstream updates.
 

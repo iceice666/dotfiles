@@ -14,25 +14,42 @@ let
   # Digest-pinned linux/arm64 manifest list (PostgreSQL 16.15). Bump the digest
   # deliberately; `podman run` would otherwise follow the floating tag.
   postgresImage = "docker.io/library/postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab";
-  # Preserve Umami 3.2.0 and its dependencies; replace only the Node executable.
-  # Both pinned images are linux/arm64 Alpine 3.24 builds.
-  umamiContainerfile = ''
-    FROM docker.io/library/node:22.23.4-alpine@sha256:fd4a97c1630a4a0a70117dd7b393e322db316d0489bdf36a0e776e7b235341b0 AS patched-node
-    FROM ghcr.io/umami-software/umami@sha256:41c5df65ee777b762411c105f9b040e33708ef8640a19a2d2b9abf3284ee3f37
-    COPY --from=patched-node /usr/local/bin/node /usr/local/bin/node
-    ENV NODE_VERSION=22.23.4
-    RUN test "$(node --version)" = v22.23.4
-  '';
-  umamiBuildContext = pkgs.writeTextDir "Containerfile" umamiContainerfile;
-  umamiImage = "localhost/lumo-umami:node-${
-    builtins.substring 0 16 (builtins.hashString "sha256" umamiContainerfile)
-  }";
+  # Upstream 3.4.1 (security hotfix: Next.js 16.4.2) already ships Node
+  # 22.23.4 on Alpine 3.24.3, so the former Node-replacement Containerfile is
+  # no longer needed. Digest-pinned linux/arm64 manifest list.
+  umamiImage = "ghcr.io/umami-software/umami:3.4.1@sha256:e69d1a7932e9dab0fc523edc7be1f3a53f3c261f57856fc2167ae74a8fc022e8";
   ensureUmamiImage = pkgs.writeShellScript "lumo-umami-ensure-image" ''
     set -eu
     if ! ${pkgs.podman}/bin/podman image exists ${umamiImage}; then
-      ${pkgs.podman}/bin/podman build --pull=missing --network=none \
-        --file ${umamiBuildContext}/Containerfile --tag ${umamiImage} ${umamiBuildContext} >&2
+      ${pkgs.podman}/bin/podman pull ${umamiImage} >&2
     fi
+  '';
+  # Umami runs Prisma migrations on startup. Dump the database before the
+  # first start of a new image so a failed migration can be rolled back.
+  imageMarker = "${dataDir}/image";
+  backupDir = "${dataDir}/backups";
+  preUpgradeBackup = pkgs.writeShellScript "lumo-umami-pre-upgrade-backup" ''
+    set -euo pipefail
+    if [ -f ${imageMarker} ] && [ "$(cat ${imageMarker})" = "${umamiImage}" ]; then
+      exit 0
+    fi
+    if ! ${pkgs.podman}/bin/podman container exists lumo-umami-postgres; then
+      echo "umami: no running postgres container; skipping pre-upgrade dump" >&2
+      exit 0
+    fi
+    install -d -m 0700 -o root -g root ${backupDir}
+    dump="${backupDir}/pre-upgrade-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+    # The server listens on the non-default port; the socket name follows it.
+    ${pkgs.podman}/bin/podman exec lumo-umami-postgres pg_dump -U umami -p ${toString postgresPort} umami \
+      | ${pkgs.gzip}/bin/gzip > "$dump"
+    chmod 0600 "$dump"
+    if [ "$(${pkgs.gzip}/bin/gzip -cd "$dump" | head -c 64 | wc -c)" -eq 0 ]; then
+      echo "umami: pre-upgrade dump is empty; refusing to continue" >&2
+      exit 1
+    fi
+    echo "umami: pre-upgrade dump written to $dump" >&2
+    # Keep the five newest dumps.
+    ls -1t ${backupDir}/pre-upgrade-*.sql.gz 2>/dev/null | tail -n +6 | xargs -r rm -f
   '';
   umamiPort = lab.ports.umami;
   postgresPasswordPath = config.sops.secrets.umami-postgres-password.path;
@@ -106,8 +123,9 @@ in
   };
 
   home.activation.lumoUmami = lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" ] ''
-    # Fail before touching either running service if the derivative cannot be built.
+    # Fail before touching either running service if the image cannot be pulled.
     ${ensureUmamiImage} || exit $?
+    ${preUpgradeBackup} || exit $?
 
     install -d -m 0755 /var/log/lumo
     install -d -m 0700 -o root -g root ${dataDir}
@@ -138,5 +156,6 @@ in
     restart_service lumo-umami-postgres
     sleep 5
     restart_service lumo-umami
+    printf '%s\n' '${umamiImage}' > ${imageMarker}
   '';
 }
