@@ -59,7 +59,83 @@ There is no unit-test suite for Nix modules; the closest equivalent is the
 narrowest host build that covers the change. Before building, `git add` new or
 untracked files so flake evaluation can see them, and confirm with `git status`.
 
-| Changed path | Validate with |
+Framework's DE10-Lite workflow uses `quartus-prime-lite` from the locked nixpkgs
+in `hosts/framework/home/default.nix`, with only `MAX 10 FPGA` device support and
+no Questa simulator. Its FHS profile forces `QT_QPA_PLATFORM=xcb` for Niri/XWayland.
+A host-local fetch override replaces retired Intel download URLs with Altera's
+official endpoint with a compatible user agent, preserving nixpkgs' hashes; remove it when the
+locked nixpkgs includes that fix.
+`hosts/framework/configuration/default.nix` grants the on-board USB-Blaster
+(`09fb:6001`) access only to `plugdev` members, including the primary user. After
+`just switch`, replug the board and start a fresh login if group membership changed.
+Run `quartus` for the GUI and `jtagconfig` to check detection without programming.
+Select device `10M50DAF484C7G` and use course/Terasic DE10-Lite pin assignments;
+JTAG `.sof` downloads are volatile, while `.pof` programming changes internal flash.
+Do not run Quartus as root or flash a board as an automated validation step.
+
+Fingerprint authentication is configured in
+`hosts/framework/configuration/default.nix` through `services.fprintd.enable`
+and `security.pam.services.{greetd,sudo}.fprintAuth`. Keep `fprintd` in the
+Framework system packages so `fprintd-enroll` and related tools are available
+for enrollment and troubleshooting.
+
+Framework appearance scheduling is configured in `hosts/framework/home/gui.nix`
+with Home Manager's `services.darkman`. It uses coarse Taipei coordinates from
+the Framework timezone, exposes darkman through the XDG Settings portal, and
+runs GTK/GNOME color-scheme scripts on sunrise/sunset transitions.
+
+Framework wallpaper rotation lives in `hosts/framework/home/wallpaper.nix`.
+`host.nix` lists the set as `desktopWallpapers` (files under `assets/`, unique
+stems); `desktopWallpaper` stays the static regreet login background. Every
+wallpaper gets its own themegen render plus AGS CSS and `Themegen{,-dark}` GTK
+theme dirs at build time. The `framework-wallpaper` helper copies the chosen
+bundle to `~/.local/state/themegen/current`, which all themegen Home Manager
+links point at, then reloads apps (darkman appearance links, GTK name bounce,
+link nudges for Zed/Pi/Equibop dir watchers, kitty `SIGUSR1`, fish
+`themegen_generation` uvar, AGS restart, `awww img`). The darkman hook rotates to a
+random different wallpaper only when the mode actually changes (sunrise/sunset
+or a manual toggle); logins and `just switch` keep the current one.
+`framework-wallpaper next` rotates manually. awww replaces swaybg.
+libadwaita apps pick up new colors only after restarting.
+
+### Primary workflows
+
+```sh
+just build
+just switch
+just boot
+
+just theme
+just theme-preview
+just fmt
+just fmt-check
+just check
+```
+
+- `just build` and `just switch` are platform-gated duplicate recipes: macOS maps to `m5pro`, and Linux detects the hostname to pick the NixOS host (`framework`).
+- `just boot` is Linux-only and sets the current NixOS host generation for next boot.
+- Theme files are generated inside the host build by a Nix derivation.
+- `just theme` generates a local concrete theme cache for inspection only.
+- `just fmt` runs `nix fmt` through `treefmt-nix` (nixfmt + just formatters).
+- `just check` runs format, Justfile metadata, and `nix flake check --all-systems`.
+- Recipe groups and platform guards use official `just` attributes such as `[group('host')]`, `[macos]`, and `[linux]`.
+
+### Dry builds / targeted validation
+
+Before building any Nix configuration, run `git add` on new or untracked files so Nix's flake evaluation can see them. Verify with `git status` that no required `.nix` files remain untracked.
+
+There is no unit-test suite. The closest equivalent is the narrowest host build that covers the change.
+
+```sh
+just build
+```
+
+Run it on the platform that owns the changed host. For shared changes, dry-build
+on both `m5pro` and `framework`.
+
+Which build to run for a given change:
+
+| Changed path | Dry-build target(s) |
 |---|---|
 | `hosts/m5pro/**`, `common/system-darwin/**` | `m5pro` build |
 | `hosts/framework/**`, `common/system-nixos/**` | `framework` build |

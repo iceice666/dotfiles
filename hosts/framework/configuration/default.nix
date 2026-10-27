@@ -353,8 +353,14 @@ in
     noto-fonts-color-emoji
   ];
 
+  # DE10-Lite's on-board USB-Blaster; keep access limited to plugdev members.
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6001", MODE="0660", GROUP="plugdev"
+  '';
+
   users = {
     mutableUsers = true;
+    groups.plugdev = { };
     users.${username} = {
       isNormalUser = true;
       description = "Brian Duan";
