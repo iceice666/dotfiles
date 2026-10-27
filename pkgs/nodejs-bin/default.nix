@@ -4,7 +4,7 @@
   stdenvNoCC,
   fetchurl,
   autoPatchelfHook,
-  makeWrapper,
+  makeBinaryWrapper,
   python3,
   bash,
   cacert,
@@ -79,7 +79,8 @@ stdenvNoCC.mkDerivation {
   dontStrip = true;
   # Reordering the official arm64 ELF sections makes Node crash at startup.
   patchelfFlags = lib.optionals platform.isLinux [ "--no-sort" ];
-  nativeBuildInputs = [ makeWrapper ] ++ lib.optionals platform.isLinux [ autoPatchelfHook ];
+  # A compiled wrapper: Darwin rejects script interpreters in npm/corepack shebangs.
+  nativeBuildInputs = [ makeBinaryWrapper ] ++ lib.optionals platform.isLinux [ autoPatchelfHook ];
   buildInputs = [ bash ] ++ lib.optionals platform.isLinux [ stdenv.cc.cc.lib ];
   setupHook = nodejsSource + "/setup-hook.sh";
 
