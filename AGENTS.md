@@ -31,6 +31,7 @@ common/              # shared modules injected by mk-host into every host
   home-gui/          # GUI workstation baseline (features.gui)
     default.nix      # imports app-defaults, ghostty, packages-gui, vscodium, zed
     packages-gui.nix # GUI binaries: equibop-bin, helium-bin, …
+    packages-workstation.nix # workstation-only CLI (ffmpeg, bitwarden-cli) kept off the Pi servers
     app-defaults.nix # XDG MIME associations
     ghostty.nix      # fork Ghostty config with left-side vertical tabs
     vscodium.nix     # VSCodium config + marketplace wiring

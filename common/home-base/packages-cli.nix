@@ -26,7 +26,6 @@ let
     zulu21
     age
     ssh-to-age
-    ffmpeg
     nodejs_24
     fnm
     gh
@@ -38,7 +37,6 @@ let
   ];
 
   unstablePackages = with unstablePkgs; [
-    bitwarden-cli
     bun
     just
     sops
