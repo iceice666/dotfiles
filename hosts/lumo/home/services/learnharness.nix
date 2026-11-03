@@ -61,7 +61,9 @@ let
     description="Lumo LearnHarness learning app (browser mode)"
     supervisor=supervise-daemon
     command="${podman}"
-    command_args="run --replace --rm --name=lumo-learnharness --network=host --cap-drop=all --security-opt=no-new-privileges --env-file=${envPath} --env=NODE_OPTIONS=--use-openssl-ca --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro --volume=${dataDir}:/data --tmpfs=/app/.next/cache:rw,mode=1777,size=256m ${image}"
+    # --init: node as PID 1 ignores SIGTERM, so stops would end in SIGKILL
+    # mid-write; podman-init forwards it and Next exits cleanly.
+    command_args="run --replace --rm --init --name=lumo-learnharness --network=host --cap-drop=all --security-opt=no-new-privileges --env-file=${envPath} --env=NODE_OPTIONS=--use-openssl-ca --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro --volume=${dataDir}:/data --tmpfs=/app/.next/cache:rw,mode=1777,size=256m ${image}"
     command_user="root"
     output_log="/var/log/lumo/learnharness.log"
     error_log="/var/log/lumo/learnharness.log"
