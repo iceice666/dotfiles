@@ -11,6 +11,7 @@
     ./edge
     ./forgejo-woodpecker.nix
     ./git-server.nix
+    ./learnharness.nix
     ./monitoring.nix
     ./podman.nix
     ./pirc.nix

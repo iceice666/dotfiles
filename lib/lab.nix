@@ -28,6 +28,7 @@ let
     cliproxyapi = 20129;
     cliproxyapiUsageKeeper = 20130;
     dynacat = 18075;
+    learnharness = 18076;
     umami = 18078;
     forgejo = 18079;
     forgejoSsh = 2222;
@@ -53,6 +54,7 @@ rec {
     cliproxyapi = "cliproxyapi.${root}";
     traefik = "traefik.${root}";
     home = "home.${root}";
+    learnharness = "learn.${root}";
     npu = "npu.${root}";
     analytics = "analytics.${root}";
     forgejo = "git.${root}";
@@ -66,6 +68,7 @@ rec {
     cliproxyapi = "https://${domains.cliproxyapi}";
     traefik = "https://${domains.traefik}";
     home = "https://${domains.home}";
+    learnharness = "https://${domains.learnharness}";
     npu = "https://${domains.npu}";
     analytics = "https://${domains.analytics}";
     forgejo = "https://${domains.forgejo}";

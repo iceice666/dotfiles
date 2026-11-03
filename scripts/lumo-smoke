@@ -15,6 +15,7 @@ lumo-node-exporter
 lumo-blackbox-exporter
 lumo-prometheus
 lumo-dynacat
+lumo-learnharness
 "
 
 for service in $services; do
@@ -23,6 +24,7 @@ done
 
 curl --fail --silent --show-error http://127.0.0.1:18083/-/ready >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:18075/ >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:18076/ >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:4000/metrics >/dev/null
 nslookup dns.justaslime.dev 100.120.152.7 |
   grep -F 'Address: 100.120.152.7' >/dev/null

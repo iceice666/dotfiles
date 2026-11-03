@@ -378,6 +378,23 @@ let
             tls.certResolver = "letsencrypt";
           };
 
+          learnharness-http = {
+            rule = mkPrivateHostRule lab.domains.learnharness;
+            entryPoints = [ "web" ];
+            middlewares = [ "redirect-to-https@file" ];
+            service = "noop@internal";
+          };
+
+          # LearnHarness has no user authentication of its own (browser mode is
+          # a trusted shared server), so the whole host sits behind Authelia.
+          learnharness = {
+            rule = mkPrivateHostRule lab.domains.learnharness;
+            entryPoints = [ "websecure" ];
+            middlewares = [ "authelia@file" ];
+            service = "learnharness";
+            tls.certResolver = "letsencrypt";
+          };
+
           pirc-http = {
             rule = mkPrivateHostRule lab.domains.pirc;
             entryPoints = [ "web" ];
@@ -490,6 +507,9 @@ let
           ];
           dynacat.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString lab.ports.dynacat}"; }
+          ];
+          learnharness.loadBalancer.servers = [
+            { url = "http://127.0.0.1:${toString lab.ports.learnharness}"; }
           ];
         };
   };

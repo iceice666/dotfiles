@@ -62,6 +62,10 @@ let
           domain = lab.domains.cliproxyapi;
           policy = "two_factor";
         }
+        {
+          domain = lab.domains.learnharness;
+          policy = "two_factor";
+        }
       ];
     };
 

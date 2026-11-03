@@ -24,6 +24,7 @@ let
     analytics
     traefik
     home
+    learnharness
     forgejo
     woodpecker
     npu

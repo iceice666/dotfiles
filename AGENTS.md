@@ -576,8 +576,8 @@ Blocky DNS and the edge stack (Traefik/Authelia/Cloudflare DDNS) that moved off
 the retired gateway Pi.
 
 `lumo` is the data+apps+DNS plane: Postgres, Valkey, git-server, Podman,
-Blocky, Prometheus, Dynacat, CLIProxyAPI, Umami, and the daily audit.
-Application backends (Dynacat, Umami, CLIProxyAPI, Prometheus, Authelia) bind
+Blocky, Prometheus, Dynacat, CLIProxyAPI, Umami, LearnHarness, and the daily audit.
+Application backends (Dynacat, Umami, CLIProxyAPI, LearnHarness, Prometheus, Authelia) bind
 to loopback and are reached only through lumo's local Traefik. The lumo
 firewall accepts only SSH, Blocky DNS, and HTTP/HTTPS on `tailscale0`, and only
 DNS and HTTP/HTTPS from `podman*`; do not reintroduce blanket interface trust or
@@ -600,6 +600,21 @@ minutes. Rootful container images in `umami.nix` and
 `cliproxyapi-usage-keeper.nix` are digest-pinned; bump digests deliberately.
 lumo runs CLIProxyAPI 8.x; the generated `config.yaml` still uses the legacy
 layout, which v8 reads unchanged.
+
+LearnHarness (`learnharness.nix`, `https://learn.justaslime.dev`) runs the
+upstream Next.js app in browser mode. Upstream publishes no image, so lumo
+builds `localhost/learnharness:<version>-<build id>` from the hash-pinned source
+tag, `learnharness.Containerfile` and a digest-pinned `node:26-bookworm-slim`.
+A cold build outlasts deploy-rs's confirm window, so activation builds a missing
+image detached (log: `/var/log/lumo/learnharness-build.log`) and restarts the
+service afterwards; superseded builds are pruned by label. The app has no user
+authentication and all browsers share its keys and data, so the host is both
+private-client-only and Authelia `two_factor`. The container runs as `node`
+with dropped capabilities; `/var/lib/learnharness` holds data, the auth file
+and `$HOME`. The shared CPA client key is injected as `CUSTOM_OPENAI_API_KEY`;
+configure Settings → Providers → Custom endpoint with
+`http://127.0.0.1:20129/v1` and API-key mode. To upgrade, bump `version`,
+`hash` and, deliberately, the base-image digest.
 
 Blocky listens on lumo's Tailscale address (`100.120.152.7`) on TCP/UDP 53.
 Its HTTP/Prometheus listener is loopback-only on port 4000; Traefik publishes
