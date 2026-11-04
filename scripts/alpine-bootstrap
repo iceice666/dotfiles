@@ -87,11 +87,48 @@ PermitRootLogin prohibit-password
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+MaxAuthTries 3
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
 EOF
 if [ "$DOTFILES_HOST" = "lumo" ]; then
   printf 'AllowUsers root git\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
 else
   printf 'AllowUsers root\n' >> /etc/ssh/sshd_config.d/10-dotfiles.conf
+fi
+
+# Kernel hardening on top of Alpine defaults. ip_forward stays enabled for
+# Podman/Tailscale; Yama is not built into linux-rpi, so ptrace_scope is
+# not set here.
+cat > /etc/sysctl.d/10-dotfiles-hardening.conf <<'EOF'
+kernel.kptr_restrict = 1
+kernel.dmesg_restrict = 1
+kernel.unprivileged_bpf_disabled = 1
+net.core.bpf_jit_harden = 2
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv6.conf.all.accept_source_route = 0
+net.ipv4.conf.all.log_martians = 1
+net.ipv4.tcp_syncookies = 1
+fs.protected_fifos = 2
+fs.protected_regular = 2
+EOF
+sysctl -q -p /etc/sysctl.d/10-dotfiles-hardening.conf || true
+
+# The Raspberry Pi firmware injects cgroup_disable=memory unless cmdline.txt
+# opts in; without the memory controller Podman cannot limit or account
+# container memory. Takes effect on the next reboot.
+if [ -f /boot/cmdline.txt ] && ! grep -q 'cgroup_enable=memory' /boot/cmdline.txt; then
+  sed -i '1s/^/cgroup_enable=memory cgroup_memory=1 /' /boot/cmdline.txt
 fi
 
 cat > /etc/modprobe.d/dotfiles-blacklist.conf <<'EOF'
@@ -255,6 +292,10 @@ rc-service sysklogd restart || rc-service sysklogd start
 rc-service crond start
 rc-service tailscale start || true
 rc-service dotfiles-firewall restart
+# Tailscale SSH bypasses sshd's authorized_keys entirely; root access over it
+# is governed by the tailnet "ssh" policy, which must stay in "check" mode
+# (src autogroup:member, dst tag:server). Tagged sources cannot pass check, so
+# keep workstations untagged. sshd remains the key-based fallback path.
 if tailscale status >/dev/null 2>&1; then
   tailscale set --ssh=true --hostname "$DOTFILES_HOST"
 fi
