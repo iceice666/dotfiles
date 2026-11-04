@@ -109,7 +109,11 @@ let
     };
   };
 
-  # Authelia supports *_FILE env var variants for all secrets.
+  # Authelia runs as the unprivileged `authelia` account. The sops secrets
+  # under /run/secrets stay root-only (the standalone HM sops module has no
+  # per-secret owner), so start_pre (root) stages 0400 copies into the
+  # service's private runtime directory and Authelia reads them via *_FILE.
+  runDir = "/run/lumo-authelia";
   autheliaService = pkgs.writeText "lumo-authelia" ''
     #!/sbin/openrc-run
     name="lumo-authelia"
@@ -117,12 +121,13 @@ let
     supervisor=supervise-daemon
     command="${autheliaPackage}/bin/authelia"
     command_args="--config ${autheliaConfig}"
+    command_user="authelia:authelia"
     directory="/var/lib/authelia"
     output_log="/var/log/lumo/authelia.log"
     error_log="/var/log/lumo/authelia.log"
     respawn_delay=5
     respawn_max=0
-    supervise_daemon_args="-e AUTHELIA_JWT_SECRET_FILE=${jwtSecretPath} -e AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=${storageKeyPath} -e AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=${smtpPasswordPath}"
+    supervise_daemon_args="-e AUTHELIA_JWT_SECRET_FILE=${runDir}/jwt-secret -e AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=${runDir}/storage-encryption-key -e AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=${runDir}/smtp-password"
 
     depend() {
       need net
@@ -130,15 +135,22 @@ let
 
     start_pre() {
       checkpath -d -m 0755 -o root:root /var/log/lumo
-      checkpath -d -m 0700 -o root:root /var/lib/authelia
-      checkpath -f -m 0640 -o root:root /var/log/lumo/authelia.log
-      checkpath -d -m 0755 -o root:root /run/lumo-authelia
+      checkpath -d -m 0700 -o authelia:authelia /var/lib/authelia
+      # Migrate state written by earlier root-run generations.
+      chown -R authelia:authelia /var/lib/authelia
+      checkpath -f -m 0640 -o authelia:authelia /var/log/lumo/authelia.log
+      checkpath -d -m 0700 -o authelia:authelia ${runDir}
+
+      install -m 0400 -o authelia -g authelia '${jwtSecretPath}' ${runDir}/jwt-secret
+      install -m 0400 -o authelia -g authelia '${storageKeyPath}' ${runDir}/storage-encryption-key
+      install -m 0400 -o authelia -g authelia '${smtpPasswordPath}' ${runDir}/smtp-password
 
       # Render users database with the hashed password from the sops secret.
       user_hash="$(cat '${userHashPath}')"
       printf 'users:\n  iceice666:\n    disabled: false\n    displayname: iceice666\n    password: '"'"'%s'"'"'\n    email: %s\n    groups:\n      - admins\n' \
-        "$user_hash" "${lab.contact.adminEmail}" > /run/lumo-authelia/users-database.yml
-      chmod 0600 /run/lumo-authelia/users-database.yml
+        "$user_hash" "${lab.contact.adminEmail}" > ${runDir}/users-database.yml
+      chown authelia:authelia ${runDir}/users-database.yml
+      chmod 0400 ${runDir}/users-database.yml
     }
   '';
 in
@@ -170,6 +182,13 @@ in
   };
 
   home.activation.lumoAuthelia = lib.hm.dag.entryAfter [ "sopsAlpine" ] ''
+    if ! /usr/bin/getent group authelia >/dev/null; then
+      /usr/sbin/addgroup -S authelia
+    fi
+    if ! /usr/bin/id authelia >/dev/null 2>&1; then
+      /usr/sbin/adduser -S -D -H -h /var/lib/authelia -s /sbin/nologin -G authelia authelia
+    fi
+
     install -Dm755 ${autheliaService} /etc/init.d/lumo-authelia
     /sbin/rc-update add lumo-authelia default
     /sbin/rc-service lumo-authelia restart

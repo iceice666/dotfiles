@@ -521,6 +521,12 @@ let
   # command line, which is visible to any local reader of `ps`/`/proc`. Read
   # the secret and `exec` traefik from a small wrapper instead, so the token
   # only ever lives in traefik's own environment, never in argv.
+  #
+  # The wrapper starts as root (the sops secret is root-only), then drops to
+  # the unprivileged `traefik` account through setpriv, keeping only an
+  # ambient CAP_NET_BIND_SERVICE for :80/:443. Alpine's OpenRC is built
+  # without libcap, so supervise-daemon cannot grant capabilities itself, and
+  # this avoids lowering ip_unprivileged_port_start system-wide.
   traefikWrapper = pkgs.writeShellScript "lumo-traefik-wrapper" ''
     set -eu
     token="$(tr -d '\r\n' < '${cfKeyPath}')"
@@ -530,7 +536,13 @@ let
     fi
     export CF_DNS_API_TOKEN="$token"
     export CLOUDFLARE_DNS_API_TOKEN="$token"
-    exec ${traefikPackage}/bin/traefik --configFile=${staticConfig}
+    exec ${pkgs.util-linux}/bin/setpriv \
+      --reuid traefik --regid traefik --init-groups \
+      --bounding-set -all,+net_bind_service \
+      --inh-caps -all,+net_bind_service \
+      --ambient-caps -all,+net_bind_service \
+      --no-new-privs \
+      -- ${traefikPackage}/bin/traefik --configFile=${staticConfig}
   '';
 
   traefikService = pkgs.writeText "lumo-traefik" ''
@@ -552,8 +564,10 @@ let
 
     start_pre() {
       checkpath -d -m 0755 -o root:root /var/log/lumo
-      checkpath -d -m 0700 -o root:root /var/lib/traefik
-      checkpath -f -m 0640 -o root:root /var/log/lumo/traefik.log
+      checkpath -d -m 0700 -o traefik:traefik /var/lib/traefik
+      # Migrate acme.json written by earlier root-run generations.
+      chown -R traefik:traefik /var/lib/traefik
+      checkpath -f -m 0640 -o traefik:traefik /var/log/lumo/traefik.log
     }
   '';
 in
@@ -565,6 +579,13 @@ in
   };
 
   home.activation.lumoTraefik = lib.hm.dag.entryAfter [ "sopsAlpine" "lumoAuthelia" "lumoBlocky" ] ''
+    if ! /usr/bin/getent group traefik >/dev/null; then
+      /usr/sbin/addgroup -S traefik
+    fi
+    if ! /usr/bin/id traefik >/dev/null 2>&1; then
+      /usr/sbin/adduser -S -D -H -h /var/lib/traefik -s /sbin/nologin -G traefik traefik
+    fi
+
     install -Dm755 ${traefikService} /etc/init.d/lumo-traefik
     /sbin/rc-update add lumo-traefik default
     /sbin/rc-service lumo-traefik restart
