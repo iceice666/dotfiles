@@ -4,7 +4,7 @@ Multi-host Nix configuration for `m5pro`, `framework`, `lumo`, and `worker`.
 
 One flake drives system configuration, Home Manager, secrets, wallpaper-derived theme generation, dev shells, and a small overlay of custom packages.
 
-See `AGENTS.md` for detailed repo and editing guidance.
+See `AGENTS.md` for editing guidance and the [Docs](#docs) list for subsystem details.
 
 ## Hosts
 
@@ -184,7 +184,13 @@ Never commit plaintext secrets.
 
 ## Docs
 
-- `AGENTS.md` — detailed repo structure, flake inputs, build matrix, code style, conventions.
+- `AGENTS.md` — agent working rules: validation matrix, guardrails, code style, commits.
+- `lib/flake/README.md` — flake framework, feature flags, inputs, outputs, overlays.
+- `hosts/m5pro/README.md`, `hosts/framework/README.md`, `hosts/lumo/README.md` — per-host details.
+- `hosts/framework-installer/README.md` — Framework full-disk reinstall.
+- `common/home-alpine/README.md` — Alpine hosts: ownership split, bootstrap, upgrades, provisioning.
+- `common/home-base/pi/README.md` — managed Pi launcher, extensions, providers.
+- `docs/tls-trust.md` — CA distrust and Node.js/Bun security pins.
 - `common/home-gui/rime/README.md` — Frost/Rime data wiring and Traditional Chinese model setup.
 - `common/home-gui/themegen/README.md` — wallpaper-driven theme generation pipeline.
 

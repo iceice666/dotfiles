@@ -106,6 +106,26 @@ other hosts keep the built-in `light/dark` pair. Changing the theme via
 `/settings` is overwritten on the next switch — edit the repo instead. If
 `settings.json` is not valid JSON, activation warns and leaves it untouched.
 
+## Providers and models
+
+`../pi.nix` manages `~/.pi/agent/models.json` with two CLIProxyAPI providers
+(served by lumo, see `../../../hosts/lumo/README.md`):
+
+- `cliproxyapi` — OpenAI Chat Completions at `https://cliproxyapi.justaslime.dev/v1`.
+- `cliproxyapi-claude` — native Anthropic Messages at `https://cliproxyapi.justaslime.dev`.
+  Claude models support thinking and image input; all except Haiku use adaptive thinking.
+
+The `apiKey` command reads the shared SOPS secret
+(`sensitive/shared/cliproxyapi.yaml`) at request time; no plaintext key enters
+the Nix store. `../agent-model.nix` holds the shared startup model, base URL,
+model limits and SOPS key reference for Pi and the Lumo audit runner; edit it
+and deploy each host to synchronize defaults. After switching, select a model
+with `/model`, `pi --model cliproxyapi/gpt-6-astra`, or
+`pi --model cliproxyapi-claude/claude-sonnet-5-5`.
+
+`just update-pkgs` invokes Pi with the repo-local skill at
+`.agents/skills/update-pkgs/SKILL.md` on a Pi-enabled workstation.
+
 ## Observational memory and cache-safe compaction
 
 Nix pins upstream `pi-observational-memory` 3.1.4, applies
