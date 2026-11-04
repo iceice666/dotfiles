@@ -41,7 +41,6 @@
     lumo-dynacat
     lumo-cliproxyapi
     lumo-cliproxyapi-usage-keeper
-    lumo-umami-postgres
     lumo-umami
     lumo-forgejo
     lumo-forgejo-bootstrap

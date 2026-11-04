@@ -11,7 +11,9 @@ let
   postgresPackage = pkgs.postgresql_17.withPackages (ps: [ ps.pgvector ]);
   postgresData = "/var/lib/postgresql/17/data";
   postgresConfig = pkgs.writeText "postgresql.conf" ''
-    listen_addresses = '''
+    # Loopback TCP for host-network containers (Umami), which cannot use
+    # peer auth; initdb's pg_hba requires SCRAM for 127.0.0.1.
+    listen_addresses = '127.0.0.1'
     port = ${toString lab.ports.postgresql}
     unix_socket_directories = '/run/postgresql'
   '';

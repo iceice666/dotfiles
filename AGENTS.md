@@ -199,11 +199,16 @@ their old runtimes.
 
 Lumo's Umami container is a separate runtime boundary. Its module pins the
 upstream Umami 3.4.1 image by digest (Node 22.23.4 on Alpine 3.24.3, so the
-earlier Node-donor Containerfile is gone) and preserves database settings and
-explicit CA mounts. Umami runs Prisma migrations on startup, so activation
-writes a `pg_dump` to `/var/lib/umami/backups/` before the first start of a
-changed image (five newest kept) and records the running image in
-`/var/lib/umami/image`. The usage keeper runs v2 (requires CLIProxyAPI
+earlier Node-donor Containerfile is gone) and explicit CA mounts. Its data
+lives in lumo's host PostgreSQL 17 (`umami` role and database, password from
+`sensitive/hosts/lumo/umami.yaml`), reached over loopback TCP with SCRAM;
+`database.nix` listens on `127.0.0.1` only for this. The former dedicated
+`postgres:16-alpine` container (flagged by Trivy for its `gosu` Go stdlib) is
+gone: activation migrated its data once from `/var/lib/umami/postgres`
+(kept for rollback; `/var/lib/umami/host-postgres` marks completion). Umami
+runs Prisma migrations on startup, so activation writes a `pg_dump` to
+`/var/lib/umami/backups/` before the first start of a changed image (five
+newest kept) and records the running image in `/var/lib/umami/image`. The usage keeper runs v2 (requires CLIProxyAPI
 8.0.12+); activation stops it, copies `app.db` (plus WAL/SHM) to a
 `pre-upgrade-*` directory under `/var/lib/cliproxyapi-usage-keeper` before the
 first start of a changed image, and records the image in `image`. Never open a
