@@ -603,8 +603,28 @@ request header whose name is not letters, digits, and dashes. Authelia's
 `regulation` bans an account for 10 minutes after 3 failed attempts within 2
 minutes. Rootful container images in `umami.nix` and
 `cliproxyapi-usage-keeper.nix` are digest-pinned; bump digests deliberately.
+The usage keeper container starts the binary directly as the image's `app`
+uid (100:101) with every capability dropped instead of going through the
+root entrypoint; `/var/lib/cliproxyapi-usage-keeper/data` is owned by that uid.
 lumo runs CLIProxyAPI 8.x; the generated `config.yaml` still uses the legacy
 layout, which v8 reads unchanged.
+
+No Nix-managed service on lumo runs as root except the rootful Podman
+service itself. Authelia runs as `authelia`; its `start_pre` (root) stages
+0400 copies of the sops secrets into `/run/lumo-authelia` because the
+standalone HM sops module cannot set per-secret owners. Traefik's wrapper reads
+the Cloudflare token as root, then `setpriv`s to `traefik` with only an ambient
+`CAP_NET_BIND_SERVICE` for :80/:443 (Alpine's OpenRC lacks libcap, so
+`supervise-daemon` cannot grant capabilities, and `ip_unprivileged_port_start`
+is left at 1024). Both `start_pre` hooks `chown -R` their state directories so
+earlier root-owned `db.sqlite3`/`acme.json` migrate on first start.
+`scripts/alpine-bootstrap` also installs `/etc/sysctl.d/10-dotfiles-hardening.conf`
+(kptr/dmesg restrict, no ICMP redirects, protected fifos/regular), tightens
+sshd (`AllowAgentForwarding no`, `MaxAuthTries 3`, `LoginGraceTime 30`), and
+prepends `cgroup_enable=memory cgroup_memory=1` to `/boot/cmdline.txt` so the
+Raspberry Pi firmware stops injecting `cgroup_disable=memory` (effective after a
+reboot). Tailscale SSH (`tailscale set --ssh=true`) bypasses sshd's
+`authorized_keys` entirely and grants root per tailnet ACL; keep that ACL tight.
 
 LearnHarness (`learnharness.nix`, `https://learn.justaslime.dev`) runs the
 upstream Next.js app in browser mode. Upstream publishes no image, so lumo
