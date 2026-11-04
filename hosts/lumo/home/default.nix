@@ -42,6 +42,7 @@
     lumo-cliproxyapi
     lumo-cliproxyapi-usage-keeper
     lumo-umami
+    lumo-learnharness
     lumo-forgejo
     lumo-forgejo-bootstrap
     lumo-woodpecker-server
