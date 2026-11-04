@@ -14,7 +14,13 @@ let
   # v2 requires CPA 8.0.12+ (lumo runs 8.0.43). First v2 start migrates the
   # v1 database in place; a pre-upgrade copy is taken below in case rollback
   # to v1.15.11 is needed (never open a migrated database with v1).
-  image = "ghcr.io/willxup/cpa-usage-keeper:v2.0.1@sha256:2f34d43cf3faf073078757290abd325c76a726d38d4d31688bc0640881e86a41";
+  image = "ghcr.io/willxup/cpa-usage-keeper:v2.0.3@sha256:e56daad41fea07eff80045b0efb41f4c80f092ab3e87090a4089e0446cfe6855";
+  # The image's docker-entrypoint.sh starts as root only to chown WORK_DIR
+  # and su-exec to `app` (uid 100, gid 101). Own the data on the host side
+  # instead and start the binary directly as that uid, so the container never
+  # holds root or any capability.
+  appUid = "100";
+  appGid = "101";
   imageMarker = "${dataDir}/image";
   preUpgradeBackup = pkgs.writeShellScript "lumo-keeper-pre-upgrade-backup" ''
     set -eu
@@ -45,7 +51,7 @@ let
     description="Lumo CPA Usage Keeper analytics dashboard"
     supervisor=supervise-daemon
     command="${pkgs.podman}/bin/podman"
-    command_args="run --replace --rm --name=lumo-cliproxyapi-usage-keeper --network=host --env-file=${envPath} --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro -v ${dataDir}/data:/data ${image}"
+    command_args="run --replace --rm --name=lumo-cliproxyapi-usage-keeper --network=host --user=${appUid}:${appGid} --entrypoint=/app/cpa-usage-keeper --cap-drop=all --security-opt=no-new-privileges --env-file=${envPath} --env=SSL_CERT_FILE=/etc/dotfiles-ca.crt --env=SSL_CERT_DIR=/etc/dotfiles-certs --volume=${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt:/etc/dotfiles-ca.crt:ro --volume=${pkgs.dotfiles-cacert.hashed}/etc/ssl/certs:/etc/dotfiles-certs:ro -v ${dataDir}/data:/data ${image}"
     command_user="root"
     output_log="/var/log/lumo/cliproxyapi-usage-keeper.log"
     error_log="/var/log/lumo/cliproxyapi-usage-keeper.log"
@@ -60,7 +66,8 @@ let
     start_pre() {
       checkpath -f -m 0640 -o root:root /var/log/lumo/cliproxyapi-usage-keeper.log
       checkpath -d -m 0700 -o root:root ${dataDir}
-      checkpath -d -m 0750 -o root:root ${dataDir}/data
+      checkpath -d -m 0750 -o ${appUid}:${appGid} ${dataDir}/data
+      chown -R ${appUid}:${appGid} ${dataDir}/data
       if ! ${pkgs.podman}/bin/podman image exists ${image}; then
         ${pkgs.podman}/bin/podman pull ${image} >&2
       fi
@@ -86,7 +93,7 @@ in
     lib.hm.dag.entryAfter [ "lumoDirectories" "sopsAlpine" "lumoPodman" "lumoCliproxyapi" ]
       ''
         install -d -m 0700 -o root -g root ${dataDir}
-        install -d -m 0750 -o root -g root ${dataDir}/data
+        install -d -m 0750 -o ${appUid} -g ${appGid} ${dataDir}/data
 
         management_key="$(cat '${managementKeyPath}')"
         login_password="$(cat '${loginPasswordPath}')"
