@@ -7,16 +7,16 @@
 }:
 
 let
-  version = "0.4.1";
+  version = "0.5.0";
   src = pkgs.fetchFromGitHub {
     owner = "amosblomqvist";
     repo = "learnharness";
     rev = "v${version}";
-    hash = "sha256-tfmvZCGjQJgTjCZ6kyKtV1UeL+sTTiNyR+z9tI5arVQ=";
+    hash = "sha256-hUhTUsblmdnkgD7DM6oEEQCFFNPoPUX1zotCgl+hKCY=";
   };
   # Upstream CI builds on Node 26. Digest-pinned multi-arch manifest list;
   # bump it deliberately together with the source tag.
-  nodeImage = "docker.io/library/node:26-bookworm-slim@sha256:bc0a2afd3b74ce12222fc8bab99271e66257f021078f5f4a5d687a77d280c1d9";
+  nodeImage = "docker.io/library/node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68";
   containerfile = ./learnharness.Containerfile;
   # No upstream image exists, so lumo builds one locally. The tag changes
   # whenever the source, Containerfile or base image changes.
