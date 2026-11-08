@@ -115,6 +115,7 @@ let
           "status-line.ts"
           "exa-search"
           "analyze-image"
+          "local-models"
           "observational-memory"
           "cache-safe-compaction"
         ]

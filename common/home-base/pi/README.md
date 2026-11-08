@@ -23,6 +23,7 @@ every tool in such a process. Unrelated local extensions are left alone.
 | `status-line.ts` | Model/thinking, Git state, elapsed time, context and selectable live-agent footer rows |
 | `exa-search/` | Bounded public web search through Exa, OpenAI, or Claude (`web_search`) |
 | `analyze-image/` | Local image analysis through a configured vision model, returning text (`analyze_image`) |
+| `local-models/` | Optional `local` provider discovering models from an OpenAI-compatible server at `localhost:8080` (`PI_LOCAL_MODELS_URL` overrides); no models when it is down |
 | `observational-memory/` | Upstream Observational Memory 3.1.4 plus the repo-owned rate-limit fallback and Pi 1.2.0+ compatibility patch (validated against the pinned 1.4.0 SDK), pinned and installed by Nix for durable ledger-backed memory |
 | `cache-safe-compaction/` | Best-effort post-compaction warm-up of the new OpenAI prompt-cache lineage |
 
