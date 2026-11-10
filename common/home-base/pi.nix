@@ -218,7 +218,7 @@ in
       # own cache behaviour is still undiagnosed, so pin the existing 5m default.
       compat.supportsLongCacheRetention = false;
       models = [
-        (mkClaudeModel "claude-fable-5-1" 1000000 128000 true)
+        (mkClaudeModel "claude-fable-5-2" 1000000 128000 true)
         (mkClaudeModel "claude-opus-5-5" 1000000 128000 true)
         (mkClaudeModel "claude-sonnet-5-5" 1000000 128000 true)
         (mkClaudeModel "claude-haiku-4-5-20251001" 200000 64000 false)
