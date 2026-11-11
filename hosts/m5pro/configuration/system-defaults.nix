@@ -83,16 +83,6 @@ in
       AppleSelectedInputSources = squirrelTraditionalInputSources;
     };
 
-    # Mos: reverse mouse scroll so trackpad=natural, mouse=traditional
-    "com.caldis.Mos" = {
-      reverse = true;
-      smooth = true;
-      autoLaunch = true;
-      hideStatusBar = false;
-      speed = 1;
-      gap = 50;
-    };
-
     "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
       Clicking = true;
       Dragging = true;
