@@ -54,8 +54,8 @@ reports. It intentionally avoids decrypted secret content.
   but the host has not rebooted; report it as an open action.
 - `input/apk-core-packages.txt` and `input/nix-service-versions.txt` are version
   baselines for the APK layer and the Nix-provided services (Traefik, Authelia,
-  PostgreSQL, Valkey, Blocky, Podman, Prometheus, CLIProxyAPI, pirc, Node, Pi,
-  Trivy). Trivy cannot scan `/nix/store`; compare these versions against
+  PostgreSQL, Valkey, Blocky, Podman, Prometheus, CLIProxyAPI, pirc, Node, Claude
+  Code, Trivy). Trivy cannot scan `/nix/store`; compare these versions against
   advisories you know of, state the version you compared, and never claim a Nix
   package is unaffected without evidence.
 - `input/trivy-host.txt` is a Trivy scan of the Alpine APK database against the

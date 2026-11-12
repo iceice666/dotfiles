@@ -9,12 +9,13 @@ runtime pins that came with it.
 NSS labels to remove. cacert's blacklist fails the build for labels missing from
 the store, and NSS 3.131.1 (nixpkgs-unstable) already drops the three emSign
 roots while nixos-26.05 still ships 3.126 with them, so the emSign labels are
-listed only below 3.131; `pkgs/pi-bin/trust.test.cjs` asserts all four
-fingerprints are absent either way.
+listed only below 3.131; the `dotfiles-cacert-distrust-check` derivation
+(`scripts/tests/check-cacert-distrust.sh`, required by every Home Manager build)
+asserts all four fingerprints are absent either way, so builds fail closed.
 
 - `common/system` applies the list to NixOS/nix-darwin.
 - `dotfiles-cacert` in the shared overlay supplies an explicit plain bundle for
-  Pi, CLI session variables, and configured containers without rebuilding every
+  Node, CLI session variables, and configured containers without rebuilding every
   package in nixpkgs. Session variables apply to new sessions, not every daemon
   or application's embedded store.
 - Alpine activation installs the full APK `ca-certificates` package if missing,
@@ -34,10 +35,10 @@ Preserve local/custom CA requirements deliberately when changing these paths.
 The shared overlay (`lib/flake/overlays/nodejs.nix`) updates both
 `nodejs-slim_22`/`nodejs-slim_24` and their npm/corepack wrappers, including the
 default `nodejs` alias. Updating only `home.packages` does not update absolute
-runtime paths embedded in Pi, Playwright, or Bitwarden. Packaging, launcher CA
+runtime paths embedded in Playwright or Bitwarden. Packaging, launcher CA
 defaults, limits and validation commands are in `pkgs/nodejs-bin/README.md`.
 
-Restart existing Node/Pi processes after activation; old generations and running
+Restart existing Node processes after activation; old generations and running
 processes retain their old runtimes. Updating host Node does not patch Electron
 applications, user-managed fnm installations, or container images (lumo's Umami
 and usage-keeper images are separate boundaries, see `hosts/lumo/README.md`).
@@ -48,9 +49,9 @@ Bun is temporarily pinned (`lib/flake/overlays/global-patches.nix`) to the
 official patched `1.4.4-canary.1+963452075` assets with fixed hashes, explicitly
 approved by the operator. The canary URL is rolling: replacement causes a hash
 failure, never a silent update. Replace this exception with a verified fixed
-stable release when available. Pi instead uses its supported npm/Node
-distribution at the same SDK version; updating external Bun cannot update an
-already compiled standalone Pi.
+stable release when available. Updating external Bun cannot update an already
+compiled standalone binary: Claude Code (`claude-code-bin`) embeds its own Bun
+runtime and CA store, so neither this pin nor `dotfiles-cacert` applies to it.
 
 ## Validation
 

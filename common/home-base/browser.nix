@@ -14,6 +14,8 @@ in
   home.file.".skills/playwright-browser".source = ./agent-skills/skills/playwright-browser;
   home.file.".agents/skills/playwright-browser".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.skills/playwright-browser";
+  home.file.".claude/skills/playwright-browser".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.skills/playwright-browser";
 
   home.file.".playwright/cli.config.json".text = builtins.toJSON {
     browser = {

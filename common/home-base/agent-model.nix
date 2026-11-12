@@ -1,7 +1,8 @@
 { dotfiles, lab }:
 
 {
-  # Shared OpenAI-compatible startup profile for Pi and the Lumo audit runner.
+  # Shared CLIProxyAPI profile: GPT defaults for pirc, and the gateway key that
+  # Claude Code and the Lumo audit runner also read.
   model = "gpt-6-astra";
   contextWindow = 1050000;
   maxTokens = 128000;

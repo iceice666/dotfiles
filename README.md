@@ -189,7 +189,6 @@ Never commit plaintext secrets.
 - `hosts/m5pro/README.md`, `hosts/framework/README.md`, `hosts/lumo/README.md` — per-host details.
 - `hosts/framework-installer/README.md` — Framework full-disk reinstall.
 - `common/home-alpine/README.md` — Alpine hosts: ownership split, bootstrap, upgrades, provisioning.
-- `common/home-base/pi/README.md` — managed Pi launcher, extensions, providers.
 - `docs/tls-trust.md` — CA distrust and Node.js/Bun security pins.
 - `common/home-gui/rime/README.md` — Frost/Rime data wiring and Traditional Chinese model setup.
 - `common/home-gui/themegen/README.md` — wallpaper-driven theme generation pipeline.

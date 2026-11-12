@@ -36,7 +36,8 @@ in
       supportsDeveloperRole = true;
       supportsReasoningEffort = true;
       # prompt_cache_key + session_id give CLIProxyAPI's session affinity a
-      # stable per-conversation key (see the notes in pi.nix).
+      # stable per-conversation key, so concurrent conversations sharing one
+      # system prompt do not all land on (and evict) the same upstream cache.
       sendSessionAffinityHeaders = true;
       supportsLongCacheRetention = true;
     };

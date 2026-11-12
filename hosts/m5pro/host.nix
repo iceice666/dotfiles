@@ -22,7 +22,7 @@
     themegen = true;
     rime = true;
     devEnv = true;
-    pi = true;
+    claude = true;
   };
 
   extraSpecialArgs = {

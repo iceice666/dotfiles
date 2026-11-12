@@ -21,7 +21,7 @@ to `--use-openssl-ca`, and supplies the filtered CA file and an empty certificat
 directory if the caller did not select its own. These are overridable defaults,
 not a sandbox or universal certificate policy. `process.execPath` is the raw
 binary: children normally inherit the defaults, but a cleared environment loses
-them. Pi's own wrapper explicitly selects its filtered CA bundle as before.
+them.
 
 ## Validation
 
@@ -32,17 +32,16 @@ nix build --no-link .#nixosConfigurations.framework.pkgs.nodejs_24 \
   .#nixosConfigurations.framework.pkgs.nodejs_22
 nix build --no-link .#nixosConfigurations.framework.pkgs.nodejs_24.tests.nativeAddon \
   .#nixosConfigurations.framework.pkgs.nodejs_22.tests.nativeAddon
-nix build --no-link .#nixosConfigurations.framework.pkgs.pi-bin \
-  .#nixosConfigurations.framework.pkgs.playwright-cli
+nix build --no-link .#nixosConfigurations.framework.pkgs.playwright-cli
 just fmt
 just check
 ```
 
 Each runtime's install check executes `scripts/tests/test-nodejs-security.mjs`,
 npm, and corepack. Native-addon tests compile and load a dependency-free N-API
-module using patched npm/node-gyp and `srcOnly nodejs`, offline. Pi checks local
-TLS acceptance/rejection; Playwright checks its extraction fixtures. macOS and
-ARM must be validated natively before being reported as deployed.
+module using patched npm/node-gyp and `srcOnly nodejs`, offline. Playwright
+checks its extraction fixtures. macOS and ARM must be validated natively before
+being reported as deployed.
 
 A global runtime replacement also changes packages using Node at build time,
 including Chromium. `common/home-base/browser.nix` selects Chromium from a

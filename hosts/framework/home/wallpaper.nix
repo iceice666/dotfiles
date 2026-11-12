@@ -202,7 +202,7 @@ let
         esac
       }
 
-      # Directory watchers (Zed, Pi, Equibop) only see entries change, so
+      # Directory watchers (Zed, Equibop) only see entries change, so
       # atomically replace each Home Manager link with an identical one.
       nudge_links() {
         local target path tmp

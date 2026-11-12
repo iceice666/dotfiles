@@ -29,7 +29,7 @@ let
       pkgs.cliproxyapi-bin
       pkgs.pirc-gateway
       pkgs.nodejs
-      pkgs.pi-bin
+      pkgs.claude-code-bin
       pkgs.trivy
     ]
     + "\n"
@@ -38,39 +38,8 @@ let
   auditRuntimeDir = "/run/homolab-audit";
   agentModel = import ../../../../common/home-base/agent-model.nix { inherit dotfiles lab; };
   modelSecret = config.sops.secrets.${agentModel.secretName}.path;
-  modelConfig = pkgs.writeText "homolab-audit-models.json" (
-    builtins.toJSON {
-      providers.cliproxyapi = {
-        baseUrl = agentModel.baseUrl;
-        api = "openai-completions";
-        apiKey = "!${pkgs.coreutils}/bin/cat \"$HOME/api-key\"";
-        compat = {
-          supportsDeveloperRole = true;
-          supportsReasoningEffort = true;
-          sendSessionAffinityHeaders = true;
-          sessionAffinityFormat = "openai";
-          supportsLongCacheRetention = true;
-        };
-        models = [
-          {
-            id = agentModel.model;
-            inherit (agentModel) contextWindow maxTokens;
-            reasoning = true;
-          }
-        ];
-      };
-    }
-  );
-  agentSettings = pkgs.writeText "homolab-audit-settings.json" (
-    builtins.toJSON {
-      defaultProjectTrust = "never";
-      enableInstallTelemetry = false;
-      defaultTools = [
-        "read"
-        "ls"
-      ];
-    }
-  );
+  # The audit report runs on Claude through the same CLIProxyAPI gateway.
+  auditModel = "claude-sonnet-5-5";
   kernelCheck = pkgs.writeShellScript "homolab-audit-kernel-check" ''
     set -eu
     running="$(uname -r)"
@@ -324,27 +293,31 @@ let
     '';
   };
 
-  auditPi = pkgs.writeShellApplication {
-    name = "homolab-audit-pi";
+  auditAgent = pkgs.writeShellApplication {
+    name = "homolab-audit-agent";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       audit_uid="$(id -u ${auditUser})"
       if [ "$(id -u)" -eq 0 ] || [ "$(id -u)" -ne "$audit_uid" ]; then
-        echo "Audit Pi must run as ${auditUser}, never as root." >&2
+        echo "Audit agent must run as ${auditUser}, never as root." >&2
         exit 1
       fi
 
-      exec ${pkgs.pi-bin}/bin/pi --print \
-        --tools read,ls \
-        --no-session \
-        --model ${lib.escapeShellArg "cliproxyapi/${agentModel.model}"} \
-        --no-approve \
-        --no-extensions \
-        --no-skills \
-        --no-prompt-templates \
-        --no-context-files \
-        --no-themes \
-        @report-prompt.md
+      ANTHROPIC_API_KEY="$(cat "$HOME/api-key")"
+      export ANTHROPIC_API_KEY
+
+      # --bare skips hooks, plugins, CLAUDE.md discovery and keychain reads;
+      # only read-only file tools are exposed and anything else is denied.
+      exec ${pkgs.claude-code-bin}/bin/claude --print \
+        --bare \
+        --model ${lib.escapeShellArg auditModel} \
+        --tools Read,Glob,Grep \
+        --permission-mode dontAsk \
+        --no-session-persistence \
+        --strict-mcp-config \
+        --disable-slash-commands \
+        --output-format text \
+        "$(cat report-prompt.md)"
     '';
   };
 
@@ -363,7 +336,7 @@ let
       umask 0077
 
       if [ "$(id -u)" -ne 0 ]; then
-        echo "Audit orchestration requires root; Pi runs separately as ${auditUser}." >&2
+        echo "Audit orchestration requires root; the agent runs separately as ${auditUser}." >&2
         exit 1
       fi
 
@@ -377,7 +350,7 @@ let
       manifest="$run_dir/manifest.json"
       report_file="$run_dir/daily-report.md"
       prompt_file="$run_dir/report-prompt.md"
-      pi_log="$run_dir/pi-output.log"
+      agent_log="$run_dir/agent-output.log"
 
       if [ ! -s "$manifest" ]; then
         echo "Audit manifest is missing: $manifest" >&2
@@ -422,32 +395,31 @@ let
       agent_dir="$(mktemp -d ${auditRuntimeDir}/agent.XXXXXXXX)"
       trap 'rm -rf -- "$agent_dir"' EXIT
       install -m 0400 -o ${auditUser} -g ${auditUser} ${modelSecret} "$agent_dir/api-key"
-      install -m 0444 ${modelConfig} "$agent_dir/models.json"
-      install -m 0444 ${agentSettings} "$agent_dir/settings.json"
       chown ${auditUser}:${auditUser} "$agent_dir"
 
       cd "$run_dir"
       ${pkgs.util-linux}/bin/runuser -u ${auditUser} -- \
         ${pkgs.coreutils}/bin/env -i \
         HOME="$agent_dir" \
-        PI_CODING_AGENT_DIR="$agent_dir" \
+        CLAUDE_CONFIG_DIR="$agent_dir/.claude" \
+        ANTHROPIC_BASE_URL=${lib.escapeShellArg agentModel.baseUrl} \
         PATH=${
           lib.makeBinPath [
             pkgs.coreutils
             pkgs.bash
           ]
         } \
-        NO_COLOR=1 PI_OFFLINE=1 PI_CACHE_RETENTION=long \
-        ${auditPi}/bin/homolab-audit-pi \
+        NO_COLOR=1 DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+        ${auditAgent}/bin/homolab-audit-agent \
         < /dev/null \
         > "$report_file" \
-        2> "$pi_log"
-      chmod 0600 "$report_file" "$pi_log"
+        2> "$agent_log"
+      chmod 0600 "$report_file" "$agent_log"
       rm -rf -- "$agent_dir"
       trap - EXIT
 
       if [ ! -s "$report_file" ]; then
-        echo "Audit Pi produced an empty report." >&2
+        echo "Audit agent produced an empty report." >&2
         exit 1
       fi
 
@@ -502,7 +474,7 @@ in
       /usr/sbin/adduser -S -D -H -h /var/empty -s /sbin/nologin -G ${auditUser} ${auditUser}
     fi
     if [ "$(/usr/bin/id -u ${auditUser})" -eq 0 ]; then
-      echo "Refusing to configure audit Pi with a root account." >&2
+      echo "Refusing to configure the audit agent with a root account." >&2
       exit 1
     fi
 

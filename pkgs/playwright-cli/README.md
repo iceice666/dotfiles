@@ -28,8 +28,8 @@ separate runtime check. Do not use an unverified session for sensitive browsing.
 
 ## Use
 
-After `just build` / `just switch`, restart Pi or reload its skills and invoke
-`/skill:playwright-browser`. Back up existing unmanaged skill/config files before
+After `just build` / `just switch`, restart Claude Code and invoke
+`/playwright-browser`. Back up existing unmanaged skill/config files before
 first adoption; Home Manager deliberately does not force-overwrite them.
 
 ```sh
@@ -53,7 +53,7 @@ merges global, project, environment and command settings. It permits powerful
 `eval`/`run-code` operations; the coding agent is not sandboxed by this setup.
 Do not connect personal browser profiles or expose CDP endpoints. Ask before
 login, private/internal browsing or consequential actions. Text and screenshots
-returned to Pi may reach its configured model provider and session history.
+returned to Claude Code may reach its configured model provider and session history.
 Runtime profiles, auth state, snapshots and downloads must not enter Git or the
 Nix store. `.playwright-cli/` is ignored in this repository, but other output paths
 still require care. Close only owned sessions, never another agent's browser.

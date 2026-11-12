@@ -77,8 +77,7 @@
     set -gx HOSTNAME (uname -n)
   '';
 
-  # Keep npm global installs out of the read-only Nix store. Pi's
-  # package installer uses npm for npm: Pi packages.
+  # Keep npm global installs out of the read-only Nix store.
   home.file.".npmrc".text = ''
     prefix=''${HOME}/.npm-global
   '';

@@ -55,8 +55,8 @@
 
     fish_add_path -p $JAVA_HOME/bin
     fish_add_path -p $PNPM_HOME
-    # Append to PATH itself: user-global Bun installs (e.g. an upstream `pi`)
-    # must not shadow Nix-managed commands such as the restricted Pi launcher.
+    # Append to PATH itself: user-global Bun installs must not shadow
+    # Nix-managed commands such as the pinned `claude`.
     fish_add_path --path --append --move ~/.bun/bin
     fish_add_path -p ~/.npm-global/bin
     fish_add_path -p $HOME/.dotnet/tools

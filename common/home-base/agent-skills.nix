@@ -11,7 +11,7 @@ let
     "commit/agents/openai.yaml"
     "next-milestone/SKILL.md"
     "next-milestone/agents/openai.yaml"
-    "next-milestone/workflows/pi.md"
+    "next-milestone/workflows/claude.md"
   ];
 
   canonicalSkillFile = path: {
@@ -31,7 +31,8 @@ let
   # farm pointing back at the canonical `.skills/<name>` tree. Add a base here
   # to onboard another agent; SKILL.md itself must stay agent-neutral.
   skillAdapterBases = [
-    ".agents/skills" # Pi
+    ".agents/skills" # agent-neutral discovery
+    ".claude/skills" # Claude Code
   ];
 in
 {

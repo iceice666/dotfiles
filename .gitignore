@@ -1,12 +1,13 @@
 .devenv/
 .direnv/
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/skills/
 .omp/
 __pycache__
 target
 .cache/
 /result
 /result-framework-iso
-/common/home-base/pi/node_modules/
 /pkgs/playwright-cli/node_modules/
 .playwright-cli/

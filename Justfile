@@ -158,7 +158,7 @@ update *inputs:
 # Update custom packages to their latest upstream releases
 [group('flake')]
 update-pkgs:
-    pi /skill:update-pkgs
+    claude /update-pkgs
 
 # Check formatting, Justfile metadata, and flake outputs
 [group('flake')]

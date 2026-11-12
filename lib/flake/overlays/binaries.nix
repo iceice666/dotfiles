@@ -3,6 +3,7 @@
 final: prev: {
   appearance-scheduler = final.callPackage (dotfiles + /pkgs/appearance-scheduler) { };
   blocky-bin = final.callPackage (dotfiles + /pkgs/blocky-bin) { };
+  claude-code-bin = final.callPackage (dotfiles + /pkgs/claude-code-bin) { };
   cliproxyapi-bin = final.callPackage (dotfiles + /pkgs/cliproxyapi-bin) { };
   cliproxyapi-account-quota = final.callPackage (dotfiles + /pkgs/cliproxyapi-account-quota) { };
   cliproxyapi-usage-keeper-plugin = final.callPackage (
@@ -13,9 +14,6 @@ final: prev: {
   framework-shell-state = final.callPackage (dotfiles + /pkgs/framework-shell-state) { };
   helium-bin = final.callPackage (dotfiles + /pkgs/helium-bin) { };
   oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
-  pi-bin = final.callPackage (dotfiles + /pkgs/pi-bin) {
-    cacert = final.dotfiles-cacert;
-  };
   playwright-cli = final.callPackage (dotfiles + /pkgs/playwright-cli) { };
   rime-frost = final.callPackage (dotfiles + /pkgs/rime-frost) { };
   rime-octagram-zh-hant-essay-bgw = final.callPackage (

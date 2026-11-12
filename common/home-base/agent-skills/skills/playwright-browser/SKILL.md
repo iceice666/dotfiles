@@ -6,8 +6,8 @@ description: Read full web pages, extract rendered articles as Markdown, and int
 # Playwright browser
 
 Use the installed `playwright-cli` and `playwright-read`. Do not install packages,
-download browsers, or copy personal browser profiles. Read `workflows/pi.md` when
-running in Pi.
+download browsers, or copy personal browser profiles. Read `workflows/claude.md`
+when running in Claude Code.
 
 ## Session workflow
 

@@ -248,7 +248,7 @@ let
             tls.certResolver = "letsencrypt";
           };
 
-          # The whole CPA host is private: Pi clients sit on the tailnet and
+          # The whole CPA host is private: agent clients sit on the tailnet and
           # Blocky resolves the name to lumo's tailnet address, so nothing
           # legitimate arrives through Cloudflare.
           cliproxyapi-http = {

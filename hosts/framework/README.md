@@ -52,7 +52,7 @@ login background. Every wallpaper gets its own themegen render plus AGS CSS and
 The `framework-wallpaper` helper copies the chosen bundle to
 `~/.local/state/themegen/current`, which all themegen Home Manager links point
 at, then reloads apps (darkman appearance links, GTK name bounce, link nudges
-for Zed/Pi/Equibop dir watchers, kitty `SIGUSR1`, fish `themegen_generation`
+for Zed/Equibop dir watchers, kitty `SIGUSR1`, fish `themegen_generation`
 uvar, AGS restart, `awww img`). The darkman hook rotates to a random different
 wallpaper only when the mode actually changes (sunrise/sunset or a manual
 toggle); logins and `just switch` keep the current one. `framework-wallpaper

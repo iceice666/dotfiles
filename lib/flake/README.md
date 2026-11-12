@@ -26,7 +26,7 @@ Host specs own: `name`, `kind`, `system`, `username`, `homeDirectory`, optional
 | `themegen` | `common/home-gui/themegen` |
 | `rime` | `common/home-gui/rime` |
 | `devEnv` | `common/home-base/dev-env.nix` |
-| `pi` | `common/home-base/pi.nix` (binary and configuration) |
+| `claude` | `common/home-base/claude.nix` (binary and configuration) |
 
 Shared module injection:
 
@@ -71,7 +71,7 @@ Shared module injection:
 `overlays/default.nix` composes, in order:
 
 - `lix.nix` — inherits `nix-eval-jobs`, `nix-fast-build`, `nixpkgs-review` from `pkgs.lixPackageSets.stable`.
-- `nodejs.nix` — temporary official Node.js binary pins through `pkgs/nodejs-bin` (24.x for the CLI/Pi, 22.x for consumers such as Bitwarden). Remove once both locked package sets provide equivalent fixes; keep `scripts/tests/test-nodejs-security.mjs`. See `docs/tls-trust.md` and `pkgs/nodejs-bin/README.md`.
+- `nodejs.nix` — temporary official Node.js binary pins through `pkgs/nodejs-bin` (24.x for the CLI and Playwright, 22.x for consumers such as Bitwarden). Remove once both locked package sets provide equivalent fixes; keep `scripts/tests/test-nodejs-security.mjs`. See `docs/tls-trust.md` and `pkgs/nodejs-bin/README.md`.
 - `binaries.nix` — repo packages under `pkgs/`.
 - `linux-gui.nix` — Linux-only packages (`niri-scratchpad-helper`, `reimu-on-starlit-water`). Attributes are omitted, not thrown, on non-Linux.
 - `global-patches.nix` — the filtered `dotfiles-cacert` bundle, the temporary Bun canary pin (see `docs/tls-trust.md`), and the `direnv` build fix (strips `-linkmode=external`).

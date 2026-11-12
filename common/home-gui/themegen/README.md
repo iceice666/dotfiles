@@ -26,7 +26,7 @@ Copies (not store links) are deliberate: kitty only re-reads `*.auto.conf` when 
 | --- | --- |
 | niri | watches included `theme.kdl`; automatic |
 | starship, fuzzel | read config on every prompt/launch |
-| Zed, Pi, Equibop | watch their theme directory; the helper atomically re-creates each link to fire an event |
+| Zed, Equibop | watch their theme directory; the helper atomically re-creates each link to fire an event |
 | qt5ct/qt6ct | watch the config dir; darkman's `qt*ct.conf` relink triggers it |
 | kitty | `SIGUSR1` |
 | fish palette | `set -U themegen_generation …` re-sources the conf.d file in open shells |
@@ -38,7 +38,7 @@ The darkman hooks rotate on real mode changes only; `framework-wallpaper next` r
 
 ## File Map
 
-- `themegen/common/`: shared Ghostty, fish, starship, Zed, VSCodium, and Pi theme templates.
+- `themegen/common/`: shared Ghostty, fish, starship, Zed, and VSCodium theme templates.
   Ghostty palettes render to `.config/ghostty/themes/themegen-{dark,light}` in
   native Ghostty syntax, preserving the terminal, cursor, selection, and 16 ANSI
   colors, including the seed-tinted light background. The shared configuration
@@ -52,9 +52,6 @@ The darkman hooks rotate on real mode changes only; `framework-wallpaper next` r
   notarized, so Gatekeeper may require explicit approval on first launch.
   See [the fork](https://github.com/iceice666/ghostty) and
   [the pinned release](https://github.com/iceice666/ghostty/releases/tag/fork-3869d3a8a973).
-  The Pi pair renders to `.pi/agent/themes/themegen-{dark,light}.json`; Pi picks
-  them up through global theme auto-discovery, and `common/home-base/pi.nix`
-  selects `themegen-light/themegen-dark` whenever those files are installed.
 - `themegen/framework/`: Linux-only GTK, Qt, fuzzel, Niri, and AGS bar templates. GTK templates become `Themegen` theme dirs on Framework.
 - `themegen/m5pro/`: macOS-only Equibop template.
 - `common/home-gui/themegen/default.nix`: Nix derivation builder and Home Manager installer for generated concrete files.

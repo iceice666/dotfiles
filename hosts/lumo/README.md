@@ -35,7 +35,7 @@ from the retired gateway Pi.
 - Authelia `regulation` bans an account for 10 minutes after 3 failed attempts
   within 2 minutes.
 - The whole CLIProxyAPI host, including `/v1`, is restricted to
-  loopback/LAN/tailnet client IPs. Pi clients reach it over the tailnet because
+  loopback/LAN/tailnet client IPs. Agent clients reach it over the tailnet because
   Blocky maps the name to lumo's tailnet address; public requests through
   Cloudflare get a 404.
 
@@ -50,7 +50,7 @@ lumo's own resolver order is not reliable for private names (Tailscale falls
 back to the base `1.1.1.1` entry because the tailnet resolver is lumo itself),
 so `blocky.nix` also maintains a marker-delimited `/etc/hosts` block mapping
 every private name to the tailnet address; glibc-linked Nix binaries such as the
-audit Pi depend on it.
+audit agent depend on it.
 
 ## Service privileges
 
@@ -141,20 +141,21 @@ running containers (fixed-only). Trivy caches its database root-only under
 `/var/cache/trivy` and needs outbound access to ghcr.io; scan failures are
 recorded as collector gaps, not clean results. Nix closures are not CVE-scanned.
 
-The reporter uses an audit-only Pi runner with the shared
-`common/home-base/agent-model.nix` profile. Root collects evidence and sends mail
-through Resend; `runuser` runs Pi as the non-login `homolab-audit` account, and
+The reporter uses an audit-only Claude Code runner (`claude-sonnet-5-5`) through
+CLIProxyAPI, with the gateway key from `common/home-base/agent-model.nix`. Root
+collects evidence and sends mail through Resend; `runuser` runs the agent as the
+non-login `homolab-audit` account, and
 the runner refuses UID 0 or any other account. Root-owned evidence is
 group-readable but not writable by that account. Each report uses a private 0700
 temporary agent directory under `/run/homolab-audit`, a sanitized environment,
 and a 0400 copy of only the model API key; the directory is removed on exit. The
 account cannot read the root SOPS identity, original secrets, or Resend key.
 
-The fixed runner invokes the pinned `pi-bin` directly with `--tools read,ls`,
-`--no-approve`, and extension/skill/context/theme discovery disabled; it does
-not load the interactive managed extension tree. This is Unix privilege
-separation, not an OS sandbox: world-readable host files remain readable. Model
-stderr is saved as root-only `pi-output.log`; reports and mail artifacts are
-also root-only. Switching removes root's managed Pi launcher and symlinked
-config, but leaves unmanaged `/root/.pi` settings/auth/sessions untouched; old
-generations retain their previous closures until collected.
+The fixed runner invokes the pinned `claude-code-bin` directly with `--print
+--bare`, `--tools Read,Glob,Grep`, `--permission-mode dontAsk`, no session
+persistence, and no MCP servers or slash commands; hooks, plugins, and
+CLAUDE.md discovery are skipped. This is Unix privilege separation, not an OS
+sandbox: world-readable host files remain readable. Model stderr is saved as
+root-only `agent-output.log`; reports and mail artifacts are also root-only.
+Unmanaged `/root/.pi` settings/auth/sessions from the former Pi runner are left
+untouched; old generations retain their previous closures until collected.

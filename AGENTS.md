@@ -14,8 +14,8 @@ that area.
 | `lib/lab.nix` | shared hostnames, ports, domains, IP ranges for lumo/worker | — |
 | `common/system*/` | NixOS/nix-darwin system modules | `lib/flake/README.md` |
 | `common/home-base/` | CLI baseline for every HM host | — |
-| `common/home-base/agent-*` | agent-neutral global instructions (`~/.agents/AGENTS.md`, `~/.pi/agent/AGENTS.md`) and skills (`~/.skills` → `~/.agents/skills`) | — |
-| `common/home-base/pi*` | managed Pi launcher, extensions, providers | `common/home-base/pi/README.md` |
+| `common/home-base/agent-*` | agent-neutral global instructions (`~/.agents/AGENTS.md`, `~/.claude/CLAUDE.md`) and skills (`~/.skills` → `~/.agents/skills`, `~/.claude/skills`) | — |
+| `common/home-base/claude*` | Claude Code binary, CLIProxyAPI gateway, settings, statusline | — |
 | `common/home-alpine/` | root HM baseline for Alpine hosts | `common/home-alpine/README.md` |
 | `common/home-gui/` | GUI workstation baseline (ghostty, zed, vscodium, rime, themegen) | `rime/README.md`, `themegen/README.md` |
 | `themegen/` | `$HOME`-relative theme templates (`common/`, `m5pro/`, `framework/`) | `common/home-gui/themegen/README.md` |
@@ -70,7 +70,7 @@ untracked files so flake evaluation can see them, and confirm with `git status`.
 | `lib/lab.nix` | `m5pro` + `framework` + `lumo` + `worker` |
 | `common/system/**`, `common/home-gui/**` | `m5pro` + `framework` |
 | `common/home-base/**` | all Home Manager-enabled hosts |
-| `common/home-base/pi/**` | Pi test suite (see Pi README) + Pi-enabled hosts |
+| `common/home-base/claude*` | `m5pro` + `framework` |
 | `pkgs/<name>` | `nix build .#<name>` or a host that uses it |
 | TLS trust paths | `scripts/tests/test-alpine-trust.py`, `test-tls-trust-macos.py` (see `docs/tls-trust.md`) |
 
@@ -119,19 +119,17 @@ Misconfiguration here affects reachability or trust boundaries. Read
 - Activation never runs `apk upgrade`; only `just <host>-upgrade apply` does.
 - Keep Forgejo/Woodpecker disabled until the port 22 conflict is resolved.
 
-### Pi and agent tooling
+### Claude Code and agent tooling
 
-- Edit repo sources in `common/home-base/pi/`, not installed store links. Do not
-  force-overwrite unmanaged extensions or install duplicates via `pi install`.
-- Keep extension sibling directories together (agent-team imports ask-question).
-- Observational Memory owns `session_before_compact`; `cache-safe-compaction`
-  only observes `session_compact`.
-- When bumping Pi or Observational Memory, regenerate the patch and re-run the
-  upstream suite and type check against the pinned SDK.
-- The managed launcher is not a sandbox; tools and workers run with normal host
-  permissions (root on lumo).
+- Edit `common/home-base/claude/settings.json` in the repo; `~/.claude/settings.json`
+  is an out-of-store symlink to it, so runtime `/config` changes land in the repo.
+- Claude Code is the Nix-pinned `claude-code-bin`; its self-updater is disabled.
+  Bump it with `scripts/update-pkgs claude-code-bin` (all four platforms; lumo's
+  audit runs the `aarch64-linux` build).
+- Claude Code is a compiled Bun binary with an embedded CA store; the
+  `dotfiles-cacert` distrust list does not apply to it.
 - Skills under `common/home-base/agent-skills/` keep `SKILL.md` agent-neutral;
-  Pi-specific mappings go in `workflows/pi.md` beside it.
+  Claude Code-specific mappings go in `workflows/claude.md` beside it.
 - Do not manage generated system skills, sessions, memory data, auth state, or
   plugin caches from this repo.
 

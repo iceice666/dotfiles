@@ -24,7 +24,7 @@ Write the resulting ISO to a spare USB using your usual image writer, carefully
 checking the USB target. Writing the USB also destroys its contents.
 
 The installed OS is the Framework configuration from that snapshot, including
-Home Manager, Niri/AGS, themegen, Rime and Pi. The live installer is deliberately
+Home Manager, Niri/AGS, themegen, Rime and Claude Code. The live installer is deliberately
 minimal and does not start the desktop or provision credentials.
 
 ## Back up first
@@ -138,8 +138,8 @@ Never reintroduce a filesystem UUID from an erased disk: the new system will wai
 for that missing device at boot.
 
 SOPS Home Manager secrets may fail until the existing authorized SSH identity is
-restored, but their absence is not meant to block local password login. Pi API and
-search credentials will not work without it. Restore the key via trusted media
+restored, but their absence is not meant to block local password login. Claude Code
+gateway credentials will not work without it. Restore the key via trusted media
 with user ownership, `0700` on `~/.ssh`, and `0600` on private keys, then:
 
 ```sh

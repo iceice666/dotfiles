@@ -81,7 +81,7 @@ let
             ghostty
             equibop-bin
             oh-my-pi-bin
-            pi-bin
+            claude-code-bin
             pirc-gateway
             pirc-node
             playwright-cli

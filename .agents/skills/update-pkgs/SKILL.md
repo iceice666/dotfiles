@@ -25,7 +25,9 @@ Update every custom package under `pkgs/` and any nested local package flakes to
 
 ### GitHub release binaries (most packages)
 
-Packages: `blocky-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `helium-bin`, `pi-bin`, `utiluti`, `zed-bin`.
+Packages: `blocky-bin`, `claude-code-bin`, `cliproxyapi-bin`, `default-browser`, `equibop-bin`, `helium-bin`, `utiluti`, `zed-bin`.
+
+Exception: `claude-code-bin` shares one `version` across all four platforms and lumo (`aarch64-linux`) runs it for the daily audit, so update every platform hash for it, not only Linux AMD64 and macOS ARM64. `scripts/update-pkgs claude-code-bin` does this.
 
 For each:
 1. Read `pkgs/<name>/default.nix` to extract `repo`, `version`, `tag_prefix`, and platform URLs.
