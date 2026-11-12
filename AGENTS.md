@@ -15,7 +15,7 @@ that area.
 | `common/system*/` | NixOS/nix-darwin system modules | `lib/flake/README.md` |
 | `common/home-base/` | CLI baseline for every HM host | — |
 | `common/home-base/agent-*` | agent-neutral global instructions (`~/.agents/AGENTS.md`, `~/.claude/CLAUDE.md`) and skills (`~/.skills` → `~/.agents/skills`, `~/.claude/skills`) | — |
-| `common/home-base/claude*` | Claude Code binary, CLIProxyAPI gateway, settings, statusline | — |
+| `common/home-base/claude*` | Claude Code binary, settings, statusline | — |
 | `common/home-alpine/` | root HM baseline for Alpine hosts | `common/home-alpine/README.md` |
 | `common/home-gui/` | GUI workstation baseline (ghostty, zed, vscodium, rime, themegen) | `rime/README.md`, `themegen/README.md` |
 | `themegen/` | `$HOME`-relative theme templates (`common/`, `m5pro/`, `framework/`) | `common/home-gui/themegen/README.md` |

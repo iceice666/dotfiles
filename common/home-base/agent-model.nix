@@ -2,7 +2,7 @@
 
 {
   # Shared CLIProxyAPI profile: GPT defaults for pirc, and the gateway key that
-  # Claude Code and the Lumo audit runner also read.
+  # the Lumo audit runner also reads.
   model = "gpt-6-astra";
   contextWindow = 1050000;
   maxTokens = 128000;

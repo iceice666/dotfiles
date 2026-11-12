@@ -1,23 +1,15 @@
 {
   config,
-  dotfiles,
-  lab,
   lib,
   pkgs,
   ...
 }:
 
 let
-  agentModel = import ./agent-model.nix { inherit dotfiles lab; };
-
   # Canonical source lives alongside this module under ./claude/
   # mkOutOfStoreSymlink keeps the targets writable so Claude Code can update
   # settings.json in place, and edits to dotfiles are reflected immediately.
   dotfilesHome = "${config.home.homeDirectory}/dotfiles/common/home-base/claude";
-
-  apiKeyHelper = pkgs.writeShellScript "claude-cliproxyapi-api-key" ''
-    exec ${pkgs.coreutils}/bin/cat ${config.sops.secrets.${agentModel.secretName}.path}
-  '';
 
   managedFiles = [
     "settings.json"
@@ -33,15 +25,9 @@ let
   };
 in
 {
-  sops.secrets.${agentModel.secretName} = agentModel.secret;
-
   home.packages = [ pkgs.claude-code-bin ];
 
   home.file = builtins.listToAttrs (map mkClaudeFile managedFiles) // {
-    ".claude/cliproxyapi-api-key" = {
-      source = apiKeyHelper;
-      force = true;
-    };
     ".claude/CLAUDE.md" = {
       source = ./agent-instructions.md;
       force = true;
