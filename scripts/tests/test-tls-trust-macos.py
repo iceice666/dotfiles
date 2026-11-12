@@ -234,8 +234,8 @@ class FingerprintConsistencyTests(unittest.TestCase):
         self.assertEqual(len(parsed), 4)
         self.assertEqual({fingerprint for _, fingerprint in parsed}, set(TRUST.BLOCKED))
 
-    def test_matches_pi_trust_policy(self):
-        policy = (SCRIPT.parents[1] / "pkgs/pi-bin/trust.test.cjs").read_text()
+    def test_matches_cacert_build_check(self):
+        policy = (SCRIPT.parents[1] / "scripts/tests/check-cacert-distrust.sh").read_text()
         self.assertEqual(set(re.findall(r"'[0-9a-f]{64}'", policy)),
                          {repr(fingerprint) for fingerprint in TRUST.BLOCKED})
 

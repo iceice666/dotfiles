@@ -4,8 +4,9 @@
 # cacert's blacklist is strict: a label that is no longer in the NSS store
 # fails the build. NSS 3.131.1 dropped the three emSign roots upstream, so
 # they are only listed for older bundles (nixos-26.05 still ships 3.126).
-# Pi's trust.test.cjs asserts all four fingerprints are absent from the built
-# bundle regardless, so an upstream reintroduction still fails closed.
+# dotfiles-cacert-distrust-check (scripts/tests/check-cacert-distrust.sh)
+# asserts all four fingerprints are absent from the built bundle regardless,
+# so an upstream reintroduction still fails closed.
 cacertVersion:
 [ "Comodo AAA Services root" ]
 ++ (

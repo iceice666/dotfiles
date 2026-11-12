@@ -6,6 +6,16 @@ final: prev: {
     blacklist = import ../../tls-ca-blacklist.nix prev.cacert.version;
   };
 
+  # Fails closed if an upstream bundle reintroduces a distrusted root. Kept out
+  # of dotfiles-cacert itself so its hash (and the Node overlay) stays cached.
+  dotfiles-cacert-distrust-check =
+    final.runCommand "dotfiles-cacert-distrust-check" { nativeBuildInputs = [ final.openssl ]; }
+      ''
+        bash ${../../../scripts/tests/check-cacert-distrust.sh} \
+          ${final.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt
+        touch "$out"
+      '';
+
   # Temporary official canary pin until a stable Bun includes the CA revocations.
   # The rolling URL is hash-pinned: a replaced asset fails closed.
   bun = prev.bun.overrideAttrs (old: {

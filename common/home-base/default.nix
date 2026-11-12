@@ -18,6 +18,9 @@
     CURL_CA_BUNDLE = "${pkgs.dotfiles-cacert}/etc/ssl/certs/ca-no-trust-rules-bundle.crt";
   };
 
+  # Every Home Manager build fails if the bundle above trusts a blocked root.
+  home.extraDependencies = [ pkgs.dotfiles-cacert-distrust-check ];
+
   programs.git = {
     enable = true;
     settings = {
