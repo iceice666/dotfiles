@@ -80,7 +80,6 @@ let
             themegen
             ghostty
             equibop-bin
-            oh-my-pi-bin
             claude-code-bin
             pirc-gateway
             pirc-node

@@ -13,7 +13,6 @@ final: prev: {
   equibop-bin = final.callPackage (dotfiles + /pkgs/equibop-bin) { };
   framework-shell-state = final.callPackage (dotfiles + /pkgs/framework-shell-state) { };
   helium-bin = final.callPackage (dotfiles + /pkgs/helium-bin) { };
-  oh-my-pi-bin = final.callPackage (dotfiles + /pkgs/oh-my-pi-bin) { };
   playwright-cli = final.callPackage (dotfiles + /pkgs/playwright-cli) { };
   rime-frost = final.callPackage (dotfiles + /pkgs/rime-frost) { };
   rime-octagram-zh-hant-essay-bgw = final.callPackage (
