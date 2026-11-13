@@ -17,8 +17,6 @@ MAGENTA='\033[35m'
 RED='\033[31m'
 
 # Line 1 fields.
-vim_mode="$(jqr '.vim.mode')"
-
 model="$(jqr '.model.display_name // .model.id')"
 [[ -z "$model" ]] && model="unknown"
 
@@ -57,10 +55,6 @@ five_pct="$(jqr '.rate_limits.five_hour.used_percentage')"
 week_pct="$(jqr '.rate_limits.seven_day.used_percentage')"
 
 line1_parts=()
-
-if [[ -n "$vim_mode" ]]; then
-  line1_parts+=("$(printf "${BOLD}${YELLOW}%s${RESET}" "$vim_mode")")
-fi
 
 model_str="$model"
 if [[ -n "$effort" ]]; then
