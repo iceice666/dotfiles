@@ -18,6 +18,30 @@ let
         };
       };
     });
+
+  # Overlay-free Node for packages that use it only while building or testing.
+  # prev.nodejs is not enough: it still resolves the pinned slim runtime through
+  # the fixpoint. Keeping these consumers on upstream Node keeps them on the
+  # binary cache instead of compiling Chromium, rebuilding most Python
+  # environments, or hitting flaky test suites.
+  upstreamPkgs = import prev.path {
+    localSystem = prev.stdenv.buildPlatform;
+    crossSystem = prev.stdenv.hostPlatform;
+    inherit (prev) config;
+  };
+  buildOnlyNodejs = upstreamPkgs.nodejs;
+
+  # overrideScope drops .override, which python-packages uses on qt6.
+  qtScope =
+    scope:
+    scope.overrideScope (
+      _: qtPrev: {
+        qtwebengine = qtPrev.qtwebengine.override { nodejs = buildOnlyNodejs; };
+      }
+    )
+    // {
+      override = args: qtScope (scope.override args);
+    };
 in
 {
   # Official fixed binaries avoid compiling V8 on the Raspberry Pi.
@@ -35,4 +59,24 @@ in
   );
   nodejs = final.nodejs_24;
   nodejs-slim = final.nodejs-slim_24;
+
+  # Build/test-only Node consumers. Runtime consumers (e.g. zed-editor) keep the
+  # pinned runtime and build locally.
+  # Only nixpkgs-unstable's libmysofa takes nodejs (for its tests).
+  libmysofa =
+    if prev.libmysofa.override.__functionArgs ? nodejs then
+      prev.libmysofa.override { nodejs = buildOnlyNodejs; }
+    else
+      prev.libmysofa;
+  neovim-unwrapped = prev.neovim-unwrapped.override { nodejs = buildOnlyNodejs; };
+  qt6 = qtScope prev.qt6;
+  # furo's npm-built web assets reach most Python environments via tox.
+  pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+    (_: pyPrev: {
+      furo = pyPrev.furo.override {
+        nodejs = buildOnlyNodejs;
+        inherit (upstreamPkgs) buildNpmPackage;
+      };
+    })
+  ];
 }

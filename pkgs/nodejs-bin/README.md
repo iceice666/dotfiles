@@ -46,7 +46,11 @@ being reported as deployed.
 A global runtime replacement also changes packages using Node at build time,
 including Chromium. `common/home-base/browser.nix` selects Chromium from a
 pristine import of the same locked nixpkgs to retain its binary cache; the
-Playwright CLI still uses patched Node. Other build-time consumers may still
-require expensive rebuilds even though Node itself is now precompiled. Host activation still requires a complete successful build;
+Playwright CLI still uses patched Node. `lib/flake/overlays/nodejs.nix` likewise
+gives upstream Node to known build/test-only consumers (`qt6.qtwebengine`,
+`neovim-unwrapped`, `libmysofa`, Python `furo`) so they and their dependents
+stay cached; never add packages that embed Node at runtime (e.g. `zed-editor`)
+to that list. Other build-time consumers may still require local rebuilds.
+Host activation still requires a complete successful build;
 existing processes and old generations retain old runtimes until restarted or
 retired. Container and Electron runtimes are separate boundaries.
