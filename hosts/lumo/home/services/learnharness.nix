@@ -7,12 +7,12 @@
 }:
 
 let
-  version = "0.5.0";
+  version = "0.6.1";
   src = pkgs.fetchFromGitHub {
     owner = "amosblomqvist";
     repo = "learnharness";
     rev = "v${version}";
-    hash = "sha256-hUhTUsblmdnkgD7DM6oEEQCFFNPoPUX1zotCgl+hKCY=";
+    hash = "sha256-XkbLhhmRKv/fcNk0Dup+UF6mVNYmJFMGCJjk53HHe/U=";
   };
   # Upstream CI builds on Node 26. Digest-pinned multi-arch manifest list;
   # bump it deliberately together with the source tag.
@@ -100,6 +100,9 @@ in
         {
           printf 'HOSTNAME=127.0.0.1\n'
           printf 'PORT=${toString port}\n'
+          # Browser mode rejects API requests whose Host is not localhost or an
+          # IP literal unless the name is listed here (Traefik keeps the Host).
+          printf 'LH_ALLOWED_HOSTS=${lab.domains.learnharness}\n'
           # Settings → Providers → Custom endpoint picks this up as the env-owned
           # key; enter http://127.0.0.1:${toString lab.ports.cliproxyapi}/v1 as the base URL.
           printf 'CUSTOM_OPENAI_API_KEY=%s\n' "$shared_api_key"

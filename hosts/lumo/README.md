@@ -102,8 +102,9 @@ private-client-only and Authelia `two_factor`. The container runs as `node` with
 dropped capabilities; `/var/lib/learnharness` holds data, the auth file and
 `$HOME`. The shared CPA client key is injected as `CUSTOM_OPENAI_API_KEY`;
 configure Settings → Providers → Custom endpoint with `http://127.0.0.1:20129/v1`
-and API-key mode. To upgrade, bump `version`, `hash` and, deliberately, the
-base-image digest.
+and API-key mode. Since 0.6 the API refuses non-IP, non-localhost `Host`
+names, so the env file lists the public domain in `LH_ALLOWED_HOSTS`. To
+upgrade, bump `version`, `hash` and, deliberately, the base-image digest.
 
 ## CLIProxyAPI
 

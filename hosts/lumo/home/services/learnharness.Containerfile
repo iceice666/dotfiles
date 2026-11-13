@@ -13,7 +13,10 @@ ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
     npm_config_fund=false
 # build-server.mjs copies public/ and .next/static into the standalone tree
 # and refuses to continue if data/ or credential files were traced into it.
+# plugins:setup installs each bundled plugin's locked deps; `npm run build`
+# compiles the core plugins from them.
 RUN npm ci \
+ && npm run plugins:setup \
  && npm run build \
  && node scripts/build-server.mjs
 # Lets lumo prune superseded build stages without touching other images.
