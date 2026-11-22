@@ -1,7 +1,6 @@
 {
   config,
   dotfiles,
-  lab,
   lib,
   pkgs,
   unstablePkgs,
@@ -36,9 +35,9 @@ let
   );
   auditUser = "homolab-audit";
   auditRuntimeDir = "/run/homolab-audit";
-  agentModel = import ../../../../common/home-base/agent-model.nix { inherit dotfiles lab; };
-  modelSecret = config.sops.secrets.${agentModel.secretName}.path;
-  # The audit report runs on Claude through the same CLIProxyAPI gateway.
+  # Claude Code talks to Anthropic directly with a long-lived subscription
+  # token from `claude setup-token`.
+  oauthTokenSecret = config.sops.secrets.homolab-audit-claude-oauth-token.path;
   auditModel = "claude-sonnet-5-5";
   kernelCheck = pkgs.writeShellScript "homolab-audit-kernel-check" ''
     set -eu
@@ -303,13 +302,15 @@ let
         exit 1
       fi
 
-      ANTHROPIC_API_KEY="$(cat "$HOME/api-key")"
-      export ANTHROPIC_API_KEY
+      CLAUDE_CODE_OAUTH_TOKEN="$(cat "$HOME/oauth-token")"
+      export CLAUDE_CODE_OAUTH_TOKEN
 
-      # --bare skips hooks, plugins, CLAUDE.md discovery and keychain reads;
-      # only read-only file tools are exposed and anything else is denied.
+      # --bare never reads OAuth, so isolation comes from the empty temporary
+      # HOME/CLAUDE_CONFIG_DIR plus --restricted: settings files are ignored
+      # and file tools are confined to the evidence directory. Only read-only
+      # file tools are exposed and anything else is denied.
       exec ${pkgs.claude-code-bin}/bin/claude --print \
-        --bare \
+        --restricted \
         --model ${lib.escapeShellArg auditModel} \
         --tools Read,Glob,Grep \
         --permission-mode dontAsk \
@@ -394,7 +395,7 @@ let
       # The account can read evidence, but cannot change inputs or mail artifacts.
       agent_dir="$(mktemp -d ${auditRuntimeDir}/agent.XXXXXXXX)"
       trap 'rm -rf -- "$agent_dir"' EXIT
-      install -m 0400 -o ${auditUser} -g ${auditUser} ${modelSecret} "$agent_dir/api-key"
+      install -m 0400 -o ${auditUser} -g ${auditUser} ${oauthTokenSecret} "$agent_dir/oauth-token"
       chown ${auditUser}:${auditUser} "$agent_dir"
 
       cd "$run_dir"
@@ -402,7 +403,6 @@ let
         ${pkgs.coreutils}/bin/env -i \
         HOME="$agent_dir" \
         CLAUDE_CONFIG_DIR="$agent_dir/.claude" \
-        ANTHROPIC_BASE_URL=${lib.escapeShellArg agentModel.baseUrl} \
         PATH=${
           lib.makeBinPath [
             pkgs.coreutils
@@ -458,7 +458,11 @@ in
     reporter
   ];
 
-  sops.secrets.${agentModel.secretName} = agentModel.secret;
+  sops.secrets.homolab-audit-claude-oauth-token = {
+    sopsFile = dotfiles + /sensitive/hosts/lumo/claude-code.yaml;
+    key = "oauthToken";
+    mode = "0400";
+  };
 
   sops.secrets.homolab-audit-resend-api-key = {
     sopsFile = dotfiles + /sensitive/hosts/lumo/resend.yaml;

@@ -1,8 +1,7 @@
 { dotfiles, lab }:
 
 {
-  # Shared CLIProxyAPI profile: GPT defaults for pirc, and the gateway key that
-  # the Lumo audit runner also reads.
+  # Shared CLIProxyAPI profile: GPT defaults for pirc and its gateway key.
   model = "gpt-6-astra";
   contextWindow = 1050000;
   maxTokens = 128000;

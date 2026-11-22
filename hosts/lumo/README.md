@@ -142,20 +142,27 @@ running containers (fixed-only). Trivy caches its database root-only under
 `/var/cache/trivy` and needs outbound access to ghcr.io; scan failures are
 recorded as collector gaps, not clean results. Nix closures are not CVE-scanned.
 
-The reporter uses an audit-only Claude Code runner (`claude-sonnet-5-5`) through
-CLIProxyAPI, with the gateway key from `common/home-base/agent-model.nix`. Root
+The reporter uses an audit-only Claude Code runner (`claude-sonnet-5-5`) that
+talks to Anthropic directly with a Claude subscription OAuth token from
+`claude setup-token`, stored as `oauthToken` in
+`sensitive/hosts/lumo/claude-code.yaml` and passed as `CLAUDE_CODE_OAUTH_TOKEN`.
+The token is long-lived but expires; regenerate it with `claude setup-token`
+and `just secret-edit sensitive/hosts/lumo/claude-code.yaml`. Root
 collects evidence and sends mail through Resend; `runuser` runs the agent as the
 non-login `homolab-audit` account, and
 the runner refuses UID 0 or any other account. Root-owned evidence is
 group-readable but not writable by that account. Each report uses a private 0700
 temporary agent directory under `/run/homolab-audit`, a sanitized environment,
-and a 0400 copy of only the model API key; the directory is removed on exit. The
+and a 0400 copy of only the OAuth token; the directory is removed on exit. The
 account cannot read the root SOPS identity, original secrets, or Resend key.
 
 The fixed runner invokes the pinned `claude-code-bin` directly with `--print
---bare`, `--tools Read,Glob,Grep`, `--permission-mode dontAsk`, no session
-persistence, and no MCP servers or slash commands; hooks, plugins, and
-CLAUDE.md discovery are skipped. This is Unix privilege separation, not an OS
+--restricted`, `--tools Read,Glob,Grep`, `--permission-mode dontAsk`, no session
+persistence, and no MCP servers or slash commands. `--bare` is not used because
+it never reads OAuth credentials; instead the empty temporary
+`HOME`/`CLAUDE_CONFIG_DIR` carries no settings, hooks, or plugins, and
+`--restricted` ignores settings files and confines file tools to the evidence
+directory. This is Unix privilege separation, not an OS
 sandbox: world-readable host files remain readable. Model stderr is saved as
 root-only `agent-output.log`; reports and mail artifacts are also root-only.
 Unmanaged `/root/.pi` settings/auth/sessions from the former Pi runner are left
