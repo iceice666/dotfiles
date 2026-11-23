@@ -165,5 +165,13 @@ it never reads OAuth credentials; instead the empty temporary
 directory. This is Unix privilege separation, not an OS
 sandbox: world-readable host files remain readable. Model stderr is saved as
 root-only `agent-output.log`; reports and mail artifacts are also root-only.
+
+Any reporter failure after the root check mails a short `FAILED` notice through
+the same Resend sender. The notice names the failing step and includes the head
+of `daily-report.md` and the tail of `agent-output.log`. The reporter also
+fails, and notifies, when the latest bundle is more than 20 hours old, which
+means the collector did not finish; a manual rerun later than that needs a fresh
+`homolab-audit-collect` first. If Resend itself is unreachable, the notice
+cannot be sent either.
 Unmanaged `/root/.pi` settings/auth/sessions from the former Pi runner are left
 untouched; old generations retain their previous closures until collected.

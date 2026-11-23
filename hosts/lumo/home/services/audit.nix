@@ -336,15 +336,97 @@ let
       set -euo pipefail
       umask 0077
 
+      step="start"
+      failure_reason=""
+      run_dir=""
+      report_file=""
+      agent_log=""
+      agent_dir=""
+      report_sent=""
+
+      fail() {
+        failure_reason="$1"
+        echo "$1" >&2
+        exit 1
+      }
+
+      # send_email SUBJECT TEXT_FILE [HTML_FILE]; the Resend response goes to stdout.
+      send_email() {
+        local subject="$1" text_file="$2" html_file="''${3:-}" api_key
+        api_key="$(cat ${resendSecret})"
+        if [ -n "$html_file" ]; then
+          jq -n \
+            --arg from "${reportSender}" \
+            --arg to "${reportRecipient}" \
+            --arg subject "$subject" \
+            --rawfile text "$text_file" \
+            --rawfile html "$html_file" \
+            '{from: $from, to: [$to], subject: $subject, text: $text, html: $html}'
+        else
+          jq -n \
+            --arg from "${reportSender}" \
+            --arg to "${reportRecipient}" \
+            --arg subject "$subject" \
+            --rawfile text "$text_file" \
+            '{from: $from, to: [$to], subject: $subject, text: $text}'
+        fi | curl --fail --silent --show-error \
+          -X POST https://api.resend.com/emails \
+          -H "Authorization: Bearer $api_key" \
+          -H "Content-Type: application/json" \
+          --data-binary @-
+      }
+
+      # Any failure after this point mails a short notice, so a broken
+      # token, gateway or collector never goes silent again.
+      notify_failure() {
+        local status="$1" notice rc=0
+        notice="$(mktemp)"
+        {
+          printf 'The Homolab daily audit report failed on %s at %s.\n\n' \
+            "$(uname -n)" "$(date --iso-8601=seconds)"
+          printf 'Exit status: %s\nStep: %s\n' "$status" "$step"
+          if [ -n "$failure_reason" ]; then
+            printf 'Reason: %s\n' "$failure_reason"
+          fi
+          printf 'Run directory: %s\n' "''${run_dir:-unknown}"
+          if [ -n "$report_file" ] && [ -s "$report_file" ]; then
+            printf '\n--- daily-report.md (first 2000 bytes) ---\n'
+            head -c 2000 -- "$report_file"
+            printf '\n'
+          fi
+          if [ -n "$agent_log" ] && [ -s "$agent_log" ]; then
+            printf '\n--- agent-output.log (last 2000 bytes) ---\n'
+            tail -c 2000 -- "$agent_log"
+            printf '\n'
+          fi
+        } > "$notice"
+        send_email "Homolab daily security audit FAILED $(date +%F)" "$notice" > /dev/null || rc="$?"
+        rm -f -- "$notice"
+        return "$rc"
+      }
+
+      on_exit() {
+        local status="$?"
+        if [ -n "$agent_dir" ]; then
+          rm -rf -- "$agent_dir"
+        fi
+        if [ "$status" -ne 0 ] && [ -z "$report_sent" ]; then
+          notify_failure "$status" || echo "Failure notice could not be sent." >&2
+        fi
+        exit "$status"
+      }
+      trap on_exit EXIT
+
       if [ "$(id -u)" -ne 0 ]; then
         echo "Audit orchestration requires root; the agent runs separately as ${auditUser}." >&2
+        trap - EXIT
         exit 1
       fi
 
+      step="locate bundle"
       latest=${auditBaseDir}/latest
       if [ ! -e "$latest" ]; then
-        echo "No audit bundle exists at $latest" >&2
-        exit 1
+        fail "No audit bundle exists at $latest"
       fi
 
       run_dir="$(readlink -f "$latest")"
@@ -354,8 +436,13 @@ let
       agent_log="$run_dir/agent-output.log"
 
       if [ ! -s "$manifest" ]; then
-        echo "Audit manifest is missing: $manifest" >&2
-        exit 1
+        fail "Audit manifest is missing: $manifest"
+      fi
+      # The collector runs 20 minutes earlier; an older bundle means it failed
+      # before updating latest, and re-reporting it would hide that.
+      manifest_age=$(( $(date +%s) - $(stat -c %Y "$manifest") ))
+      if [ "$manifest_age" -gt 72000 ]; then
+        fail "Latest audit bundle is $((manifest_age / 3600))h old; the collector did not finish."
       fi
 
       cat > "$prompt_file" <<'PROMPT'
@@ -394,11 +481,11 @@ let
       chown root:${auditUser} "$prompt_file"
       chmod 0640 "$prompt_file"
 
+      step="run agent"
       # /run is cleared at boot; recreate the root-owned parent for every report.
       install -d -m 0750 -o root -g ${auditUser} ${auditRuntimeDir}
       # The account can read evidence, but cannot change inputs or mail artifacts.
       agent_dir="$(mktemp -d ${auditRuntimeDir}/agent.XXXXXXXX)"
-      trap 'rm -rf -- "$agent_dir"' EXIT
       install -m 0400 -o ${auditUser} -g ${auditUser} ${oauthTokenSecret} "$agent_dir/oauth-token"
       chown ${auditUser}:${auditUser} "$agent_dir"
 
@@ -420,13 +507,13 @@ let
         2> "$agent_log"
       chmod 0600 "$report_file" "$agent_log"
       rm -rf -- "$agent_dir"
-      trap - EXIT
+      agent_dir=""
 
       if [ ! -s "$report_file" ]; then
-        echo "Audit agent produced an empty report." >&2
-        exit 1
+        fail "Audit agent produced an empty report."
       fi
 
+      step="render report"
       html_file="$run_dir/report-email.html"
       {
         printf '<!doctype html><html><head><meta charset="utf-8"></head><body><main>\n'
@@ -434,24 +521,10 @@ let
         printf '</main></body></html>\n'
       } > "$html_file"
 
-      api_key="$(cat ${resendSecret})"
-      payload="$run_dir/resend-payload.json"
-      jq -n \
-        --arg from "${reportSender}" \
-        --arg to "${reportRecipient}" \
-        --arg subject "Homolab daily security audit $(date +%F)" \
-        --rawfile text "$report_file" \
-        --rawfile html "$html_file" \
-        '{from: $from, to: [$to], subject: $subject, text: $text, html: $html}' \
-        > "$payload"
-
-      curl --fail --silent --show-error \
-        -X POST https://api.resend.com/emails \
-        -H "Authorization: Bearer $api_key" \
-        -H "Content-Type: application/json" \
-        --data-binary "@$payload" \
+      step="send report"
+      send_email "Homolab daily security audit $(date +%F)" "$report_file" "$html_file" \
         > "$run_dir/resend-response.json"
-      rm -f "$payload"
+      report_sent=1
       printf 'Generated and sent audit report: %s\n' "$report_file"
     '';
   };
