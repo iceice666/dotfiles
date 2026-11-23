@@ -14,7 +14,7 @@ just cliproxyapi-reset-cooldown [provider] # clear CLIProxyAPI cooldowns (defaul
 ```
 
 Services (`home/services/`): Postgres, Valkey, git-server, Podman, Blocky,
-Prometheus, Dynacat, CLIProxyAPI, Umami, LearnHarness, pirc gateway, the daily
+Prometheus, Dynacat, CLIProxyAPI, Umami, LearnHarness, the daily
 audit, and the edge stack (`edge/`: Traefik, Authelia, Cloudflare DDNS) moved
 from the retired gateway Pi.
 

@@ -26,7 +26,6 @@ let
       pkgs.prometheus-node-exporter
       pkgs.prometheus-blackbox-exporter
       pkgs.cliproxyapi-bin
-      pkgs.pirc-gateway
       pkgs.nodejs
       pkgs.claude-code-bin
       pkgs.trivy

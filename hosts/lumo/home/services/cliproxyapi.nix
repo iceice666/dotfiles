@@ -173,8 +173,8 @@ in
       # Bind each client session to one upstream credential. Without this every
       # turn round-robins onto another account, so only the globally shared
       # system prefix stays warm upstream and the per-conversation prompt cache
-      # never hits. Claude Code sends its own session affinity key, and pirc
-      # enables session affinity headers in common/home-base/pirc-models.nix. Bindings fail over automatically when an account is unavailable,
+      # never hits. Claude Code sends its own session affinity key. Bindings
+      # fail over automatically when an account is unavailable,
       # so the account-quota reserves still apply.
       # 1h is the binding lifetime worth keeping: upstream prompt caches expire
       # far sooner, and a longer TTL only reduces balancing across accounts.

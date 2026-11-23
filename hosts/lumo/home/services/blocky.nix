@@ -18,7 +18,6 @@ let
   # Names that must resolve to lumo itself for tailnet clients.
   privateNames = with lab.domains; [
     auth
-    pirc
     dns
     cliproxyapi
     analytics

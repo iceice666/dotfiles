@@ -48,7 +48,6 @@ Shared module injection:
 - `nixpkgs-unstable` is used through `unstablePkgsFor` and for specific packages.
 - `ags` is pinned to `v3.1.2` (Framework GTK4 shell); its matching Astal follows the upstream lock.
 - `ghostty` is pinned to a commit of the `iceice666/ghostty` fork (vertical tabs); see `pkgs/ghostty-bin/README.md`.
-- `pirc` is release-pinned and follows `nixpkgs-unstable` (its `bun.lock` needs Bun 1.4). Its overlay adds `pkgs.pirc-gateway` (used by lumo's `pirc.nix`) and `pkgs.pirc-node` (homolab/WSL runs a manually built node). To upgrade, bump the tag in `flake.nix`, run `just update pirc`, and back up both services' state first.
 - `niri-scratchpad-helper` and `reimu-on-starlit-water` are non-flake sources built by `overlays/linux-gui.nix`.
 
 ## Outputs
@@ -75,7 +74,6 @@ Shared module injection:
 - `binaries.nix` — repo packages under `pkgs/`.
 - `linux-gui.nix` — Linux-only packages (`niri-scratchpad-helper`, `reimu-on-starlit-water`). Attributes are omitted, not thrown, on non-Linux.
 - `global-patches.nix` — the filtered `dotfiles-cacert` bundle, the temporary Bun canary pin (see `docs/tls-trust.md`), and the `direnv` build fix (strips `-linkmode=external`).
-- the `pirc` input overlay.
 - an inline `ghostty` selection: the fork's flake package on Linux, `pkgs/ghostty-bin` on Darwin.
 
 Package notes:

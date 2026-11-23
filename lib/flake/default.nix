@@ -81,8 +81,6 @@ let
             ghostty
             equibop-bin
             claude-code-bin
-            pirc-gateway
-            pirc-node
             playwright-cli
             zed-bin
             rime-frost

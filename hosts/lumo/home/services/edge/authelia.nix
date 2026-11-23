@@ -47,10 +47,6 @@ let
           policy = "two_factor";
         }
         {
-          domain = lab.domains.pirc;
-          policy = "two_factor";
-        }
-        {
           domain = lab.domains.traefik;
           policy = "two_factor";
         }

@@ -90,9 +90,9 @@ let
       };
     };
 
-    # Drop request headers whose name aliases another (X_Pirc_User, X.Pirc.User,
-    # …) so a client cannot smuggle a lookalike past the identity-stripping
-    # middlewares; only letters, digits and dashes survive.
+    # Drop request headers whose name aliases another (Remote_User, Remote.User,
+    # …) so a client cannot smuggle a lookalike past forward-auth identity
+    # headers; only letters, digits and dashes survive.
     entryPoints =
       lib.mapAttrs (_: ep: lib.recursiveUpdate { http.aliasHeadersStrategy = "delete"; } ep)
         {
@@ -162,25 +162,6 @@ let
         referrerPolicy = "strict-origin-when-cross-origin";
         customFrameOptionsValue = "SAMEORIGIN";
       };
-
-      # Only the single explicitly allowed Authelia account may reach pirc.
-      # Strip client-provided identity before forward auth, then set the daemon
-      # header after a successful two-factor check.
-      pirc-strip-identity.headers.customRequestHeaders."Remote-Email" = "";
-      pirc-use-verified-email.headers.customRequestHeaders."X-Pirc-User" = lab.contact.adminEmail;
-      # The static server reports every Nix-store file as modified in 1970 and
-      # sends no Cache-Control, so browsers may heuristically keep a stale
-      # index.html pointing at the previous bundle. Always revalidate; hashed
-      # assets are still cached by the service worker.
-      pirc-revalidate.headers.customResponseHeaders."Cache-Control" = "no-cache";
-      # Phone app device-token requests authenticate with the gateway's own
-      # `pirc_dev_…` bearer token and never go through Authelia. Always strip
-      # any client-supplied identity header so a device token cannot also
-      # smuggle a spoofed identity; the gateway verifies the token itself.
-      pirc-clear-identity.headers.customRequestHeaders."X-Pirc-User" = "";
-      # The static server has no SPA fallback; serve the app shell for the
-      # client-side /engine routes.
-      pirc-spa-index.replacePath.path = "/index.html";
 
       authelia.forwardAuth = {
         address = "http://127.0.0.1:${toString lab.ports.authelia}/api/verify?rd=https%3A%2F%2F${lab.domains.auth}%2F";
@@ -394,76 +375,6 @@ let
             service = "learnharness";
             tls.certResolver = "letsencrypt";
           };
-
-          pirc-http = {
-            rule = mkPrivateHostRule lab.domains.pirc;
-            entryPoints = [ "web" ];
-            middlewares = [ "redirect-to-https@file" ];
-            service = "noop@internal";
-          };
-
-          pirc-node = {
-            rule = mkPrivateHostPathRule lab.domains.pirc "Path(`/node/connect`)";
-            entryPoints = [ "websecure" ];
-            priority = 1000;
-            middlewares = [ "pirc-clear-identity@file" ];
-            service = "pirc-gateway";
-            tls.certResolver = "letsencrypt";
-          };
-
-          # Device-token requests (Android app) skip Authelia entirely: the
-          # gateway validates its own `pirc_dev_…` bearer token. This router must
-          # outrank pirc-api so matching requests never reach forward auth.
-          pirc-device = {
-            rule = mkPrivateHostPathRule lab.domains.pirc "PathPrefix(`/api/`) && HeaderRegexp(`Authorization`, `^Bearer pirc_dev_`)";
-            entryPoints = [ "websecure" ];
-            priority = 3000;
-            middlewares = [ "pirc-clear-identity@file" ];
-            service = "pirc-gateway";
-            tls.certResolver = "letsencrypt";
-          };
-
-          pirc-api = {
-            rule = mkPrivateHostPathRule lab.domains.pirc "PathPrefix(`/api/`)";
-            entryPoints = [ "websecure" ];
-            # The broader private-host rule is long enough to outrank priority 100.
-            priority = 2000;
-            middlewares = [
-              "pirc-strip-identity@file"
-              "authelia@file"
-              "pirc-use-verified-email@file"
-            ];
-            service = "pirc-gateway";
-            tls.certResolver = "letsencrypt";
-          };
-
-          pirc-engine = {
-            rule = mkPrivateHostPathRule lab.domains.pirc "(Path(`/engine`) || PathPrefix(`/engine/`))";
-            entryPoints = [ "websecure" ];
-            priority = 1500;
-            middlewares = [
-              "pirc-strip-identity@file"
-              "authelia@file"
-              "pirc-use-verified-email@file"
-              "pirc-revalidate@file"
-              "pirc-spa-index@file"
-            ];
-            service = "pirc-web";
-            tls.certResolver = "letsencrypt";
-          };
-
-          pirc = {
-            rule = mkPrivateHostRule lab.domains.pirc;
-            entryPoints = [ "websecure" ];
-            middlewares = [
-              "pirc-strip-identity@file"
-              "authelia@file"
-              "pirc-use-verified-email@file"
-              "pirc-revalidate@file"
-            ];
-            service = "pirc-web";
-            tls.certResolver = "letsencrypt";
-          };
         }
     );
 
@@ -478,12 +389,6 @@ let
           ])
         )
         {
-          pirc-gateway.loadBalancer.servers = [
-            { url = "http://127.0.0.1:18787"; }
-          ];
-          pirc-web.loadBalancer.servers = [
-            { url = "http://127.0.0.1:18788"; }
-          ];
           authelia.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString lab.ports.authelia}"; }
           ];

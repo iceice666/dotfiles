@@ -54,7 +54,7 @@ reports. It intentionally avoids decrypted secret content.
   but the host has not rebooted; report it as an open action.
 - `input/apk-core-packages.txt` and `input/nix-service-versions.txt` are version
   baselines for the APK layer and the Nix-provided services (Traefik, Authelia,
-  PostgreSQL, Valkey, Blocky, Podman, Prometheus, CLIProxyAPI, pirc, Node, Claude
+  PostgreSQL, Valkey, Blocky, Podman, Prometheus, CLIProxyAPI, Node, Claude
   Code, Trivy). Trivy cannot scan `/nix/store`; compare these versions against
   advisories you know of, state the version you compared, and never claim a Nix
   package is unaffected without evidence.
@@ -81,7 +81,7 @@ reports. It intentionally avoids decrypted secret content.
   Paths in rules, header values, auth endpoint URLs, user databases, session
   secrets and process environments are excluded. These are active startup file
   settings, not exhaustive effective defaults or successful authorization tests.
-- `input/application-log-summary.txt` covers Prometheus, PIRC gateway, Blocky,
+- `input/application-log-summary.txt` covers Prometheus, Blocky,
   Traefik and Authelia current logs plus existing plain `.0`/`.1`/`.2` rotations.
   Each file is sampled at no more than 64 KiB and 500 records. Summaries include
   source size/mtime, observed timestamps, truncation, structured/unclassified

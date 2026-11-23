@@ -14,7 +14,7 @@ import yaml
 
 MAX_BYTES = 65536
 MAX_LINES = 500
-SERVICES = ("prometheus", "pirc-daemon", "blocky", "traefik", "authelia")
+SERVICES = ("prometheus", "blocky", "traefik", "authelia")
 
 
 def now():

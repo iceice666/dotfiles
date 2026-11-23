@@ -43,12 +43,6 @@
       flake = false;
     };
 
-    pirc = {
-      url = "github:iceice666/pirc/v0.10.0";
-      # pirc's bun.lock needs Bun 1.4, which the stable channel lacks.
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
-
     reimu-on-starlit-water = {
       url = "github:iceice666/reimu_on_starlit_water";
       flake = false;
