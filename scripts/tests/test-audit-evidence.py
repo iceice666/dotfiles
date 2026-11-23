@@ -50,12 +50,21 @@ class EvidenceTests(unittest.TestCase):
                 value.read_bytes.return_value = b"traefik\0--configFile=/nix/store/config.yml\0"
             return value
         proc.__truediv__.side_effect = child
-        with mock.patch.object(audit.pathlib.Path, "glob", return_value=[proc]):
-            self.assertEqual(audit.active_config("traefik", "--configFile"), "/nix/store/config.yml")
-        proc.stat.return_value.st_uid = 1000
-        with mock.patch.object(audit.pathlib.Path, "glob", return_value=[proc]):
-            with self.assertRaises(ValueError):
-                audit.active_config("traefik", "--configFile")
+        account = mock.MagicMock(pw_uid=115)
+        with mock.patch.object(audit.pwd, "getpwnam", return_value=account):
+            for uid in (0, 115):
+                proc.stat.return_value.st_uid = uid
+                with mock.patch.object(audit.pathlib.Path, "glob", return_value=[proc]):
+                    self.assertEqual(audit.active_config("traefik", "--configFile"), "/nix/store/config.yml")
+            proc.stat.return_value.st_uid = 1000
+            with mock.patch.object(audit.pathlib.Path, "glob", return_value=[proc]):
+                with self.assertRaises(ValueError):
+                    audit.active_config("traefik", "--configFile")
+        with mock.patch.object(audit.pwd, "getpwnam", side_effect=KeyError("traefik")):
+            proc.stat.return_value.st_uid = 115
+            with mock.patch.object(audit.pathlib.Path, "glob", return_value=[proc]):
+                with self.assertRaises(ValueError):
+                    audit.active_config("traefik", "--configFile")
 
     def test_authelia_allowlist_and_order(self):
         result = audit.authelia_summary({"session": {"secret": "SENTINEL"}, "access_control": {

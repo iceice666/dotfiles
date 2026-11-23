@@ -5,6 +5,7 @@ import datetime
 import json
 import os
 import pathlib
+import pwd
 import re
 import subprocess
 import sys
@@ -45,11 +46,17 @@ def read_yaml(path):
 
 
 def active_config(service, option):
+    # Services run under their own accounts; any other owner could be a
+    # look-alike process pointing at a forged config.
+    try:
+        trusted_uids = {0, pwd.getpwnam(service).pw_uid}
+    except KeyError:
+        trusted_uids = {0}
     matches = []
     for proc in pathlib.Path("/proc").glob("[0-9]*"):
         try:
             executable = (proc / "exe").resolve()
-            if proc.stat().st_uid != 0 or not str(executable).startswith("/nix/store/"):
+            if proc.stat().st_uid not in trusted_uids or not str(executable).startswith("/nix/store/"):
                 continue
             if executable.name not in {service, f".{service}-wrapped"}:
                 continue
