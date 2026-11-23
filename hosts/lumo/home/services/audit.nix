@@ -372,6 +372,10 @@ let
       overrides. SSH settings omit connection-specific Match contexts. Do not infer
       safety from omitted fields, zero counts, or the presence of auth middleware.
 
+      Your final response is captured from stdout and mailed as the report. Output
+      only the finished report, with no preamble. Do not read, write, or mention
+      daily-report.md, agent-output.log, report-prompt.md, or any other output file.
+
       Write concise Markdown with these sections:
       # Homolab Daily Security Audit
       ## TLDR
