@@ -175,3 +175,13 @@ means the collector did not finish; a manual rerun later than that needs a fresh
 cannot be sent either.
 Unmanaged `/root/.pi` settings/auth/sessions from the former Pi runner are left
 untouched; old generations retain their previous closures until collected.
+
+## Log rotation
+
+`logrotate.nix` adds a root cron entry at 04:45, after the audit collector
+(04:05) and reporter (04:25), so rotation never empties the logs the audit
+samples. It rotates `/var/log/lumo/*.log` only once a file exceeds 50 MB, keeps
+four gzip rotations, and uses `copytruncate` because supervise-daemon keeps each
+log open; those descriptors use `O_APPEND`, so truncation does not leave sparse
+files. State lives in `/var/lib/lumo-logrotate/status`. Logs of removed services
+are rotated by the same rule but never deleted.

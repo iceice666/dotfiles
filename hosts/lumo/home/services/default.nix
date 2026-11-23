@@ -12,6 +12,7 @@
     ./forgejo-woodpecker.nix
     ./git-server.nix
     ./learnharness.nix
+    ./logrotate.nix
     ./monitoring.nix
     ./podman.nix
     ./pirc.nix
