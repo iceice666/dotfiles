@@ -38,8 +38,10 @@ from the retired gateway Pi.
   loopback/LAN/tailnet client IPs. Agent clients reach it over the tailnet because
   Blocky maps the name to lumo's tailnet address; public requests through
   Cloudflare get a 404.
-- `3dp.justaslime.dev` proxies the printer's Mainsail UI (`192.168.1.90`) to
-  LAN client IPs only; tailnet and Cloudflare requests get a 404. Blocky maps
+- `3dp.justaslime.dev` proxies the printer's Mainsail UI (`192.168.1.90`) and,
+  under `/webcam/`, its µStreamer (`:8080`) to LAN client IPs only; tailnet and
+  Cloudflare requests get a 404. Moonraker's webcam URLs must be the relative
+  `/webcam/stream` and `/webcam/snapshot` to avoid mixed content. Blocky maps
   it to lumo's LAN address, and a DNS-only Cloudflare A record to
   `192.168.1.128` serves LAN devices without Tailscale.
 

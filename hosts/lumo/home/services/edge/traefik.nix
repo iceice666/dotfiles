@@ -30,8 +30,8 @@ let
   # route, so tailnet traffic is never SNATed to a LAN source.
   mkLanHostRule = host: "${mkHostRule host} && ClientIP(`${lab.network.lan.cidr}`)";
 
-  # Mainsail/Moonraker web UI on the 3D printer.
-  printerUrl = "http://192.168.1.90";
+  # Mainsail/Moonraker web UI and µStreamer webcam on the 3D printer.
+  printerAddress = "192.168.1.90";
 
   npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] lab.domains.npu;
 
@@ -187,6 +187,8 @@ let
         scheme = "https";
         permanent = true;
       };
+
+      printer-webcam-strip.stripPrefix.prefixes = [ "/webcam" ];
 
       npu-youtube.redirectRegex = {
         regex = "^https?://${npuHostRegex}/.*";
@@ -397,6 +399,17 @@ let
             service = "printer";
             tls.certResolver = "letsencrypt";
           };
+
+          # Same-origin webcam so the HTTPS UI avoids mixed content; Moonraker's
+          # webcam URLs must be relative (/webcam/stream, /webcam/snapshot).
+          printer-webcam = {
+            rule = "${mkLanHostRule lab.domains.printer} && PathPrefix(`/webcam/`)";
+            entryPoints = [ "websecure" ];
+            priority = 1000;
+            middlewares = [ "printer-webcam-strip@file" ];
+            service = "printer-webcam";
+            tls.certResolver = "letsencrypt";
+          };
         }
     );
 
@@ -438,7 +451,8 @@ let
           learnharness.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString lab.ports.learnharness}"; }
           ];
-          printer.loadBalancer.servers = [ { url = printerUrl; } ];
+          printer.loadBalancer.servers = [ { url = "http://${printerAddress}"; } ];
+          printer-webcam.loadBalancer.servers = [ { url = "http://${printerAddress}:8080"; } ];
         };
   };
 
