@@ -25,6 +25,14 @@ let
   mkPrivateHostRule = host: "${mkHostRule host} && ${privateClientRule}";
   mkPrivateHostPathRule = host: pathRule: "${mkPrivateHostRule host} && ${pathRule}";
 
+  # LAN-only: excludes the tailnet ranges, and Cloudflare-proxied requests
+  # arrive from Cloudflare addresses. No tailnet node advertises a subnet
+  # route, so tailnet traffic is never SNATed to a LAN source.
+  mkLanHostRule = host: "${mkHostRule host} && ClientIP(`${lab.network.lan.cidr}`)";
+
+  # Mainsail/Moonraker web UI on the 3D printer.
+  printerUrl = "http://192.168.1.90";
+
   npuHostRegex = builtins.replaceStrings [ "." ] [ "\\." ] lab.domains.npu;
 
   yamlFormat = pkgs.formats.yaml { };
@@ -375,6 +383,20 @@ let
             service = "learnharness";
             tls.certResolver = "letsencrypt";
           };
+
+          printer-http = {
+            rule = mkLanHostRule lab.domains.printer;
+            entryPoints = [ "web" ];
+            middlewares = [ "redirect-to-https@file" ];
+            service = "noop@internal";
+          };
+
+          printer = {
+            rule = mkLanHostRule lab.domains.printer;
+            entryPoints = [ "websecure" ];
+            service = "printer";
+            tls.certResolver = "letsencrypt";
+          };
         }
     );
 
@@ -416,6 +438,7 @@ let
           learnharness.loadBalancer.servers = [
             { url = "http://127.0.0.1:${toString lab.ports.learnharness}"; }
           ];
+          printer.loadBalancer.servers = [ { url = printerUrl; } ];
         };
   };
 

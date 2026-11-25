@@ -59,6 +59,7 @@ rec {
     forgejo = "git.${root}";
     woodpecker = "ci.${root}";
     proxy = "proxy.${root}";
+    printer = "3dp.${root}";
   };
 
   urls = {

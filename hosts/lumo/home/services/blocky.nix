@@ -70,7 +70,11 @@ let
     customDNS = {
       customTTL = "5m";
       filterUnmappedTypes = true;
-      mapping = lib.genAttrs privateNames (_: lab.hosts.lumo.tailnet);
+      # LAN-only names map to lumo's LAN address, so on-LAN Tailscale clients
+      # reach them directly; off-LAN tailnet clients cannot.
+      mapping = lib.genAttrs privateNames (_: lab.hosts.lumo.tailnet) // {
+        ${lab.domains.printer} = lab.hosts.lumo.lan;
+      };
       zone = "";
     };
 
